@@ -1,0 +1,15 @@
+out
+target
+test-classes
+.idea
+target
+war
+#.settings
+#.project
+#.classpath
+*.iws
+*.iml
+*.ipr
+#*_Roo*
+
+#*.roo
