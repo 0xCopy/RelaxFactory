@@ -50,19 +50,20 @@ public abstract class SessionLocatorVisitor<TxPojo, DataPojo> implements AsioVis
     System.err.println("<<<" + json);
     TxPojo tx = (TxPojo) GSON.fromJson(json, memento.getClass());
     handle(json, tx);
-    blockingQueue.put( tx);
+    blockingQueue.put(tx);
     key.cancel();
   }
 
   protected abstract void handle(String json, TxPojo couchTx);
 
-  @Override                 final
+  @Override
+  final
   public void onRead(SelectionKey key) {
     try {
       ByteBuffer dst = ByteBuffer.allocateDirect(receiveBufferSize);
       int read = channel.read(dst);
       dst.flip();
-      System.err.println(KernelImpl.UTF_8.decode(dst));
+      System.err.println(HttpMethod.UTF8.decode(dst));
       dst.rewind();
       byteBufferLinkedList = null;
       if (null == headers) {
@@ -128,8 +129,8 @@ public abstract class SessionLocatorVisitor<TxPojo, DataPojo> implements AsioVis
         headers = (ByteBuffer) dst.duplicate().flip();
         ByteBuffer cl = headers.duplicate();
 
-        Map<String,int[]> headers1 = HttpHeaders.getHeaders((ByteBuffer) cl.rewind());
-        System.err.println( (headers1.keySet().toString() ));
+        Map<String, int[]> headers1 = HttpHeaders.getHeaders((ByteBuffer) cl.rewind());
+        System.err.println((headers1.keySet().toString()));
 
         int[] ints = headers1.get("Content-Length");
         Buffer position = cl.clear().limit(ints[1]).position(ints[0]);

@@ -1,8 +1,10 @@
 package ro.server;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.ServerSocketChannel;
 import java.text.MessageFormat;
 import java.util.Date;
 import java.util.Map;
@@ -12,6 +14,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import one.xio.AsioVisitor;
 import one.xio.HttpHeaders;
 import one.xio.HttpMethod;
 import ro.model.RoSession;
@@ -28,12 +31,13 @@ public class KernelImpl {
 
   public static final RoSessionLocator RO_SESSION_LOCATOR = new RoSessionLocator();
   public static final ExecutorService EXECUTOR_SERVICE = Executors.newCachedThreadPool();
-  public static final Charset UTF_8 = UTF8;
-  public static final String MYSESSIONSTRING = "mysessionstring";
+  public static final ThreadLocal<ByteBuffer> ThreadLocalHeaders = new ThreadLocal<ByteBuffer>();
+  public static final ThreadLocal<Map<String, String>> ThreadLocalSetCookies = new ThreadLocal<Map<String, String>>();
+  private static final String MYSESSIONSTRING = KernelImpl.class.getCanonicalName();
 
 
   static public RoSession getCurrentSession() {
-    ByteBuffer hb = RfPostWrapper.ThreadLocalHeaders.get();
+    ByteBuffer hb = ThreadLocalHeaders.get();
     RoSession roSession = null;
     Map<String, int[]> headers = HttpHeaders.getHeaders(hb);
     String id = null;
@@ -47,14 +51,14 @@ public class KernelImpl {
     }
     if (null == roSession) {
       roSession = RO_SESSION_LOCATOR.create(RoSession.class);
-      Map o = (Map) RfPostWrapper.ThreadLocalSetCookies.get();
+      Map o = (Map) ThreadLocalSetCookies.get();
       if (null == o) {
         Map<String, String> value = new TreeMap<String, String>();
         value.put(MYSESSIONSTRING, roSession.getId());
-        RfPostWrapper.ThreadLocalSetCookies.set(value);
+        ThreadLocalSetCookies.set(value);
       }
       String s = new Date(TimeUnit.DAYS.toMillis(14) + System.currentTimeMillis()).toGMTString();
-      RfPostWrapper.ThreadLocalSetCookies.get().put(MYSESSIONSTRING, MessageFormat.format("{0}; path=/ ; expires=\"{1}\" ; HttpOnly", roSession.getId(), s));
+      ThreadLocalSetCookies.get().put(MYSESSIONSTRING, MessageFormat.format("{0}; path=/ ; expires=\"{1}\" ; HttpOnly", roSession.getId(), s));
     }
 
     return roSession;
@@ -62,8 +66,8 @@ public class KernelImpl {
 
   static String getSessionCookieId(ByteBuffer headerBuffer, Map<String, int[]> headerIndex) {
 
-    String trim = UTF_8.decode((ByteBuffer) headerBuffer.rewind()).toString().trim();
-    System.err.println("gsci:"+trim);
+    String trim = UTF8.decode((ByteBuffer) headerBuffer.rewind()).toString().trim();
+    System.err.println("gsci:" + trim);
     String id = null;
     if (headerIndex.containsKey("Cookie")) {
       int[] cookieses = headerIndex.get("Cookie");
@@ -71,10 +75,10 @@ public class KernelImpl {
 
       String[] split = coo.split(";");
       for (String s : split) {
-        String[] split1 = s.split("=");
-        String cname = split1[0];
-        if (MYSESSIONSTRING.equals(cname)) {
-          id = split1[1].trim();
+        String[] chunk = s.split("=");
+        String cname = chunk[0];
+        if (MYSESSIONSTRING.equals(cname.trim())) {
+          id = chunk[1].trim();
           break;
         }
       }
@@ -106,8 +110,17 @@ public class KernelImpl {
       }
     });
 
-    RfPostWrapper.startServer(args);
+    startServer(args);
 
+  }
+
+  public static void startServer(String... args) throws IOException {
+    ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+    serverSocketChannel.socket().bind(new InetSocketAddress(8080));
+    serverSocketChannel.configureBlocking(false);
+    AsioVisitor topLevel = new RfPostWrapper();
+    HttpMethod.enqueue(serverSocketChannel, SelectionKey.OP_ACCEPT, topLevel);
+    HttpMethod.init(args, topLevel);
   }
 }
 

@@ -1,7 +1,6 @@
 package ro.server;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.channels.SelectionKey;
@@ -15,7 +14,6 @@ import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
 
 import com.google.web.bindery.requestfactory.server.ServiceLayer;
 import com.google.web.bindery.requestfactory.server.SimpleRequestProcessor;
@@ -24,6 +22,9 @@ import one.xio.HttpHeaders;
 import one.xio.HttpMethod;
 
 import static one.xio.HttpMethod.UTF8;
+import static ro.server.KernelImpl.EXECUTOR_SERVICE;
+import static ro.server.KernelImpl.ThreadLocalHeaders;
+import static ro.server.KernelImpl.ThreadLocalSetCookies;
 
 /**
  * a POST interception wrapper for http protocol cracking
@@ -34,11 +35,7 @@ import static one.xio.HttpMethod.UTF8;
 class RfPostWrapper implements AsioVisitor {
 
 
-  public static final ExecutorService EXECUTOR_SERVICE = KernelImpl.EXECUTOR_SERVICE;
   public static final SimpleRequestProcessor SIMPLE_REQUEST_PROCESSOR = new SimpleRequestProcessor(ServiceLayer.create());
-  public static final ThreadLocal<SelectionKey> ThreadLocalKey = new ThreadLocal<SelectionKey>();
-  public static final ThreadLocal<ByteBuffer> ThreadLocalHeaders = new ThreadLocal<ByteBuffer>();
-  public static final ThreadLocal<Map<String, String>> ThreadLocalSetCookies = new ThreadLocal<Map<String, String>>();
 
   @Override
   public void onRead(final SelectionKey key) {
@@ -82,15 +79,6 @@ class RfPostWrapper implements AsioVisitor {
     } catch (IOException e) {
       e.printStackTrace();  //todo: verify for a purpose
     }
-  }
-
-  public static void startServer(String... args) throws IOException {
-    ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
-    serverSocketChannel.socket().bind(new InetSocketAddress(8080));
-    serverSocketChannel.configureBlocking(false);
-    AsioVisitor topLevel = new RfPostWrapper();
-    HttpMethod.enqueue(serverSocketChannel, SelectionKey.OP_ACCEPT, topLevel);
-    HttpMethod.init(args, topLevel);
   }
 
 
@@ -167,7 +155,7 @@ class RfPostWrapper implements AsioVisitor {
         r.add(byteBufferCallable);
         x += byteBuffer.limit();
       }
-      KernelImpl.EXECUTOR_SERVICE.invokeAll(r);
+      EXECUTOR_SERVICE.invokeAll(r);
       return fbuf;
     }
 
@@ -222,7 +210,7 @@ class RfPostWrapper implements AsioVisitor {
       System.err.println("+++ process " + s);
 
 
-      ThreadLocalKey.set(key);
+//      ThreadLocalKey.set(key);
       final String process = SIMPLE_REQUEST_PROCESSOR.process(s);
       setCookiesMap = ThreadLocalSetCookies.get();
       String sc = "";
@@ -257,7 +245,6 @@ class RfPostWrapper implements AsioVisitor {
       ThreadLocalHeaders.set(headers);
       try {
         Object attachment = key.attachment();
-        ByteBuffer dst1 = null;
         if (attachment instanceof ByteBuffer) {
           resolve((ByteBuffer) attachment);
         }
@@ -271,14 +258,12 @@ class RfPostWrapper implements AsioVisitor {
     }
 
     void resolve(ByteBuffer attachment) throws InterruptedException {
-      ByteBuffer dst1;
-      dst1 = (ByteBuffer) attachment;
-      dst1.rewind();
+      attachment.rewind();
       byteBufferLinkedList = null;
-      if (null == ThreadLocalHeaders.get()) {
-        bisectFirstPacketIntoHeaders(dst1);
+      if (null == headers) {
+        bisectFirstPacketIntoHeaders(attachment);
       } else {
-        pileOnBufferSegment(dst1, dst1.limit());
+        pileOnBufferSegment(attachment, attachment.limit());
       }
     }
 
