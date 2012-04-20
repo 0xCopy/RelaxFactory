@@ -24,87 +24,8 @@ public class SessionFindLocatorVisitor extends SessionLocatorVisitor<RoSession, 
     super(blockingQueue, channel);
     this.id = id;
   }
-/*
-  @Override
-  public void onRead(SelectionKey key) {
-    try {
-      ByteBuffer dst = ByteBuffer.allocateDirect(receiveBufferSize);
-      int read = channel.read(dst);
-      dst.flip();
-      System.err.println(RoSessionLocator.UTF_8.decode(dst));
-      dst.rewind();
-      byteBufferLinkedList = null;
-      if (null == headers) {
-        boolean eol = false;
-        while (dst.hasRemaining()) {
-          byte b = dst.get();
-          if ('\n' != b) {
-            if ('\r' != b) {
-              eol = false;
-            }
-          } else if (!eol) {
-            eol = true;
-          } else {
-            headers = (ByteBuffer) dst.duplicate().flip();
-            ByteBuffer cl = headers.duplicate();
-
-            total = Integer.parseInt(HttpHeaders.getContentLength(cl).toString());
-            ByteBuffer slice = dst.slice();
-            remaining = total - slice.remaining();
-
-            switch (remaining) {
-              case 0:
-                processBuffer(key, slice, RoSessionLocator.MEMENTO);
-                break;
-              default:
-                byteBufferLinkedList = new LinkedList<ByteBuffer>();
-                byteBufferLinkedList.add(slice);
-                break;
-            }
-            break;
-          }
-        }
-      } else {
-        byteBufferLinkedList.add(dst);
-        remaining -= read;
-        if (remaining < 0) {
-          throw new Error("bad code");
-        } else {
-          if (0 == remaining) {
-            final ByteBuffer fbuf = ByteBuffer.allocateDirect(total);
-            int size = byteBufferLinkedList.size();
-
-            Collection<Callable<ByteBuffer>> r = new ArrayList<Callable<ByteBuffer>>();
-            int x = 0;
-            for (final ByteBuffer byteBuffer : byteBufferLinkedList) {
-              int limit = byteBuffer.limit();
-
-              final int finalX = x;
-              Callable<ByteBuffer> byteBufferCallable = new Callable<ByteBuffer>() {
-                @Override
-                public ByteBuffer call() throws Exception {
-                  ByteBuffer p = (ByteBuffer) fbuf.duplicate().position(finalX);
-                  p.put((ByteBuffer) byteBuffer.position(finalX));
-                  return fbuf;  //todo: verify for a purpose
-                }
-              };
-              r.add(byteBufferCallable);
-              x += byteBuffer.limit();
-            }
-            RoSessionLocator.EXECUTOR_SERVICE.invokeAll(r);
-            processBuffer(key, fbuf, RoSessionLocator.MEMENTO);
-          }
-        }
-      }
-
-    } catch (IOException e) {
-      e.printStackTrace();  //todo: verify for a purpose
-    } catch (InterruptedException e) {
-      e.printStackTrace();  //todo: verify for a purpose
-    }
 
 
-  }*/
 
   @Override
   RoSession getMemento() {

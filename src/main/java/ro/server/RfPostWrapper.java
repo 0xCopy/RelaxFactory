@@ -10,6 +10,7 @@ import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.Map;
@@ -119,8 +120,9 @@ class RfPostWrapper implements AsioVisitor {
     public int total;
     public LinkedList<ByteBuffer> byteBufferLinkedList;
     public int remaining;
-    public ByteBuffer headers;
     private final SelectionKey key;
+    private Map<String, String> setCookiesMap;
+    private ByteBuffer headers;
 
     public RfCallable(SelectionKey key) {
       this.key = key;
@@ -175,7 +177,7 @@ class RfPostWrapper implements AsioVisitor {
         byte b = dst.get();
         if ('\n' == b) {
           if (eol) {
-            headers = (ByteBuffer) dst.duplicate().flip();
+            ThreadLocalHeaders.set(headers = (ByteBuffer) dst.duplicate().flip());
             System.err.println("h: " + UTF8.decode(headers).toString());
             ByteBuffer cl = headers.duplicate();
 
@@ -185,7 +187,7 @@ class RfPostWrapper implements AsioVisitor {
               System.err.println(Arrays.toString(hm.keySet().toArray()));
               int[] ints = hm.get("Content-Length");
 
-              total = Integer.parseInt(HttpMethod.UTF8.decode((ByteBuffer) headers.limit(ints[1]).position(ints[0])).toString().trim());
+              total = Integer.parseInt(HttpMethod.UTF8.decode((ByteBuffer) headers.duplicate().limit(ints[1]).position(ints[0])).toString().trim());
               ByteBuffer slice = dst.slice();
               remaining = total - slice.remaining();
               switch (remaining) {
@@ -214,21 +216,34 @@ class RfPostWrapper implements AsioVisitor {
       }
     }
 
-    void processBuffer(ByteBuffer byteBuffer) {
-      String s = UTF8.decode(byteBuffer).toString();
-      System.err.println("+++ headers " + UTF8.decode(headers).toString());
+    void processBuffer(ByteBuffer payload) {
+      System.err.println("+++ headers " + UTF8.decode((ByteBuffer) headers.rewind()).toString());
+      String s = UTF8.decode(payload).toString();
       System.err.println("+++ process " + s);
 
 
       ThreadLocalKey.set(key);
-      ThreadLocalHeaders.set(headers);
       final String process = SIMPLE_REQUEST_PROCESSOR.process(s);
+      setCookiesMap = ThreadLocalSetCookies.get();
+      String sc = "";
+      if (null != setCookiesMap && !setCookiesMap.isEmpty()) {
+        sc = "Set-Cookie: ";
 
+        Iterator<Map.Entry<String, String>> iterator = setCookiesMap.entrySet().iterator();
+        if (iterator.hasNext()) {
+          do {
+            Map.Entry<String, String> stringStringEntry = iterator.next();
+            sc += stringStringEntry.getKey() + "=" + stringStringEntry.getValue().trim();
+            if (iterator.hasNext()) sc += "; ";
+          } while (iterator.hasNext());
+        }
+        sc += "\r\n";
+      }
       int length = process.length();
       String s1 = "HTTP/1.1 200 OK\r\n" +
+          sc +
           "Content-Type: application/json\r\n" +
           "Content-Length: " + length + "\r\n\r\n";
-
       try {
         String debug = s1 + process;
         ((SocketChannel) key.channel()).write(UTF8.encode(debug));
@@ -239,7 +254,7 @@ class RfPostWrapper implements AsioVisitor {
     }
 
     public Object call() throws Exception {
-
+      ThreadLocalHeaders.set(headers);
       try {
         Object attachment = key.attachment();
         ByteBuffer dst1 = null;
@@ -260,7 +275,7 @@ class RfPostWrapper implements AsioVisitor {
       dst1 = (ByteBuffer) attachment;
       dst1.rewind();
       byteBufferLinkedList = null;
-      if (null == headers) {
+      if (null == ThreadLocalHeaders.get()) {
         bisectFirstPacketIntoHeaders(dst1);
       } else {
         pileOnBufferSegment(dst1, dst1.limit());
