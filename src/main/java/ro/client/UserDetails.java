@@ -11,6 +11,10 @@ import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.web.bindery.requestfactory.shared.Receiver;
+
+import static ro.client.Welcome.gather;
+import static ro.client.Welcome.requestFactory;
 
 /**
  * User: jim
@@ -19,6 +23,7 @@ import com.google.gwt.user.client.ui.TextBox;
  */
 enum UserDetails {
   ConfirmCity("Welcome,  what city are you in?", "ShowLocalPage") {
+    {key="city";}
     @Override
     public void decorateDialog(final DialogBox dialog, final RunAsyncCallback callback) {
 
@@ -27,12 +32,7 @@ enum UserDetails {
       dialog.setWidget(flowPanel);
 
       final ListBox list = new ListBox();
-
-//      String[] cities = SimpleData.CITIES;
-//      for (String s : cities) {
-//        list.addItem(s);
-//      }
-          list.addItem("SF Bay");
+      list.addItem("SF Bay");
       flowPanel.add(list);
 
       addCloseButton(dialog, callback, flowPanel, new HasText() {
@@ -48,11 +48,9 @@ enum UserDetails {
         }
       });
     }
-
-
   },
-  EnterEmailAddress("What is your Email Address?"),
-  ZipGender("A few final details...") {
+  EnterEmailAddress("What is your Email Address?"){{key="email";}},
+  ZipGender("A few final details...") {{key="zipGender";}
     @Override
     public void decorateDialog(DialogBox dialog, RunAsyncCallback callback) {
 
@@ -79,9 +77,9 @@ enum UserDetails {
         }
 
         @Override
-        public void setText(String text) {
-          //todo: verify for a purpose
-        }
+        public void setText(String text) { }
+
+
       });
 
     }
@@ -91,6 +89,7 @@ enum UserDetails {
 
   String caption;
   String pageChange;
+  String key;
 
   UserDetails(String... details) {
     this.caption = details[0];
@@ -103,10 +102,16 @@ enum UserDetails {
       addClickHandler(new ClickHandler() {
         @Override
         public void onClick(ClickEvent event) {
-          Welcome.e.put(UserDetails.this, w.getText());
+          final String text = w.getText();
+          requestFactory.couch().setProperty(Welcome.session.getId(),key,text).fire(new Receiver<Void>() {
+            @Override
+            public void onSuccess(Void response) {
+          gather.put(UserDetails.this, text);
           dialog.hide();
-
           GWT.runAsync(callback);
+
+            }
+          });
         }
       });
     }});
@@ -128,5 +133,9 @@ enum UserDetails {
     final TextBox w = new TextBox();
     flowPanel.add(w);
     addCloseButton(dialog, callback, flowPanel, w);
+  }
+
+  public String getKey() {
+    return key;
   }
 }

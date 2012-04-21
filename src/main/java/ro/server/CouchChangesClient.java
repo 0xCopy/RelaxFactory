@@ -81,6 +81,14 @@ public class CouchChangesClient implements AsioVisitor {
   public CouchChangesClient() {
   }
 
+  static SocketChannel createConnection() throws IOException {
+    System.err.println("opening " + new InetSocketAddress(LOOPBACK, 5984).toString());
+    final SocketChannel channel = SocketChannel.open();
+    channel.configureBlocking(false);
+    channel.connect(new InetSocketAddress(LOOPBACK, 5984));
+    return channel;
+  }
+
   public String getFeedString() {
     return "/" + feedname + "/_changes?include_docs=true&feed=continuous&heartbeat=" +
         POLL_HEARTBEAT_MS;

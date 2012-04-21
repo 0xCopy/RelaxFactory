@@ -11,6 +11,9 @@ import java.util.concurrent.SynchronousQueue;
 import com.google.web.bindery.requestfactory.shared.Locator;
 import one.xio.HttpMethod;
 import ro.model.RoSession;
+import ro.server.rf.SessionCreateVisitor;
+import ro.server.rf.SessionFindLocatorVisitor;
+import ro.server.rf.SessionLocatorVisitor;
 
 import static ro.server.CouchChangesClient.LOOPBACK;
 

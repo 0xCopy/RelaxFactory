@@ -1,3 +1,5 @@
 package ro.server;
 
-public class CouchTx{boolean ok;String id,rev;}
+public class CouchTx{boolean ok;
+  public String id;
+  public String rev;}

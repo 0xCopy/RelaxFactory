@@ -1,4 +1,4 @@
-package ro.server;
+package ro.server.rf;
 
 import java.io.IOException;
 import java.net.SocketException;
@@ -16,6 +16,7 @@ import java.util.concurrent.Callable;
 import one.xio.AsioVisitor;
 import one.xio.HttpHeaders;
 import one.xio.HttpMethod;
+import ro.server.KernelImpl;
 
 import static ro.server.CouchChangesClient.GSON;
 
@@ -25,7 +26,7 @@ import static ro.server.CouchChangesClient.GSON;
  * Time: 8:18 PM
  */
 public abstract class SessionLocatorVisitor<TxPojo, DataPojo> implements AsioVisitor {
-  DataPojo data;
+  public DataPojo data;
   protected BlockingQueue<TxPojo> blockingQueue;
   protected int receiveBufferSize;
   public ByteBuffer headers;

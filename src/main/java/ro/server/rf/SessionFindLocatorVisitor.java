@@ -1,4 +1,4 @@
-package ro.server;
+package ro.server.rf;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -9,6 +9,7 @@ import java.util.concurrent.BlockingQueue;
 
 import one.xio.HttpMethod;
 import ro.model.RoSession;
+import ro.server.RoSessionLocator;
 
 import static ro.server.CouchChangesClient.GSON;
 
