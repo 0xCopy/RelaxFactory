@@ -21,10 +21,11 @@ import ro.server.KernelImpl;
 import static ro.server.CouchChangesClient.GSON;
 
 /**
+ * @deprecated this was used to model RF but ignores DRY.
  * User: jim
  * Date: 4/17/12
  * Time: 8:18 PM
- */
+ */                   @Deprecated()
 public abstract class SessionLocatorVisitor<TxPojo, DataPojo> implements AsioVisitor {
   public DataPojo data;
   protected BlockingQueue<TxPojo> blockingQueue;
