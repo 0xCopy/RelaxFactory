@@ -60,18 +60,19 @@ public class Welcome implements EntryPoint {
 
           @Override
           public void onSuccess() {
-            requestFactory.couch().getProperty(session.getId(), userDetails.getKey()).fire(new Receiver<String>() {
-              @Override
-              public void onSuccess(String response) {
+            requestFactory.couch().getProperty(session.getId(), userDetails.getKey()).fire(
+                new Receiver<String>() {
+                  @Override
+                  public void onSuccess(String response) {
 
-if(null==response){
-                DialogBox dialog = userDetails.createDialog();
-                    userDetails.decorateDialog(dialog, new MyRunAsyncCallback());
-                    dialog.center();
-                    dialog.show();
-  }
-              }
-            });
+                    if (null == response) {
+                      DialogBox dialog = userDetails.createDialog();
+                      userDetails.decorateDialog(dialog, new MyRunAsyncCallback());
+                      dialog.center();
+                      dialog.show();
+                    }
+                  }
+                });
           }
         });
 

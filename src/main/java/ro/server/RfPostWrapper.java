@@ -54,14 +54,15 @@ class RfPostWrapper implements AsioVisitor {
           ByteBuffer duplicate = dst.duplicate();
           while (duplicate.hasRemaining() && !Character.isWhitespace(duplicate.get())) ;
           String trim = UTF8.decode((ByteBuffer) duplicate.flip()).toString().trim();
+
+
           HttpMethod method = HttpMethod.valueOf(trim);
           dst.limit(read).position(0);
           key.attach(dst);
           switch (method) {
             case POST:
 
-              final SelectionKey key2 = key;
-              EXECUTOR_SERVICE.submit(new RfCallable(key2));
+              EXECUTOR_SERVICE.submit(new RfCallable(key));
               break;
             default:
               method.onRead(key);
@@ -251,7 +252,6 @@ class RfPostWrapper implements AsioVisitor {
       } catch (InterruptedException e) {
         e.printStackTrace();
       } finally {
-
         key.attach(this);
       }
       return null;

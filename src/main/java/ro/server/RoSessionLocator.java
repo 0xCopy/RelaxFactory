@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.SynchronousQueue;
 
@@ -12,10 +11,12 @@ import com.google.web.bindery.requestfactory.shared.Locator;
 import one.xio.HttpMethod;
 import ro.model.RoSession;
 import ro.server.rf.SessionCreateVisitor;
-import ro.server.rf.SessionFindLocatorVisitor;
 import ro.server.rf.SessionLocatorVisitor;
 
+import static ro.server.CouchChangesClient.GSON;
 import static ro.server.CouchChangesClient.LOOPBACK;
+
+//import ro.server.rf.SessionFindLocatorVisitor;
 
 /**
  * User: jim
@@ -74,30 +75,17 @@ public class RoSessionLocator extends Locator<RoSession, String> {
 
   @Override
   public RoSession find(Class<? extends RoSession> clazz, String id) {
-    BlockingQueue<RoSession> blockingQueue = new SynchronousQueue<RoSession>();
-    SessionLocatorVisitor<RoSession, RoSession> sessionVisitor = null;
+
+    String s = null;
     try {
-      System.err.println("opening " + new InetSocketAddress(LOOPBACK, 5984).toString());
-      SocketChannel channel = SocketChannel.open();
-      blockingQueue = new SynchronousQueue<RoSession>();
-      channel.configureBlocking(false);
-      channel.connect(new InetSocketAddress(LOOPBACK, 5984));
-      sessionVisitor = new SessionFindLocatorVisitor(blockingQueue, channel, id);
-      HttpMethod.enqueue(channel, SelectionKey.OP_CONNECT, sessionVisitor);
-
-
+      s = CouchToolImpl.fetchJsonById(id);
     } catch (IOException e) {
       e.printStackTrace();  //todo: verify for a purpose
-    }
-
-    try {
-      RoSession take = blockingQueue.take();
-//      System.err.println("data received asyncronously!");
-      return take;
     } catch (InterruptedException e) {
       e.printStackTrace();  //todo: verify for a purpose
     }
-    return sessionVisitor.data;
+    return GSON.fromJson(s, getDomainType());
+
   }
 
   @Override

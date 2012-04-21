@@ -14,7 +14,13 @@ import ro.server.CouchToolImpl;
 public interface CouchTool extends RequestContext {
   Request<String> getProperty(String id, String key);
 
-  Request<Void> setProperty(String id,String key ,String value);
+  /**
+   * @param id
+   * @param key
+   * @param value
+   * @return new version string
+   */
+  Request<String> setProperty(String id, String key, String value);
 
 
 }

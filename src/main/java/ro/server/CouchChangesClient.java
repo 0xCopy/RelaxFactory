@@ -118,8 +118,9 @@ public class CouchChangesClient implements AsioVisitor {
     try {
       if (channel.finishConnect()) {
         String str = "GET " + getFeedString() + " HTTP/1.1\r\n\r\n";
+        System.err.println("attempting "+str);
         attachment[1] = UTF8.encode(str);
-        key.interestOps(OP_WRITE);//a bit academic for now
+        key.interestOps(OP_WRITE);
       }
     } catch (IOException e) {
       e.printStackTrace();

@@ -15,6 +15,7 @@ import com.google.web.bindery.requestfactory.shared.Receiver;
 
 import static ro.client.Welcome.gather;
 import static ro.client.Welcome.requestFactory;
+import static ro.client.Welcome.session;
 
 /**
  * User: jim
@@ -23,7 +24,10 @@ import static ro.client.Welcome.requestFactory;
  */
 enum UserDetails {
   ConfirmCity("Welcome,  what city are you in?", "ShowLocalPage") {
-    {key="city";}
+    {
+      key = "city";
+    }
+
     @Override
     public void decorateDialog(final DialogBox dialog, final RunAsyncCallback callback) {
 
@@ -49,8 +53,13 @@ enum UserDetails {
       });
     }
   },
-  EnterEmailAddress("What is your Email Address?"){{key="email";}},
-  ZipGender("A few final details...") {{key="zipGender";}
+  EnterEmailAddress("What is your Email Address?") {{
+    key = "email";
+  }},
+  ZipGender("A few final details...") {{
+    key = "zipGender";
+  }
+
     @Override
     public void decorateDialog(DialogBox dialog, RunAsyncCallback callback) {
 
@@ -77,16 +86,11 @@ enum UserDetails {
         }
 
         @Override
-        public void setText(String text) { }
-
-
+        public void setText(String text) {
+        }
       });
-
     }
-
   };
-
-
   String caption;
   String pageChange;
   String key;
@@ -94,7 +98,6 @@ enum UserDetails {
   UserDetails(String... details) {
     this.caption = details[0];
     if (details.length > 1) this.pageChange = details[1];
-
   }
 
   void addCloseButton(final DialogBox dialog, final RunAsyncCallback callback, FlowPanel flowPanel, final HasText w) {
@@ -103,13 +106,14 @@ enum UserDetails {
         @Override
         public void onClick(ClickEvent event) {
           final String text = w.getText();
-          requestFactory.couch().setProperty(Welcome.session.getId(),key,text).fire(new Receiver<Void>() {
-            @Override
-            public void onSuccess(Void response) {
-          gather.put(UserDetails.this, text);
-          dialog.hide();
-          GWT.runAsync(callback);
+          requestFactory.couch().setProperty(Welcome.session.getId(), key, text).fire(new Receiver<String>() {
 
+            @Override
+            public void onSuccess(String response) {
+              session.setVersion(response);
+              gather.put(UserDetails.this, text);
+              dialog.hide();
+              GWT.runAsync(callback);
             }
           });
         }
@@ -121,7 +125,6 @@ enum UserDetails {
     DialogBox dialogBox = new DialogBox();
     dialogBox.setModal(true);
     dialogBox.setAnimationEnabled(true);
-
     return dialogBox;
   }
 
