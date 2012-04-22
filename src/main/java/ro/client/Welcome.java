@@ -1,6 +1,7 @@
 package ro.client;
 
 import java.util.EnumMap;
+import java.util.Map;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
@@ -13,6 +14,7 @@ import com.google.web.bindery.requestfactory.shared.Request;
 import ro.shared.KernelFactory;
 import ro.shared.prox.RoSessionProxy;
 import ro.shared.req.Kernel;
+import ro.shared.req.SessionTool;
 
 
 /**
@@ -60,7 +62,7 @@ public class Welcome implements EntryPoint {
 
           @Override
           public void onSuccess() {
-            requestFactory.couch().getSessionProperty(session.getId(), userDetails.getKey()).fire(
+            requestFactory.couch().getSessionProperty(userDetails.getKey()).fire(
                 new Receiver<String>() {
                   @Override
                   public void onSuccess(String response) {
@@ -91,6 +93,19 @@ public class Welcome implements EntryPoint {
     @Override
     public void onSuccess() {
       doController();
+      SessionTool couch = requestFactory.couch();
+      Request<String> lastReq;
+      for (Map.Entry<UserDetails, String> e : gather.entrySet()) {
+        couch.setSessionProperty(e.getKey().getKey(), e.getValue()).fire();
+      }
+
+    }
+
+    private class StringReceiver extends Receiver<String> {
+      @Override
+      public void onSuccess(String response) {
+        //todo: verify for a purpose
+      }
     }
   }
 }

@@ -38,12 +38,10 @@ public class KernelImpl {
 
 
   static public RoSession getCurrentSession() {
-    ByteBuffer hb = ThreadLocalHeaders.get();
-    RoSession roSession = null;
-    Map<String, int[]> headers = HttpHeaders.getHeaders((ByteBuffer) hb.rewind());
     String id = null;
+    RoSession roSession = null;
     try {
-      id = getSessionCookieId((ByteBuffer) hb , headers);
+      id = getSessionCookieId( );
       if (null != id)
         roSession = RO_SESSION_LOCATOR.find(RoSession.class, id);
     } catch (Throwable e) {
@@ -65,8 +63,10 @@ public class KernelImpl {
     return roSession;
   }
 
-  static String getSessionCookieId(ByteBuffer hb, Map<String, int[]> headerIndex) {
-
+  static String getSessionCookieId() {
+    ThreadLocalSessionHeaders invoke = new ThreadLocalSessionHeaders().invoke();
+    ByteBuffer hb = invoke.getHb();
+    Map<String, int[]> headerIndex = invoke.getHeaders();
     String headerStrring = UTF8.decode((ByteBuffer) hb.rewind()).toString().trim();
     System.err.println("gsci:" + headerStrring);
     String id = null;
@@ -124,6 +124,25 @@ public class KernelImpl {
     AsioVisitor topLevel = new RfPostWrapper();
     HttpMethod.enqueue(serverSocketChannel, SelectionKey.OP_ACCEPT, topLevel);
     HttpMethod.init(args, topLevel);
+  }
+
+  private static class ThreadLocalSessionHeaders {
+    private ByteBuffer hb;
+    private Map<String, int[]> headers;
+
+    public ByteBuffer getHb() {
+      return hb;
+    }
+
+    public Map<String, int[]> getHeaders() {
+      return headers;
+    }
+
+    public ThreadLocalSessionHeaders invoke() {
+      hb = ThreadLocalHeaders.get();
+      headers = HttpHeaders.getHeaders((ByteBuffer) hb.rewind());
+      return this;
+    }
   }
 }
 

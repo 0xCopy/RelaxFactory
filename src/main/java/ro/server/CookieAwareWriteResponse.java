@@ -13,10 +13,10 @@ import static one.xio.HttpMethod.UTF8;
 import static ro.server.KernelImpl.ThreadLocalSetCookies;
 
 /**
-* User: jim
-* Date: 4/21/12
-* Time: 2:50 PM
-*/
+ * User: jim
+ * Date: 4/21/12
+ * Time: 2:50 PM
+ */
 class CookieAwareWriteResponse implements AsioVisitor {
 
   private final String process;
@@ -48,7 +48,7 @@ class CookieAwareWriteResponse implements AsioVisitor {
     String s1 = "HTTP/1.1 200 OK\r\n" +
         cookieDeclaration +
         "Content-Type: application/json\r\n" +
-        "Content-Length: " + length + "\r\n\r\n"  + process;
+        "Content-Length: " + length + "\r\n\r\n" + process;
     final ByteBuffer payload = UTF8.encode(s1);
     final int write = ((SocketChannel) key.channel()).write(payload);
     final int total = payload.limit();

@@ -39,19 +39,24 @@ class JsonResponseReader implements AsioVisitor {
       dst.flip();
       byte b = 0;
       boolean eol = false;
-      label:
-      moveCaretToDoubleEol(dst );
+
+      moveCaretToDoubleEol(dst);
       int[] bounds = HttpHeaders.getHeaders((ByteBuffer) dst.duplicate().flip()).get("Content-Length");
+      if (null == bounds)
+        return;
       total = Long.parseLong(UTF8.decode((ByteBuffer) dst.duplicate().limit(bounds[1]).position(bounds[0])).toString().trim());
       remaining = total - dst.remaining();
 
       ByteBuffer payload;
       if (remaining <= 0) {
         payload = dst.slice();
+        key.attach(null);
         synchronousQueue.put(UTF8.decode(payload).toString().trim());
+
       } else {
         final LinkedList<ByteBuffer> ll = new LinkedList<ByteBuffer>();
-//          synchronousQueue.clear();
+//
+//    synchronousQueue.clear();
         ll.add(dst.slice());
         key.attach(new AsioVisitor() {
           @Override
@@ -70,7 +75,7 @@ class JsonResponseReader implements AsioVisitor {
                   payload.put((ByteBuffer) buffer.rewind());
                 }
                 key.attach(null);
-                key.cancel();
+
                 synchronousQueue.put(UTF8.decode(payload).toString().trim());
               }
             } catch (IOException e) {
@@ -107,7 +112,7 @@ class JsonResponseReader implements AsioVisitor {
 
   }
 
-  public static void moveCaretToDoubleEol(ByteBuffer dst ) {
+  public static void moveCaretToDoubleEol(ByteBuffer dst) {
     byte b;
     boolean eol = false;
     while (dst.hasRemaining() && (b = dst.get()) != -1) {

@@ -12,15 +12,12 @@ import ro.server.SessionToolImpl;
  */
 @Service(value = SessionToolImpl.class)
 public interface SessionTool extends RequestContext {
-  Request<String> getSessionProperty(String id, String key);
+  Request<String> getSessionProperty( String key);
 
   /**
-   * @param id
-   * @param key
-   * @param value
    * @return new version string
    */
-  Request<String> setSessionProperty(String id, String key, String value);
+  Request<String> setSessionProperty( String key, String value);
 
 
 }
