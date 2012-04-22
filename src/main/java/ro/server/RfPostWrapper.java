@@ -47,17 +47,18 @@ class RfPostWrapper implements AsioVisitor {
         case POST:
           JsonResponseReader.moveCaretToDoubleEol(dst);
           ByteBuffer headers = (ByteBuffer) dst.duplicate().flip();
-          System.err.println("+++ headers: "+UTF8.decode((ByteBuffer) headers.duplicate().rewind()).toString());
+          System.err.println("+++ headers: " + UTF8.decode((ByteBuffer) headers.duplicate().rewind()).toString());
           Map<String, int[]> headers1 = HttpHeaders.getHeaders(headers);
           int[] ints = headers1.get("Content-Length");
+
 
           ByteBuffer duplicate1 = (ByteBuffer) headers.duplicate().rewind();
           String trim1 = UTF8.decode((ByteBuffer) duplicate1.limit(ints[1]).position(ints[0])).toString().trim();
           long total = Long.parseLong(trim1);
 
-          final long[] remaining = {total - read};
+          final long[] remaining = {total - dst.remaining()};
           if (remaining[0] == 0) {
-            KernelImpl.EXECUTOR_SERVICE.submit(new RfProcessTask(headers, dst,key));
+            KernelImpl.EXECUTOR_SERVICE.submit(new RfProcessTask(headers, dst, key));
 
           } else {
             if (dst.capacity() - dst.position() >= total) {
@@ -75,7 +76,7 @@ class RfPostWrapper implements AsioVisitor {
               public void onRead(SelectionKey selectionKey) throws IOException {
                 ((SocketChannel) selectionKey.channel()).read(finalDst);
                 if (!finalDst.hasRemaining()) {
-                  KernelImpl.EXECUTOR_SERVICE.submit(new RfProcessTask(finalHeaders, finalDst,key));
+                  KernelImpl.EXECUTOR_SERVICE.submit(new RfProcessTask(finalHeaders, finalDst, key));
                 }
               }
 
@@ -139,20 +140,15 @@ class RfPostWrapper implements AsioVisitor {
     @Override
     public void run() {
       KernelImpl.ThreadLocalHeaders.set(headers);
-      String process = SIMPLE_REQUEST_PROCESSOR.process(UTF8.decode((ByteBuffer) data.rewind()).toString().trim());
+      String trim = UTF8.decode( data ).toString().trim();
+      final String process = SIMPLE_REQUEST_PROCESSOR.process(trim);
       String sc = setOutboundCookies();
       int length = process.length();
-      String s1 = "HTTP/1.1 200 OK\r\n" +
+      final String s1 = "HTTP/1.1 200 OK\r\n" +
           sc +
           "Content-Type: application/json\r\n" +
           "Content-Length: " + length + "\r\n\r\n";
-      try {
-        String debug = s1 + process;
-        ((SocketChannel) key.channel()).write(UTF8.encode(debug));
-        System.err.println("debug: " + debug);
-      } catch (IOException e) {
-        e.printStackTrace();  //todo: verify for a purpose
-      }
+
       key.attach(new AsioVisitor() {
         @Override
         public void onRead(SelectionKey selectionKey) throws IOException {
@@ -166,7 +162,10 @@ class RfPostWrapper implements AsioVisitor {
 
         @Override
         public void onWrite(SelectionKey selectionKey) throws IOException {
-
+          ((SocketChannel) key.channel()).write(UTF8.encode(s1 + process));
+          System.err.println("debug: " + s1 + process);
+          key.attach(null);
+          key.interestOps(SelectionKey.OP_READ);
         }
 
         @Override
@@ -174,7 +173,7 @@ class RfPostWrapper implements AsioVisitor {
           //todo: verify for a purpose
         }
       });
-
+      key.interestOps(SelectionKey.OP_WRITE);
 
     }
 

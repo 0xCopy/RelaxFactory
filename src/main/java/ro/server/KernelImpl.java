@@ -9,6 +9,7 @@ import java.text.MessageFormat;
 import java.util.Date;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -39,10 +40,10 @@ public class KernelImpl {
   static public RoSession getCurrentSession() {
     ByteBuffer hb = ThreadLocalHeaders.get();
     RoSession roSession = null;
-    Map<String, int[]> headers = HttpHeaders.getHeaders(hb);
+    Map<String, int[]> headers = HttpHeaders.getHeaders((ByteBuffer) hb.rewind());
     String id = null;
     try {
-      id = getSessionCookieId(hb, headers);
+      id = getSessionCookieId((ByteBuffer) hb , headers);
       if (null != id)
         roSession = RO_SESSION_LOCATOR.find(RoSession.class, id);
     } catch (Throwable e) {
@@ -64,14 +65,14 @@ public class KernelImpl {
     return roSession;
   }
 
-  static String getSessionCookieId(ByteBuffer headerBuffer, Map<String, int[]> headerIndex) {
+  static String getSessionCookieId(ByteBuffer hb, Map<String, int[]> headerIndex) {
 
-    String trim = UTF8.decode((ByteBuffer) headerBuffer.rewind()).toString().trim();
-    System.err.println("gsci:" + trim);
+    String headerStrring = UTF8.decode((ByteBuffer) hb.rewind()).toString().trim();
+    System.err.println("gsci:" + headerStrring);
     String id = null;
     if (headerIndex.containsKey("Cookie")) {
       int[] cookieses = headerIndex.get("Cookie");
-      String coo = HttpMethod.UTF8.decode((ByteBuffer) headerBuffer.limit(cookieses[1]).position(cookieses[0])).toString().trim();
+      String coo = HttpMethod.UTF8.decode((ByteBuffer) hb.limit(cookieses[1]).position(cookieses[0])).toString().trim();
 
       String[] split = coo.split(";");
       for (String s : split) {
@@ -88,9 +89,9 @@ public class KernelImpl {
 
   //test
   public static void main(String... args) throws InterruptedException, IOException, ExecutionException {
-    EXECUTOR_SERVICE.submit(new Runnable() {
-      @Override
-      public void run() {
+    EXECUTOR_SERVICE.submit(new Callable<Object>() {
+
+      public Object call() throws IOException {
         String id;
         {
           RoSessionLocator roSessionLocator = new RoSessionLocator();
@@ -107,6 +108,8 @@ public class KernelImpl {
           System.err.println("find: " + s);
 
         }
+
+        return null;
       }
     });
 
