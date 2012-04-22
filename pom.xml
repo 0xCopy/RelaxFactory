@@ -14,14 +14,49 @@
         <gwt.draftCompile>false</gwt.draftCompile>
         <!--  there is too much genreated code in gwt for pmd to produce an accurate report -->
         <pmd.skip>true</pmd.skip>
+        <gwt-maven-plugin.compileReport>false</gwt-maven-plugin.compileReport>
+        <gwt-maven-plugin.soycDetailed>false</gwt-maven-plugin.soycDetailed>
     </properties>
     <profiles>
         <profile>
-            <!-- Simplified a few of the default GWT compiler settings in an effort to speed up dev builds -->
-            <id>dev-build</id>
+            <!--big box-->
+            <id>soyc</id>
             <properties>
-                <gwt.style>PRETTY</gwt.style>
+                <gwt.style>DETAILED</gwt.style>
                 <gwt.draftCompile>true</gwt.draftCompile>
+                <gwt.compiler.optimizationLevel>0</gwt.compiler.optimizationLevel>
+                <gwt.extraJvmArgs>-Xmx6g</gwt.extraJvmArgs>
+                <gwt-maven-plugin.compileReport>true</gwt-maven-plugin.compileReport>
+                <gwt-maven-plugin.soycDetailed>true</gwt-maven-plugin.soycDetailed>
+            </properties>
+        </profile>
+        <profile>
+            <!--big box-->
+            <id>dev</id>
+            <properties>
+                <gwt.style>DETAILED</gwt.style>
+                <gwt.draftCompile>true</gwt.draftCompile>
+                <gwt.compiler.optimizationLevel>0</gwt.compiler.optimizationLevel>
+                <gwt.extraJvmArgs>-Xmx6g</gwt.extraJvmArgs>
+            </properties>
+        </profile>
+        <profile>
+            <!-- Simplified a few of the default GWT compiler settings in an effort to speed up dev builds -->
+            <id>rel</id>
+            <properties>
+                <gwt.style>OBF</gwt.style>
+                <gwt.draftCompile>false</gwt.draftCompile>
+                <gwt.compiler.optimizationLevel>9</gwt.compiler.optimizationLevel>
+                <gwt.extraJvmArgs>-Xmx6g</gwt.extraJvmArgs>
+            </properties>
+        </profile>
+        <profile>
+
+            <id>linode</id>
+            <properties>
+                <gwt.style>OBF</gwt.style>
+                <!--it really chugs hard in 512m-->
+                <gwt.draftCompile>false</gwt.draftCompile>
                 <gwt.compiler.optimizationLevel>0</gwt.compiler.optimizationLevel>
 
                 <gwt.extraJvmArgs>-Xmx178m</gwt.extraJvmArgs>
@@ -183,46 +218,6 @@
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
-                <artifactId>gwt-maven-plugin</artifactId>
-                <version>2.4.0</version>
-                <configuration>
-                    <logLevel>INFO</logLevel>
-                    <style>PRETTY</style>
-                    <optimizationLevel>9</optimizationLevel>
-                    <runTarget>/Welcome.html</runTarget>
-                    <hostedWebapp>${project.build.directory}/${project.build.finalName}</hostedWebapp>
-                    <!--<modules>
-                        <module>${project.groupId}.Welcome</module>
-                        &lt;!&ndash;<module>${project.groupId}.ApplicationScaffold</module>&ndash;&gt;
-                    </modules>-->
-                    <copyWebapp>true</copyWebapp>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>gwtcompile</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>compile</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <dependencies>
-
-
-                    <dependency>
-                        <groupId>com.google.gwt</groupId>
-                        <artifactId>gwt-dev</artifactId>
-                        <version>2.4.0</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>com.google.gwt</groupId>
-                        <artifactId>gwt-user</artifactId>
-                        <version>2.4.0</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.2</version>
                 <executions>
@@ -257,7 +252,65 @@
                     </dependency>
                 </dependencies>
             </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>gwt-maven-plugin</artifactId>
+                <version>2.4.0</version>
+                <configuration>
+                    <logLevel>INFO</logLevel>
+                    <style>PRETTY</style>
+                    <optimizationLevel>9</optimizationLevel>
+                    <runTarget>/Welcome.html</runTarget>
+                    <hostedWebapp>${project.build.directory}/${project.build.finalName}</hostedWebapp>
+                    <!--<modules>
+                        <module>${project.groupId}.Welcome</module>
+                        &lt;!&ndash;<module>${project.groupId}.ApplicationScaffold</module>&ndash;&gt;
+                    </modules>-->
+                    <copyWebapp>true</copyWebapp>
+                    <compileReport>${gwt-maven-plugin.compileReport}</compileReport>
+                    <soycDetailed>${gwt-maven-plugin.soycDetailed}</soycDetailed>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>gwtcompile</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+
+
+                    <dependency>
+                        <groupId>com.google.gwt</groupId>
+                        <artifactId>gwt-dev</artifactId>
+                        <version>2.4.0</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>com.google.gwt</groupId>
+                        <artifactId>gwt-user</artifactId>
+                        <version>2.4.0</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
         </plugins>
         <outputDirectory>${project.build.directory}/${project.build.finalName}/WEB-INF/classes</outputDirectory>
     </build>
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>gwt-maven-plugin</artifactId>
+                <version>2.4.0</version>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>compile-report</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+        </plugins>
+    </reporting>
 </project>

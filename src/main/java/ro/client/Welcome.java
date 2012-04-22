@@ -87,18 +87,26 @@ public class Welcome implements EntryPoint {
   class MyRunAsyncCallback implements RunAsyncCallback {
     @Override
     public void onFailure(Throwable reason) {
-
+      GWT.log("failure");
+      RuntimeException runtimeException = new RuntimeException();
+      throw runtimeException;
     }
 
     @Override
     public void onSuccess() {
       doController();
       SessionTool couch = requestFactory.couch();
-      Request<String> lastReq;
       for (Map.Entry<UserDetails, String> e : gather.entrySet()) {
-        couch.setSessionProperty(e.getKey().getKey(), e.getValue()).fire();
-      }
+        Receiver<String> receiver = new Receiver<String>() {
+          @Override
+          public void onSuccess(String response) {
+           GWT.log("session version"+response);
+          }
+        };
+        couch.setSessionProperty(e.getKey().getKey(), e.getValue()).to(receiver);
 
+      }
+      if (couch.isChanged()) couch.fire();
     }
 
     private class StringReceiver extends Receiver<String> {

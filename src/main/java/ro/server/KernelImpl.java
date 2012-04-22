@@ -118,10 +118,14 @@ public class KernelImpl {
   }
 
   public static void startServer(String... args) throws IOException {
+    AsioVisitor topLevel = new RfPostWrapper();
     ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
     serverSocketChannel.socket().bind(new InetSocketAddress(8080));
     serverSocketChannel.configureBlocking(false);
-    AsioVisitor topLevel = new RfPostWrapper();
+    HttpMethod.enqueue(serverSocketChannel, SelectionKey.OP_ACCEPT, topLevel);
+    serverSocketChannel = ServerSocketChannel.open();
+    serverSocketChannel.socket().bind(new InetSocketAddress(8888));
+    serverSocketChannel.configureBlocking(false);
     HttpMethod.enqueue(serverSocketChannel, SelectionKey.OP_ACCEPT, topLevel);
     HttpMethod.init(args, topLevel);
   }
