@@ -106,7 +106,7 @@ enum UserDetails {
         @Override
         public void onClick(ClickEvent event) {
           final String text = w.getText();
-          requestFactory.couch().setProperty(Welcome.session.getId(), key, text).fire(new Receiver<String>() {
+          requestFactory.couch().setSessionProperty(Welcome.session.getId(), key, text).fire(new Receiver<String>() {
 
             @Override
             public void onSuccess(String response) {

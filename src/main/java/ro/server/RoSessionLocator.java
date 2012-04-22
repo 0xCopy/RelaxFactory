@@ -78,7 +78,7 @@ public class RoSessionLocator extends Locator<RoSession, String> {
 
     String s = null;
     try {
-      s = CouchToolImpl.fetchJsonById(id);
+      s = SessionToolImpl.fetchJsonById(id);
     } catch (IOException e) {
       e.printStackTrace();  //todo: verify for a purpose
     } catch (InterruptedException e) {

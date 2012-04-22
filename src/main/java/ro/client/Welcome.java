@@ -60,7 +60,7 @@ public class Welcome implements EntryPoint {
 
           @Override
           public void onSuccess() {
-            requestFactory.couch().getProperty(session.getId(), userDetails.getKey()).fire(
+            requestFactory.couch().getSessionProperty(session.getId(), userDetails.getKey()).fire(
                 new Receiver<String>() {
                   @Override
                   public void onSuccess(String response) {

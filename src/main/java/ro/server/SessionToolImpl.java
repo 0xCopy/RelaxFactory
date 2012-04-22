@@ -23,7 +23,7 @@ import static ro.server.CouchChangesClient.GSON;
  * Date: 4/20/12
  * Time: 5:04 PM
  */
-public class CouchToolImpl {
+public class SessionToolImpl {
 
   public static final RoSessionLocator RO_SESSION_LOCATOR = new RoSessionLocator();
   public static final String INSTANCE = "rosession";
@@ -34,7 +34,7 @@ public class CouchToolImpl {
    * @return
    * @throws InterruptedException
    */
-  static public String getProperty(String id, final String key) throws InterruptedException {
+  static public String getSessionProperty(String id, final String key) throws InterruptedException {
     RoSession ret;
     LinkedHashMap linkedHashMap = null;
     try {
@@ -47,7 +47,7 @@ public class CouchToolImpl {
   }
 
   //maximum wastefulness
-  static public String setProperty(String id, String key, String value) throws IOException, InterruptedException {
+  static public String setSessionProperty(String id, String key, String value) throws IOException, InterruptedException {
     LinkedHashMap linkedHashMap = fetchMapById(id);
     linkedHashMap.put(key, value);
     CouchTx rev = sendJson(GSON.toJson(linkedHashMap), id, String.valueOf(linkedHashMap.get("_rev")));
