@@ -55,13 +55,12 @@
             <id>linode</id>
             <properties>
                 <gwt.style>OBF</gwt.style>
-                <!--it really chugs hard in 512m-->
                 <gwt.draftCompile>false</gwt.draftCompile>
-                <gwt.compiler.optimizationLevel>0</gwt.compiler.optimizationLevel>
-
                 <gwt.extraJvmArgs>-Xmx178m</gwt.extraJvmArgs>
+                <gwt.compiler.optimizationLevel>0</gwt.compiler.optimizationLevel>
                 <!--128 too small-->
                 <gwt.compiler.localWorkers>1</gwt.compiler.localWorkers>
+
                 <!--linode 119 seconds, 600 without-->
             </properties>
         </profile>
@@ -157,6 +156,16 @@
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-validator</artifactId>
             <version>4.2.0.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>net.sf.jtidy</groupId>
+            <artifactId>jtidy</artifactId>
+            <version>r938</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.4</version>
         </dependency>
     </dependencies>
     <build>
