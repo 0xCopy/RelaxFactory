@@ -2,14 +2,10 @@ package ro.server;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -17,8 +13,6 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.text.MessageFormat;
 import java.util.AbstractList;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
@@ -35,9 +29,6 @@ import com.google.gson.GsonBuilder;
 import one.xio.AsioVisitor;
 import one.xio.HttpHeaders;
 import one.xio.HttpMethod;
-import org.apache.commons.compress.archivers.ArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 import org.xml.sax.SAXException;
 import ro.model.RoSession;
 
@@ -145,7 +136,7 @@ public class KernelImpl {
   public static void main(String... args) throws InterruptedException, IOException, ExecutionException, ParserConfigurationException, SAXException, XPathExpressionException {
 
 
-    GeoIpImpl.scrapeGeoIpDbArchiveUrlFromMaxMind("rogeoip");
+    GeoIpService.scrapeGeoIpDbArchiveUrlFromMaxMind("geoip");
 
 
     EXECUTOR_SERVICE.submit(new Callable<Object>() {
@@ -183,22 +174,22 @@ public class KernelImpl {
       @Override
       public Long get(int index) {
 
-        return GeoIpImpl.IPMASK & indexRecords.getInt(index * GeoIpImpl.geoIpRecord.reclen);
+        return GeoIpService.IPMASK & indexRecords.getInt(index * GeoIpIndexRecord.reclen);
 
       }
 
       @Override
       public int size() {
-        int i = indexRecords.limit() / GeoIpImpl.geoIpRecord.reclen;
+        int i = indexRecords.limit() / GeoIpIndexRecord.reclen;
         return i;
       }
     };
-    long l3 = GeoIpImpl.IPMASK &
+    long l3 = GeoIpService.IPMASK &
         ByteBuffer.wrap(inet4Address.getAddress()).getInt();
 
     final int abs = abs(Collections.binarySearch(abstractList, l3));
 
-    indexRecords.position(GeoIpImpl.geoIpRecord.reclen * abs + 4);
+    indexRecords.position(GeoIpIndexRecord.reclen * abs + 4);
     int anInt = indexRecords.getInt();
     ByteBuffer buffer = (ByteBuffer) locationRecords.duplicate().clear().position(anInt);
     while (buffer.hasRemaining() && '\n' != buffer.get()) ;

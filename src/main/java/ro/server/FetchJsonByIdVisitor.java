@@ -1,31 +1,35 @@
 package ro.server;
 
 import java.io.IOException;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.text.MessageFormat;
 import java.util.concurrent.SynchronousQueue;
 
 import one.xio.AsioVisitor;
+import one.xio.HttpMethod;
 
+import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpMethod.UTF8;
 
 /**
-* User: jim
-* Date: 4/23/12
-* Time: 10:18 PM
-*/
+ * User: jim
+ * Date: 4/23/12
+ * Time: 10:18 PM
+ */
 class FetchJsonByIdVisitor extends AsioVisitor.Impl {
   private final String path;
   private final SocketChannel channel;
-  private final SynchronousQueue synchronousQueue;
+  private final SynchronousQueue <String>synchronousQueue;
 
-  public FetchJsonByIdVisitor(String path, SocketChannel channel, SynchronousQueue synchronousQueue) {
+  public FetchJsonByIdVisitor(String path, SocketChannel channel, SynchronousQueue <String>synchronousQueue) throws ClosedChannelException {
     this.path = path;
     this.channel = channel;
     this.synchronousQueue = synchronousQueue;
+    HttpMethod.enqueue(channel, OP_CONNECT, this);
   }
 
   @Override

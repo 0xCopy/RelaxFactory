@@ -55,6 +55,7 @@ class JsonResponseReader extends AsioVisitor.Impl {
           //
           //    synchronousQueue.clear();
           ll.add(dst.slice());
+          key.interestOps(SelectionKey.OP_READ);
           key.attach(new Impl() {
             @Override
             public void onRead(SelectionKey key) throws InterruptedException, IOException {
@@ -77,7 +78,6 @@ class JsonResponseReader extends AsioVisitor.Impl {
               }
             }
           });
-          key.interestOps(SelectionKey.OP_READ);
         }
       }
     }
@@ -98,9 +98,15 @@ class JsonResponseReader extends AsioVisitor.Impl {
   }
 
   private String parseResponseCode(ByteBuffer dst) {
-    while (!Character.isWhitespace(dst.get())) ;
-    ByteBuffer d2 = dst.duplicate();
-    while (!Character.isWhitespace(dst.get())) ;
+    ByteBuffer d2 = null;
+    try {
+      while (!Character.isWhitespace(dst.get())) ;
+      d2 = dst.duplicate();
+      while (!Character.isWhitespace(dst.get())) ;
+    } catch (Throwable e) {
+      e.printStackTrace();  //todo: verify for a purpose
+    } finally {
+    }
     return UTF8.decode((ByteBuffer) d2.limit(dst.position() - 1)).toString();
   }
 
