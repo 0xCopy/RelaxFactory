@@ -26,7 +26,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -104,6 +106,7 @@ public class KernelImpl {
   public static final String DOWNLOAD_LINK = "//ul[@class=\"lstSquare\"][2]/li[2]/a[2]";
   public static final String GEOIP_ROOTNODE = "/rogeoip/current";
   public static final long IPMASK = 0xffffffffl;
+  public static final Random RANDOM = new Random();
 
 
   static public RoSession getCurrentSession() {
@@ -379,9 +382,9 @@ public class KernelImpl {
         @Override
         public Long get(int index) {
 
-            int anInt = indexBuf.getInt(index * reclen);
-            long l = IPMASK & anInt;
-            return l;
+          int anInt = indexBuf.getInt(index * reclen);
+          long l = IPMASK & anInt;
+          return l;
 
         }
 
@@ -421,7 +424,7 @@ public class KernelImpl {
         indexBuf.mark();
         int anInt = indexBuf.getInt();
         indexBuf.reset();
-        Integer value = index[anInt-1];
+        Integer value = index[anInt - 1];
         indexBuf.putInt(value);
         l2.add(value);
       }
@@ -440,23 +443,91 @@ public class KernelImpl {
 
     InetAddress loopBackAddr = Inet4Address.getByAddress(new byte[]{127, 0, 0, 1});
     Inet4Address martinez = (Inet4Address) Inet4Address.getByAddress(new byte[]{67, (byte) 174, (byte) 244, 99});
-    ByteBuffer indexBuf2 = (ByteBuffer) indexBuf.rewind();
-    System.err.println(mapLookup(l2, l1.toArray(new Long[l1.size()]), loopBackAddr, ((ByteBuffer) locBuf.duplicate())));
-    System.err.println(mapLookup(l2, l1.toArray(new Long[l1.size()]), martinez, ((ByteBuffer) locBuf.duplicate())));
+    final ByteBuffer indexBuf2 = (ByteBuffer) indexBuf.rewind();
+    System.err.println(arraysLookup(l2, l1.toArray(new Long[l1.size()]), loopBackAddr, locBuf.duplicate()));
+    System.err.println(arraysLookup(l2, l1.toArray(new Long[l1.size()]), martinez, locBuf.duplicate()));
 
 
-    InetAddress byAddress = loopBackAddr;
-    String lookup = geoIpRecord.lookup((Inet4Address) byAddress, indexBuf2, locBuf);
+    String lookup = lookupInetAddress(loopBackAddr, locBuf, indexBuf2);
     System.err.println("localhost: " + lookup);
 
 
     lookup = geoIpRecord.lookup(martinez, indexBuf2, locBuf);
+    byte[][] bytes1 = new byte[1000][4];
+    List<InetAddress> inetAddresses = new ArrayList<InetAddress>();
     System.err.println("martinez: " + lookup);
+    {
+      long l3 = System.currentTimeMillis();
+      byte[] bytes = new byte[4];
+      for (int i = 0; i < bytes1.length; i++) {
 
-    return new Pair<ByteBuffer, ByteBuffer>(locBuf, indexBuf2);
+        RANDOM.nextBytes(bytes);
+        bytes1[i] = bytes;
+      }
+
+      System.err.println("random generator overhead: " + (System.currentTimeMillis() - l3));
+    }
+    {
+      long l3 = System.currentTimeMillis();
+      for (int i = 0; i < bytes1.length; i++) {
+        byte[] bytes = bytes1[i];
+        inetAddresses.add(Inet4Address.getByAddress(bytes));
+      }
+      System.err.println("inataddr overhead: " + (System.currentTimeMillis() - l3));
+    }
+
+    {
+      long l3 = System.currentTimeMillis();
+
+
+      for (InetAddress inetAddress : inetAddresses) {
+
+        lookupInetAddress(inetAddress, locBuf, indexBuf2);
+      }
+      System.err.println("lookup benchmark: " + (System.currentTimeMillis() - l3));
+    }
+    {
+      long l3 = System.currentTimeMillis();
+
+      for (InetAddress inetAddress : inetAddresses) {
+        arraysLookup(l2, l1.toArray(new Long[l1.size()]), inetAddress, locBuf);
+      }
+    System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));
+    }
+    return new Pair<ByteBuffer, ByteBuffer>(indexBuf, locBuf);
   }
 
-  private static String mapLookup(ArrayList<Integer> l2, Long[] longs, InetAddress byAddress, ByteBuffer csvData) {
+
+
+  public static String lookupInetAddress(InetAddress inet4Address, ByteBuffer locationRecords, final ByteBuffer indexRecords) {
+    AbstractList<Long> abstractList = new AbstractList<Long>() {
+      @Override
+      public Long get(int index) {
+
+        return IPMASK & indexRecords.getInt(index * geoIpRecord.reclen);
+
+      }
+
+      @Override
+      public int size() {
+        int i = indexRecords.limit() / geoIpRecord.reclen;
+        return i;
+      }
+    };
+    long l3 = IPMASK &
+        ByteBuffer.wrap(inet4Address.getAddress()).getInt();
+
+    final int abs = abs(Collections.binarySearch(abstractList, l3));
+
+    indexRecords.position(geoIpRecord.reclen * abs + 4);
+    int anInt = indexRecords.getInt();
+    ByteBuffer buffer = (ByteBuffer) locationRecords.duplicate().clear().position(anInt);
+    while (buffer.hasRemaining() && '\n' != buffer.get()) ;
+
+    return UTF8.decode((ByteBuffer) buffer.limit(buffer.position()).position(anInt)).toString().trim();
+  }
+
+  private static String arraysLookup(ArrayList<Integer> l2, Long[] longs, InetAddress byAddress, ByteBuffer csvData) {
 
     byte[] address = byAddress.getAddress();
     ByteBuffer ipadd = ByteBuffer.wrap(address);
@@ -555,59 +626,59 @@ public class KernelImpl {
     return new Triple<Integer[], ByteBuffer, ByteBuffer>(locations, indexBuf, locBuf);
   }
 
-  /**
-   * Simple pair class.
-   *
-   * @param <A> any type
-   * @param <B> any type
-   */
-  static class Pair<A, B> {
-    private final A a;
-    private final B b;
+/**
+ * Simple pair class.
+ *
+ * @param <A> any type
+ * @param <B> any type
+ */
+static class Pair<A, B> {
+  private final A a;
+  private final B b;
 
-    public Pair(A a, B b) {
-      this.a = a;
-      this.b = b;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (!(o instanceof Pair<?, ?>)) {
-        return false;
-      }
-      Pair<?, ?> other = (Pair<?, ?>) o;
-      return a.equals(other.a) && b.equals(other.b);
-    }
-
-    public A getA() {
-      return a;
-    }
-
-    public B getB() {
-      return b;
-    }
-
-    @Override
-    public int hashCode() {
-      return a.hashCode() * 13 + b.hashCode() * 7;
-    }
+  public Pair(A a, B b) {
+    this.a = a;
+    this.b = b;
   }
 
-  /**
-   * A pair with extra data.
-   */
-  static class Triple<A, B, C> extends Pair<A, B> {
-    private final C c;
-
-    public Triple(A a, B b, C... c) {
-      super(a, b);
-      this.c = c[0];
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof Pair<?, ?>)) {
+      return false;
     }
-
-    public C getC() {
-      return c;
-    }
+    Pair<?, ?> other = (Pair<?, ?>) o;
+    return a.equals(other.a) && b.equals(other.b);
   }
+
+  public A getA() {
+    return a;
+  }
+
+  public B getB() {
+    return b;
+  }
+
+  @Override
+  public int hashCode() {
+    return a.hashCode() * 13 + b.hashCode() * 7;
+  }
+}
+
+/**
+ * A pair with extra data.
+ */
+static class Triple<A, B, C> extends Pair<A, B> {
+  private final C c;
+
+  public Triple(A a, B b, C... c) {
+    super(a, b);
+    this.c = c[0];
+  }
+
+  public C getC() {
+    return c;
+  }
+}
 
   private static ByteArrayOutputStream downloadMaxMindBinaryTarXz(String href) throws IOException {
     long l = System.currentTimeMillis();
@@ -662,24 +733,24 @@ public class KernelImpl {
     return channel;
   }
 
-  private static class ThreadLocalSessionHeaders {
+private static class ThreadLocalSessionHeaders {
 
-    private ByteBuffer hb;
-    private Map<String, int[]> headers;
+  private ByteBuffer hb;
+  private Map<String, int[]> headers;
 
-    public ByteBuffer getHb() {
-      return hb;
-    }
-
-    public Map<String, int[]> getHeaders() {
-      return headers;
-    }
-
-    public ThreadLocalSessionHeaders invoke() {
-      hb = ThreadLocalHeaders.get();
-      headers = HttpHeaders.getHeaders((ByteBuffer) hb.rewind());
-      return this;
-    }
+  public ByteBuffer getHb() {
+    return hb;
   }
+
+  public Map<String, int[]> getHeaders() {
+    return headers;
+  }
+
+  public ThreadLocalSessionHeaders invoke() {
+    hb = ThreadLocalHeaders.get();
+    headers = HttpHeaders.getHeaders((ByteBuffer) hb.rewind());
+    return this;
+  }
+}
 }
 
