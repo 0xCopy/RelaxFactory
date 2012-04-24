@@ -5,7 +5,7 @@ JIT_LOGGING_OPT='-XX:+AggressiveOpts -XX:+AlwaysCompileLoopMethods -XX:+Backgrou
 rt=$PWD/$(dirname $0 )
 p=$(grep '<artifactId>' $rt/../pom.xml |head -n1|sed -e 's,[^>]*>\([^<]*\).*,\1,g')
 s=$(grep '<version>' $rt/../pom.xml |head -n1|sed -e 's,[^>]*>\([^<]*\).*,\1,g')
-mvn -Pdev-build package war:exploded  &&
+mvn -Plinode package war:exploded  &&
 {
 set -x
 CP=$(mvn dependency:build-classpath |grep  -v '\[INFO\]'|grep -v ' ')
