@@ -11,7 +11,7 @@ import one.xio.HttpMethod;
 import ro.model.RoSession;
 import ro.server.CouchTx;
 
-import static ro.server.CouchChangesClient.GSON;
+import static ro.server.KernelImpl.GSON;
 
 /**
  * User: jim

@@ -2,11 +2,8 @@ package ro.server;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.lang.reflect.InvocationTargetException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
@@ -16,9 +13,6 @@ import java.util.LinkedList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.google.gson.FieldNamingPolicy;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import one.xio.AsioVisitor;
 import one.xio.HttpMethod;
 
@@ -27,6 +21,7 @@ import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpMethod.UTF8;
 import static one.xio.HttpMethod.killswitch;
 import static one.xio.HttpMethod.toArray;
+import static ro.server.KernelImpl.LOOPBACK;
 
 /**
  * Created by IntelliJ IDEA.
@@ -38,40 +33,13 @@ public class CouchChangesClient implements AsioVisitor {
 
   public String feedname = "example";
   public Serializable port = 5984;
-  public static InetAddress LOOPBACK = null;
-
-  static {
-    try {
-      try {
-        LOOPBACK = (InetAddress) InetAddress.class.getMethod("getLoopBackAddress").invoke(null);
 
 
-      } catch (NoSuchMethodException e) {
-        LOOPBACK = (InetAddress) InetAddress.getByAddress(new byte[]{127, 0, 0, 1});
-        System.err.println("java 6 LOOPBACK detected");
-      } catch (InvocationTargetException e) {
-        e.printStackTrace();  //todo: verify for a purpose
-      } catch (IllegalAccessException e) {
-        e.printStackTrace();  //todo: verify for a purpose
-      }
-    } catch (UnknownHostException e) {
-      e.printStackTrace();  //todo: verify for a purpose
-    }
-  }
 
   boolean active = false;
   public final int POLL_HEARTBEAT_MS = 45000;
   public final byte[] ENDL = new byte[]{/*'\n',*/ '\r', '\n'};
   public boolean scriptExit2 = false;
-  public static final Gson GSON = new GsonBuilder()
-//     .registerTypeAdapter(Id.class, new IdTypeAdapter())
-      .enableComplexMapKeySerialization()
-//     .serializeNulls()
-      .setDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz")
-      .setFieldNamingPolicy(FieldNamingPolicy.IDENTITY)
-      .setPrettyPrinting()
-//     .setVersion(1.0)
-      .create();
   public String hostname = LOOPBACK.getHostAddress();
 
   public CouchChangesClient(String feedname) {
@@ -79,14 +47,6 @@ public class CouchChangesClient implements AsioVisitor {
   }
 
   public CouchChangesClient() {
-  }
-
-  static SocketChannel createConnection() throws IOException {
-    System.err.println("opening " + new InetSocketAddress(LOOPBACK, 5984).toString());
-    final SocketChannel channel = SocketChannel.open();
-    channel.configureBlocking(false);
-    channel.connect(new InetSocketAddress(LOOPBACK, 5984));
-    return channel;
   }
 
   public String getFeedString() {
@@ -252,7 +212,7 @@ public class CouchChangesClient implements AsioVisitor {
         ByteBuffer handoff = (ByteBuffer) buffer.slice().limit(integer);
         final String trim = UTF8.decode(handoff).toString().trim();
         //        System.err.println("RecordId: " + trim);
-        final LinkedHashMap couchChange = GSON.fromJson(trim, LinkedHashMap.class);
+        final LinkedHashMap couchChange = KernelImpl.GSON.fromJson(trim, LinkedHashMap.class);
 
         EXECUTOR_SERVICE.submit(getDocUpdateHandler(couchChange));
         buffer.position(handoff.limit() + ENDL.length);

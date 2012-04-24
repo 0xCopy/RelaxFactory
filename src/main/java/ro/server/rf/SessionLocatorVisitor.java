@@ -18,7 +18,7 @@ import one.xio.HttpHeaders;
 import one.xio.HttpMethod;
 import ro.server.KernelImpl;
 
-import static ro.server.CouchChangesClient.GSON;
+import static ro.server.KernelImpl.GSON;
 
 /**
  * @deprecated this was used to model RF but ignores DRY.

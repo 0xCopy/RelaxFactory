@@ -145,7 +145,7 @@
         <dependency>
             <groupId>1xio</groupId>
             <artifactId>1xio</artifactId>
-            <version>1.9.3</version>
+            <version>1.9.4</version>
         </dependency>
         <dependency>
             <groupId>javax.validation</groupId>

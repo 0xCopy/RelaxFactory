@@ -1,10 +1,10 @@
 package ro.server;
 
 import java.io.IOException;
-import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.text.MessageFormat;
 import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.concurrent.SynchronousQueue;
@@ -19,10 +19,10 @@ import static one.xio.HttpMethod.UTF8;
  * Date: 4/21/12
  * Time: 12:10 PM
  */
-class JsonResponseReader implements AsioVisitor {
+class JsonResponseReader extends AsioVisitor.Impl {
   public long remaining;
   public long total;
-  private final SynchronousQueue synchronousQueue;
+  private final SynchronousQueue<String> synchronousQueue;
 
   public JsonResponseReader(SynchronousQueue<String> synchronousQueue) {
     this.synchronousQueue = synchronousQueue;
@@ -30,38 +30,34 @@ class JsonResponseReader implements AsioVisitor {
 
 
   @Override
-  public void onRead(SelectionKey key) {
+  public void onRead(SelectionKey key) throws IOException, InterruptedException {
     final SocketChannel channel = (SocketChannel) key.channel();
-    try {
+    {
       final int receiveBufferSize = channel.socket().getReceiveBufferSize();
       ByteBuffer dst = ByteBuffer.allocateDirect(receiveBufferSize);
       int read = channel.read(dst);
       dst.flip();
-      byte b = 0;
-      boolean eol = false;
+
+      final String rescode = (String) parseResponseCode(dst);
 
       moveCaretToDoubleEol(dst);
       int[] bounds = HttpHeaders.getHeaders((ByteBuffer) dst.duplicate().flip()).get("Content-Length");
-      if (null == bounds)
-        return;
-      total = Long.parseLong(UTF8.decode((ByteBuffer) dst.duplicate().limit(bounds[1]).position(bounds[0])).toString().trim());
-      remaining = total - dst.remaining();
+      if (null != bounds) {
+        total = Long.parseLong(UTF8.decode((ByteBuffer) dst.duplicate().limit(bounds[1]).position(bounds[0])).toString().trim());
+        remaining = total - dst.remaining();
 
-      ByteBuffer payload;
-      if (remaining <= 0) {
-        payload = dst.slice();
-        key.attach(null);
-        synchronousQueue.put(UTF8.decode(payload).toString().trim());
-
-      } else {
-        final LinkedList<ByteBuffer> ll = new LinkedList<ByteBuffer>();
-//
-//    synchronousQueue.clear();
-        ll.add(dst.slice());
-        key.attach(new AsioVisitor() {
-          @Override
-          public void onRead(SelectionKey key) {
-            try {
+        ByteBuffer payload;
+        if (remaining <= 0) {
+          payload = dst.slice();
+          returnJsonStringOrErrorResponse(key, rescode, payload);
+        } else {
+          final LinkedList<ByteBuffer> ll = new LinkedList<ByteBuffer>();
+          //
+          //    synchronousQueue.clear();
+          ll.add(dst.slice());
+          key.attach(new Impl() {
+            @Override
+            public void onRead(SelectionKey key) throws InterruptedException, IOException {
               ByteBuffer payload = ByteBuffer.allocateDirect(receiveBufferSize);
               int read = channel.read(payload);
               ll.add(payload);
@@ -72,44 +68,40 @@ class JsonResponseReader implements AsioVisitor {
                 while (iter.hasNext()) {
                   ByteBuffer buffer = iter.next();
                   iter.remove();
-                  payload.put((ByteBuffer) buffer.rewind());
+                  if (buffer.position() == total)
+                    payload = (ByteBuffer) buffer.flip();
+                  else
+                    payload.put(buffer);     //todo: rewrite this up-kernel
                 }
-                key.attach(null);
-
-                synchronousQueue.put(UTF8.decode(payload).toString().trim());
+                returnJsonStringOrErrorResponse(key, rescode, payload);
               }
-            } catch (IOException e) {
-              e.printStackTrace();  //todo: verify for a purpose
-            } catch (InterruptedException e) {
-              e.printStackTrace();  //todo: verify for a purpose
             }
-          }
-
-          @Override
-          public void onConnect(SelectionKey key) {
-          }
-
-          @Override
-          public void onWrite(SelectionKey key) {
-          }
-
-          @Override
-          public void onAccept(SelectionKey key) {
-          }
+          });
+          key.interestOps(SelectionKey.OP_READ);
         }
-
-        );
-        key.interestOps(SelectionKey.OP_READ);
       }
-
-    } catch (SocketException e) {
-      e.printStackTrace();  //todo: verify for a purpose
-    } catch (IOException e) {
-      e.printStackTrace();  //todo: verify for a purpose
-    } catch (InterruptedException e) {
-      e.printStackTrace();  //todo: verify for a purpose
     }
+  }
 
+  private void returnJsonStringOrErrorResponse(SelectionKey key, String rescode, ByteBuffer payload) throws InterruptedException {
+    key.attach(null);
+    System.err.println("payload: " + UTF8.decode((ByteBuffer) payload.duplicate().rewind()));
+    if (!payload.hasRemaining())
+      payload.rewind();
+
+    String trim = UTF8.decode(payload).toString().trim();
+    if (rescode.startsWith("20") && rescode.length() == 3) {
+      synchronousQueue.put(trim);
+    } else {
+      synchronousQueue.put(MessageFormat.format("'{'\"responseCode\":\"{0}\",\"orig\":{1}'}'", rescode, trim));
+    }
+  }
+
+  private String parseResponseCode(ByteBuffer dst) {
+    while (!Character.isWhitespace(dst.get())) ;
+    ByteBuffer d2 = dst.duplicate();
+    while (!Character.isWhitespace(dst.get())) ;
+    return UTF8.decode((ByteBuffer) d2.limit(dst.position() - 1)).toString();
   }
 
   public static void moveCaretToDoubleEol(ByteBuffer dst) {
@@ -128,18 +120,5 @@ class JsonResponseReader implements AsioVisitor {
         }
       }
     }
-  }
-
-
-  @Override
-  public void onConnect(SelectionKey key) {
-  }
-
-  @Override
-  public void onWrite(SelectionKey key) {
-  }
-
-  @Override
-  public void onAccept(SelectionKey key) {
   }
 }

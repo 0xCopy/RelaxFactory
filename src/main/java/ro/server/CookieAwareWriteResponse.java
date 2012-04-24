@@ -17,7 +17,7 @@ import static ro.server.KernelImpl.ThreadLocalSetCookies;
  * Date: 4/21/12
  * Time: 2:50 PM
  */
-class CookieAwareWriteResponse implements AsioVisitor {
+class CookieAwareWriteResponse extends AsioVisitor.Impl {
 
   private final String process;
   private final SelectionKey key;
@@ -52,18 +52,9 @@ class CookieAwareWriteResponse implements AsioVisitor {
     final ByteBuffer payload = UTF8.encode(s1);
     final int write = ((SocketChannel) key.channel()).write(payload);
     final int total = payload.limit();
-    if (total != write) key.attach(new AsioVisitor() {
+    if (total != write) key.attach(new AsioVisitor.Impl() {
       int remaining = total - write;
 
-      @Override
-      public void onRead(SelectionKey selectionKey) throws IOException {
-
-      }
-
-      @Override
-      public void onConnect(SelectionKey selectionKey) throws IOException {
-        //todo: verify for a purpose
-      }
 
       @Override
       public void onWrite(SelectionKey selectionKey) throws IOException {
@@ -71,24 +62,10 @@ class CookieAwareWriteResponse implements AsioVisitor {
         remaining -= write1;
       }
 
-      @Override
-      public void onAccept(SelectionKey selectionKey) throws IOException {
 
-      }
     });
 
     System.err.println("debug: " + s1);
   }
 
-  @Override
-  public void onAccept(SelectionKey selectionKey) {
-  }
-
-  @Override
-  public void onRead(SelectionKey selectionKey) {
-  }
-
-  @Override
-  public void onConnect(SelectionKey selectionKey) {
-  }
 }

@@ -13,8 +13,8 @@ import ro.model.RoSession;
 import ro.server.rf.SessionCreateVisitor;
 import ro.server.rf.SessionLocatorVisitor;
 
-import static ro.server.CouchChangesClient.GSON;
-import static ro.server.CouchChangesClient.LOOPBACK;
+import static ro.server.KernelImpl.GSON;
+import static ro.server.KernelImpl.LOOPBACK;
 
 //import ro.server.rf.SessionFindLocatorVisitor;
 
@@ -78,7 +78,7 @@ public class RoSessionLocator extends Locator<RoSession, String> {
 
     String s = null;
     try {
-      s = SessionToolImpl.fetchJsonById(id);
+      s = SessionToolImpl.fetchSessionJsonById(id);
     } catch (IOException e) {
       e.printStackTrace();  //todo: verify for a purpose
     } catch (InterruptedException e) {

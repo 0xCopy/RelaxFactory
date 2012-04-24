@@ -22,7 +22,7 @@ import static one.xio.HttpMethod.UTF8;
  * Date: 4/18/12
  * Time: 12:37 PM
  */
-class RfPostWrapper implements AsioVisitor {
+class RfPostWrapper extends AsioVisitor.Impl {
 
 
   public static final SimpleRequestProcessor SIMPLE_REQUEST_PROCESSOR = new SimpleRequestProcessor(ServiceLayer.create());
@@ -71,7 +71,7 @@ class RfPostWrapper implements AsioVisitor {
             }
             final ByteBuffer finalDst = dst;
             final ByteBuffer finalHeaders = headers;
-            key.attach(new AsioVisitor() {
+            key.attach(new AsioVisitor.Impl() {
               @Override
               public void onRead(SelectionKey selectionKey) throws IOException {
                 ((SocketChannel) selectionKey.channel()).read(finalDst);
@@ -79,31 +79,13 @@ class RfPostWrapper implements AsioVisitor {
                   KernelImpl.EXECUTOR_SERVICE.submit(new RfProcessTask(finalHeaders, finalDst, key));
                 }
               }
-
-              @Override
-              public void onConnect(SelectionKey selectionKey) throws IOException {
-
-              }
-
-              @Override
-              public void onWrite(SelectionKey selectionKey) throws IOException {
-
-              }
-
-              @Override
-              public void onAccept(SelectionKey selectionKey) throws IOException {
-
-              }
             });
           }
-
-
           break;
         default:
           method.onRead(key);
           break;
       }
-
     }
   }
 
@@ -112,9 +94,6 @@ class RfPostWrapper implements AsioVisitor {
     HttpMethod.$.onConnect(key);
   }
 
-  @Override
-  public void onWrite(SelectionKey key) {
-  }
 
   @Override
   public void onAccept(SelectionKey key) throws IOException {
@@ -148,29 +127,13 @@ class RfPostWrapper implements AsioVisitor {
           sc +
           "Content-Type: application/json\r\n" +
           "Content-Length: " + length + "\r\n\r\n";
-
-      key.attach(new AsioVisitor() {
-        @Override
-        public void onRead(SelectionKey selectionKey) throws IOException {
-          //todo: verify for a purpose
-        }
-
-        @Override
-        public void onConnect(SelectionKey selectionKey) throws IOException {
-          //todo: verify for a purpose
-        }
-
+      key.attach(new AsioVisitor.Impl() {
         @Override
         public void onWrite(SelectionKey selectionKey) throws IOException {
           ((SocketChannel) key.channel()).write(UTF8.encode(s1 + process));
           System.err.println("debug: " + s1 + process);
           key.attach(null);
           key.interestOps(SelectionKey.OP_READ);
-        }
-
-        @Override
-        public void onAccept(SelectionKey selectionKey) throws IOException {
-          //todo: verify for a purpose
         }
       });
       key.interestOps(SelectionKey.OP_WRITE);
