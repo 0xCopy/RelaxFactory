@@ -21,7 +21,10 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.text.MessageFormat;
+import java.util.AbstractList;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 import java.util.TreeMap;
@@ -342,94 +345,133 @@ public class KernelImpl {
       return b.limit() / reclen;
     }
 
-    static int lookup(Inet4Address byAddress, ByteBuffer indexBuf) {
-      byte[] address = byAddress.getAddress();
-      int accum = 0;
-      for (int i = 0; i < address.length; i++) {
-        int b = address[i] & 0xff;
-        accum |= b << (address.length - 1 - i) * 8;
+    static class Geo {
+      Geo(int recordNum, ByteBuffer indexBuf) {
+        this.recordNum = recordNum;
+        this.indexBuf = indexBuf;
       }
-      ByteBuffer ipadd = ByteBuffer.wrap(address);
-      ByteBuffer ip2 = (ByteBuffer) indexBuf.duplicate().clear();
-      ByteBuffer ip3 = (ByteBuffer) indexBuf.duplicate().clear();
-      int stride = count(indexBuf) / 2;
-      int cursor = stride;
-      while (stride > 0) {
-        int newPosition = cursor * reclen;
 
-        ip2.clear().position(newPosition).limit(newPosition + 4);
-        ipadd.position(0);
-        int cmp = ipadd.compareTo(ip2);
-        int direction = cmp / abs(cmp);
-          if(0==direction)break;
-        try {
+      int recordNum;
+      ByteBuffer indexBuf;
 
-          int hop = direction * reclen;
-          int ip3loc = newPosition + hop;
-          ip3.clear().limit(ip3loc + 4 ).position(ip3loc);
-          cmp = ipadd.compareTo(ip3);
-          int direction2 = cmp / abs(cmp);
-          if (direction2 != 0 && direction != direction2)
-             break;
-        } catch (Exception e) {
-          e.printStackTrace();  //todo: verify for a purpose
+
+      public Long getBlock() {
+        indexBuf.position(reclen * recordNum);
+        return IPMASK & indexBuf.getInt();
+      }
+
+
+      public String getCsv(ByteBuffer csvBuf) {
+
+        indexBuf.position(reclen * recordNum + 4);
+        int anInt = indexBuf.getInt();
+        ByteBuffer buffer = (ByteBuffer) csvBuf.duplicate().clear().position(anInt);
+        while (buffer.hasRemaining() && '\n' != buffer.get()) ;
+        return UTF8.decode((ByteBuffer) buffer.limit(buffer.position()).position(anInt)).toString().trim();
+
+      }
+
+
+    }
+
+    static String lookup(Inet4Address byAddress, final ByteBuffer indexBuf, ByteBuffer csvBuf) {
+      AbstractList<Long> abstractList = new AbstractList<Long>() {
+        @Override
+        public Long get(int index) {
+
+            int anInt = indexBuf.getInt(index * reclen);
+            long l = IPMASK & anInt;
+            return l;
+
         }
-        stride/=2;
-        cursor+=direction*stride;
-      }
-             ip2.limit(ip2.capacity());
 
-      ip2.getInt();
-      return ip2.getInt();
+        @Override
+        public int size() {
+          int i = indexBuf.limit() / reclen;
+          return i;  //todo: verify for a purpose
+        }
+      };
+      long l = IPMASK &
+          ByteBuffer.wrap(byAddress.getAddress()).getInt();
 
+
+      int abs = abs(Collections.binarySearch(abstractList, l));
+      String csv = new Geo(abs, indexBuf).getCsv(csvBuf);
+      return csv;
     }
 
 
   }
 
   private static Pair<ByteBuffer, ByteBuffer> buildGeoIpSecondPass(Triple<Integer[], ByteBuffer, ByteBuffer> triple) throws UnknownHostException {
-    Integer[] index = triple.getA();
-    ByteBuffer indexBuf = triple.getB();
-    ByteBuffer locBuf = triple.getC();
-    ArrayList<Long> l1 = new ArrayList<Long>();
-    ArrayList<Integer> l2 = new ArrayList<Integer>();
+    ByteBuffer indexBuf = null;
+    ByteBuffer locBuf = null;
+    ArrayList<Long> l1 = null;
+    ArrayList<Integer> l2 = null;
+    long l = System.currentTimeMillis();
+    try {
+      Integer[] index = triple.getA();
+      indexBuf = triple.getB();
+      locBuf = triple.getC();
+      l1 = new ArrayList<Long>();
+      l2 = new ArrayList<Integer>();
 
-    while (indexBuf.hasRemaining()) {
-      long vl = (long) indexBuf.getInt() & IPMASK;
-      l1.add(vl);
-
-      Integer normalized = index[(((ByteBuffer) indexBuf.mark()).getInt() - 1)];
-      ((ByteBuffer) indexBuf.reset()).putInt(normalized);
-      l2.add(normalized);
+      while (indexBuf.hasRemaining()) {
+        l1.add(IPMASK & indexBuf.getInt());
+        indexBuf.mark();
+        int anInt = indexBuf.getInt();
+        indexBuf.reset();
+        Integer value = index[anInt-1];
+        indexBuf.putInt(value);
+        l2.add(value);
+      }
+      indexBuf.rewind();
+    } catch (Throwable e) {
+      e.printStackTrace();
+    } finally {
+      System.err.println("pass2 arrays (ms):" + (System.currentTimeMillis() - l));
     }
 
-
+    assert l1 != null;
     System.err.println("read back: " + l1.size());
 
 
     String s2 = "127.0.0.1";
 
-//    System.err.println(mapLookup(l2, l1.toArray(new Long[l1.size()]), Inet4Address.getByAddress(new byte[]{127, 0, 0, 1}), ((ByteBuffer) locBuf.duplicate())));
-//    System.err.println(mapLookup(l2, l1.toArray(new Long[l1.size()]), martinez, ((ByteBuffer) locBuf.duplicate())));
+    InetAddress loopBackAddr = Inet4Address.getByAddress(new byte[]{127, 0, 0, 1});
     Inet4Address martinez = (Inet4Address) Inet4Address.getByAddress(new byte[]{67, (byte) 174, (byte) 244, 99});
-    ByteBuffer indexBuf2 = (ByteBuffer) indexBuf.flip();
+    ByteBuffer indexBuf2 = (ByteBuffer) indexBuf.rewind();
+    System.err.println(mapLookup(l2, l1.toArray(new Long[l1.size()]), loopBackAddr, ((ByteBuffer) locBuf.duplicate())));
+    System.err.println(mapLookup(l2, l1.toArray(new Long[l1.size()]), martinez, ((ByteBuffer) locBuf.duplicate())));
 
 
-    InetAddress byAddress = Inet4Address.getByAddress(new byte[]{127, 0, 0, 1});
-    int lookup = geoIpRecord.lookup((Inet4Address) byAddress, indexBuf2);
-    System.err.println("localhost: "+lookup);
+    InetAddress byAddress = loopBackAddr;
+    String lookup = geoIpRecord.lookup((Inet4Address) byAddress, indexBuf2, locBuf);
+    System.err.println("localhost: " + lookup);
 
 
-    ByteBuffer res = (ByteBuffer) locBuf.duplicate().position(lookup);
-    while (res.hasRemaining() && '\n' != res.get()) ;
-    System.err.println(UTF8.decode((ByteBuffer) res.flip().position(lookup)).toString().trim());
+    lookup = geoIpRecord.lookup(martinez, indexBuf2, locBuf);
+    System.err.println("martinez: " + lookup);
 
-    lookup = geoIpRecord.lookup(martinez, indexBuf2);
-    System.err.println("martinez: "+lookup);
-    res = (ByteBuffer) locBuf.duplicate().position(lookup);
-    while (res.hasRemaining() && '\n' != res.get()) ;
-    System.err.println(UTF8.decode((ByteBuffer) res.flip().position(lookup)).toString().trim());
     return new Pair<ByteBuffer, ByteBuffer>(locBuf, indexBuf2);
+  }
+
+  private static String mapLookup(ArrayList<Integer> l2, Long[] longs, InetAddress byAddress, ByteBuffer csvData) {
+
+    byte[] address = byAddress.getAddress();
+    ByteBuffer ipadd = ByteBuffer.wrap(address);
+
+    long z = IPMASK & ipadd.slice().getInt();
+
+    int i = Arrays.binarySearch(longs, z);
+
+    int abs = abs(i);
+    Integer integer = l2.get(abs);
+
+    ByteBuffer bb = (ByteBuffer) csvData.duplicate().clear().position(integer);
+    while (bb.hasRemaining() && bb.get() != '\n') ;
+    return UTF8.decode((ByteBuffer) bb.flip().position(integer)).toString();
+
   }
 
   private static Triple<Integer[], ByteBuffer, ByteBuffer> buildGeoIpFirstPass(ByteArrayOutputStream archiveBuffer) throws IOException {
@@ -466,7 +508,6 @@ public class KernelImpl {
           while (locBuf.hasRemaining()) {
             while (locBuf.hasRemaining() && ',' != locBuf.get()) ;
             int position = locBuf.position();
-            assert 16777727 != abs(position);
             a.add(position);
             while (locBuf.hasRemaining() && locBuf.get() != '\n') ;
           }
