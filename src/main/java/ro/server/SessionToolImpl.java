@@ -30,19 +30,25 @@ public class SessionToolImpl {
     RoSession ret;
     LinkedHashMap linkedHashMap = null;
 
-      linkedHashMap = fetchMapById(key);
+    linkedHashMap = fetchMapById(key);
 
     return (String) linkedHashMap.get(key);
   }
 
   //maximum wastefulness
-  static public String setSessionProperty( String key, String value) throws IOException, InterruptedException {
-    String id = KernelImpl.getSessionCookieId();
-    LinkedHashMap linkedHashMap = fetchMapById(id);
-    linkedHashMap.put(key, value);
-    CouchTx rev = sendJson(GSON.toJson(linkedHashMap), INSTANCE+"/"+id, String.valueOf(linkedHashMap.get("_rev")));
+  static public String setSessionProperty(String key, String value) throws IOException, InterruptedException {
+    try {
+      String id = KernelImpl.getSessionCookieId();
+      LinkedHashMap linkedHashMap = fetchMapById(id);
+      linkedHashMap.put(key, value);
+      CouchTx tx = sendJson(GSON.toJson(linkedHashMap), INSTANCE + "/" + id, String.valueOf(linkedHashMap.get("_rev")));
 
-    return rev.rev;
+      return tx.rev;
+    } catch (Throwable e) {
+      e.printStackTrace();  //todo: verify for a purpose
+    } finally {
+    }
+    return null;
   }
 
 
@@ -56,8 +62,8 @@ public class SessionToolImpl {
     HttpMethod.enqueue(channel, SelectionKey.OP_CONNECT, new SendJsonVisitor(json, synchronousQueue, idver));
 
 
-      Object take = synchronousQueue.take();
-      return GSON.fromJson(String.valueOf(take), CouchTx.class);
+    Object take = synchronousQueue.take();
+    return GSON.fromJson(String.valueOf(take), CouchTx.class);
   }
 
   public static LinkedHashMap fetchMapById(final String key) throws IOException, InterruptedException {

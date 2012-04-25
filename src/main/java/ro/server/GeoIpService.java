@@ -127,16 +127,13 @@ public class GeoIpService {
         return m;
       }
     };
-    Map map = EXECUTOR_SERVICE.submit(callable).get();
-    String revision = getRevision(map);
+    final Map map = EXECUTOR_SERVICE.submit(callable).get();
 
-
-    SocketChannel couchConnection;
 
     final SynchronousQueue<String> synchronousQueue = new SynchronousQueue<String>();
+    SocketChannel couchConnection;
     {
       couchConnection = createCouchConnection();
-      final String finalRevision = revision;
       HttpMethod.enqueue(couchConnection, OP_CONNECT,
           new AsioVisitor.Impl() {
             @Override
@@ -147,12 +144,15 @@ public class GeoIpService {
             @Override
             public void onWrite(SelectionKey key) throws Exception {
 
+              String ctype = "text/csv; charset=" + KernelImpl.ISO88591.name();
+//              String ctype = "application/octet-stream ; charset="+KernelImpl.ISO88591.name() ;
+//              String ctype = "application/octet-stream";// charset="+KernelImpl.ISO88591.name() ;
+
               final ByteBuffer d2 = (ByteBuffer) indexLocPair.getB().duplicate().rewind();
 
               String fn = GEOIP_CURRENT_LOCATIONS_CSV;
               int limit = d2.limit();
-              String ctype = "application/octet-stream";
-              String push = getBlobPutString(fn, limit, ctype, finalRevision);
+              String push = getBlobPutString(fn, limit, ctype, getRevision(map));
               System.err.println("pushing: " + push);
               putFile(key, d2, push, synchronousQueue);
             }
@@ -160,10 +160,8 @@ public class GeoIpService {
     }
     final String take = synchronousQueue.take();
     final CouchTx couchTx = GSON.fromJson(take, CouchTx.class);
-    revision = couchTx.rev;
     {
       couchConnection = createCouchConnection();
-      final String finalRevision = revision;
       HttpMethod.enqueue(couchConnection, OP_CONNECT,
           new AsioVisitor.Impl() {
             @Override
@@ -178,7 +176,7 @@ public class GeoIpService {
               String fn = GEOIP_CURRENT_INDEX;
               int limit = d2.limit();
               String ctype = "application/octet-stream";
-              String push = getBlobPutString(fn, limit, ctype, finalRevision);
+              String push = getBlobPutString(fn, limit, ctype, couchTx.rev);
               System.err.println("pushing: " + push);
 
               putFile(key, d2, push, synchronousQueue);
@@ -205,7 +203,7 @@ public class GeoIpService {
           public void onWrite(final SelectionKey key) {
             try {
               int write = channel.write(d2);
-            } catch (IOException e) {
+            } catch (Throwable e) {
               key.interestOps(OP_READ);
               e.printStackTrace();  //todo: verify for a purpose
             }
@@ -236,7 +234,10 @@ public class GeoIpService {
 
   public static String getRevision(Map map) {
     String rev = null;
+
     rev = (String) map.get("_rev");
+    if (null == rev)
+      rev = (String) map.get("rev");
     if (null == rev) {
       rev = (String) map.get("version");
     }
@@ -246,44 +247,35 @@ public class GeoIpService {
   }
 
   static Pair<ByteBuffer, ByteBuffer> buildGeoIpSecondPass(Triple<Integer[], ByteBuffer, ByteBuffer> triple) throws UnknownHostException {
-    try {
-      ByteBuffer indexBuf = null;
-      ByteBuffer locBuf = null;
-      long[] l1 = null;
-      int[] l2 = null;
 
-      long l = System.currentTimeMillis();
-      try {
-        Integer[] index = triple.getA();
-        indexBuf = triple.getB();
-        locBuf = triple.getC();
-        int count = GeoIpIndexRecord.count(indexBuf);
-        l1 = new long[count];
-        l2 = new int[count];
+    ByteBuffer indexBuf = null;
+    ByteBuffer locBuf = null;
+    long[] l1 = null;
+    int[] l2 = null;
 
-        int i = 0;
-        while (indexBuf.hasRemaining()) {
-          l1[i] = (IPMASK & indexBuf.getInt());
-          indexBuf.mark();
-          int anInt = indexBuf.getInt();
-          indexBuf.reset();
-          Integer value = index[anInt - 1];
-          indexBuf.putInt(value);
-          l2[i++] = (value);
-        }
-        indexBuf.rewind();
-      } catch (Throwable e) {
-        e.printStackTrace();
-      } finally {
-        System.err.println("pass2 arrays (ms):" + (System.currentTimeMillis() - l));
-      }
-      assert l1 != null;
-      System.err.println("read back: " + l1.length);
+    long l = System.currentTimeMillis();
 
-    } catch (Throwable e) {
-      e.printStackTrace();  //todo: verify for a purpose
+    Integer[] index = triple.getA();
+    indexBuf = triple.getB();
+    locBuf = triple.getC();
+    int count = GeoIpIndexRecord.count(indexBuf);
+    l1 = new long[count];
+    l2 = new int[count];
+
+    int i = 0;
+    while (indexBuf.hasRemaining()) {
+      l1[i] = (IPMASK & indexBuf.getInt());
+      indexBuf.mark();
+      int anInt = indexBuf.getInt();
+      indexBuf.reset();
+      Integer value = index[anInt - 1];
+      indexBuf.putInt(value);
+      l2[i++] = (value);
     }
-    return null;
+    indexBuf.rewind();
+
+
+    return new Pair<ByteBuffer, ByteBuffer>(indexBuf, locBuf);
   }
 
   private static void testMartinez(final ByteBuffer ix, ByteBuffer loc, long[] l1, int[] l2) throws UnknownHostException {

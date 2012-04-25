@@ -112,7 +112,7 @@ public class KernelImpl {
         ThreadLocalSetCookies.set(value);
       }
       String s = new Date(TimeUnit.DAYS.toMillis(14) + System.currentTimeMillis()).toGMTString();
-      final String sessionCookie = MessageFormat.format("{0}; path=/ ; expires=\"{1}\" ; HttpOnly", roSession.getId(), s);
+      final String sessionCookie = MessageFormat.format("{0}; path=/ ; expires={1}; HttpOnly", roSession.getId(), s);
       ThreadLocalSetCookies.get().put(MYSESSIONSTRING, sessionCookie);
       final InetAddress inet4Address = ThreadLocalInetAddress.get();
       if (null != inet4Address) {
@@ -121,8 +121,17 @@ public class KernelImpl {
         while (b.hasRemaining() && '\n' != b.get()) ;
         b.flip().position(i);
         final CharBuffer cityString = ISO88591.decode((ByteBuffer) b);
-        final String geoip = MessageFormat.format("{0}; path=/ ; expires=\"{1}\" ", URLEncoder.encode(cityString.toString().trim(), ISO88591.name()), s);
+        final String geoip = MessageFormat.format("{0}; path=/ ;expires={1}", URLEncoder.encode(cityString.toString().trim(), ISO88591.name()), s);
         ThreadLocalSetCookies.get().put(MYGEOIPSTRING, geoip);
+        EXECUTOR_SERVICE.submit(new Callable<Object>() {
+          @Override
+          public Object call() throws Exception {
+            final String canonicalHostName = ThreadLocalInetAddress.get().getCanonicalHostName();
+            SessionToolImpl.setSessionProperty("last_ip", canonicalHostName);
+
+            return null;
+          }
+        });
       }
     }
 
