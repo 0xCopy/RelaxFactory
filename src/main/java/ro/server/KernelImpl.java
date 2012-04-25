@@ -12,9 +12,9 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.text.MessageFormat;
-import java.util.AbstractList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
@@ -33,7 +33,10 @@ import org.xml.sax.SAXException;
 import ro.model.RoSession;
 
 import static java.lang.Math.abs;
+import static java.lang.Math.min;
 import static one.xio.HttpMethod.UTF8;
+import static ro.server.GeoIpIndexRecord.reclen;
+import static ro.server.GeoIpService.IPMASK;
 
 /**
  * User: jim
@@ -136,7 +139,7 @@ public class KernelImpl {
   public static void main(String... args) throws InterruptedException, IOException, ExecutionException, ParserConfigurationException, SAXException, XPathExpressionException {
 
 
-    GeoIpService.scrapeGeoIpDbArchiveUrlFromMaxMind("geoip");
+    GeoIpService.startGeoIpService("geoip");
 
 
     EXECUTOR_SERVICE.submit(new Callable<Object>() {
@@ -168,33 +171,35 @@ public class KernelImpl {
 
   }
 
+  /**
+   * offset to locationcsv buffer [n] to EOL
+   *
+   * @param inet4Address
+   * @param indexRecords
+   * @param bufAbstraction
+   * @return
+   */
+  public static int lookupInetAddress(InetAddress inet4Address, final ByteBuffer indexRecords, List<Long> bufAbstraction) {
 
-  public static String lookupInetAddress(InetAddress inet4Address, ByteBuffer locationRecords, final ByteBuffer indexRecords) {
-    AbstractList<Long> abstractList = new AbstractList<Long>() {
-      @Override
-      public Long get(int index) {
+    int newPosition;
+    int abs;
+    int ret;
 
-        return GeoIpService.IPMASK & indexRecords.getInt(index * GeoIpIndexRecord.reclen);
+    final byte[] address = inet4Address.getAddress();
+    long compare = 0;
+    for (int i = 0; i < address.length; i++) {
+      compare |= (address[i] & 0xff) << 8 * (address.length - 1 - i);
+    }
+    int a = Collections.binarySearch(bufAbstraction, IPMASK & compare);
+    final int b = bufAbstraction.size() - 1;
+    abs = min(abs(a), b);
 
-      }
+    newPosition = reclen * abs + 4;
+    indexRecords.position(newPosition);
+    ret = indexRecords.getInt();
 
-      @Override
-      public int size() {
-        int i = indexRecords.limit() / GeoIpIndexRecord.reclen;
-        return i;
-      }
-    };
-    long l3 = GeoIpService.IPMASK &
-        ByteBuffer.wrap(inet4Address.getAddress()).getInt();
 
-    final int abs = abs(Collections.binarySearch(abstractList, l3));
-
-    indexRecords.position(GeoIpIndexRecord.reclen * abs + 4);
-    int anInt = indexRecords.getInt();
-    ByteBuffer buffer = (ByteBuffer) locationRecords.duplicate().clear().position(anInt);
-    while (buffer.hasRemaining() && '\n' != buffer.get()) ;
-
-    return UTF8.decode((ByteBuffer) buffer.limit(buffer.position()).position(anInt)).toString().trim();
+    return ret;
   }
 
 

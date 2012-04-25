@@ -6,14 +6,14 @@
     <groupId>ro</groupId>
     <artifactId>RelaxFactory</artifactId>
     <packaging>war</packaging>
-    <version>0.2.0</version>
+    <version>0.2.5</version>
     <properties>
         <java.version>1.6</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <gwt.style>OBF</gwt.style>
         <gwt.draftCompile>false</gwt.draftCompile>
         <!--  there is too much genreated code in gwt for pmd to produce an accurate report -->
-        <pmd.skip>true</pmd.skip>
+
         <gwt-maven-plugin.compileReport>false</gwt-maven-plugin.compileReport>
         <gwt-maven-plugin.soycDetailed>false</gwt-maven-plugin.soycDetailed>
     </properties>
@@ -55,7 +55,7 @@
             <id>linode</id>
             <properties>
                 <gwt.style>OBF</gwt.style>
-                <gwt.draftCompile>false</gwt.draftCompile>
+                <gwt.draftCompile>true</gwt.draftCompile>
                 <gwt.extraJvmArgs>-Xmx178m</gwt.extraJvmArgs>
                 <gwt.compiler.optimizationLevel>0</gwt.compiler.optimizationLevel>
                 <!--128 too small-->
@@ -64,36 +64,6 @@
                 <!--linode 119 seconds, 600 without-->
             </properties>
         </profile>
-        <!--<profile>
-                &lt;!&ndash; Runs the JpaBootstrap script, which sets up a sample database for use in the webapp's output dir &ndash;&gt;
-                <id>db-init</id>
-                <build>
-                    <plugins>
-                        <plugin>
-                            <groupId>org.codehaus.mojo</groupId>
-                            <artifactId>exec-maven-plugin</artifactId>
-                            <version>1.2</version>
-                            <executions>
-                                <execution>
-                                    <phase>prepare-package</phase>
-                                    <goals>
-                                        <goal>exec</goal>
-                                    </goals>
-                                    <configuration>
-                                        <executable>java</executable>
-                                        <arguments>
-                                            <argument>-classpath</argument>
-                                            <classpath/>
-                                            <argument>com.acme.gwt.server.simple.JpaBootstrap</argument>
-                                        </arguments>
-                                        <workingDirectory>${project.build.directory}/${project.build.finalName}</workingDirectory>
-                                    </configuration>
-                                </execution>
-                            </executions>
-                        </plugin>
-                    </plugins>
-                </build>
-            </profile>-->
     </profiles>
     <repositories>
         <repository>
