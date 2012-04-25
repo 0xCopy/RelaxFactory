@@ -3,14 +3,18 @@ package ro.server;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.URLEncoder;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.Charset;
 import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.Date;
@@ -37,6 +41,7 @@ import static java.lang.Math.min;
 import static one.xio.HttpMethod.UTF8;
 import static ro.server.GeoIpIndexRecord.reclen;
 import static ro.server.GeoIpService.IPMASK;
+import static ro.server.GeoIpService.bufAbstraction;
 
 /**
  * User: jim
@@ -48,6 +53,7 @@ public class KernelImpl {
 
   public static final ExecutorService EXECUTOR_SERVICE = Executors.newCachedThreadPool();
   public static final ThreadLocal<ByteBuffer> ThreadLocalHeaders = new ThreadLocal<ByteBuffer>();
+  static ThreadLocal<InetAddress> ThreadLocalInetAddress = new ThreadLocal<InetAddress>();
   public static final ThreadLocal<Map<String, String>> ThreadLocalSetCookies = new ThreadLocal<Map<String, String>>();
   private static final String MYSESSIONSTRING = KernelImpl.class.getCanonicalName();
 
@@ -82,9 +88,11 @@ public class KernelImpl {
       .setPrettyPrinting()
 //    .setVersion(1.0)
       .create();
+  public static final Charset ISO88591 = Charset.forName("ISO-8859-1");
+  public static final String MYGEOIPSTRING = "mygeoipstring";
 
 
-  static public RoSession getCurrentSession() {
+  static public RoSession getCurrentSession() throws UnsupportedEncodingException {
     String id = null;
     RoSession roSession = null;
     try {
@@ -104,7 +112,18 @@ public class KernelImpl {
         ThreadLocalSetCookies.set(value);
       }
       String s = new Date(TimeUnit.DAYS.toMillis(14) + System.currentTimeMillis()).toGMTString();
-      ThreadLocalSetCookies.get().put(MYSESSIONSTRING, MessageFormat.format("{0}; path=/ ; expires=\"{1}\" ; HttpOnly", roSession.getId(), s));
+      final String sessionCookie = MessageFormat.format("{0}; path=/ ; expires=\"{1}\" ; HttpOnly", roSession.getId(), s);
+      ThreadLocalSetCookies.get().put(MYSESSIONSTRING, sessionCookie);
+      final InetAddress inet4Address = ThreadLocalInetAddress.get();
+      if (null != inet4Address) {
+        final int i = lookupInetAddress(inet4Address, GeoIpService.indexMMBuf, bufAbstraction);
+        final ByteBuffer b = (ByteBuffer) GeoIpService.locationMMBuf.duplicate().clear().position(i);
+        while (b.hasRemaining() && '\n' != b.get()) ;
+        b.flip().position(i);
+        final CharBuffer cityString = ISO88591.decode((ByteBuffer) b);
+        final String geoip = MessageFormat.format("{0}; path=/ ; expires=\"{1}\" ", URLEncoder.encode(cityString.toString().trim(), ISO88591.name()), s);
+        ThreadLocalSetCookies.get().put(MYGEOIPSTRING, geoip);
+      }
     }
 
     return roSession;

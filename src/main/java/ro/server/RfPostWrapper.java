@@ -1,6 +1,7 @@
 package ro.server;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
@@ -119,7 +120,10 @@ class RfPostWrapper extends AsioVisitor.Impl {
     @Override
     public void run() {
       KernelImpl.ThreadLocalHeaders.set(headers);
-      String trim = UTF8.decode( data ).toString().trim();
+      final SocketChannel socketChannel = (SocketChannel) key.channel();
+      final InetAddress remoteSocketAddress = socketChannel.socket().getInetAddress();
+      KernelImpl.ThreadLocalInetAddress.set(remoteSocketAddress);
+      String trim = UTF8.decode(data).toString().trim();
       final String process = SIMPLE_REQUEST_PROCESSOR.process(trim);
       String sc = setOutboundCookies();
       int length = process.length();
@@ -145,17 +149,18 @@ class RfPostWrapper extends AsioVisitor.Impl {
       Map setCookiesMap = KernelImpl.ThreadLocalSetCookies.get();
       String sc = "";
       if (null != setCookiesMap && !setCookiesMap.isEmpty()) {
-        sc = "Set-Cookie: ";
+        sc = "";
 
         Iterator<Map.Entry<String, String>> iterator = setCookiesMap.entrySet().iterator();
         if (iterator.hasNext()) {
           do {
             Map.Entry<String, String> stringStringEntry = iterator.next();
-            sc += stringStringEntry.getKey() + "=" + stringStringEntry.getValue().trim();
+            sc += "Set-Cookie: " + stringStringEntry.getKey() + "=" + stringStringEntry.getValue().trim();
             if (iterator.hasNext()) sc += "; ";
+            sc += "\r\n";
           } while (iterator.hasNext());
         }
-        sc += "\r\n";
+
       }
       return sc;
     }

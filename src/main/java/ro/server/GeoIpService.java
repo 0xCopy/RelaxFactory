@@ -74,10 +74,10 @@ public class GeoIpService {
   public static final String GEOIP_CURRENT_LOCATIONS_CSV = "/geoip/current/locations.csv";
   public static final String GEOIP_CURRENT_INDEX = "/geoip/current/index";
   public static final String GEOIP_BENCHMARK_ON_STARTUP = "GEOIP_BENCHMARK_ON_STARTUP";
-  private static MappedByteBuffer indexMMBuf;
-  private static MappedByteBuffer locationMMBuf;
+  static MappedByteBuffer indexMMBuf;
+  static MappedByteBuffer locationMMBuf;
   public static final String DEBUG_CREATEGEOIPINDEX = "DEBUG_CREATEGEOIPINDEX";
-  private static List<Long> bufAbstraction = new AbstractList<Long>() {
+  static List<Long> bufAbstraction = new AbstractList<Long>() {
     @Override
     public Long get(int index) {
 
@@ -293,7 +293,7 @@ public class GeoIpService {
 
 
       InetAddress loopBackAddr = Inet4Address.getByAddress(new byte[]{127, 0, 0, 1});
-      Inet4Address martinez = (Inet4Address) Inet4Address.getByAddress(new byte[]{67, (byte) 174, (byte) 244, 11});
+      InetAddress martinez = (Inet4Address) Inet4Address.getByAddress(new byte[]{67, (byte) 174, (byte) 244, 11});
       if (null != l1 && null != l2) {
         System.err.println(arraysLookup(l2, l1, loopBackAddr, loc.duplicate()));
         System.err.println(arraysLookup(l2, l1, martinez, loc.duplicate()));
@@ -381,7 +381,7 @@ public class GeoIpService {
   }
 
   /**
-   * download both files.  index the smaller one over top of the larger one.
+   * download both files.  index buffer is incidentally rewritten as it is iterated.
    *
    * @param dbinstance
    * @throws java.io.IOException
@@ -438,9 +438,12 @@ public class GeoIpService {
                 selectionKey.attach(this);
                 System.err.println("rootnode: " + take);
                 Map map = GSON.fromJson(take, Map.class);
+
+                //happens if we need to create the 'current' geoip database.
                 if (map.containsKey("responseCode") || null != System.getenv(DEBUG_CREATEGEOIPINDEX)) {
                   createGeoIpIndex();
                 }
+//                happens every time we start
                 {
                   ArrayList<Callable<MappedByteBuffer>> cc = new ArrayList<Callable<MappedByteBuffer>>();
                   cc.add(getMappedIndexFile(GEOIP_CURRENT_INDEX));
@@ -451,12 +454,23 @@ public class GeoIpService {
 
                   final ByteBuffer ix = (ByteBuffer) indexMMBuf.duplicate().clear();
                   final ByteBuffer loc = (ByteBuffer) locationMMBuf.duplicate().clear();
+
+
+                  //this should report 'Martinez'
                   testMartinez(ix, loc, null, null);
-                  if (null != System.getenv(GEOIP_BENCHMARK_ON_STARTUP))
-                    runGeoIpLookupBenchMark((ByteBuffer) loc.clear(), null, null, (ByteBuffer) ix.clear());
+
+
+                  if (null != System.getenv(GEOIP_BENCHMARK_ON_STARTUP)) {
+                    for (int i = 0; i < 1000; i++) {
+                      final long l = System.currentTimeMillis();
+                      runGeoIpLookupBenchMark((ByteBuffer) loc.clear(), null, null, (ByteBuffer) ix.clear());
+                      System.err.println(MessageFormat.format("{0}: {1} (ms) -----------------------------", i, System.currentTimeMillis() - l));
+                    }
+
+
+                  }
                   return new Pair<ByteBuffer, ByteBuffer>(ix, loc);
                 }
-
               }
 
               Callable<MappedByteBuffer> getMappedIndexFile(final String path) throws IOException {
@@ -469,7 +483,7 @@ public class GeoIpService {
                     return success.take();  //todo: verify for a purpose
                   }
                 };
-//                final Future<MappedByteBuffer> indexFuture = EXECUTOR_SERVICE.submit(callable);
+
 
                 HttpMethod.enqueue(couchConnection, OP_CONNECT, new Impl() {
 
@@ -538,8 +552,6 @@ public class GeoIpService {
                       }
                     });
                   }
-
-
                 });
                 return callable;
               }
