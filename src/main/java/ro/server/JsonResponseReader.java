@@ -40,7 +40,7 @@ class JsonResponseReader extends AsioVisitor.Impl {
 
       final String rescode = (String) parseResponseCode(dst);
 
-      moveCaretToDoubleEol(dst);
+      KernelImpl.moveCaretToDoubleEol(dst);
       int[] bounds = HttpHeaders.getHeaders((ByteBuffer) dst.duplicate().flip()).get("Content-Length");
       if (null != bounds) {
         total = Long.parseLong(UTF8.decode((ByteBuffer) dst.duplicate().limit(bounds[1]).position(bounds[0])).toString().trim());
@@ -110,21 +110,4 @@ class JsonResponseReader extends AsioVisitor.Impl {
     return UTF8.decode((ByteBuffer) d2.limit(dst.position() - 1)).toString();
   }
 
-  public static void moveCaretToDoubleEol(ByteBuffer dst) {
-    byte b;
-    boolean eol = false;
-    while (dst.hasRemaining() && (b = dst.get()) != -1) {
-      if (b != '\n') {
-        if (b != '\r') {
-          eol = false;
-        }
-      } else {
-        if (!eol) {
-          eol = true;
-        } else {
-          break;
-        }
-      }
-    }
-  }
 }

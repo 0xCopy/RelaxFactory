@@ -45,7 +45,7 @@ class RfPostWrapper extends AsioVisitor.Impl {
       key.attach(dst);
       switch (method) {
         case POST:
-          JsonResponseReader.moveCaretToDoubleEol(dst);
+          KernelImpl.moveCaretToDoubleEol(dst);
           ByteBuffer headers = (ByteBuffer) dst.duplicate().flip();
           System.err.println("+++ headers: " + UTF8.decode((ByteBuffer) headers.duplicate().rewind()).toString());
           Map<String, int[]> headers1 = HttpHeaders.getHeaders(headers);

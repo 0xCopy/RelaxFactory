@@ -219,6 +219,24 @@ public class KernelImpl {
     return channel;
   }
 
+  public static void moveCaretToDoubleEol(ByteBuffer dst) {
+    byte b;
+    boolean eol = false;
+    while (dst.hasRemaining() && (b = dst.get()) != -1) {
+      if (b != '\n') {
+        if (b != '\r') {
+          eol = false;
+        }
+      } else {
+        if (!eol) {
+          eol = true;
+        } else {
+          break;
+        }
+      }
+    }
+  }
+
   private static class ThreadLocalSessionHeaders {
 
     private ByteBuffer hb;

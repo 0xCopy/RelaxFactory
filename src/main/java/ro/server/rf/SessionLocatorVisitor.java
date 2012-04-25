@@ -69,7 +69,7 @@ public abstract class SessionLocatorVisitor<TxPojo, DataPojo> implements AsioVis
       dst.rewind();
       byteBufferLinkedList = null;
       if (null == headers) {
-        bisectFirstPacketIntoHeaders(key, dst);
+        bisectFirstPacketIntoHeaders(this, key, dst);
       } else {
         pileOnBufferSegment(key, dst, read);
       }
@@ -117,7 +117,7 @@ public abstract class SessionLocatorVisitor<TxPojo, DataPojo> implements AsioVis
 
   abstract TxPojo getMemento();
 
-  public void bisectFirstPacketIntoHeaders(SelectionKey key, ByteBuffer dst) throws InterruptedException {
+  public static <TxPojo, DataPojo> void bisectFirstPacketIntoHeaders(SessionLocatorVisitor<TxPojo, DataPojo> sessionLocatorVisitor, SelectionKey key, ByteBuffer dst) throws InterruptedException {
     boolean eol = false;
     while (dst.hasRemaining()) {
       byte b = dst.get();
@@ -128,8 +128,8 @@ public abstract class SessionLocatorVisitor<TxPojo, DataPojo> implements AsioVis
       } else if (!eol) {
         eol = true;
       } else {
-        headers = (ByteBuffer) dst.duplicate().flip();
-        ByteBuffer cl = headers.duplicate();
+        sessionLocatorVisitor.headers = (ByteBuffer) dst.duplicate().flip();
+        ByteBuffer cl = sessionLocatorVisitor.headers.duplicate();
 
         Map<String, int[]> headers1 = HttpHeaders.getHeaders((ByteBuffer) cl.rewind());
         System.err.println((headers1.keySet().toString()));
@@ -138,19 +138,19 @@ public abstract class SessionLocatorVisitor<TxPojo, DataPojo> implements AsioVis
         Buffer position = cl.clear().limit(ints[1]).position(ints[0]);
         String decode = HttpMethod.UTF8.decode((ByteBuffer) position).toString().trim();
 //        headers1.keySet()
-        total = Integer.parseInt(decode);
+        sessionLocatorVisitor.total = Integer.parseInt(decode);
 
 
         ByteBuffer slice = dst.slice();
-        remaining = total - slice.remaining();
+        sessionLocatorVisitor.remaining = sessionLocatorVisitor.total - slice.remaining();
 
-        switch (remaining) {
+        switch (sessionLocatorVisitor.remaining) {
           case 0:
-            processBuffer(key, slice, getMemento());
+            sessionLocatorVisitor.processBuffer(key, slice, sessionLocatorVisitor.getMemento());
             break;
           default:
-            byteBufferLinkedList = new LinkedList<ByteBuffer>();
-            byteBufferLinkedList.add(slice);
+            sessionLocatorVisitor.byteBufferLinkedList = new LinkedList<ByteBuffer>();
+            sessionLocatorVisitor.byteBufferLinkedList.add(slice);
             break;
         }
         break;
