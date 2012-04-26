@@ -62,7 +62,7 @@ public class OAuth2SampleEntryPoint implements EntryPoint {
 
   // This app's personal client ID assigned by the Google APIs Console
   // (http://code.google.com/apis/console).
-  private static final String GOOGLE_CLIENT_ID = "452237527106.apps.googleusercontent.com";
+  private static final String GOOGLE_CLIENT_ID = "67460658808.apps.googleusercontent.com";
 
   // The auth scope being requested. This scope will allow the application to
   // identify who the authenticated user is.
@@ -130,7 +130,7 @@ public class OAuth2SampleEntryPoint implements EntryPoint {
       public void onClick(ClickEvent event) {
         final AuthRequest req = new AuthRequest(INSTAGRAM_AUTH_URL, INSTAGRAM_CLIENT_ID)
             .withScopes(INSTAGRAM_COMMENTS_SCOPE, INSTAGRAM_LIKES_SCOPE)
-            // Instagram expects a plus-delimited list of scopes
+                // Instagram expects a plus-delimited list of scopes
             .withScopeDelimiter("+");
         AUTH.login(req, new Callback<String, Throwable>() {
           @Override
@@ -219,7 +219,7 @@ public class OAuth2SampleEntryPoint implements EntryPoint {
       public void onClick(ClickEvent event) {
         final AuthRequest req = new AuthRequest(FACEBOOK_AUTH_URL, FACEBOOK_CLIENT_ID)
             .withScopes(FACEBOOK_EMAIL_SCOPE, FACEBOOK_BIRTHDAY_SCOPE)
-            // Facebook expects a comma-delimited list of scopes
+                // Facebook expects a comma-delimited list of scopes
             .withScopeDelimiter(",");
         AUTH.login(req, new Callback<String, Throwable>() {
           @Override

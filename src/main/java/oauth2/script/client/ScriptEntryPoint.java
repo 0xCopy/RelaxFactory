@@ -16,8 +16,9 @@
 
 package oauth2.script.client;
 
-import java.lang.Override;import com.google.api.gwt.oauth2.client.Auth;
+
 import com.google.gwt.core.client.EntryPoint;
+import oauth2.client.Auth;
 
 /**
  * An EntryPoint class that exports the {@link Auth#login()} method.
