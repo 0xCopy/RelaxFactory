@@ -66,23 +66,21 @@ import static ro.server.KernelImpl.moveCaretToDoubleEol;
  */
 public class GeoIpService {
   public static final String GEOIP_ROOTNODE = "/geoip/current";
-  static int geoIpHeaderOffset;
+  public static final String GEOIP_CURRENT_LOCATIONS_CSV = "/geoip/current/locations.csv";
+  public static final String GEOIP_CURRENT_INDEX = "/geoip/current/index";
+  public static final String DEBUG_CREATEGEOIPINDEX = "DEBUG_CREATEGEOIPINDEX";
   public static final String MAXMIND_URL = "http://www.maxmind.com/app/geolitecity";
   public static final String DOWNLOAD_META_SOURCE = "//ul[@class=\"lstSquare\"][2]/li[2]/a[2]";
   public static final long IPMASK = 0xffffffffl;
   public static final Random RANDOM = new Random();
-  public static final String GEOIP_CURRENT_LOCATIONS_CSV = "/geoip/current/locations.csv";
-  public static final String GEOIP_CURRENT_INDEX = "/geoip/current/index";
   public static final String GEOIP_BENCHMARK_ON_STARTUP = "GEOIP_BENCHMARK_ON_STARTUP";
   static MappedByteBuffer indexMMBuf;
   static MappedByteBuffer locationMMBuf;
-  public static final String DEBUG_CREATEGEOIPINDEX = "DEBUG_CREATEGEOIPINDEX";
+  static int geoIpHeaderOffset;
   static List<Long> bufAbstraction = new AbstractList<Long>() {
     @Override
     public Long get(int index) {
-
       return IPMASK & indexMMBuf.getInt(index * reclen);
-
     }
 
     @Override
@@ -94,7 +92,6 @@ public class GeoIpService {
       return i;
     }
   };
-  ;
 
 
   public static void createGeoIpIndex() throws IOException, XPathExpressionException, ExecutionException, InterruptedException {
@@ -278,14 +275,12 @@ public class GeoIpService {
     return new Pair<ByteBuffer, ByteBuffer>(indexBuf, locBuf);
   }
 
-  private static void testMartinez(final ByteBuffer ix, ByteBuffer loc, long[] l1, int[] l2) throws UnknownHostException {
+    static void testMartinez(final ByteBuffer ix, ByteBuffer loc, long[] l1, int[] l2) throws UnknownHostException {
 
     try {
       String s2 = "127.0.0.1";
-
-
       InetAddress loopBackAddr = Inet4Address.getByAddress(new byte[]{127, 0, 0, 1});
-      InetAddress martinez = (Inet4Address) Inet4Address.getByAddress(new byte[]{67, (byte) 174, (byte) 244, 11});
+      InetAddress martinez = Inet4Address.getByAddress(new byte[]{67, (byte) 174, (byte) 244, 11});
       if (null != l1 && null != l2) {
         System.err.println(arraysLookup(l2, l1, loopBackAddr, loc.duplicate()));
         System.err.println(arraysLookup(l2, l1, martinez, loc.duplicate()));
@@ -332,7 +327,6 @@ public class GeoIpService {
       for (int i = 0; i < bytes1.length; i++) {
 
         RANDOM.nextBytes(bytes1[i] = new byte[4]);
-        ;
       }
 
       System.err.println("random generator overhead: " + (System.currentTimeMillis() - l3));
@@ -354,7 +348,7 @@ public class GeoIpService {
 
         for (InetAddress inetAddress : inetAddresses) {
 
-          KernelImpl.lookupInetAddress(inetAddress, (ByteBuffer) ix, bufAbstraction);
+          KernelImpl.lookupInetAddress(inetAddress, ix, bufAbstraction);
         }
         System.err.println("list benchmark: " + (System.currentTimeMillis() - l3));
       } catch (Throwable e) {
@@ -366,7 +360,7 @@ public class GeoIpService {
       long l3 = System.currentTimeMillis();
 
       for (InetAddress inetAddress : inetAddresses) {
-        arraysLookup(l2, l1, inetAddress, (ByteBuffer) loc);
+        arraysLookup(l2, l1, inetAddress, loc);
       }
       System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));
     }

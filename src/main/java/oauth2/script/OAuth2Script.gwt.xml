@@ -1,0 +1,14 @@
+<module>
+  <inherits name="com.google.api.gwt.oauth2.OAuth2" />
+  <inherits name="com.google.gwt.user.User" />
+
+  <entry-point class="oauth2.script.client.ScriptEntryPoint" />
+
+  <add-linker name="sso" />
+  <!--  <collapse-all-properties />-->
+
+  <!-- Ignore runtime warnings to minimize output code size. -->
+  <set-property name="compiler.stackMode" value="strip" />
+  <set-configuration-property name="document.compatMode.severity" value="IGNORE" />
+  <set-configuration-property name="user.agent.runtimeWarning" value="false"/>
+</module>

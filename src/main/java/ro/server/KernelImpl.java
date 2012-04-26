@@ -3,7 +3,6 @@ package ro.server;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -92,7 +91,7 @@ public class KernelImpl {
   public static final String MYGEOIPSTRING = "mygeoipstring";
 
 
-  static public RoSession getCurrentSession() throws UnsupportedEncodingException {
+  static public RoSession getCurrentSession() throws IOException, InterruptedException {
     String id = null;
     RoSession roSession = null;
     try {
@@ -116,25 +115,22 @@ public class KernelImpl {
       ThreadLocalSetCookies.get().put(MYSESSIONSTRING, sessionCookie);
       final InetAddress inet4Address = ThreadLocalInetAddress.get();
       if (null != inet4Address) {
+        SessionToolImpl.setSessionProperty(InetAddress.class.getCanonicalName(), inet4Address.getCanonicalHostName());
+
         final int i = lookupInetAddress(inet4Address, GeoIpService.indexMMBuf, bufAbstraction);
         final ByteBuffer b = (ByteBuffer) GeoIpService.locationMMBuf.duplicate().clear().position(i);
         while (b.hasRemaining() && '\n' != b.get()) ;
         b.flip().position(i);
-        final CharBuffer cityString = ISO88591.decode((ByteBuffer) b);
+        //maxmind is iso not utf
+        final CharBuffer cityString = ISO88591.decode(b);
         final String geoip = MessageFormat.format("{0}; path=/ ;expires={1}", URLEncoder.encode(cityString.toString().trim(), ISO88591.name()), s);
         ThreadLocalSetCookies.get().put(MYGEOIPSTRING, geoip);
-        EXECUTOR_SERVICE.submit(new Callable<Object>() {
-          @Override
-          public Object call() throws Exception {
-            final String canonicalHostName = ThreadLocalInetAddress.get().getCanonicalHostName();
-            SessionToolImpl.setSessionProperty("last_ip", canonicalHostName);
 
-            return null;
-          }
-        });
+
       }
-    }
 
+
+    }
     return roSession;
   }
 

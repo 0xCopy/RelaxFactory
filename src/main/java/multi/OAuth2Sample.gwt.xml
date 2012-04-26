@@ -1,0 +1,6 @@
+<module>
+  <inherits name="com.google.gwt.user.User" />
+    <inherits name="oauth2.OAuth2"/>
+
+    <entry-point class="multi.client.OAuth2SampleEntryPoint" />
+</module>
