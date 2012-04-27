@@ -56,7 +56,7 @@
             <properties>
                 <gwt.style>OBF</gwt.style>
                 <gwt.draftCompile>true</gwt.draftCompile>
-                <gwt.extraJvmArgs>-Xmx178m</gwt.extraJvmArgs>
+                <gwt.extraJvmArgs>-Xmx224m</gwt.extraJvmArgs>
                 <gwt.compiler.optimizationLevel>0</gwt.compiler.optimizationLevel>
                 <!--128 too small-->
                 <gwt.compiler.localWorkers>1</gwt.compiler.localWorkers>
