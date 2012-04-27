@@ -7,9 +7,9 @@ import java.util.LinkedHashMap;
 import java.util.concurrent.SynchronousQueue;
 
 import one.xio.HttpMethod;
-import ro.model.RoSession;
 
 import static ro.server.KernelImpl.GSON;
+import static ro.server.KernelImpl.getSessionCookieId;
 
 /**
  * User: jim
@@ -27,12 +27,10 @@ public class SessionToolImpl {
    * @throws InterruptedException
    */
   static public String getSessionProperty(final String key) throws InterruptedException, IOException {
-    RoSession ret;
-    LinkedHashMap linkedHashMap = null;
 
-    linkedHashMap = fetchMapById(key);
 
-    return (String) linkedHashMap.get(key);
+    final String sessionCookieId = getSessionCookieId();
+    return (String) fetchMapById(sessionCookieId).get(key);
   }
 
   //maximum wastefulness
@@ -58,7 +56,7 @@ public class SessionToolImpl {
    */
   public static CouchTx sendJson(final String json, final String... idver) throws IOException, InterruptedException {
     final SocketChannel channel = KernelImpl.createCouchConnection();
-    final SynchronousQueue synchronousQueue = new SynchronousQueue();
+    final SynchronousQueue<Object> synchronousQueue = new SynchronousQueue<Object>();
     HttpMethod.enqueue(channel, SelectionKey.OP_CONNECT, new SendJsonVisitor(json, synchronousQueue, idver));
 
 
@@ -73,11 +71,11 @@ public class SessionToolImpl {
 
   public static String fetchSessionJsonById(final String path) throws IOException, InterruptedException {
     final SocketChannel channel = KernelImpl.createCouchConnection();
-    final SynchronousQueue synchronousQueue = new SynchronousQueue();
+    final SynchronousQueue<String> synchronousQueue = new SynchronousQueue<String>();
     HttpMethod.enqueue(channel, SelectionKey.OP_CONNECT, new
         FetchJsonByIdVisitor(INSTANCE + '/' + path, channel, synchronousQueue));
 
-    return (String) synchronousQueue.take();
+    return synchronousQueue.take();
   }
 
 }

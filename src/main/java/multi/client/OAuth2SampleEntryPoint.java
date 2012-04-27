@@ -158,8 +158,7 @@ public class OAuth2SampleEntryPoint implements EntryPoint {
 
   // This app's personal client ID assigned by the Foursquare OAuth page
   // (https://foursquare.com/oauth/)
-  private static final String FOURSQUARE_CLIENT_ID =
-      "SL3GLC45VW5T2KBD4XRQTOJQT5Y0E5CCUA10GI4RGDJ2BQX4";
+  private static final String FOURSQUARE_CLIENT_ID = "SL3GLC45VW5T2KBD4XRQTOJQT5Y0E5CCUA10GI4RGDJ2BQX4";
 
   // Adds a button to the page that asks for authentication from Foursquare.
   private void addFoursquareAuth() {

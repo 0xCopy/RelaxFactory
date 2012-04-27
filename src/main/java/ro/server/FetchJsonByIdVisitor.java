@@ -23,9 +23,9 @@ import static one.xio.HttpMethod.UTF8;
 class FetchJsonByIdVisitor extends AsioVisitor.Impl {
   private final String path;
   private final SocketChannel channel;
-  private final SynchronousQueue <String>synchronousQueue;
+  private final SynchronousQueue<String> synchronousQueue;
 
-  public FetchJsonByIdVisitor(String path, SocketChannel channel, SynchronousQueue <String>synchronousQueue) throws ClosedChannelException {
+  public FetchJsonByIdVisitor(String path, SocketChannel channel, SynchronousQueue<String> synchronousQueue) throws ClosedChannelException {
     this.path = path;
     this.channel = channel;
     this.synchronousQueue = synchronousQueue;
@@ -47,14 +47,14 @@ class FetchJsonByIdVisitor extends AsioVisitor.Impl {
   public void onWrite(final SelectionKey selectionKey) {
 
     try {
-      String format = (MessageFormat.format("GET /{0} HTTP/1.1\r\n\r\n", path));
+      String format = (MessageFormat.format("GET /{0} HTTP/1.1\r\n\r\n", path.trim()));
       System.err.println("attempting connect: " + format.trim());
       channel.write(UTF8.encode(format));
+      selectionKey.attach(new JsonResponseReader(synchronousQueue));
+      selectionKey.interestOps(OP_READ);
     } catch (IOException e) {
       e.printStackTrace();  //todo: verify for a purpose
     }
-    selectionKey.attach(new JsonResponseReader(synchronousQueue));
-    selectionKey.interestOps(OP_READ);
   }
 
 }

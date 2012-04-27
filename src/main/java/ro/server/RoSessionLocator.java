@@ -84,6 +84,7 @@ public class RoSessionLocator extends Locator<RoSession, String> {
     } catch (InterruptedException e) {
       e.printStackTrace();  //todo: verify for a purpose
     }
+
     return GSON.fromJson(s, getDomainType());
 
   }
