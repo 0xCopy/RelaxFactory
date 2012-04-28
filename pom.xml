@@ -101,11 +101,18 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.google.gwt</groupId>
-            <artifactId>gwt-servlet</artifactId>
+            <groupId>com.google.web.bindery</groupId>
+            <artifactId>requestfactory-server</artifactId>
             <version>2.4.0</version>
-            <!--<scope>provided</scope>-->
         </dependency>
+
+        <!-- see sample projects for correct placement -->
+        <dependency>
+            <groupId>com.google.web.bindery</groupId>
+            <artifactId>requestfactory-apt</artifactId>
+            <version>2.4.0</version>
+        </dependency>
+
         <dependency>
             <groupId>com.google.gwt</groupId>
             <artifactId>gwt-user</artifactId>
