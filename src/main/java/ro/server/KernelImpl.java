@@ -49,7 +49,6 @@ import static ro.server.GeoIpService.bufAbstraction;
  */
 public class KernelImpl {
   public static final RoSessionLocator RO_SESSION_LOCATOR = new RoSessionLocator();
-
   public static final ExecutorService EXECUTOR_SERVICE = Executors.newCachedThreadPool();
   public static final ThreadLocal<ByteBuffer> ThreadLocalHeaders = new ThreadLocal<ByteBuffer>();
   static ThreadLocal<InetAddress> ThreadLocalInetAddress = new ThreadLocal<InetAddress>();

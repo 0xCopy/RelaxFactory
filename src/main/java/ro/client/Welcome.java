@@ -29,6 +29,7 @@ public class Welcome implements EntryPoint {
 
 
   public void onModuleLoad() {
+
     final EventBus eventBus = new SimpleEventBus();
     requestFactory = GWT.create(KernelFactory.class);
     requestFactory.initialize(eventBus);
@@ -43,7 +44,6 @@ public class Welcome implements EntryPoint {
         session = response;
         String id = response.getId();
         doController();
-
       }
     });
   }
@@ -100,7 +100,7 @@ public class Welcome implements EntryPoint {
         Receiver<String> receiver = new Receiver<String>() {
           @Override
           public void onSuccess(String response) {
-           GWT.log("session version"+response);
+            GWT.log("session version" + response);
           }
         };
         couch.setSessionProperty(e.getKey().getKey(), e.getValue()).to(receiver);

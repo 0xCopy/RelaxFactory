@@ -56,12 +56,11 @@ public class RoSessionLocator extends Locator<RoSession, String> {
           channel.configureBlocking(false);
           channel.connect(remote);
 
-          SynchronousQueue<CouchTx> blockingQueue = new SynchronousQueue<CouchTx>();
+          SynchronousQueue<CouchTx> retVal = new SynchronousQueue<CouchTx>();
 
-          sessionVisitor = new SessionCreateVisitor(channel, blockingQueue);
+          sessionVisitor = new SessionCreateVisitor(channel, retVal);
           HttpMethod.enqueue(channel, SelectionKey.OP_CONNECT, sessionVisitor);
-          CouchTx take = blockingQueue.take();
-          //      System.err.println("data received asyncronously!");
+          retVal.take();
           return sessionVisitor.data;
 
         }

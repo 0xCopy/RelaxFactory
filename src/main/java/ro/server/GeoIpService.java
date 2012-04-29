@@ -104,16 +104,16 @@ public class GeoIpService {
         Map m = null;
         try {
           final SocketChannel couchConnection = KernelImpl.createCouchConnection();
-          final SynchronousQueue<String> synchronousQueue = new SynchronousQueue<String>();
-          FetchJsonByIdVisitor fetchJsonByIdVisitor = new FetchJsonByIdVisitor(GEOIP_ROOTNODE, couchConnection, synchronousQueue);
+          final SynchronousQueue<String> retVal = new SynchronousQueue<String>();
+          FetchJsonByIdVisitor fetchJsonByIdVisitor = new FetchJsonByIdVisitor(GEOIP_ROOTNODE, couchConnection, retVal);
 
-          m = GSON.fromJson(synchronousQueue.take(), Map.class);
+          m = GSON.fromJson(retVal.take(), Map.class);
           if (2 == m.size() && m.containsKey("responseCode")) {
             Map<String, Date> map = new HashMap<String, Date>();
             //noinspection unchecked
             map.put("created", new Date());
-            HttpMethod.enqueue(couchConnection, OP_WRITE, new SendJsonVisitor(GSON.toJson(map).trim(), synchronousQueue, GEOIP_ROOTNODE));
-            String json = synchronousQueue.take();
+            HttpMethod.enqueue(couchConnection, OP_WRITE, new SendJsonVisitor(GSON.toJson(map).trim(), retVal, GEOIP_ROOTNODE));
+            String json = retVal.take();
             m = GSON.fromJson(json, Map.class);
 
           }
@@ -127,7 +127,7 @@ public class GeoIpService {
     final Map map = EXECUTOR_SERVICE.submit(callable).get();
 
 
-    final SynchronousQueue<String> synchronousQueue = new SynchronousQueue<String>();
+    final SynchronousQueue<String> retVal = new SynchronousQueue<String>();
     SocketChannel couchConnection;
     {
       couchConnection = createCouchConnection();
@@ -151,11 +151,11 @@ public class GeoIpService {
               int limit = d2.limit();
               String push = getBlobPutString(fn, limit, ctype, getRevision(map));
               System.err.println("pushing: " + push);
-              putFile(key, d2, push, synchronousQueue);
+              putFile(key, d2, push, retVal);
             }
           });
     }
-    final String take = synchronousQueue.take();
+    final String take = retVal.take();
     final CouchTx couchTx = GSON.fromJson(take, CouchTx.class);
     {
       couchConnection = createCouchConnection();
@@ -176,7 +176,7 @@ public class GeoIpService {
               String push = getBlobPutString(fn, limit, ctype, couchTx.rev);
               System.err.println("pushing: " + push);
 
-              putFile(key, d2, push, synchronousQueue);
+              putFile(key, d2, push, retVal);
             }
           });
     }
@@ -275,7 +275,7 @@ public class GeoIpService {
     return new Pair<ByteBuffer, ByteBuffer>(indexBuf, locBuf);
   }
 
-    static void testMartinez(final ByteBuffer ix, ByteBuffer loc, long[] l1, int[] l2) throws UnknownHostException {
+  static void testMartinez(final ByteBuffer ix, ByteBuffer loc, long[] l1, int[] l2) throws UnknownHostException {
 
     try {
       String s2 = "127.0.0.1";
@@ -376,7 +376,7 @@ public class GeoIpService {
    */
   static void startGeoIpService(final String dbinstance) throws IOException, XPathExpressionException, InterruptedException {
     SocketChannel connection = KernelImpl.createCouchConnection();
-    final SynchronousQueue<String> synchronousQueue = new SynchronousQueue<String>();
+    final SynchronousQueue<String> retVal = new SynchronousQueue<String>();
 
     HttpMethod.enqueue(connection, SelectionKey.OP_CONNECT, new AsioVisitor.Impl() {
       public void onRead(final SelectionKey selectionKey) throws IOException, InterruptedException {
@@ -411,7 +411,7 @@ public class GeoIpService {
                 } catch (IOException e) {
                   e.printStackTrace();  //todo: verify for a purpose
                 }
-                selectionKey.attach(new JsonResponseReader(synchronousQueue));
+                selectionKey.attach(new JsonResponseReader(retVal));
                 selectionKey.interestOps(OP_READ);
               }
             });
@@ -420,7 +420,7 @@ public class GeoIpService {
             Callable<Object> callable = new Callable<Object>() {
               public Object call() throws Exception {
 
-                String take = synchronousQueue.take();
+                String take = retVal.take();
                 selectionKey.attach(this);
                 System.err.println("rootnode: " + take);
                 Map map = GSON.fromJson(take, Map.class);
@@ -461,12 +461,12 @@ public class GeoIpService {
 
               Callable<MappedByteBuffer> getMappedIndexFile(final String path) throws IOException {
                 final SocketChannel couchConnection = createCouchConnection();
-                final SynchronousQueue<MappedByteBuffer> success = new SynchronousQueue<MappedByteBuffer>();
+                final SynchronousQueue<MappedByteBuffer> retVal = new SynchronousQueue<MappedByteBuffer>();
 
                 final Callable<MappedByteBuffer> callable = new Callable<MappedByteBuffer>() {
                   @Override
                   public MappedByteBuffer call() throws Exception {
-                    return success.take();  //todo: verify for a purpose
+                    return retVal.take();  //todo: verify for a purpose
                   }
                 };
 
@@ -505,6 +505,7 @@ public class GeoIpService {
                           final int[] ints = hm.get("Content-Length");
                           final String cl = UTF8.decode((ByteBuffer) h2.clear().position(ints[0]).limit(ints[1])).toString().trim();
                           final long total = Long.parseLong(cl);
+
                           final File geoip = File.createTempFile("geoip", ".index");
                           try {
                             geoip.createNewFile();
@@ -519,13 +520,15 @@ public class GeoIpService {
                           key.attach(new Impl() {
                             long pos = (long) pos1;
 
+                            private final SynchronousQueue<MappedByteBuffer> returnTo = retVal;
+
                             @Override
                             public void onRead(SelectionKey key) throws IOException, InterruptedException {
                               final long l = fileChannel.transferFrom((ReadableByteChannel) key.channel(), pos, 16 * 1024 * 1024);
                               pos += l;
                               if (pos >= total) {
                                 final MappedByteBuffer map1 = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, total);
-                                success.put(map1);
+                                returnTo.put(map1);
                                 key.cancel();
                                 final long l1 = System.currentTimeMillis() - l2;
                                 System.err.println(MessageFormat.format("file write ended: {0} {1}/{2} in {3} (ms) @ {4}M/s", geoip, total, randomAccessFile.length(), l1, (total / 1024. * 1024.) / l1 / 1000.));

@@ -56,12 +56,11 @@ public class SessionToolImpl {
    */
   public static CouchTx sendJson(final String json, final String... idver) throws IOException, InterruptedException {
     final SocketChannel channel = KernelImpl.createCouchConnection();
-    final SynchronousQueue<Object> synchronousQueue = new SynchronousQueue<Object>();
-    HttpMethod.enqueue(channel, SelectionKey.OP_CONNECT, new SendJsonVisitor(json, synchronousQueue, idver));
+    final SynchronousQueue<Object> retVal = new SynchronousQueue<Object>();
+    HttpMethod.enqueue(channel, SelectionKey.OP_CONNECT, new SendJsonVisitor(json, retVal, idver));
 
 
-    Object take = synchronousQueue.take();
-    return GSON.fromJson(String.valueOf(take), CouchTx.class);
+    return GSON.fromJson(String.valueOf(retVal.take()), CouchTx.class);
   }
 
   public static LinkedHashMap fetchMapById(final String key) throws IOException, InterruptedException {
@@ -71,11 +70,11 @@ public class SessionToolImpl {
 
   public static String fetchSessionJsonById(final String path) throws IOException, InterruptedException {
     final SocketChannel channel = KernelImpl.createCouchConnection();
-    final SynchronousQueue<String> synchronousQueue = new SynchronousQueue<String>();
+    final SynchronousQueue<String> retVal = new SynchronousQueue<String>();
     HttpMethod.enqueue(channel, SelectionKey.OP_CONNECT, new
-        FetchJsonByIdVisitor(INSTANCE + '/' + path, channel, synchronousQueue));
+        FetchJsonByIdVisitor(INSTANCE + '/' + path, channel, retVal));
 
-    return synchronousQueue.take();
+    return retVal.take();
   }
 
 }

@@ -13,19 +13,19 @@ import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpMethod.UTF8;
 
 /**
-* User: jim
-* Date: 4/23/12
-* Time: 10:20 PM
-*/
+ * User: jim
+ * Date: 4/23/12
+ * Time: 10:20 PM
+ */
 class SendJsonVisitor extends AsioVisitor.Impl {
 
   private final String json;
-  private final SynchronousQueue synchronousQueue;
+  private final SynchronousQueue returnTo;
   private final String[] idver;
 
-  public SendJsonVisitor(String json, SynchronousQueue synchronousQueue, String... idver) {
+  public SendJsonVisitor(String json, SynchronousQueue returnTo, String... idver) {
     this.json = json;
-    this.synchronousQueue = synchronousQueue;
+    this.returnTo = returnTo;
     this.idver = idver;
   }
 
@@ -35,7 +35,7 @@ class SendJsonVisitor extends AsioVisitor.Impl {
     String call;
     method = idver.length == 0 ? "POST" : "PUT";
 
-    String path="";
+    String path = "";
     for (int i = 0; i < idver.length; i++) {
       String s = idver[i];
       switch (i) {
@@ -53,7 +53,7 @@ class SendJsonVisitor extends AsioVisitor.Impl {
     SocketChannel channel = (SocketChannel) selectionKey.channel();
     try {
       channel.write(encode);
-      selectionKey.attach(new JsonResponseReader(synchronousQueue));
+      selectionKey.attach(new JsonResponseReader(returnTo));
       selectionKey.interestOps(SelectionKey.OP_READ);
 
     } catch (IOException e) {

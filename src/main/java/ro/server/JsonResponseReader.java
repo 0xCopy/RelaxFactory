@@ -22,10 +22,10 @@ import static one.xio.HttpMethod.UTF8;
 class JsonResponseReader extends AsioVisitor.Impl {
   public long remaining;
   public long total;
-  private final SynchronousQueue<String> synchronousQueue;
+  private final SynchronousQueue<String> returnTo;
 
-  public JsonResponseReader(SynchronousQueue<String> synchronousQueue) {
-    this.synchronousQueue = synchronousQueue;
+  public JsonResponseReader(SynchronousQueue<String> returnTo) {
+    this.returnTo = returnTo;
   }
 
 
@@ -91,9 +91,9 @@ class JsonResponseReader extends AsioVisitor.Impl {
 
     String trim = UTF8.decode(payload).toString().trim();
     if (rescode.startsWith("20") && rescode.length() == 3) {
-      synchronousQueue.put(trim);
+      returnTo.put(trim);
     } else {
-      synchronousQueue.put(MessageFormat.format("'{'\"responseCode\":\"{0}\",\"orig\":{1}'}'", rescode, trim));
+      returnTo.put(MessageFormat.format("'{'\"responseCode\":\"{0}\",\"orig\":{1}'}'", rescode, trim));
     }
   }
 
