@@ -90,7 +90,7 @@ public class KernelImpl {
   public static final String MYGEOIPSTRING = "mygeoipstring";
 
 
-  static public RoSession getCurrentSession() throws IOException, InterruptedException {
+  static public RoSession getCurrentSession() throws Exception {
     String id = null;
     RoSession roSession = null;
     try {
@@ -124,8 +124,17 @@ public class KernelImpl {
         final CharBuffer cityString = ISO88591.decode(b);
         final String geoip = MessageFormat.format("{0}; path=/ ;expires={1}", URLEncoder.encode(cityString.toString().trim(), ISO88591.name()), s);
         ThreadLocalSetCookies.get().put(MYGEOIPSTRING, geoip);
+        EXECUTOR_SERVICE.submit(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              final String geoip1 = SessionToolImpl.setSessionProperty("geoip", geoip);
+              System.err.println("new user geo: " + geoip1);
 
-
+            } catch (Throwable ignored) {
+            }
+          }
+        });
       }
 
 

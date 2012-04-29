@@ -34,7 +34,7 @@
             <!--big box-->
             <id>dev</id>
             <properties>
-                <gwt.style>DETAILED</gwt.style>
+                <gwt.style>PRETTY</gwt.style>
                 <gwt.draftCompile>true</gwt.draftCompile>
                 <gwt.compiler.optimizationLevel>0</gwt.compiler.optimizationLevel>
                 <gwt.extraJvmArgs>-Xmx6g</gwt.extraJvmArgs>
@@ -86,7 +86,7 @@
         <dependency>
             <groupId>1xio</groupId>
             <artifactId>1xio</artifactId>
-            <version>1.9.5</version>
+            <version>1.9.6</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>

@@ -26,7 +26,7 @@ public class SessionToolImpl {
    * @return
    * @throws InterruptedException
    */
-  static public String getSessionProperty(final String key) throws InterruptedException, IOException {
+  static public String getSessionProperty(final String key) throws Exception {
 
 
     final String sessionCookieId = getSessionCookieId();
@@ -34,7 +34,7 @@ public class SessionToolImpl {
   }
 
   //maximum wastefulness
-  static public String setSessionProperty(String key, String value) throws IOException, InterruptedException {
+  static public String setSessionProperty(String key, String value) throws Exception {
     try {
       String id = KernelImpl.getSessionCookieId();
       LinkedHashMap linkedHashMap = fetchMapById(id);
@@ -54,9 +54,9 @@ public class SessionToolImpl {
    * @param json
    * @return new _rev
    */
-  public static CouchTx sendJson(final String json, final String... idver) throws IOException, InterruptedException {
+  public static CouchTx sendJson(final String json, final String... idver) throws Exception {
     final SocketChannel channel = KernelImpl.createCouchConnection();
-    final SynchronousQueue<Object> retVal = new SynchronousQueue<Object>();
+    final SynchronousQueue<String> retVal = new SynchronousQueue<String>();
     HttpMethod.enqueue(channel, SelectionKey.OP_CONNECT, new SendJsonVisitor(json, retVal, idver));
 
 
@@ -73,7 +73,6 @@ public class SessionToolImpl {
     final SynchronousQueue<String> retVal = new SynchronousQueue<String>();
     HttpMethod.enqueue(channel, SelectionKey.OP_CONNECT, new
         FetchJsonByIdVisitor(INSTANCE + '/' + path, channel, retVal));
-
     return retVal.take();
   }
 

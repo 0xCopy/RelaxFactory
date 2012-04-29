@@ -18,12 +18,11 @@ import static one.xio.HttpMethod.UTF8;
  * Time: 10:20 PM
  */
 class SendJsonVisitor extends AsioVisitor.Impl {
-
   private final String json;
-  private final SynchronousQueue returnTo;
   private final String[] idver;
+  private final SynchronousQueue<String> returnTo;
 
-  public SendJsonVisitor(String json, SynchronousQueue returnTo, String... idver) {
+  public SendJsonVisitor(String json, SynchronousQueue<String> returnTo, String... idver) {
     this.json = json;
     this.returnTo = returnTo;
     this.idver = idver;
@@ -48,18 +47,17 @@ class SendJsonVisitor extends AsioVisitor.Impl {
       }
     }
 
-    call = MessageFormat.format("{0}  /{1} HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: {2}\r\n\r\n{3}", method, path, json.length(), json);
+//    call = MessageFormat.format("{0} /{1} HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: {2}\r\n\r\n{3}", method, path, json.length(), json);
+    call = MessageFormat.format("{0} /{1} HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: " + json.length() + "\r\n\r\n{2}", method, path, json);
     ByteBuffer encode = UTF8.encode(call);
     SocketChannel channel = (SocketChannel) selectionKey.channel();
     try {
       channel.write(encode);
       selectionKey.attach(new JsonResponseReader(returnTo));
       selectionKey.interestOps(SelectionKey.OP_READ);
-
     } catch (IOException e) {
       e.printStackTrace();  //todo: verify for a purpose
     }
-
   }
 
 
@@ -74,3 +72,4 @@ class SendJsonVisitor extends AsioVisitor.Impl {
     }
   }
 }
+
