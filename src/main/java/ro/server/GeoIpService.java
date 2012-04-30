@@ -51,9 +51,11 @@ import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpMethod.UTF8;
+import static one.xio.HttpMethod.getSelector;
 import static ro.server.GeoIpIndexRecord.reclen;
 import static ro.server.KernelImpl.EXECUTOR_SERVICE;
 import static ro.server.KernelImpl.GSON;
+import static ro.server.KernelImpl.couchDq;
 import static ro.server.KernelImpl.createCouchConnection;
 import static ro.server.KernelImpl.moveCaretToDoubleEol;
 
@@ -102,8 +104,8 @@ public class GeoIpService {
     Callable<Map> callable = new Callable<Map>() {
       public Map call() throws Exception {
         Map m = null;
+        SocketChannel couchConnection = KernelImpl.createCouchConnection();
         try {
-          SocketChannel couchConnection = KernelImpl.createCouchConnection();
           SynchronousQueue<String> retVal = new SynchronousQueue<String>();
           FetchJsonByIdVisitor fetchJsonByIdVisitor = new FetchJsonByIdVisitor(GEOIP_ROOTNODE, couchConnection, retVal);
 
@@ -114,14 +116,17 @@ public class GeoIpService {
             map.put("created", new Date());
             HttpMethod.enqueue(couchConnection, OP_WRITE, new SendJsonVisitor(GSON.toJson(map).trim(), retVal, GEOIP_ROOTNODE));
             String json = retVal.take();
+
+
             m = GSON.fromJson(json, Map.class);
 
           }
-        } catch (Throwable e) {
-          e.printStackTrace();  //todo: verify for a purpose
         } finally {
+          couchConnection.register(getSelector(), 0);
+          couchDq.add(couchConnection);
         }
         return m;
+
       }
     };
     final Map map = EXECUTOR_SERVICE.submit(callable).get();
@@ -375,8 +380,8 @@ public class GeoIpService {
    *
    */
   static void startGeoIpService(final String dbinstance) throws IOException, XPathExpressionException, InterruptedException {
-    SocketChannel connection = KernelImpl.createCouchConnection();
     final SynchronousQueue<String> retVal = new SynchronousQueue<String>();
+    SocketChannel connection = KernelImpl.createCouchConnection();
 
     HttpMethod.enqueue(connection, SelectionKey.OP_CONNECT, new AsioVisitor.Impl() {
       public void onRead(final SelectionKey selectionKey) throws IOException, InterruptedException {

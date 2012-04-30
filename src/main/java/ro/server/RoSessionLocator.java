@@ -1,7 +1,6 @@
 package ro.server;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.Callable;
@@ -13,8 +12,9 @@ import ro.model.RoSession;
 import ro.server.rf.SessionCreateVisitor;
 import ro.server.rf.SessionLocatorVisitor;
 
+import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static ro.server.KernelImpl.GSON;
-import static ro.server.KernelImpl.LOOPBACK;
+import static ro.server.KernelImpl.createCouchConnection;
 
 //import ro.server.rf.SessionFindLocatorVisitor;
 
@@ -50,17 +50,24 @@ public class RoSessionLocator extends Locator<RoSession, String> {
       Callable<RoSession> callable = new Callable<RoSession>() {
         public RoSession call() throws Exception {
           SessionLocatorVisitor<? extends CouchTx, ? extends RoSession> sessionVisitor = null;
-          InetSocketAddress remote = new InetSocketAddress(LOOPBACK, 5984);
-          System.err.println("opening " + remote.toString());
-          SocketChannel channel = SocketChannel.open();
-          channel.configureBlocking(false);
-          channel.connect(remote);
+//          InetSocketAddress remote = new InetSocketAddress(LOOPBACK, 5984);
+//          System.err.println("opening " + remote.toString());
+//          SocketChannel channel = SocketChannel.open();
+//          channel.configureBlocking(false);
+//          channel.connect(remote);
+          final SocketChannel channel = createCouchConnection();
 
-          SynchronousQueue<CouchTx> retVal = new SynchronousQueue<CouchTx>();
+          try {
+            SynchronousQueue<CouchTx> retVal = new SynchronousQueue<CouchTx>();
 
-          sessionVisitor = new SessionCreateVisitor(channel, retVal);
-          HttpMethod.enqueue(channel, SelectionKey.OP_CONNECT, sessionVisitor);
-          retVal.take();
+            sessionVisitor = new SessionCreateVisitor(channel, retVal);
+            HttpMethod.enqueue(channel, OP_CONNECT | SelectionKey.OP_WRITE, sessionVisitor);
+            retVal.take();
+          } finally {
+            KernelImpl.recycleChannel(channel);
+          }
+
+
           return sessionVisitor.data;
 
         }

@@ -29,7 +29,7 @@ class FetchJsonByIdVisitor extends AsioVisitor.Impl {
     this.path = path;
     this.channel = channel;
     this.returnTo = returnTo;
-    HttpMethod.enqueue(channel, OP_CONNECT, this);
+    HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, this);
   }
 
   @Override
@@ -44,17 +44,14 @@ class FetchJsonByIdVisitor extends AsioVisitor.Impl {
   }
 
   @Override
-  public void onWrite(final SelectionKey selectionKey) {
+  public void onWrite(final SelectionKey selectionKey) throws IOException {
 
-    try {
-      String format = (MessageFormat.format("GET /{0} HTTP/1.1\r\n\r\n", path.trim()));
-      System.err.println("attempting connect: " + format.trim());
-      channel.write(UTF8.encode(format));
-      selectionKey.attach(new JsonResponseReader(returnTo));
-      selectionKey.interestOps(OP_READ);
-    } catch (IOException e) {
-      e.printStackTrace();  //todo: verify for a purpose
-    }
+    String format = (MessageFormat.format("GET /{0} HTTP/1.1\r\n\r\n", path.trim()));
+    System.err.println("attempting connect: " + format.trim());
+    channel.write(UTF8.encode(format));
+    selectionKey.attach(new JsonResponseReader(returnTo));
+    selectionKey.interestOps(OP_READ);
+
   }
 
 }

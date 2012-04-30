@@ -7,17 +7,20 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -67,7 +70,10 @@ public class KernelImpl {
   //  private static ByteBuffer indexBuf;
   private static int blockCount;
   //  private static ByteBuffer locBuf;
-  public static InetAddress LOOPBACK = null; static {
+  public static InetAddress LOOPBACK = null;
+  public static final ConcurrentLinkedDeque<SocketChannel> couchDq = new ConcurrentLinkedDeque<SocketChannel>();
+
+  static {
     try {
       try {
         KernelImpl.LOOPBACK = (InetAddress) InetAddress.class.getMethod("getLoopBackAddress").invoke(null);
@@ -269,10 +275,22 @@ public class KernelImpl {
   }
 
   public static SocketChannel createCouchConnection() throws IOException {
-    System.err.println("opening " + new InetSocketAddress(LOOPBACK, 5984).toString());
-    SocketChannel channel = SocketChannel.open();
-    channel.configureBlocking(false);
-    channel.connect(new InetSocketAddress(LOOPBACK, 5984));
+
+    SocketChannel channel = null;
+    while (null == channel && !couchDq.isEmpty()) {
+
+      SocketChannel remove = (SocketChannel) couchDq.remove();
+      if (remove.isConnected()) {
+        channel = remove;
+      }
+    }
+    if (null == channel) {
+      System.err.println("opening " + new InetSocketAddress(LOOPBACK, 5984).toString());
+      channel = SocketChannel.open();
+      channel.configureBlocking(false);
+      channel.connect(new InetSocketAddress(LOOPBACK, 5984));
+    } else System.err.println("+++ recycling " + deepToString(channel));
+
     return channel;
   }
 
@@ -287,6 +305,15 @@ public class KernelImpl {
       distance = abs(eol - prev);
       if (2 == distance && '\r' == buffer.get(eol - 2)) break;
     } while (buffer.hasRemaining() && 1 < distance);
+  }
+
+  static String deepToString(Object... d) {
+    return Arrays.deepToString(d);
+  }
+
+  public static void recycleChannel(SocketChannel channel) throws ClosedChannelException {
+    channel.register(HttpMethod.getSelector(), 0).attach(null);
+    couchDq.add(channel);
   }
 
   static class ThreadLocalSessionHeaders {

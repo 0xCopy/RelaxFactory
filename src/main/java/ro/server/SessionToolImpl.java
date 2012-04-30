@@ -2,14 +2,16 @@ package ro.server;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.LinkedHashMap;
 import java.util.concurrent.SynchronousQueue;
 
 import one.xio.HttpMethod;
 
+import static java.nio.channels.SelectionKey.OP_CONNECT;
+import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpMethod.UTF8;
+import static one.xio.HttpMethod.getSelector;
 import static ro.server.KernelImpl.GSON;
 import static ro.server.KernelImpl.getSessionCookieId;
 
@@ -28,17 +30,17 @@ public class SessionToolImpl {
    * @return
    * @throws InterruptedException
    */
-  static public String getSessionProperty(final String key) throws Exception {
+  static public String getSessionProperty(String key) throws Exception {
 
 
-    final String sessionCookieId = getSessionCookieId();
+    String sessionCookieId = getSessionCookieId();
     String s = null;
     String canonicalName = null;
     try {
       s = (String) fetchMapById(sessionCookieId).get(key);
     } catch (Exception e) {
       canonicalName = SessionToolImpl.class.getCanonicalName();
-      final ByteBuffer byteBuffer = KernelImpl.ThreadLocalHeaders.get();
+      ByteBuffer byteBuffer = KernelImpl.ThreadLocalHeaders.get();
       if (!UTF8.decode(byteBuffer).toString().trim().equals(canonicalName)) {
 
         KernelImpl.ThreadLocalHeaders.set(UTF8.encode(canonicalName));
@@ -69,29 +71,41 @@ public class SessionToolImpl {
    * @param json
    * @return new _rev
    */
-  public static CouchTx sendJson(final String json, final String... idver) throws Exception {
-    final SocketChannel channel = KernelImpl.createCouchConnection();
-    final SynchronousQueue<String> retVal = new SynchronousQueue<String>();
-    HttpMethod.enqueue(channel, SelectionKey.OP_CONNECT, new SendJsonVisitor(json, retVal, idver));
-
-
-    return GSON.fromJson(String.valueOf(retVal.take()), CouchTx.class);
+  public static CouchTx sendJson(String json, String... idver) throws Exception {
+    String take;
+    SocketChannel channel = null;
+    try {
+      channel = KernelImpl.createCouchConnection();
+      SynchronousQueue<String> retVal = new SynchronousQueue<String>();
+      HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, new SendJsonVisitor(json, retVal, idver));
+      take = retVal.take();
+    } finally {
+      if (null != channel) {
+        channel.register(getSelector(), 0);
+        KernelImpl.couchDq.add(channel);
+      }
+    }
+    return GSON.fromJson(take, CouchTx.class);
   }
 
-  public static LinkedHashMap fetchMapById(final String key) throws IOException, InterruptedException {
+  public static LinkedHashMap fetchMapById(String key) throws IOException, InterruptedException {
     String take = fetchSessionJsonById(key);
-    final LinkedHashMap linkedHashMap = GSON.fromJson(take, LinkedHashMap.class);
-    if (linkedHashMap.size() == 2 && linkedHashMap.containsKey("responseCode"))
-      throw new IOException(String.valueOf(linkedHashMap));
+    LinkedHashMap linkedHashMap = GSON.fromJson(take, LinkedHashMap.class);
+    if (2 == linkedHashMap.size() && linkedHashMap.containsKey("responseCode"))
+      throw new IOException(KernelImpl.deepToString(linkedHashMap));
     return linkedHashMap;
   }
 
-  public static String fetchSessionJsonById(final String path) throws IOException, InterruptedException {
-    final SocketChannel channel = KernelImpl.createCouchConnection();
-    final SynchronousQueue<String> retVal = new SynchronousQueue<String>();
-    HttpMethod.enqueue(channel, SelectionKey.OP_CONNECT, new
-        FetchJsonByIdVisitor(INSTANCE + '/' + path, channel, retVal));
-    final String take = retVal.take();
+  public static String fetchSessionJsonById(String path) throws IOException, InterruptedException {
+    SocketChannel channel = KernelImpl.createCouchConnection();
+    String take;
+    try {
+      SynchronousQueue<String> retVal = new SynchronousQueue<String>();
+      HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, new FetchJsonByIdVisitor(INSTANCE + '/' + path, channel, retVal));
+      take = retVal.take();
+    } finally {
+      KernelImpl.recycleChannel(channel);
+    }
     return take;
   }
 
