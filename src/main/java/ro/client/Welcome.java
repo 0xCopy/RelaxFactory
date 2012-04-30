@@ -31,9 +31,9 @@ public class Welcome implements EntryPoint {
     final EventBus eventBus = new SimpleEventBus();
     requestFactory = GWT.create(KernelFactory.class);
     requestFactory.initialize(eventBus);
-//    Kernel api = requestFactory.api();
-//    Request<RoSessionProxy> currentSession = api.getCurrentSession();
-
+////    Kernel api = requestFactory.api();
+////    Request<RoSessionProxy> currentSession = api.getCurrentSession();
+//
     doController();
 //    currentSession.fire(new Receiver<RoSessionProxy>() {
 //      private String id;
@@ -63,7 +63,7 @@ public class Welcome implements EntryPoint {
                 new Receiver<String>() {
                   @Override
                   public void onFailure(ServerFailure error) {
-                    super.onFailure(error);    //To change body of overridden methods use File | Settings | File Templates.
+                    super.onFailure(error);
                   }
 
                   @Override

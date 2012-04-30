@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.URLEncoder;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -22,8 +21,8 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import com.google.gson.FieldNamingPolicy;
@@ -37,6 +36,7 @@ import ro.model.RoSession;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.min;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static one.xio.HttpMethod.UTF8;
 import static ro.server.GeoIpIndexRecord.reclen;
 import static ro.server.GeoIpService.IPMASK;
@@ -49,7 +49,8 @@ import static ro.server.GeoIpService.bufAbstraction;
  */
 public class KernelImpl {
   public static final RoSessionLocator RO_SESSION_LOCATOR = new RoSessionLocator();
-  public static final ExecutorService EXECUTOR_SERVICE = Executors.newCachedThreadPool();
+  final private static ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() + 3);
+  public static final ScheduledExecutorService EXECUTOR_SERVICE = scheduledExecutorService;
   public static final ThreadLocal<ByteBuffer> ThreadLocalHeaders = new ThreadLocal<ByteBuffer>();
   static ThreadLocal<InetAddress> ThreadLocalInetAddress = new ThreadLocal<InetAddress>();
   public static final ThreadLocal<Map<String, String>> ThreadLocalSetCookies = new ThreadLocal<Map<String, String>>();
@@ -77,95 +78,114 @@ public class KernelImpl {
     }
   }
 
+  public static final String YYYY_MM_DD_T_HH_MM_SS_SSSZ = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
   public static final Gson GSON = new GsonBuilder()
 //    .registerTypeAdapter(Id.class, new IdTypeAdapter())
       .enableComplexMapKeySerialization()
 //    .serializeNulls()
-      .setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+      .setDateFormat(YYYY_MM_DD_T_HH_MM_SS_SSSZ)
       .setFieldNamingPolicy(FieldNamingPolicy.IDENTITY)
       .setPrettyPrinting()
 //    .setVersion(1.0)
       .create();
   public static final Charset ISO88591 = Charset.forName("ISO-8859-1");
   public static final String MYGEOIPSTRING = "mygeoipstring";
+  public static final String COOKIE = "Cookie";
 
 
-  static public RoSession getCurrentSession() throws Exception {
+  static public String getSessionCookieId() throws Exception {
     String id = null;
     RoSession roSession = null;
     try {
-      id = getSessionCookieId();
-      if (null != id)
-        roSession = RO_SESSION_LOCATOR.find(RoSession.class, id);
+      ThreadLocalSessionHeaders invoke = new ThreadLocalSessionHeaders().invoke();
+      ByteBuffer headerBuffer = invoke.getHb();
+      Map<String, int[]> headerIndex = invoke.getHeaders();
+//      String s = UTF8.decode((ByteBuffer) hb.rewind()).toString().trim();
+//      System.err.println("gsci:" + s);
+
+      if (headerIndex.containsKey(COOKIE)) {
+        final int[] optionalStartStopMarkers = headerIndex.get(COOKIE);
+        id = getBufferAsString(id, headerBuffer, optionalStartStopMarkers);
+      }
+
+      /* if (null != id)
+   roSession = RO_SESSION_LOCATOR.find(RoSession.class, id);*/
     } catch (Throwable e) {
       System.err.println("cookie failure on " + id);
       e.printStackTrace();
     }
-    if (null == roSession) {
+    if (null == id) {
       roSession = RO_SESSION_LOCATOR.create(RoSession.class);
-      Map<String, String> o = ThreadLocalSetCookies.get();
-      if (null == o) {
+      id = roSession.getId();
+
+      Map<String, String> stringMap = ThreadLocalSetCookies.get();
+      if (null == stringMap) {
         Map<String, String> value = new TreeMap<String, String>();
-        value.put(MYSESSIONSTRING, roSession.getId());
+        value.put(MYSESSIONSTRING, id);
         ThreadLocalSetCookies.set(value);
       }
-      String s = new Date(TimeUnit.DAYS.toMillis(14) + System.currentTimeMillis()).toGMTString();
-      final String sessionCookie = MessageFormat.format("{0}; path=/ ; expires={1}; HttpOnly", roSession.getId(), s);
-      ThreadLocalSetCookies.get().put(MYSESSIONSTRING, sessionCookie);
+      final Date expire = new Date(TimeUnit.DAYS.toMillis(14) + System.currentTimeMillis());
+      String cookietext = MessageFormat.format("{0} ; path=/ ; expires={1,date,yyyy-MM-dd HH:mm:ss.SSSZ} ; HttpOnly", id, expire);
+      ThreadLocalSetCookies.get().put(MYSESSIONSTRING, cookietext);
       final InetAddress inet4Address = ThreadLocalInetAddress.get();
       if (null != inet4Address) {
-        SessionToolImpl.setSessionProperty(InetAddress.class.getCanonicalName(), inet4Address.getCanonicalHostName());
 
         final int i = lookupInetAddress(inet4Address, GeoIpService.indexMMBuf, bufAbstraction);
         final ByteBuffer b = (ByteBuffer) GeoIpService.locationMMBuf.duplicate().clear().position(i);
         while (b.hasRemaining() && '\n' != b.get()) ;
+        while (Character.isWhitespace(b.get(b.position() - 1))) b.position(b.position() - 1);
+
+
         b.flip().position(i);
         //maxmind is iso not utf
-        final CharBuffer cityString = ISO88591.decode(b);
-        final String geoip = MessageFormat.format("{0}; path=/ ;expires={1}", URLEncoder.encode(cityString.toString().trim(), ISO88591.name()), s);
+        final CharBuffer cityString = ISO88591.decode(b);//attempt a utf8 switchout here...
+        final String geoip = MessageFormat.format("{0} ; path=/ ; expires={1,date,yyyy-MM-dd HH:mm:ss.SSSZ}", UTF8.decode(ByteBuffer.wrap(cityString.toString().getBytes(UTF8))), expire);
         ThreadLocalSetCookies.get().put(MYGEOIPSTRING, geoip);
-        EXECUTOR_SERVICE.submit(new Runnable() {
+        EXECUTOR_SERVICE.schedule(new Runnable() {
           @Override
           public void run() {
             try {
-              final String geoip1 = SessionToolImpl.setSessionProperty("geoip", geoip);
-              System.err.println("new user geo: " + geoip1);
+
+              SessionToolImpl.setSessionProperty(InetAddress.class.getCanonicalName(), inet4Address.getCanonicalHostName());
+              SessionToolImpl.setSessionProperty("geoip", geoip);
 
             } catch (Throwable ignored) {
             }
           }
-        });
-      }
-
-
-    }
-    return roSession;
-  }
-
-
-  static String getSessionCookieId() {
-    ThreadLocalSessionHeaders invoke = new ThreadLocalSessionHeaders().invoke();
-    ByteBuffer hb = invoke.getHb();
-    Map<String, int[]> headerIndex = invoke.getHeaders();
-    String headerStrring = UTF8.decode((ByteBuffer) hb.rewind()).toString().trim();
-    System.err.println("gsci:" + headerStrring);
-    String id = null;
-    if (headerIndex.containsKey("Cookie")) {
-      int[] cookieses = headerIndex.get("Cookie");
-      String coo = HttpMethod.UTF8.decode((ByteBuffer) hb.limit(cookieses[1]).position(cookieses[0])).toString().trim();
-
-      String[] split = coo.split(";");
-      for (String s : split) {
-        String[] chunk = s.split("=");
-        String cname = chunk[0];
-        if (MYSESSIONSTRING.equals(cname.trim())) {
-          id = chunk[1].trim();
-          break;
-        }
+        }, 250, MILLISECONDS);
       }
     }
     return id;
   }
+
+  static public RoSession getCurrentSession() throws Exception {
+    String id = null;
+    RoSession roSession = null;
+    id = getSessionCookieId();
+    if (null != id)
+      roSession = RO_SESSION_LOCATOR.find(RoSession.class, id);
+    return roSession;
+  }
+
+  public static String getBufferAsString(String id, ByteBuffer hb, int... optionalStartStopMarkers) {
+
+    if (optionalStartStopMarkers.length > 1) hb.limit(optionalStartStopMarkers[1]);
+    if (optionalStartStopMarkers.length > 1) hb.position(optionalStartStopMarkers[0]);
+    String coo =
+        UTF8.decode(hb).toString().trim();
+
+    String[] split = coo.split(";");
+    for (String s : split) {
+      String[] chunk = s.split("=");
+      String cname = chunk[0];
+      if (MYSESSIONSTRING.equals(cname.trim())) {
+        id = chunk[1].trim();
+        break;
+      }
+    }
+    return id;
+  }
+
 
   //test
   public static void main(String... args) throws InterruptedException, IOException, ExecutionException, ParserConfigurationException, SAXException, XPathExpressionException {
