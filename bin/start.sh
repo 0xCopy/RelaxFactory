@@ -13,6 +13,6 @@ RD=$rt/..
 TD=$RD/target/${p}-${s}/
 pushd $TD
 TD=$(pwd -P)
-java -cp $CP:$TD/WEB-INF/classes ro.server.KernelImpl
+java -Xmx425m -cp $CP:$TD/WEB-INF/classes ro.server.KernelImpl
 popd
 }
