@@ -7,7 +7,7 @@
     <inherits name="com.google.gwt.query.Query"/>
     <inherits name="com.google.gwt.user.theme.standard.Standard"/>
     <inherits name="com.google.gwt.precompress.Precompress"/>
-    <inherits name="com.google.gwt.geolocation.Geolocation"/>
+
     <source path='client'/>
     <source path='shared'/>
     <public path="public"/>

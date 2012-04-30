@@ -41,7 +41,12 @@ class RfPostWrapper extends Impl {
     SocketChannel channel = (SocketChannel) key.channel();
     int receiveBufferSize = channel.socket().getReceiveBufferSize();
     ByteBuffer dst = ByteBuffer.allocateDirect(receiveBufferSize);
-    int read = channel.read(dst);
+    int read = 0;
+    try {
+      read = channel.read(dst);
+    } catch (IOException e) {
+      channel.close();
+    }
     if (-1 == read) {
       key.attach(null);
     } else {
@@ -97,14 +102,14 @@ class RfPostWrapper extends Impl {
           while (!Character.isWhitespace(headers.get())) ;
           int position = headers.position();
           while (!Character.isWhitespace(headers.get())) ;
-          String fname = URLDecoder.decode(UTF8.decode((ByteBuffer) headers.flip().position(position)).toString().trim(), UTF8.name());
-          String fn = fname.split("[?#]", 1)[0];
+          String fname = URLDecoder.decode(UTF8.decode((ByteBuffer) headers.flip().position(position)).toString().trim());
 
           fname = MessageFormat.format("./{0}", fname.split("[\\#\\?]")).replace("//", "/").replace("../", "./");
-          final File[] file = {new File(fname)};
+          final File filex = new File(fname);
+          final File[] file = {filex};
           if (file[0].isFile()) {
-            key.interestOps(SelectionKey.OP_WRITE);
             final String finalFname = fname;
+            key.interestOps(SelectionKey.OP_WRITE);
             key.attach(new Impl() {
 
               @Override
@@ -115,17 +120,17 @@ class RfPostWrapper extends Impl {
                 final int sendBufferSize = socketChannel.socket().getSendBufferSize();
                 String ceString = "";
 
-                final Map<String, int[]> hmap = HttpHeaders.getHeaders(headers);
-                final int[] ints = hmap.get("Accept-Encoding");
+                Map<String, int[]> hmap = HttpHeaders.getHeaders((ByteBuffer) headers.clear());
+                int[] ints = hmap.get("Accept-Encoding");
                 if (null != ints) {
-                  final String accepts = UTF8.decode((ByteBuffer) headers.clear().limit(ints[1]).position(ints[0])).toString().trim();
+                  String accepts = UTF8.decode((ByteBuffer) headers.clear().limit(ints[1]).position(ints[0])).toString().trim();
                   for (CompressionTypes compTypes : CompressionTypes.values()) {
                     if (accepts.contains(compTypes.name())) {
-                      final File file1 = new File(finalFname + "." + compTypes.suffix);
+                      File file1 = new File(finalFname + "." + compTypes.suffix);
                       if (file1.isFile()) {
                         file[0] = file1;
                         System.err.println("sending compressed archive: " + file1.getAbsolutePath());
-                        ceString = "Content-Encoding: " + compTypes.name() + "\r\n";
+                        ceString = MessageFormat.format("Content-Encoding: {0}\r\n", compTypes.name());
                         break;
                       }
                     }
@@ -139,20 +144,32 @@ class RfPostWrapper extends Impl {
 
                 String substring = finalFname.substring(finalFname.lastIndexOf('.') + 1);
                 MimeType mimeType = MimeType.valueOf(substring);
-                String response = MessageFormat.format("HTTP/1.1 200 OK\r\nContent-Type: {0}\r\nContent-Length: {1,number,#}\r\n" +
-                    ceString + "\r\n\r\n", (null == mimeType ? MimeType.bin : mimeType).contentType, total);
-                final int write = socketChannel.write(UTF8.encode(response));
+                long length;
+                /* try {
+              length = filex.length();
+            } catch (Exception e) */
+                {
+                  length = randomAccessFile.length();
+                }
+                String response = MessageFormat.format("HTTP/1.1 200 OK\r\nContent-Type: {0}\r\nContent-Length: {1,number,#}\r\n{2}\r\n", (null == mimeType ? MimeType.bin : mimeType).contentType, length, ceString);
+                System.err.println("GET response: " + response + '+');
+
+
+                int write = socketChannel.write(UTF8.encode(response));
 
                 final long[] progress = {fileChannel.transferTo(0, sendBufferSize, socketChannel)};
-
+                key.interestOps(SelectionKey.OP_WRITE);
                 key.attach(new Impl() {
                   @Override
                   public void onWrite(SelectionKey key) throws Exception {
-                    progress[0] += fileChannel.transferTo(progress[0], min(sendBufferSize, total - progress[0]), socketChannel);
-                    if (progress[0] >= total) {
+                    long remaining = total - progress[0];
+                    progress[0] += fileChannel.transferTo(progress[0], min(sendBufferSize, remaining), socketChannel);
+                    remaining = total - progress[0];
+                    if (remaining == 0) {
+                      fileChannel.close();
+                      randomAccessFile.close();
                       key.interestOps(SelectionKey.OP_READ);
                       key.attach(new Object[0]);
-                      randomAccessFile.close();
                     }
                   }
                 });
@@ -210,7 +227,7 @@ class RfPostWrapper extends Impl {
       int length = process.length();
       final String s1 = "HTTP/1.1 200 OK\r\n" +
           sc +
-          "Content-Type: application/json\r\n" +
+          "Content-Type: application/json ; charset=utf-8\r\n" +
           "Content-Length: " + length + "\r\n\r\n";
       key.attach(new AsioVisitor.Impl() {
         @Override
