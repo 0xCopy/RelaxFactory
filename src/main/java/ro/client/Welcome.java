@@ -10,10 +10,8 @@ import com.google.gwt.user.client.ui.DialogBox;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.google.web.bindery.requestfactory.shared.Receiver;
-import com.google.web.bindery.requestfactory.shared.Request;
+import com.google.web.bindery.requestfactory.shared.ServerFailure;
 import ro.shared.KernelFactory;
-import ro.shared.prox.RoSessionProxy;
-import ro.shared.req.Kernel;
 import ro.shared.req.SessionTool;
 
 
@@ -25,7 +23,7 @@ import ro.shared.req.SessionTool;
 public class Welcome implements EntryPoint {
   static EnumMap<UserDetails, String> gather = new EnumMap<UserDetails, String>(UserDetails.class);
   public static KernelFactory requestFactory;
-  public static RoSessionProxy session;
+//  public static RoSessionProxy session;
 
 
   public void onModuleLoad() {
@@ -33,19 +31,18 @@ public class Welcome implements EntryPoint {
     final EventBus eventBus = new SimpleEventBus();
     requestFactory = GWT.create(KernelFactory.class);
     requestFactory.initialize(eventBus);
-    Kernel api = requestFactory.api();
-    Request<RoSessionProxy> currentSession = api.getCurrentSession();
+//    Kernel api = requestFactory.api();
+//    Request<RoSessionProxy> currentSession = api.getCurrentSession();
 
-    currentSession.fire(new Receiver<RoSessionProxy>() {
-      private String id;
-
-      @Override
-      public void onSuccess(RoSessionProxy response) {
-        session = response;
-        String id = response.getId();
-        doController();
-      }
-    });
+    doController();
+//    currentSession.fire(new Receiver<RoSessionProxy>() {
+//      private String id;
+//
+//      @Override
+//      public void onSuccess(RoSessionProxy response) {
+//
+//      }
+//    });
   }
 
   void doController() {
@@ -65,6 +62,11 @@ public class Welcome implements EntryPoint {
             requestFactory.couch().getSessionProperty(userDetails.getKey()).fire(
                 new Receiver<String>() {
                   @Override
+                  public void onFailure(ServerFailure error) {
+                    super.onFailure(error);    //To change body of overridden methods use File | Settings | File Templates.
+                  }
+
+                  @Override
                   public void onSuccess(String response) {
 
                     if (null == response) {
@@ -72,6 +74,9 @@ public class Welcome implements EntryPoint {
                       userDetails.decorateDialog(dialog, new MyRunAsyncCallback());
                       dialog.center();
                       dialog.show();
+                    } else {
+                      gather.put(userDetails, response);
+                      doController();
                     }
                   }
                 });

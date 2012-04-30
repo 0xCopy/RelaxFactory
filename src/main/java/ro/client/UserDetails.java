@@ -15,7 +15,6 @@ import com.google.web.bindery.requestfactory.shared.Receiver;
 
 import static ro.client.Welcome.gather;
 import static ro.client.Welcome.requestFactory;
-import static ro.client.Welcome.session;
 
 /**
  * User: jim
@@ -106,11 +105,11 @@ enum UserDetails {
         @Override
         public void onClick(ClickEvent event) {
           final String text = w.getText();
-          requestFactory.couch().setSessionProperty( key, text).fire(new Receiver<String>() {
+          requestFactory.couch().setSessionProperty(key, text).fire(new Receiver<String>() {
 
             @Override
             public void onSuccess(String response) {
-              session.setVersion(response);
+//              session.setVersion(response);
               gather.put(UserDetails.this, text);
               dialog.hide();
               GWT.runAsync(callback);
