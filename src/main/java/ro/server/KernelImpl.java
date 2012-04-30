@@ -1,7 +1,5 @@
 package ro.server;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
@@ -20,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -31,7 +28,6 @@ import com.google.gson.GsonBuilder;
 import one.xio.AsioVisitor;
 import one.xio.HttpHeaders;
 import one.xio.HttpMethod;
-import org.xml.sax.SAXException;
 import ro.model.RoSession;
 
 import static java.lang.Math.abs;
@@ -49,35 +45,11 @@ import static ro.server.GeoIpService.bufAbstraction;
  */
 public class KernelImpl {
   public static final RoSessionLocator RO_SESSION_LOCATOR = new RoSessionLocator();
-  final private static ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() + 3);
-  public static final ScheduledExecutorService EXECUTOR_SERVICE = scheduledExecutorService;
+  public static final ScheduledExecutorService EXECUTOR_SERVICE = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() + 3);
   public static final ThreadLocal<ByteBuffer> ThreadLocalHeaders = new ThreadLocal<ByteBuffer>();
-  static ThreadLocal<InetAddress> ThreadLocalInetAddress = new ThreadLocal<InetAddress>();
+  public static ThreadLocal<InetAddress> ThreadLocalInetAddress = new ThreadLocal<InetAddress>();
   public static final ThreadLocal<Map<String, String>> ThreadLocalSetCookies = new ThreadLocal<Map<String, String>>();
   private static final String MYSESSIONSTRING = KernelImpl.class.getCanonicalName();
-
-  //  private static ByteBuffer indexBuf;
-  private static int blockCount;
-  //  private static ByteBuffer locBuf;
-  public static InetAddress LOOPBACK = null; static {
-    try {
-      try {
-        KernelImpl.LOOPBACK = (InetAddress) InetAddress.class.getMethod("getLoopBackAddress").invoke(null);
-
-
-      } catch (NoSuchMethodException e) {
-        KernelImpl.LOOPBACK = InetAddress.getByAddress(new byte[]{127, 0, 0, 1});
-        System.err.println("java 6 LOOPBACK detected");
-      } catch (InvocationTargetException e) {
-        e.printStackTrace();  //todo: verify for a purpose
-      } catch (IllegalAccessException e) {
-        e.printStackTrace();  //todo: verify for a purpose
-      }
-    } catch (UnknownHostException e) {
-      e.printStackTrace();  //todo: verify for a purpose
-    }
-  }
-
   public static final String YYYY_MM_DD_T_HH_MM_SS_SSSZ = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
   public static final Gson GSON = new GsonBuilder()
 //    .registerTypeAdapter(Id.class, new IdTypeAdapter())
@@ -92,6 +64,26 @@ public class KernelImpl {
   public static final String MYGEOIPSTRING = "mygeoipstring";
   public static final String COOKIE = "Cookie";
 
+  //  private static ByteBuffer indexBuf;
+  private static int blockCount;
+  //  private static ByteBuffer locBuf;
+  public static InetAddress LOOPBACK = null; static {
+    try {
+      try {
+        KernelImpl.LOOPBACK = (InetAddress) InetAddress.class.getMethod("getLoopBackAddress").invoke(null);
+      } catch (NoSuchMethodException e) {
+        KernelImpl.LOOPBACK = InetAddress.getByAddress(new byte[]{127, 0, 0, 1});
+        System.err.println("java 6 LOOPBACK detected");
+      } catch (InvocationTargetException e) {
+        e.printStackTrace();
+      } catch (IllegalAccessException e) {
+        e.printStackTrace();
+      }
+    } catch (UnknownHostException e) {
+      e.printStackTrace();
+    }
+  }
+
 
   static public String getSessionCookieId() throws Exception {
     String id = null;
@@ -105,7 +97,7 @@ public class KernelImpl {
 
       if (headerIndex.containsKey(COOKIE)) {
         final int[] optionalStartStopMarkers = headerIndex.get(COOKIE);
-        id = getBufferAsString(id, headerBuffer, optionalStartStopMarkers);
+        id = getCookieAsString(MYSESSIONSTRING, headerBuffer, optionalStartStopMarkers);
       }
 
       /* if (null != id)
@@ -133,10 +125,8 @@ public class KernelImpl {
         final int i = lookupInetAddress(inet4Address, GeoIpService.indexMMBuf, bufAbstraction);
         final ByteBuffer b = (ByteBuffer) GeoIpService.locationMMBuf.duplicate().clear().position(i);
         while (b.hasRemaining() && '\n' != b.get()) ;
-        while (Character.isWhitespace(b.get(b.position() - 1))) b.position(b.position() - 1);
+        rtrimByteBuffer(b).position(i);
 
-
-        b.flip().position(i);
         //maxmind is iso not utf
         final CharBuffer cityString = ISO88591.decode(b);//attempt a utf8 switchout here...
         final String geoip = MessageFormat.format("{0} ; path=/ ; expires={1,date,yyyy-MM-dd HH:mm:ss.SSSZ}", UTF8.decode(ByteBuffer.wrap(cityString.toString().getBytes(UTF8))), expire);
@@ -158,6 +148,12 @@ public class KernelImpl {
     return id;
   }
 
+  private static ByteBuffer rtrimByteBuffer(ByteBuffer b) {
+    while (Character.isWhitespace(b.get(b.position() - 1))) b.position(b.position() - 1);
+    b.flip();
+    return b;
+  }
+
   static public RoSession getCurrentSession() throws Exception {
     String id = null;
     RoSession roSession = null;
@@ -167,28 +163,33 @@ public class KernelImpl {
     return roSession;
   }
 
-  public static String getBufferAsString(String id, ByteBuffer hb, int... optionalStartStopMarkers) {
+  public static String getCookieAsString(String cookieKey, ByteBuffer headerBuffer, int... optionalStartStopMarkers) {
 
-    if (optionalStartStopMarkers.length > 1) hb.limit(optionalStartStopMarkers[1]);
-    if (optionalStartStopMarkers.length > 1) hb.position(optionalStartStopMarkers[0]);
+    if (0 < optionalStartStopMarkers.length) {
+      if (1 < optionalStartStopMarkers.length) {
+        headerBuffer.limit(optionalStartStopMarkers[1]);
+      }
+      headerBuffer.position(optionalStartStopMarkers[0]);
+    }
     String coo =
-        UTF8.decode(hb).toString().trim();
+        UTF8.decode(headerBuffer).toString().trim();
 
     String[] split = coo.split(";");
+    String val = null;
     for (String s : split) {
       String[] chunk = s.split("=");
       String cname = chunk[0];
-      if (MYSESSIONSTRING.equals(cname.trim())) {
-        id = chunk[1].trim();
+      if (cookieKey.equals(cname.trim())) {
+        val = chunk[1].trim();
         break;
       }
     }
-    return id;
+    return val;
   }
 
 
   //test
-  public static void main(String... args) throws InterruptedException, IOException, ExecutionException, ParserConfigurationException, SAXException, XPathExpressionException {
+  public static void main(String... args) throws Exception {
 
 
     GeoIpService.startGeoIpService("geoip");
@@ -276,25 +277,20 @@ public class KernelImpl {
     return channel;
   }
 
-  public static void moveCaretToDoubleEol(ByteBuffer dst) {
-    byte b;
-    boolean eol = false;
-    while (dst.hasRemaining() && (b = dst.get()) != -1) {
-      if (b != '\n') {
-        if (b != '\r') {
-          eol = false;
-        }
-      } else {
-        if (!eol) {
-          eol = true;
-        } else {
-          break;
-        }
-      }
-    }
+  public static void moveCaretToDoubleEol(ByteBuffer buffer) {
+    int distance;
+    int eol = buffer.position();
+
+    do {
+      int prev = eol;
+      while (buffer.hasRemaining() && '\n' != buffer.get()) ;
+      eol = buffer.position();
+      distance = abs(eol - prev);
+      if (2 == distance && '\r' == buffer.get(eol - 2)) break;
+    } while (buffer.hasRemaining() && 1 < distance);
   }
 
-  private static class ThreadLocalSessionHeaders {
+  static class ThreadLocalSessionHeaders {
 
     private ByteBuffer hb;
     private Map<String, int[]> headers;
@@ -313,5 +309,6 @@ public class KernelImpl {
       return this;
     }
   }
-}
 
+
+}

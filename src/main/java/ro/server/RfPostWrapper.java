@@ -1,20 +1,28 @@
 package ro.server;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.net.InetAddress;
+import java.net.URLDecoder;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.text.MessageFormat;
 import java.util.Iterator;
 import java.util.Map;
 
 import com.google.web.bindery.requestfactory.server.ServiceLayer;
 import com.google.web.bindery.requestfactory.server.SimpleRequestProcessor;
 import one.xio.AsioVisitor;
+import one.xio.AsioVisitor.Impl;
 import one.xio.HttpHeaders;
 import one.xio.HttpMethod;
+import one.xio.MimeType;
 
+import static java.lang.Math.min;
 import static one.xio.HttpMethod.UTF8;
 
 /**
@@ -23,7 +31,7 @@ import static one.xio.HttpMethod.UTF8;
  * Date: 4/18/12
  * Time: 12:37 PM
  */
-class RfPostWrapper extends AsioVisitor.Impl {
+class RfPostWrapper extends Impl {
 
 
   public static final SimpleRequestProcessor SIMPLE_REQUEST_PROCESSOR = new SimpleRequestProcessor(ServiceLayer.create());
@@ -33,9 +41,9 @@ class RfPostWrapper extends AsioVisitor.Impl {
     SocketChannel channel = (SocketChannel) key.channel();
     int receiveBufferSize = channel.socket().getReceiveBufferSize();
     ByteBuffer dst = ByteBuffer.allocateDirect(receiveBufferSize);
-    final int read = channel.read(dst);
+    int read = channel.read(dst);
     if (-1 == read) {
-      key.cancel();
+      key.attach(null);
     } else {
       dst.flip();
       ByteBuffer duplicate = dst.duplicate();
@@ -45,7 +53,7 @@ class RfPostWrapper extends AsioVisitor.Impl {
       dst.limit(read).position(0);
       key.attach(dst);
       switch (method) {
-        case POST:
+        case POST: {
           KernelImpl.moveCaretToDoubleEol(dst);
           ByteBuffer headers = (ByteBuffer) dst.duplicate().flip();
           System.err.println("+++ headers: " + UTF8.decode((ByteBuffer) headers.duplicate().rewind()).toString());
@@ -57,10 +65,9 @@ class RfPostWrapper extends AsioVisitor.Impl {
           String trim1 = UTF8.decode((ByteBuffer) duplicate1.limit(ints[1]).position(ints[0])).toString().trim();
           long total = Long.parseLong(trim1);
 
-          final long[] remaining = {total - dst.remaining()};
-          if (remaining[0] == 0) {
+          long[] remaining = {total - dst.remaining()};
+          if (0 == remaining[0]) {
             KernelImpl.EXECUTOR_SERVICE.submit(new RfProcessTask(headers, dst, key));
-
           } else {
             if (dst.capacity() - dst.position() >= total) {
               headers = ByteBuffer.allocateDirect(dst.position()).put(headers);
@@ -72,7 +79,7 @@ class RfPostWrapper extends AsioVisitor.Impl {
             }
             final ByteBuffer finalDst = dst;
             final ByteBuffer finalHeaders = headers;
-            key.attach(new AsioVisitor.Impl() {
+            key.attach(new Impl() {
               @Override
               public void onRead(SelectionKey selectionKey) throws IOException {
                 ((SocketChannel) selectionKey.channel()).read(finalDst);
@@ -83,6 +90,80 @@ class RfPostWrapper extends AsioVisitor.Impl {
             });
           }
           break;
+        }
+        case GET: {
+          KernelImpl.moveCaretToDoubleEol(dst);
+          final ByteBuffer headers = ((ByteBuffer) dst.duplicate().flip()).slice();
+          while (!Character.isWhitespace(headers.get())) ;
+          int position = headers.position();
+          while (!Character.isWhitespace(headers.get())) ;
+          String fname = URLDecoder.decode(UTF8.decode((ByteBuffer) headers.flip().position(position)).toString().trim(), UTF8.name());
+          String fn = fname.split("[?#]", 1)[0];
+
+          fname = MessageFormat.format("./{0}", fname.split("[\\#\\?]")).replace("//", "/").replace("../", "./");
+          final File[] file = {new File(fname)};
+          if (file[0].isFile()) {
+            key.interestOps(SelectionKey.OP_WRITE);
+            final String finalFname = fname;
+            key.attach(new Impl() {
+
+              @Override
+              public void onWrite(SelectionKey key) throws Exception {
+
+
+                final SocketChannel socketChannel = (SocketChannel) key.channel();
+                final int sendBufferSize = socketChannel.socket().getSendBufferSize();
+                String ceString = "";
+
+                final Map<String, int[]> hmap = HttpHeaders.getHeaders(headers);
+                final int[] ints = hmap.get("Accept-Encoding");
+                if (null != ints) {
+                  final String accepts = UTF8.decode((ByteBuffer) headers.clear().limit(ints[1]).position(ints[0])).toString().trim();
+                  for (CompressionTypes compTypes : CompressionTypes.values()) {
+                    if (accepts.contains(compTypes.name())) {
+                      final File file1 = new File(finalFname + "." + compTypes.suffix);
+                      if (file1.isFile()) {
+                        file[0] = file1;
+                        System.err.println("sending compressed archive: " + file1.getAbsolutePath());
+                        ceString = "Content-Encoding: " + compTypes.name() + "\r\n";
+                        break;
+                      }
+                    }
+                  }
+                }
+
+                final RandomAccessFile randomAccessFile = new RandomAccessFile(file[0], "r");
+                final long total = randomAccessFile.length();
+                final FileChannel fileChannel = randomAccessFile.getChannel();
+
+
+                String substring = finalFname.substring(finalFname.lastIndexOf('.') + 1);
+                MimeType mimeType = MimeType.valueOf(substring);
+                String response = MessageFormat.format("HTTP/1.1 200 OK\r\nContent-Type: {0}\r\nContent-Length: {1,number,#}\r\n" +
+                    ceString + "\r\n\r\n", (null == mimeType ? MimeType.bin : mimeType).contentType, total);
+                final int write = socketChannel.write(UTF8.encode(response));
+
+                final long[] progress = {fileChannel.transferTo(0, sendBufferSize, socketChannel)};
+
+                key.attach(new Impl() {
+                  @Override
+                  public void onWrite(SelectionKey key) throws Exception {
+                    progress[0] += fileChannel.transferTo(progress[0], min(sendBufferSize, total - progress[0]), socketChannel);
+                    if (progress[0] >= total) {
+                      key.interestOps(SelectionKey.OP_READ);
+                      key.attach(new Object[0]);
+                      randomAccessFile.close();
+                    }
+                  }
+                });
+
+              }
+            });
+          }
+
+          break;
+
+        }
         default:
           method.onRead(key);
           break;
@@ -120,8 +201,8 @@ class RfPostWrapper extends AsioVisitor.Impl {
     @Override
     public void run() {
       KernelImpl.ThreadLocalHeaders.set(headers);
-      final SocketChannel socketChannel = (SocketChannel) key.channel();
-      final InetAddress remoteSocketAddress = socketChannel.socket().getInetAddress();
+      SocketChannel socketChannel = (SocketChannel) key.channel();
+      InetAddress remoteSocketAddress = socketChannel.socket().getInetAddress();
       KernelImpl.ThreadLocalInetAddress.set(remoteSocketAddress);
       String trim = UTF8.decode(data).toString().trim();
       final String process = SIMPLE_REQUEST_PROCESSOR.process(trim);
@@ -144,7 +225,7 @@ class RfPostWrapper extends AsioVisitor.Impl {
 
     }
 
-    private String setOutboundCookies() {
+    String setOutboundCookies() {
       System.err.println("+++ headers " + UTF8.decode((ByteBuffer) headers.rewind()).toString());
       Map setCookiesMap = KernelImpl.ThreadLocalSetCookies.get();
       String sc = "";
@@ -166,3 +247,4 @@ class RfPostWrapper extends AsioVisitor.Impl {
     }
   }
 }
+

@@ -22,10 +22,11 @@ import static ro.server.KernelImpl.GSON;
 
 /**
  * @deprecated this was used to model RF but ignores DRY.
- * User: jim
- * Date: 4/17/12
- * Time: 8:18 PM
- */                   @Deprecated()
+ *             User: jim
+ *             Date: 4/17/12
+ *             Time: 8:18 PM
+ */
+@Deprecated()
 public abstract class SessionLocatorVisitor<TxPojo, DataPojo> implements AsioVisitor {
   public DataPojo data;
   protected BlockingQueue<TxPojo> blockingQueue;
@@ -53,7 +54,7 @@ public abstract class SessionLocatorVisitor<TxPojo, DataPojo> implements AsioVis
     TxPojo tx = (TxPojo) GSON.fromJson(json, memento.getClass());
     handle(json, tx);
     blockingQueue.put(tx);
-    key.cancel();
+    key.attach(null);
   }
 
   protected abstract void handle(String json, TxPojo couchTx);
