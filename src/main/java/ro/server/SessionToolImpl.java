@@ -1,6 +1,7 @@
 package ro.server;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.LinkedHashMap;
@@ -8,6 +9,7 @@ import java.util.concurrent.SynchronousQueue;
 
 import one.xio.HttpMethod;
 
+import static one.xio.HttpMethod.UTF8;
 import static ro.server.KernelImpl.GSON;
 import static ro.server.KernelImpl.getSessionCookieId;
 
@@ -30,7 +32,20 @@ public class SessionToolImpl {
 
 
     final String sessionCookieId = getSessionCookieId();
-    return (String) fetchMapById(sessionCookieId).get(key);
+    String s = null;
+    String canonicalName = null;
+    try {
+      s = (String) fetchMapById(sessionCookieId).get(key);
+    } catch (Exception e) {
+      canonicalName = SessionToolImpl.class.getCanonicalName();
+      final ByteBuffer byteBuffer = KernelImpl.ThreadLocalHeaders.get();
+      if (!UTF8.decode(byteBuffer).toString().trim().equals(canonicalName)) {
+
+        KernelImpl.ThreadLocalHeaders.set(UTF8.encode(canonicalName));
+        return getSessionProperty(key);
+      }
+    }
+    return s;
   }
 
   //maximum wastefulness
@@ -43,7 +58,7 @@ public class SessionToolImpl {
 
       return tx.rev;
     } catch (Throwable e) {
-      e.printStackTrace();  //todo: verify for a purpose
+
     } finally {
     }
     return null;
@@ -65,7 +80,10 @@ public class SessionToolImpl {
 
   public static LinkedHashMap fetchMapById(final String key) throws IOException, InterruptedException {
     String take = fetchSessionJsonById(key);
-    return GSON.fromJson(take, LinkedHashMap.class);
+    final LinkedHashMap linkedHashMap = GSON.fromJson(take, LinkedHashMap.class);
+    if (linkedHashMap.size() == 2 && linkedHashMap.containsKey("responseCode"))
+      throw new IOException(String.valueOf(linkedHashMap));
+    return linkedHashMap;
   }
 
   public static String fetchSessionJsonById(final String path) throws IOException, InterruptedException {
@@ -73,7 +91,8 @@ public class SessionToolImpl {
     final SynchronousQueue<String> retVal = new SynchronousQueue<String>();
     HttpMethod.enqueue(channel, SelectionKey.OP_CONNECT, new
         FetchJsonByIdVisitor(INSTANCE + '/' + path, channel, retVal));
-    return retVal.take();
+    final String take = retVal.take();
+    return take;
   }
 
 }

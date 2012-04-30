@@ -152,7 +152,7 @@ class RfPostWrapper extends Impl {
                   length = randomAccessFile.length();
                 }
                 String response = MessageFormat.format("HTTP/1.1 200 OK\r\nContent-Type: {0}\r\nContent-Length: {1,number,#}\r\n{2}\r\n", (null == mimeType ? MimeType.bin : mimeType).contentType, length, ceString);
-                System.err.println("GET response: " + response + '+');
+//                System.err.println("GET response: " + response + '+');
 
 
                 int write = socketChannel.write(UTF8.encode(response));
@@ -173,13 +173,10 @@ class RfPostWrapper extends Impl {
                     }
                   }
                 });
-
               }
             });
           }
-
           break;
-
         }
         default:
           method.onRead(key);

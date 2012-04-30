@@ -96,7 +96,7 @@ public class KernelImpl {
 //      System.err.println("gsci:" + s);
 
       if (headerIndex.containsKey(COOKIE)) {
-        final int[] optionalStartStopMarkers = headerIndex.get(COOKIE);
+        int[] optionalStartStopMarkers = headerIndex.get(COOKIE);
         id = getCookieAsString(MYSESSIONSTRING, headerBuffer, optionalStartStopMarkers);
       }
 
@@ -104,7 +104,6 @@ public class KernelImpl {
    roSession = RO_SESSION_LOCATOR.find(RoSession.class, id);*/
     } catch (Throwable e) {
       System.err.println("cookie failure on " + id);
-      e.printStackTrace();
     }
     if (null == id) {
       roSession = RO_SESSION_LOCATOR.create(RoSession.class);
@@ -116,20 +115,20 @@ public class KernelImpl {
         value.put(MYSESSIONSTRING, id);
         ThreadLocalSetCookies.set(value);
       }
-      final Date expire = new Date(TimeUnit.DAYS.toMillis(14) + System.currentTimeMillis());
-      String cookietext = MessageFormat.format("{0} ; path=/ ; expires={1,date,yyyy-MM-dd HH:mm:ss.SSSZ} ; HttpOnly", id, expire);
+      Date expire = new Date(TimeUnit.DAYS.toMillis(14) + System.currentTimeMillis());
+      String cookietext = MessageFormat.format("{0} ; path=/ ; expires={1} ; HttpOnly", id, expire.toGMTString());
       ThreadLocalSetCookies.get().put(MYSESSIONSTRING, cookietext);
       final InetAddress inet4Address = ThreadLocalInetAddress.get();
       if (null != inet4Address) {
 
-        final int i = lookupInetAddress(inet4Address, GeoIpService.indexMMBuf, bufAbstraction);
-        final ByteBuffer b = (ByteBuffer) GeoIpService.locationMMBuf.duplicate().clear().position(i);
+        int i = lookupInetAddress(inet4Address, GeoIpService.indexMMBuf, bufAbstraction);
+        ByteBuffer b = (ByteBuffer) GeoIpService.locationMMBuf.duplicate().clear().position(i);
         while (b.hasRemaining() && '\n' != b.get()) ;
         rtrimByteBuffer(b).position(i);
 
         //maxmind is iso not utf
-        final CharBuffer cityString = ISO88591.decode(b);//attempt a utf8 switchout here...
-        final String geoip = MessageFormat.format("{0} ; path=/ ; expires={1,date,yyyy-MM-dd HH:mm:ss.SSSZ}", UTF8.decode(ByteBuffer.wrap(cityString.toString().getBytes(UTF8))), expire);
+        CharBuffer cityString = ISO88591.decode(b);//attempt a utf8 switchout here...
+        final String geoip = MessageFormat.format("{0} ; path=/ ; expires={1}", UTF8.decode(ByteBuffer.wrap(cityString.toString().getBytes(UTF8))), expire.toGMTString());
         ThreadLocalSetCookies.get().put(MYGEOIPSTRING, geoip);
         EXECUTOR_SERVICE.schedule(new Runnable() {
           @Override
@@ -238,13 +237,13 @@ public class KernelImpl {
     int abs;
     int ret;
 
-    final byte[] address = inet4Address.getAddress();
+    byte[] address = inet4Address.getAddress();
     long compare = 0;
     for (int i = 0; i < address.length; i++) {
       compare |= (address[i] & 0xff) << 8 * (address.length - 1 - i);
     }
     int a = Collections.binarySearch(bufAbstraction, IPMASK & compare);
-    final int b = bufAbstraction.size() - 1;
+    int b = bufAbstraction.size() - 1;
     abs = min(abs(a), b);
 
     newPosition = reclen * abs + 4;
@@ -271,7 +270,7 @@ public class KernelImpl {
 
   public static SocketChannel createCouchConnection() throws IOException {
     System.err.println("opening " + new InetSocketAddress(LOOPBACK, 5984).toString());
-    final SocketChannel channel = SocketChannel.open();
+    SocketChannel channel = SocketChannel.open();
     channel.configureBlocking(false);
     channel.connect(new InetSocketAddress(LOOPBACK, 5984));
     return channel;
