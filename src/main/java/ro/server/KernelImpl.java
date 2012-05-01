@@ -193,6 +193,102 @@ public class KernelImpl {
   }
 
 
+  /**
+   * offset to locationcsv buffer [n] to EOL
+   *
+   * @param inet4Address
+   * @param indexRecords
+   * @param bufAbstraction
+   * @return
+   */
+  public static int lookupInetAddress(InetAddress inet4Address, final ByteBuffer indexRecords, List<Long> bufAbstraction) {
+
+    int newPosition;
+    int abs;
+    int ret;
+
+    byte[] address = inet4Address.getAddress();
+    long compare = 0;
+    for (int i = 0; i < address.length; i++) {
+      compare |= (address[i] & 0xff) << 8 * (address.length - 1 - i);
+    }
+    int a = Collections.binarySearch(bufAbstraction, IPMASK & compare);
+    int b = bufAbstraction.size() - 1;
+    abs = min(abs(a), b);
+
+    newPosition = reclen * abs + 4;
+    indexRecords.position(newPosition);
+    ret = indexRecords.getInt();
+
+
+    return ret;
+  }
+
+  public static SocketChannel createCouchConnection() throws IOException {
+
+    SocketChannel channel = null;
+    while (null == channel && !couchDq.isEmpty()) {
+
+      SocketChannel remove = (SocketChannel) couchDq.remove();
+      if (remove.isConnected()) {
+        channel = remove;
+      }
+    }
+    if (null == channel) {
+      System.err.println("opening " + new InetSocketAddress(LOOPBACK, 5984).toString());
+      channel = SocketChannel.open();
+      channel.configureBlocking(false);
+      channel.connect(new InetSocketAddress(LOOPBACK, 5984));
+    } else System.err.println("+++ recycling " + deepToString(channel));
+
+    return channel;
+  }
+
+
+  public static void moveCaretToDoubleEol(ByteBuffer buffer) {
+    int distance;
+    int eol = buffer.position();
+
+    do {
+      int prev = eol;
+      while (buffer.hasRemaining() && '\n' != buffer.get()) ;
+      eol = buffer.position();
+      distance = abs(eol - prev);
+      if (2 == distance && '\r' == buffer.get(eol - 2)) break;
+    } while (buffer.hasRemaining() && 1 < distance);
+  }
+
+  static String deepToString(Object... d) {
+    return Arrays.deepToString(d);
+  }
+
+  public static void recycleChannel(SocketChannel channel) throws ClosedChannelException {
+    channel.register(HttpMethod.getSelector(), 0).attach(null);
+    couchDq.add(channel);
+  }
+
+  static class ThreadLocalSessionHeaders {
+
+    private ByteBuffer hb;
+
+    private Map<String, int[]> headers;
+
+    public ByteBuffer getHb() {
+      return hb;
+    }
+
+    public Map<String, int[]> getHeaders() {
+      return headers;
+    }
+
+    public ThreadLocalSessionHeaders invoke() {
+      hb = ThreadLocalHeaders.get();
+      headers = HttpHeaders.getHeaders((ByteBuffer) hb.rewind());
+      return this;
+    }
+
+  }
+
   //test
   public static void main(String... args) throws Exception {
 
@@ -229,38 +325,6 @@ public class KernelImpl {
 
   }
 
-  /**
-   * offset to locationcsv buffer [n] to EOL
-   *
-   * @param inet4Address
-   * @param indexRecords
-   * @param bufAbstraction
-   * @return
-   */
-  public static int lookupInetAddress(InetAddress inet4Address, final ByteBuffer indexRecords, List<Long> bufAbstraction) {
-
-    int newPosition;
-    int abs;
-    int ret;
-
-    byte[] address = inet4Address.getAddress();
-    long compare = 0;
-    for (int i = 0; i < address.length; i++) {
-      compare |= (address[i] & 0xff) << 8 * (address.length - 1 - i);
-    }
-    int a = Collections.binarySearch(bufAbstraction, IPMASK & compare);
-    int b = bufAbstraction.size() - 1;
-    abs = min(abs(a), b);
-
-    newPosition = reclen * abs + 4;
-    indexRecords.position(newPosition);
-    ret = indexRecords.getInt();
-
-
-    return ret;
-  }
-
-
   public static void startServer(String... args) throws IOException {
     AsioVisitor topLevel = new RfPostWrapper();
     ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
@@ -273,68 +337,4 @@ public class KernelImpl {
     HttpMethod.enqueue(serverSocketChannel, SelectionKey.OP_ACCEPT, topLevel);
     HttpMethod.init(args, topLevel);
   }
-
-  public static SocketChannel createCouchConnection() throws IOException {
-
-    SocketChannel channel = null;
-    while (null == channel && !couchDq.isEmpty()) {
-
-      SocketChannel remove = (SocketChannel) couchDq.remove();
-      if (remove.isConnected()) {
-        channel = remove;
-      }
-    }
-    if (null == channel) {
-      System.err.println("opening " + new InetSocketAddress(LOOPBACK, 5984).toString());
-      channel = SocketChannel.open();
-      channel.configureBlocking(false);
-      channel.connect(new InetSocketAddress(LOOPBACK, 5984));
-    } else System.err.println("+++ recycling " + deepToString(channel));
-
-    return channel;
-  }
-
-  public static void moveCaretToDoubleEol(ByteBuffer buffer) {
-    int distance;
-    int eol = buffer.position();
-
-    do {
-      int prev = eol;
-      while (buffer.hasRemaining() && '\n' != buffer.get()) ;
-      eol = buffer.position();
-      distance = abs(eol - prev);
-      if (2 == distance && '\r' == buffer.get(eol - 2)) break;
-    } while (buffer.hasRemaining() && 1 < distance);
-  }
-
-  static String deepToString(Object... d) {
-    return Arrays.deepToString(d);
-  }
-
-  public static void recycleChannel(SocketChannel channel) throws ClosedChannelException {
-    channel.register(HttpMethod.getSelector(), 0).attach(null);
-    couchDq.add(channel);
-  }
-
-  static class ThreadLocalSessionHeaders {
-
-    private ByteBuffer hb;
-    private Map<String, int[]> headers;
-
-    public ByteBuffer getHb() {
-      return hb;
-    }
-
-    public Map<String, int[]> getHeaders() {
-      return headers;
-    }
-
-    public ThreadLocalSessionHeaders invoke() {
-      hb = ThreadLocalHeaders.get();
-      headers = HttpHeaders.getHeaders((ByteBuffer) hb.rewind());
-      return this;
-    }
-  }
-
-
 }
