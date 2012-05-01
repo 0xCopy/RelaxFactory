@@ -27,7 +27,7 @@ import static ro.server.KernelImpl.GSON;
  *             Time: 8:18 PM
  */
 @Deprecated()
-public abstract class SessionLocatorVisitor<TxPojo, DataPojo> implements AsioVisitor {
+public abstract class SessionLocatorVisitor<TxPojo, DataPojo> extends AsioVisitor.Impl {
   public DataPojo data;
   protected BlockingQueue<TxPojo> blockingQueue;
   protected int receiveBufferSize;
