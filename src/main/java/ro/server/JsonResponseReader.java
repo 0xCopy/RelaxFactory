@@ -103,11 +103,11 @@ class JsonResponseReader extends AsioVisitor.Impl {
       while (!Character.isWhitespace(dst.get())) ;
       d2 = dst.duplicate();
       while (!Character.isWhitespace(dst.get())) ;
+      return UTF8.decode((ByteBuffer) d2.limit(dst.position() - 1)).toString();
     } catch (Throwable e) {
-      e.printStackTrace();  //todo: verify for a purpose
-    } finally {
+//      e.printStackTrace();  //todo: verify for a purpose
     }
-    return UTF8.decode((ByteBuffer) d2.limit(dst.position() - 1)).toString();
+    return null;
   }
 
 }

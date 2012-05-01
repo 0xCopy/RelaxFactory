@@ -21,7 +21,6 @@ import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpMethod.UTF8;
-import static one.xio.HttpMethod.toArray;
 import static ro.server.KernelImpl.LOOPBACK;
 
 /**
@@ -74,7 +73,7 @@ public class CouchChangesClient extends AsioVisitor.Impl {
 
   public void onRead(SelectionKey key) {
     SocketChannel channel = (SocketChannel) key.channel();
-    final Object[] attachment = (Object[]) key.attachment();
+
 
     try {
       final ByteBuffer b = ByteBuffer.allocateDirect(channel.socket().getReceiveBufferSize());
@@ -129,13 +128,23 @@ public class CouchChangesClient extends AsioVisitor.Impl {
           }
         }, getFeedString()});
       } else {
-        String str = "PUT /" + feedname + "/ HTTP/1.1\r\n\r\n";
-        ByteBuffer encode = UTF8.encode(str);
-        attachment[1] = encode;
-        key.attach(toArray(this, encode));
         key.interestOps(OP_WRITE);
-        System.err.println("attempting db creation  " + str);
-        scriptExit2 = true;
+        final CouchChangesClient prev = this;
+        key.attach(new Impl() {
+
+
+          @Override
+          public void onWrite(SelectionKey key) throws Exception {
+
+            String str = "PUT /" + feedname + "/ HTTP/1.1\r\n\r\n";
+            ByteBuffer encode = UTF8.encode(str);
+            System.err.println("attempting db creation  " + str);
+            ((SocketChannel) key.channel()).write(ByteBuffer.wrap(str.getBytes()));
+            key.interestOps(OP_READ);
+            key.attach(prev);
+            scriptExit2 = true;
+          }
+        });
       }
     } catch (SocketException e) {
       e.printStackTrace();  //todo: verify for a purpose
