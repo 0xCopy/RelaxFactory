@@ -33,7 +33,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.SynchronousQueue;
 
 import one.xio.AsioVisitor;
@@ -136,12 +135,10 @@ public class GeoIpService {
     SocketChannel couchConnection;
     {
       couchConnection = createCouchConnection();
-      HttpMethod.enqueue(couchConnection, OP_CONNECT,
+      HttpMethod.enqueue(couchConnection, OP_CONNECT | OP_WRITE,
+
           new AsioVisitor.Impl() {
-            @Override
-            public void onConnect(SelectionKey key) throws Exception {
-              if (((SocketChannel) key.channel()).finishConnect()) key.interestOps(OP_WRITE);
-            }
+
 
             @Override
             public void onWrite(SelectionKey key) throws Exception {
@@ -383,7 +380,7 @@ public class GeoIpService {
     final SynchronousQueue<String> retVal = new SynchronousQueue<String>();
     SocketChannel connection = KernelImpl.createCouchConnection();
 
-    HttpMethod.enqueue(connection, SelectionKey.OP_CONNECT, new AsioVisitor.Impl() {
+    HttpMethod.enqueue(connection, SelectionKey.OP_CONNECT | OP_WRITE, new AsioVisitor.Impl() {
       public void onRead(final SelectionKey selectionKey) throws IOException, InterruptedException {
         final AsioVisitor parent = this;
         final SocketChannel channel = (SocketChannel) selectionKey.channel();
@@ -436,13 +433,12 @@ public class GeoIpService {
                 }
 //                happens every time we start
                 {
-                  ArrayList<Callable<MappedByteBuffer>> cc = new ArrayList<Callable<MappedByteBuffer>>();
-                  cc.add(getMappedIndexFile(GEOIP_CURRENT_INDEX));
-                  cc.add(getMappedIndexFile(GEOIP_CURRENT_LOCATIONS_CSV));
-                  List<Future<MappedByteBuffer>> futures = EXECUTOR_SERVICE.invokeAll(cc);
-                  indexMMBuf = futures.get(0).get();
-                  locationMMBuf = futures.get(1).get();
-
+//                  ArrayList<Callable<MappedByteBuffer>> cc = new ArrayList<Callable<MappedByteBuffer>>();
+//                  cc.add();
+//                  cc.add();
+//                  List<Future<MappedByteBuffer>> futures = EXECUTOR_SERVICE.invokeAll(cc);
+                  indexMMBuf = getMappedIndexFile(GEOIP_CURRENT_INDEX).call();
+                  locationMMBuf = getMappedIndexFile(GEOIP_CURRENT_LOCATIONS_CSV).call();
                   ByteBuffer ix = (ByteBuffer) indexMMBuf.duplicate().clear();
                   ByteBuffer loc = (ByteBuffer) locationMMBuf.duplicate().clear();
 
@@ -476,7 +472,7 @@ public class GeoIpService {
                 };
 
 
-                HttpMethod.enqueue(couchConnection, OP_CONNECT, new Impl() {
+                HttpMethod.enqueue(couchConnection, OP_CONNECT | OP_WRITE, new Impl() {
 
                   @Override
                   public void onWrite(SelectionKey selectionKey) throws Exception {
@@ -484,7 +480,7 @@ public class GeoIpService {
 
                   }
 
-                  void mapTmpFile(SelectionKey selectionKey, String path) throws IOException {
+                  void mapTmpFile(SelectionKey selectionKey, final String path) throws IOException {
                     String req = "GET " + path + " HTTP/1.1\r\n\r\n";
                     int write = ((SocketChannel) selectionKey.channel()).write(UTF8.encode(req));
                     selectionKey.interestOps(OP_READ);
@@ -510,9 +506,13 @@ public class GeoIpService {
                           int[] ints = hm.get("Content-Length");
                           String cl = UTF8.decode((ByteBuffer) h2.clear().position(ints[0]).limit(ints[1])).toString().trim();
                           final long total = Long.parseLong(cl);
-
-                          final File geoip = File.createTempFile("geoip", ".index");
+                          File geoip = null;
                           try {
+                            final String[] split = path.split("[/.]");
+                            final String s = split[split.length - 1];
+                            geoip = File.createTempFile("geoip", "." + s);
+
+
                             geoip.createNewFile();
                           } catch (IOException e) {
                             e.printStackTrace();  //todo: verify for a purpose
@@ -522,6 +522,7 @@ public class GeoIpService {
                           int write1 = fileChannel.write(dst1);
                           final float pos1 = write1;
 
+                          final File finalGeoip = geoip;
                           key.attach(new Impl() {
                             long pos = (long) pos1;
 
@@ -536,8 +537,9 @@ public class GeoIpService {
                                 returnTo.put(map1);
                                 key.attach(null);
                                 long l1 = System.currentTimeMillis() - l2;
-                                System.err.println(MessageFormat.format("file write ended: {0} {1}/{2} in {3} (ms) @ {4}M/s", geoip, total, randomAccessFile.length(), l1, (total / 1024. * 1024.) / l1 / 1000.));
-                                geoip.deleteOnExit();
+
+                                System.err.println(MessageFormat.format("file write ended: {0} {1}/{2} in {3} (ms) @ {4}M/s", finalGeoip, total, randomAccessFile.length(), l1, (total / 1024. * 1024.) / l1 / 1000.));
+                                finalGeoip.deleteOnExit();
                               }
                             }
                           });
@@ -583,13 +585,7 @@ public class GeoIpService {
 
       }
 
-      @Override
-      public void onConnect(SelectionKey selectionKey) throws IOException {
-        SocketChannel channel = (SocketChannel) selectionKey.channel();
-        if (channel.finishConnect()) {
-          selectionKey.interestOps(OP_WRITE);
-        }
-      }
+
     });
   }
 
