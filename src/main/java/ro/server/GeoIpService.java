@@ -33,7 +33,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.SynchronousQueue;
 
 import one.xio.AsioVisitor;
@@ -436,12 +435,13 @@ public class GeoIpService {
                 }
 //                happens every time we start
                 {
-                  ArrayList<Callable<MappedByteBuffer>> cc = new ArrayList<Callable<MappedByteBuffer>>();
-                  cc.add(getMappedIndexFile(GEOIP_CURRENT_INDEX));
-                  cc.add(getMappedIndexFile(GEOIP_CURRENT_LOCATIONS_CSV));
-                  List<Future<MappedByteBuffer>> futures = EXECUTOR_SERVICE.invokeAll(cc);
-                  indexMMBuf = futures.get(0).get();
-                  locationMMBuf = futures.get(1).get();
+//                  ArrayList<Callable<MappedByteBuffer>> cc = new ArrayList<Callable<MappedByteBuffer>>();
+                  /*cc.add*/
+                  indexMMBuf =
+                      getMappedIndexFile(GEOIP_CURRENT_INDEX).call();
+                  locationMMBuf =
+                      getMappedIndexFile(GEOIP_CURRENT_LOCATIONS_CSV).call();
+//                  List<Future<MappedByteBuffer>> futures = EXECUTOR_SERVICE.invokeAll(cc);
 
                   ByteBuffer ix = (ByteBuffer) indexMMBuf.duplicate().clear();
                   ByteBuffer loc = (ByteBuffer) locationMMBuf.duplicate().clear();
