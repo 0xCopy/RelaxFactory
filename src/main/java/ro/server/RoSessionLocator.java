@@ -1,7 +1,6 @@
 package ro.server;
 
 import java.io.IOException;
-import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.Callable;
 import java.util.concurrent.SynchronousQueue;
@@ -13,6 +12,7 @@ import ro.server.rf.SessionCreateVisitor;
 import ro.server.rf.SessionLocatorVisitor;
 
 import static java.nio.channels.SelectionKey.OP_CONNECT;
+import static java.nio.channels.SelectionKey.OP_WRITE;
 import static ro.server.KernelImpl.GSON;
 import static ro.server.KernelImpl.createCouchConnection;
 
@@ -61,7 +61,7 @@ public class RoSessionLocator extends Locator<RoSession, String> {
             SynchronousQueue<CouchTx> retVal = new SynchronousQueue<CouchTx>();
 
             sessionVisitor = new SessionCreateVisitor(channel, retVal);
-            HttpMethod.enqueue(channel, OP_CONNECT | SelectionKey.OP_WRITE, sessionVisitor);
+            HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, sessionVisitor);
             retVal.take();
           } finally {
             KernelImpl.recycleChannel(channel);

@@ -16,6 +16,7 @@ import java.util.concurrent.Executors;
 import one.xio.AsioVisitor;
 import one.xio.HttpMethod;
 
+import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpMethod.UTF8;
@@ -33,7 +34,6 @@ public class CouchChangesClient implements AsioVisitor {
 
   public String feedname = "example";
   public Serializable port = 5984;
-
 
 
   boolean active = false;
@@ -78,7 +78,7 @@ public class CouchChangesClient implements AsioVisitor {
     try {
       if (channel.finishConnect()) {
         String str = "GET " + getFeedString() + " HTTP/1.1\r\n\r\n";
-        System.err.println("attempting "+str);
+        System.err.println("attempting " + str);
         attachment[1] = UTF8.encode(str);
         key.interestOps(OP_WRITE);
       }
@@ -253,7 +253,7 @@ public class CouchChangesClient implements AsioVisitor {
 
     String feedString = couchChangesClient.getFeedString();
     System.err.println("feedstring: " + feedString);
-    HttpMethod.enqueue(channel, SelectionKey.OP_CONNECT, couchChangesClient, feedString);
+    HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, couchChangesClient, feedString);
     HttpMethod.init(args, HttpMethod.$); // no http
   }
 }

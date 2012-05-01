@@ -136,7 +136,7 @@ public class GeoIpService {
     SocketChannel couchConnection;
     {
       couchConnection = createCouchConnection();
-      HttpMethod.enqueue(couchConnection, OP_CONNECT,
+      HttpMethod.enqueue(couchConnection, OP_CONNECT | OP_WRITE,
           new AsioVisitor.Impl() {
             @Override
             public void onConnect(SelectionKey key) throws Exception {
@@ -164,7 +164,7 @@ public class GeoIpService {
     final CouchTx couchTx = GSON.fromJson(take, CouchTx.class);
     {
       couchConnection = createCouchConnection();
-      HttpMethod.enqueue(couchConnection, OP_CONNECT,
+      HttpMethod.enqueue(couchConnection, OP_CONNECT | OP_WRITE,
           new AsioVisitor.Impl() {
             @Override
             public void onConnect(SelectionKey key) throws Exception {
@@ -383,7 +383,7 @@ public class GeoIpService {
     final SynchronousQueue<String> retVal = new SynchronousQueue<String>();
     SocketChannel connection = KernelImpl.createCouchConnection();
 
-    HttpMethod.enqueue(connection, SelectionKey.OP_CONNECT, new AsioVisitor.Impl() {
+    HttpMethod.enqueue(connection, OP_CONNECT | OP_WRITE, new AsioVisitor.Impl() {
       public void onRead(final SelectionKey selectionKey) throws IOException, InterruptedException {
         final AsioVisitor parent = this;
         final SocketChannel channel = (SocketChannel) selectionKey.channel();
@@ -476,7 +476,7 @@ public class GeoIpService {
                 };
 
 
-                HttpMethod.enqueue(couchConnection, OP_CONNECT, new Impl() {
+                HttpMethod.enqueue(couchConnection, OP_CONNECT | OP_WRITE, new Impl() {
 
                   @Override
                   public void onWrite(SelectionKey selectionKey) throws Exception {

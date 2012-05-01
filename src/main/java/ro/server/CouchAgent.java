@@ -1,12 +1,13 @@
 package ro.server;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.LinkedHashMap;
 
 import one.xio.HttpMethod;
+
+import static java.nio.channels.SelectionKey.OP_CONNECT;
+import static java.nio.channels.SelectionKey.OP_WRITE;
 
 /**
  * User: jim
@@ -56,13 +57,10 @@ public class CouchAgent {
 
 
     for (CouchChangesClient changeHandler : changeHandlers) {
-      InetSocketAddress remote = new InetSocketAddress(changeHandler.hostname, (Integer) changeHandler.port);
-      SocketChannel channel = SocketChannel.open();
-      channel.configureBlocking(false);
-      channel.connect(remote);
+      final SocketChannel channel = KernelImpl.createCouchConnection();
       String feedString = changeHandler.getFeedString();
       System.err.println("feedstring: " + feedString);
-      HttpMethod.enqueue(channel, SelectionKey.OP_CONNECT, changeHandler, feedString);
+      HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, changeHandler, feedString);
     }
     HttpMethod.main();
   }
