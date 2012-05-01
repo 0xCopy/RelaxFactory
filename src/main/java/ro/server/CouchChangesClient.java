@@ -35,9 +35,8 @@ public class CouchChangesClient implements AsioVisitor {
   public Serializable port = 5984;
 
 
-
   boolean active = false;
-  public final int POLL_HEARTBEAT_MS = 45000;
+  public static final int POLL_HEARTBEAT_MS = 45000;
   public final byte[] ENDL = new byte[]{/*'\n',*/ '\r', '\n'};
   public boolean scriptExit2 = false;
   public String hostname = LOOPBACK.getHostAddress();
@@ -75,10 +74,11 @@ public class CouchChangesClient implements AsioVisitor {
   public void onConnect(SelectionKey key) {
     Object[] attachment = (Object[]) key.attachment();
     SocketChannel channel = (SocketChannel) key.channel();
+
     try {
       if (channel.finishConnect()) {
         String str = "GET " + getFeedString() + " HTTP/1.1\r\n\r\n";
-        System.err.println("attempting "+str);
+        System.err.println("attempting " + str);
         attachment[1] = UTF8.encode(str);
         key.interestOps(OP_WRITE);
       }
@@ -105,7 +105,7 @@ public class CouchChangesClient implements AsioVisitor {
       if (active) {
         b.flip();
 
-        Object prev = attachment.length > 2 ? attachment[2] : null;
+        Object prev = 2 < attachment.length ? attachment[2] : null;
         boolean stuff = false;
         ByteBuffer wrap = ByteBuffer.wrap(ENDL);
         b.mark();

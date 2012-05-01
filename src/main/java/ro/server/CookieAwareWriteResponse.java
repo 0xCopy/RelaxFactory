@@ -10,7 +10,7 @@ import java.util.Map;
 import one.xio.AsioVisitor;
 
 import static one.xio.HttpMethod.UTF8;
-import static ro.server.KernelImpl.ThreadLocalSetCookies;
+import static ro.server.KernelImpl.cookieSetterMapThreadLocal;
 
 /**
  * User: jim
@@ -29,7 +29,7 @@ class CookieAwareWriteResponse extends AsioVisitor.Impl {
 
   @Override
   public void onWrite(SelectionKey selectionKey) throws IOException {
-    Map<String, String> setCookiesMap = ThreadLocalSetCookies.get();
+    Map<String, String> setCookiesMap = cookieSetterMapThreadLocal.get();
     String cookieDeclaration = "";
     if (null != setCookiesMap && !setCookiesMap.isEmpty()) {
       cookieDeclaration = "Set-Cookie: ";

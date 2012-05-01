@@ -11,6 +11,7 @@ import one.xio.HttpMethod;
 import ro.model.RoSession;
 import ro.server.CouchTx;
 
+import static java.nio.channels.SelectionKey.OP_READ;
 import static ro.server.KernelImpl.GSON;
 
 /**
@@ -22,7 +23,7 @@ public class SessionCreateVisitor extends SessionLocatorVisitor<CouchTx, RoSessi
 
   public static final CouchTx MEMENTO = new CouchTx();
 
-  public SessionCreateVisitor(SocketChannel channel,   BlockingQueue<CouchTx> blockingQueue) {
+  public SessionCreateVisitor(SocketChannel channel, BlockingQueue<CouchTx> blockingQueue) {
     super(blockingQueue, channel);
   }
 
@@ -45,13 +46,8 @@ public class SessionCreateVisitor extends SessionLocatorVisitor<CouchTx, RoSessi
 
       boolean b = channel.finishConnect();
       if (b) {
-        data = RoSession.createSession();
-        String cs = GSON.toJson(data);
-        String format = MessageFormat.format("POST /rosession HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: {0}\r\n\r\n{1}", cs.length(), cs);
-        ByteBuffer encode = HttpMethod.UTF8.encode(format);
-        channel.write(encode);
-        System.err.println(format);
-        key.interestOps(SelectionKey.OP_READ);
+
+        key.interestOps(SelectionKey.OP_WRITE);
       }
     } catch (IOException e) {
       e.printStackTrace();
@@ -60,19 +56,27 @@ public class SessionCreateVisitor extends SessionLocatorVisitor<CouchTx, RoSessi
   }
 
   @Override
-  public void onWrite(SelectionKey key) {
-    System.err.println("hi");
+  public void onWrite(SelectionKey key) throws IOException {
+    data = RoSession.createSession();
+    String cs = GSON.toJson(data);
+    String format = MessageFormat.format("POST /rosession HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: {0}\r\n\r\n{1}", cs.length(), cs);
+    ByteBuffer encode = HttpMethod.UTF8.encode(format);
+    channel.write(encode);
+    System.err.println(format);
+    key.interestOps(OP_READ);
   }
 
   @Override
   public void onAccept(SelectionKey key) {
-    System.err.println("hi");
+    key.interestOps(0);
+    key.attach(null);
   }
 
   @Override
   protected void handle(String json, CouchTx couchTx) {
-    System.err.println("creation: "+json);
-    data.setId(couchTx.id);data.setVersion(couchTx.rev);
+    System.err.println("creation: " + json);
+    data.setId(couchTx.id);
+    data.setVersion(couchTx.rev);
   }
 
   @Override

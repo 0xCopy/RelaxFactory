@@ -3,7 +3,7 @@ package ro.server;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.net.InetAddress;
+import java.net.Inet4Address;
 import java.net.URLDecoder;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -214,10 +214,10 @@ class RfPostWrapper extends Impl {
 
     @Override
     public void run() {
-      KernelImpl.ThreadLocalHeaders.set(headers);
+      KernelImpl.headersByteBufferThreadLocal.set(headers);
       SocketChannel socketChannel = (SocketChannel) key.channel();
-      InetAddress remoteSocketAddress = socketChannel.socket().getInetAddress();
-      KernelImpl.ThreadLocalInetAddress.set(remoteSocketAddress);
+      Inet4Address remoteSocketAddress = (Inet4Address) socketChannel.socket().getInetAddress();
+      KernelImpl.inet4AddressThreadLocal.set(remoteSocketAddress);
       String trim = UTF8.decode(data).toString().trim();
       final String process = SIMPLE_REQUEST_PROCESSOR.process(trim);
       String sc = setOutboundCookies();
@@ -241,7 +241,7 @@ class RfPostWrapper extends Impl {
 
     String setOutboundCookies() {
       System.err.println("+++ headers " + UTF8.decode((ByteBuffer) headers.rewind()).toString());
-      Map setCookiesMap = KernelImpl.ThreadLocalSetCookies.get();
+      Map setCookiesMap = KernelImpl.cookieSetterMapThreadLocal.get();
       String sc = "";
       if (null != setCookiesMap && !setCookiesMap.isEmpty()) {
         sc = "";

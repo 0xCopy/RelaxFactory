@@ -2,9 +2,11 @@ package ro.server;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.channels.ClosedChannelException;
@@ -19,9 +21,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -29,12 +33,18 @@ import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import one.xio.AsioVisitor;
+import one.xio.AsioVisitor.Impl;
 import one.xio.HttpHeaders;
 import one.xio.HttpMethod;
 import ro.model.RoSession;
 
+import static java.lang.Character.isWhitespace;
 import static java.lang.Math.abs;
 import static java.lang.Math.min;
+import static java.nio.channels.SelectionKey.OP_ACCEPT;
+import static java.nio.channels.SelectionKey.OP_CONNECT;
+import static java.nio.channels.SelectionKey.OP_READ;
+import static java.nio.channels.SelectionKey.OP_WRITE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static one.xio.HttpMethod.UTF8;
 import static ro.server.GeoIpIndexRecord.reclen;
@@ -49,9 +59,9 @@ import static ro.server.GeoIpService.bufAbstraction;
 public class KernelImpl {
   public static final RoSessionLocator RO_SESSION_LOCATOR = new RoSessionLocator();
   public static final ScheduledExecutorService EXECUTOR_SERVICE = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() + 3);
-  public static final ThreadLocal<ByteBuffer> ThreadLocalHeaders = new ThreadLocal<ByteBuffer>();
-  public static ThreadLocal<InetAddress> ThreadLocalInetAddress = new ThreadLocal<InetAddress>();
-  public static final ThreadLocal<Map<String, String>> ThreadLocalSetCookies = new ThreadLocal<Map<String, String>>();
+  public static ThreadLocal<ByteBuffer> headersByteBufferThreadLocal = new ThreadLocal<ByteBuffer>();
+  public static ThreadLocal<Inet4Address> inet4AddressThreadLocal = new ThreadLocal<Inet4Address>();
+  public static ThreadLocal<Map<String, String>> cookieSetterMapThreadLocal = new ThreadLocal<Map<String, String>>();
   private static final String MYSESSIONSTRING = KernelImpl.class.getCanonicalName();
   public static final String YYYY_MM_DD_T_HH_MM_SS_SSSZ = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
   public static final Gson GSON = new GsonBuilder()
@@ -71,14 +81,14 @@ public class KernelImpl {
   private static int blockCount;
   //  private static ByteBuffer locBuf;
   public static InetAddress LOOPBACK = null;
-  public static final ConcurrentLinkedDeque<SocketChannel> couchDq = new ConcurrentLinkedDeque<SocketChannel>();
+  public static final ConcurrentLinkedQueue<SocketChannel> couchDq = new ConcurrentLinkedQueue<SocketChannel>();
 
   static {
     try {
       try {
         KernelImpl.LOOPBACK = (InetAddress) InetAddress.class.getMethod("getLoopBackAddress").invoke(null);
       } catch (NoSuchMethodException e) {
-        KernelImpl.LOOPBACK = InetAddress.getByAddress(new byte[]{127, 0, 0, 1});
+        KernelImpl.LOOPBACK = InetAddress.getByAddress(new byte[]{(byte) 127, (byte) 0, (byte) 0, (byte) 1});
         System.err.println("java 6 LOOPBACK detected");
       } catch (InvocationTargetException e) {
         e.printStackTrace();
@@ -91,7 +101,7 @@ public class KernelImpl {
   }
 
 
-  static public String getSessionCookieId() throws Exception {
+  public static String getSessionCookieId() throws Exception {
     String id = null;
     RoSession roSession = null;
     try {
@@ -115,27 +125,28 @@ public class KernelImpl {
       roSession = RO_SESSION_LOCATOR.create(RoSession.class);
       id = roSession.getId();
 
-      Map<String, String> stringMap = ThreadLocalSetCookies.get();
+      Map<String, String> stringMap = cookieSetterMapThreadLocal.get();
       if (null == stringMap) {
         Map<String, String> value = new TreeMap<String, String>();
         value.put(MYSESSIONSTRING, id);
-        ThreadLocalSetCookies.set(value);
+        cookieSetterMapThreadLocal.set(value);
       }
-      Date expire = new Date(TimeUnit.DAYS.toMillis(14) + System.currentTimeMillis());
+      Date expire = new Date(TimeUnit.DAYS.toMillis(14L) + System.currentTimeMillis());
       String cookietext = MessageFormat.format("{0} ; path=/ ; expires={1} ; HttpOnly", id, expire.toGMTString());
-      ThreadLocalSetCookies.get().put(MYSESSIONSTRING, cookietext);
-      final InetAddress inet4Address = ThreadLocalInetAddress.get();
+      cookieSetterMapThreadLocal.get().put(MYSESSIONSTRING, cookietext);
+      final Inet4Address inet4Address = inet4AddressThreadLocal.get();
       if (null != inet4Address) {
 
         int i = lookupInetAddress(inet4Address, GeoIpService.indexMMBuf, bufAbstraction);
         ByteBuffer b = (ByteBuffer) GeoIpService.locationMMBuf.duplicate().clear().position(i);
-        while (b.hasRemaining() && '\n' != b.get()) ;
+        while (b.hasRemaining() && (int) '\n' != (int) b.get()) {
+        }
         rtrimByteBuffer(b).position(i);
 
         //maxmind is iso not utf
         CharBuffer cityString = ISO88591.decode(b);//attempt a utf8 switchout here...
         final String geoip = MessageFormat.format("{0} ; path=/ ; expires={1}", UTF8.decode(ByteBuffer.wrap(cityString.toString().getBytes(UTF8))), expire.toGMTString());
-        ThreadLocalSetCookies.get().put(MYGEOIPSTRING, geoip);
+        cookieSetterMapThreadLocal.get().put(MYGEOIPSTRING, geoip);
         EXECUTOR_SERVICE.schedule(new Runnable() {
           @Override
           public void run() {
@@ -147,24 +158,29 @@ public class KernelImpl {
             } catch (Throwable ignored) {
             }
           }
-        }, 250, MILLISECONDS);
+        }, 250L, MILLISECONDS);
       }
     }
     return id;
   }
 
-  private static ByteBuffer rtrimByteBuffer(ByteBuffer b) {
-    while (Character.isWhitespace(b.get(b.position() - 1))) b.position(b.position() - 1);
-    b.flip();
-    return b;
+  public static ByteBuffer rtrimByteBuffer(Buffer b) {
+
+    ByteBuffer b1 = (ByteBuffer) b;
+    while (isWhitespace((int) b1.get(b1.position() - 1))) {
+      b1.position(b1.position() - 1);
+    }
+    b1.flip();
+    return b1;
   }
 
-  static public RoSession getCurrentSession() throws Exception {
+  public static RoSession getCurrentSession() throws Exception {
     String id = null;
     RoSession roSession = null;
     id = getSessionCookieId();
-    if (null != id)
+    if (null != id) {
       roSession = RO_SESSION_LOCATOR.find(RoSession.class, id);
+    }
     return roSession;
   }
 
@@ -237,16 +253,16 @@ public class KernelImpl {
    * @param bufAbstraction
    * @return
    */
-  public static int lookupInetAddress(InetAddress inet4Address, final ByteBuffer indexRecords, List<Long> bufAbstraction) {
+  public static int lookupInetAddress(Inet4Address inet4Address, ByteBuffer indexRecords, List<Long> bufAbstraction) {
 
     int newPosition;
     int abs;
     int ret;
 
     byte[] address = inet4Address.getAddress();
-    long compare = 0;
+    long compare = 0L;
     for (int i = 0; i < address.length; i++) {
-      compare |= (address[i] & 0xff) << 8 * (address.length - 1 - i);
+      compare |= (long) ((address[i] & 0xff) << 8 * (address.length - 1 - i));
     }
     int a = Collections.binarySearch(bufAbstraction, IPMASK & compare);
     int b = bufAbstraction.size() - 1;
@@ -262,6 +278,7 @@ public class KernelImpl {
 
 
   public static void startServer(String... args) throws IOException {
+
     AsioVisitor topLevel = new RfPostWrapper();
     ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
     serverSocketChannel.socket().bind(new InetSocketAddress(8080));
@@ -270,8 +287,97 @@ public class KernelImpl {
     serverSocketChannel = ServerSocketChannel.open();
     serverSocketChannel.socket().bind(new InetSocketAddress(8888));
     serverSocketChannel.configureBlocking(false);
-    HttpMethod.enqueue(serverSocketChannel, SelectionKey.OP_ACCEPT, topLevel);
+    HttpMethod.enqueue(serverSocketChannel, OP_ACCEPT, topLevel);
+
+    SocketChannel couchConnection = createCouchConnection();
+    HttpMethod.enqueue(couchConnection, OP_CONNECT | OP_WRITE, new Impl() {
+      @Override
+      public void onWrite(SelectionKey key) throws Exception {
+        final SocketChannel channel = (SocketChannel) key.channel();
+        ByteBuffer encode = UTF8.encode(MessageFormat.format("GET /rosession/_changes?include_docs=true&feed=continuous&heartbeat={0,number,#} HTTP/1.1\r\nAccept: */*\r\n\r\n", CouchChangesClient.POLL_HEARTBEAT_MS));
+        int write = channel.write(encode);
+        key.attach(new Impl() {
+          @Override
+          public void onRead(SelectionKey key) throws Exception {
+            ByteBuffer dst = ByteBuffer.allocateDirect(channel.socket().getReceiveBufferSize());
+            int read = channel.read(dst);
+            int position1 = moveCaretToDoubleEol((ByteBuffer) dst.flip()).position();
+            ByteBuffer headers = (ByteBuffer) ByteBuffer.allocateDirect(position1).put((ByteBuffer) dst.duplicate().clear().limit(position1)).rewind();
+
+            Map<String, int[]> map = HttpHeaders.getHeaders((ByteBuffer) headers.clear());
+            boolean isChunked = false;
+            if (map.containsKey("Transfer-Encoding")) {
+              int[] ints = map.get("Transfer-Encoding");
+              Buffer clear = headers.clear();
+              Buffer position = clear.position(ints[0]);
+              Buffer limit = position.limit(ints[1]);
+              String v = UTF8.decode((ByteBuffer) limit).toString().trim();
+              isChunked = v.contains("chunked");
+            }
+            headers.clear();
+            while (!isWhitespace((int) headers.get())) {
+            }
+            ByteBuffer slice = headers.slice();
+            while (!isWhitespace((int) slice.get())) {
+            }
+
+            String s = UTF8.decode((ByteBuffer) slice.flip()).toString().trim();
+            int resCode = Integer.parseInt(s);
+            switch (resCode) {
+              case 200:
+              case 201:
+
+//       requires an event pump
+                ByteBuffer slice1 = dst.slice();
+                final BlockingDeque<ByteBuffer> slabs = new LinkedBlockingDeque<ByteBuffer>(555);
+                final BlockingDeque<ByteBuffer> chunks = new LinkedBlockingDeque<ByteBuffer>(555);
+
+                slabs.addLast(slice1);
+                EXECUTOR_SERVICE.submit(new SlabDecoder(slabs, chunks));
+                EXECUTOR_SERVICE.submit(new ChunkDecoder(chunks));
+                key.attach(new Impl() {
+                  @Override
+                  public void onRead(SelectionKey key) throws Exception {
+                    final SocketChannel channel1 = (SocketChannel) key.channel();
+                    final ByteBuffer dst1 = ByteBuffer.allocateDirect(channel1.socket().getReceiveBufferSize());
+                    channel1.read(dst1);
+                    slabs.addLast((ByteBuffer) dst1.flip());
+                  }
+                });
+                key.interestOps(OP_READ);
+                break;
+              default:
+                final Impl parent = this;
+                key.attach(new Impl() {
+                  @Override
+                  public void onWrite(SelectionKey key) throws Exception {
+                    String str = "PUT /rosession/ HTTP/1.1\r\n\r\n";
+                    channel.write(UTF8.encode(str));
+                    key.attach(parent);
+                    key.interestOps(OP_READ);
+                  }
+                });
+                key.interestOps(OP_WRITE);
+                break;
+            }
+          }
+        });
+        key.interestOps(OP_READ);
+
+
+      }
+    });
     HttpMethod.init(args, topLevel);
+  }
+
+  /**
+   * stub for a system-wide eventhandler to update or more likely invalidate old proxies
+   *
+   * @param jsonMap map of json from couch updates
+   */
+  public static void adjustProxyCache(Map jsonMap) {
+    System.err.println("notification from couchdb: " + jsonMap.toString());
+
   }
 
   public static SocketChannel createCouchConnection() throws IOException {
@@ -279,7 +385,7 @@ public class KernelImpl {
     SocketChannel channel = null;
     while (null == channel && !couchDq.isEmpty()) {
 
-      SocketChannel remove = (SocketChannel) couchDq.remove();
+      SocketChannel remove = couchDq.remove();
       if (remove.isConnected()) {
         channel = remove;
       }
@@ -289,22 +395,27 @@ public class KernelImpl {
       channel = SocketChannel.open();
       channel.configureBlocking(false);
       channel.connect(new InetSocketAddress(LOOPBACK, 5984));
-    } else System.err.println("+++ recycling " + deepToString(channel));
+    } else {
+      System.err.println("+++ recycling " + deepToString(channel));
+    }
 
     return channel;
   }
 
-  public static void moveCaretToDoubleEol(ByteBuffer buffer) {
+  public static ByteBuffer moveCaretToDoubleEol(ByteBuffer buffer) {
     int distance;
     int eol = buffer.position();
 
     do {
       int prev = eol;
-      while (buffer.hasRemaining() && '\n' != buffer.get()) ;
+      while (buffer.hasRemaining() && (int) '\n' != (int) buffer.get()) ;
       eol = buffer.position();
       distance = abs(eol - prev);
-      if (2 == distance && '\r' == buffer.get(eol - 2)) break;
+      if (2 == distance && (int) '\r' == (int) buffer.get(eol - 2)) {
+        break;
+      }
     } while (buffer.hasRemaining() && 1 < distance);
+    return buffer;
   }
 
   static String deepToString(Object... d) {
@@ -330,11 +441,80 @@ public class KernelImpl {
     }
 
     public ThreadLocalSessionHeaders invoke() {
-      hb = ThreadLocalHeaders.get();
+      hb = headersByteBufferThreadLocal.get();
       headers = HttpHeaders.getHeaders((ByteBuffer) hb.rewind());
       return this;
     }
   }
 
+  /**
+   * pushes a blocking queue of slab bytebuffers
+   */
+  private static class SlabDecoder implements Callable<Object> {
+    private final BlockingDeque<ByteBuffer> slabs;
+    private final BlockingDeque<ByteBuffer> chunks;
 
+    public SlabDecoder(BlockingDeque<ByteBuffer> slabs, BlockingDeque<ByteBuffer> chunks) {
+      this.slabs = slabs;
+      this.chunks = chunks;
+    }
+
+    @Override
+    public Object call() throws Exception {
+      ByteBuffer curChunk = null;
+      ByteBuffer buffer;
+      while (null != (buffer = slabs.takeFirst())) {
+        while (buffer.hasRemaining()) {
+          if (null != curChunk) {
+            while (curChunk.hasRemaining() && buffer.hasRemaining()) {
+              curChunk.put(buffer.get());//suboptimal
+            }
+            if (!curChunk.hasRemaining()) {
+              chunks.addLast((ByteBuffer) curChunk.rewind());
+              curChunk = null;
+              byte b = 0;
+              if (buffer.hasRemaining()) {
+                b = buffer.get();
+              }
+
+              if (buffer.hasRemaining()) {
+                b = buffer.get();
+              }
+              b++;
+            }
+            continue;
+          }
+          while (isWhitespace(buffer.get())) ;
+          int p = buffer.position() - 1;
+          while (!isWhitespace(buffer.get())) ;
+          final String trim = UTF8.decode((ByteBuffer) buffer.duplicate().position(p).limit(buffer.position())).toString().trim();
+          int chunkSize = Integer.parseInt(trim, 0x10);
+          curChunk = ByteBuffer.allocateDirect(chunkSize);
+
+        }
+
+      }
+
+      return null;
+    }
+  }
+
+  private static class ChunkDecoder implements Callable {
+    private final BlockingDeque<ByteBuffer> chunks;
+
+    public ChunkDecoder(BlockingDeque<ByteBuffer> chunks) {
+      this.chunks = chunks;
+    }
+
+    @Override
+    public Object call() throws Exception {
+      while (true) {
+
+        final ByteBuffer event = chunks.takeFirst();
+        KernelImpl.adjustProxyCache(GSON.fromJson(UTF8.decode((ByteBuffer) event.clear()).toString().trim(), Map.class));
+
+      }
+
+    }
+  }
 }

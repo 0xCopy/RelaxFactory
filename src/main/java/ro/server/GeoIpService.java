@@ -280,12 +280,12 @@ public class GeoIpService {
     return new Pair<ByteBuffer, ByteBuffer>(indexBuf, locBuf);
   }
 
-  static void testMartinez(final ByteBuffer ix, ByteBuffer loc, long[] l1, int[] l2) throws UnknownHostException {
+  static void testMartinez(ByteBuffer ix, ByteBuffer loc, long[] l1, int[] l2) throws UnknownHostException {
 
     try {
       String s2 = "127.0.0.1";
-      InetAddress loopBackAddr = Inet4Address.getByAddress(new byte[]{127, 0, 0, 1});
-      InetAddress martinez = Inet4Address.getByAddress(new byte[]{67, (byte) 174, (byte) 244, 11});
+      Inet4Address loopBackAddr = (Inet4Address) Inet4Address.getByAddress(new byte[]{127, 0, 0, 1});
+      Inet4Address martinez = (Inet4Address) Inet4Address.getByAddress(new byte[]{67, (byte) 174, (byte) 244, 11});
       if (null != l1 && null != l2) {
         System.err.println(arraysLookup(l2, l1, loopBackAddr, loc.duplicate()));
         System.err.println(arraysLookup(l2, l1, martinez, loc.duplicate()));
@@ -324,7 +324,7 @@ public class GeoIpService {
 
   }
 
-  public static void runGeoIpLookupBenchMark(ByteBuffer loc, long[] l1, int[] l2, final ByteBuffer ix) throws UnknownHostException {
+  public static void runGeoIpLookupBenchMark(ByteBuffer loc, long[] l1, int[] l2, ByteBuffer ix) throws UnknownHostException {
     byte[][] bytes1 = new byte[1000][4];
     {
       long l3 = System.currentTimeMillis();
@@ -336,11 +336,11 @@ public class GeoIpService {
 
       System.err.println("random generator overhead: " + (System.currentTimeMillis() - l3));
     }
-    InetAddress[] inetAddresses = new InetAddress[1000];
+    Inet4Address[] inetAddresses = new Inet4Address[1000];
     {
       long l3 = System.currentTimeMillis();
       for (int i = 0, bytes1Length = bytes1.length; i < bytes1Length; i++) {
-        inetAddresses[i] = InetAddress.getByAddress(bytes1[i]);
+        inetAddresses[i] = (Inet4Address) Inet4Address.getByAddress(bytes1[i]);
 
       }
       System.err.println("inataddr overhead: " + (System.currentTimeMillis() - l3));
@@ -351,7 +351,7 @@ public class GeoIpService {
         long l3 = System.currentTimeMillis();
 
 
-        for (InetAddress inetAddress : inetAddresses) {
+        for (Inet4Address inetAddress : inetAddresses) {
 
           KernelImpl.lookupInetAddress(inetAddress, ix, bufAbstraction);
         }
@@ -407,7 +407,7 @@ public class GeoIpService {
 
 
               @Override
-              public void onWrite(final SelectionKey selectionKey) {
+              public void onWrite(SelectionKey selectionKey) {
 
                 try {
                   String format = (MessageFormat.format("GET /{0} HTTP/1.1\r\n\r\n", keyDocument));

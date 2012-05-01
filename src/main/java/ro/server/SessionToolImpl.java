@@ -40,10 +40,10 @@ public class SessionToolImpl {
       s = (String) fetchMapById(sessionCookieId).get(key);
     } catch (Exception e) {
       canonicalName = SessionToolImpl.class.getCanonicalName();
-      ByteBuffer byteBuffer = KernelImpl.ThreadLocalHeaders.get();
+      ByteBuffer byteBuffer = KernelImpl.headersByteBufferThreadLocal.get();
       if (!UTF8.decode(byteBuffer).toString().trim().equals(canonicalName)) {
 
-        KernelImpl.ThreadLocalHeaders.set(UTF8.encode(canonicalName));
+        KernelImpl.headersByteBufferThreadLocal.set(UTF8.encode(canonicalName));
         return getSessionProperty(key);
       }
     }
