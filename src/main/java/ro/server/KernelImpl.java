@@ -8,7 +8,6 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.channels.ClosedChannelException;
-import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
@@ -35,6 +34,9 @@ import ro.model.RoSession;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.min;
+import static java.nio.channels.SelectionKey.OP_ACCEPT;
+import static java.nio.channels.SelectionKey.OP_CONNECT;
+import static java.nio.channels.SelectionKey.OP_WRITE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static one.xio.HttpMethod.UTF8;
 import static ro.server.GeoIpIndexRecord.reclen;
@@ -330,11 +332,13 @@ public class KernelImpl {
     ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
     serverSocketChannel.socket().bind(new InetSocketAddress(8080));
     serverSocketChannel.configureBlocking(false);
-    HttpMethod.enqueue(serverSocketChannel, SelectionKey.OP_ACCEPT, topLevel);
+    HttpMethod.enqueue(serverSocketChannel, OP_ACCEPT, topLevel);
     serverSocketChannel = ServerSocketChannel.open();
     serverSocketChannel.socket().bind(new InetSocketAddress(8888));
     serverSocketChannel.configureBlocking(false);
-    HttpMethod.enqueue(serverSocketChannel, SelectionKey.OP_ACCEPT, topLevel);
+    HttpMethod.enqueue(serverSocketChannel, OP_ACCEPT, topLevel);
+    final CouchAgent.SessionCouchAgent ro = new CouchAgent.SessionCouchAgent("ro");
+    HttpMethod.enqueue(createCouchConnection(), OP_CONNECT | OP_WRITE, new Object[]{ro, ro.getFeedString()});
     HttpMethod.init(args, topLevel);
   }
 }

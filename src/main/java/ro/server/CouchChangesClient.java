@@ -5,6 +5,7 @@ import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
+import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.Deque;
@@ -20,7 +21,6 @@ import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpMethod.UTF8;
-import static one.xio.HttpMethod.killswitch;
 import static one.xio.HttpMethod.toArray;
 import static ro.server.KernelImpl.LOOPBACK;
 
@@ -30,7 +30,7 @@ import static ro.server.KernelImpl.LOOPBACK;
  * Date: 2/12/12
  * Time: 10:24 PM
  */
-public class CouchChangesClient implements AsioVisitor {
+public class CouchChangesClient extends AsioVisitor.Impl {
 
   public String feedname = "example";
   public Serializable port = 5984;
@@ -54,38 +54,16 @@ public class CouchChangesClient implements AsioVisitor {
         POLL_HEARTBEAT_MS;
   }
 
-  public void onWrite(SelectionKey key) {
+  public void onWrite(SelectionKey key) throws IOException {
     Object[] attachment = (Object[]) key.attachment();
     SocketChannel channel = (SocketChannel) key.channel();
-
-    try {
-      Object pongContents = attachment[1];
-      channel.write((ByteBuffer) pongContents);
-      key.interestOps(OP_READ);
-    } catch (IOException e) {
-      e.printStackTrace();  //todo: verify for a purpose
-    }
+    String str = "HEAD " + getFeedString() + " HTTP/1.1\r\n\r\n";
+    System.err.println("attempting " + str);
+    attachment[1] = UTF8.encode(str);
+    channel.write(ByteBuffer.wrap(str.getBytes()));
+    key.interestOps(OP_READ);
   }
 
-  @Override
-  public void onAccept(SelectionKey key) {
-    throw new UnsupportedOperationException("OnAccept unused");
-  }
-
-  public void onConnect(SelectionKey key) {
-    Object[] attachment = (Object[]) key.attachment();
-    SocketChannel channel = (SocketChannel) key.channel();
-    try {
-      if (channel.finishConnect()) {
-        String str = "GET " + getFeedString() + " HTTP/1.1\r\n\r\n";
-        System.err.println("attempting " + str);
-        attachment[1] = UTF8.encode(str);
-        key.interestOps(OP_WRITE);
-      }
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-  }
 
   /**
    * handles a control socket read
@@ -96,59 +74,69 @@ public class CouchChangesClient implements AsioVisitor {
 
   public void onRead(SelectionKey key) {
     SocketChannel channel = (SocketChannel) key.channel();
-    Object[] attachment = (Object[]) key.attachment();
+    final Object[] attachment = (Object[]) key.attachment();
 
     try {
-      ByteBuffer b = ByteBuffer.allocateDirect(channel.socket().getReceiveBufferSize());
+      final ByteBuffer b = ByteBuffer.allocateDirect(channel.socket().getReceiveBufferSize());
 //            ByteBuffer b = ByteBuffer.allocateDirect(333);
       int sofar = channel.read(b);
-      if (active) {
-        b.flip();
+      final String s = UTF8.decode((ByteBuffer) b.rewind()).toString();
+      if (s.startsWith("HTTP/1.1 20")) {
+        active = true;
+        key.interestOps(OP_WRITE);
+        key.attach(new Object[]{new Impl() {
+          @Override
+          public void onWrite(SelectionKey key) throws Exception {
+            Object[] attachment = (Object[]) key.attachment();
+            SocketChannel channel = (SocketChannel) key.channel();
+            String str = "GET " + getFeedString() + " HTTP/1.1\r\n\r\n";
+            System.err.println("attempting " + str);
+            attachment[1] = UTF8.encode(str);
+            channel.write(ByteBuffer.wrap(str.getBytes()));
+            key.interestOps(OP_READ);
+          }
 
-        Object prev = attachment.length > 2 ? attachment[2] : null;
-        boolean stuff = false;
-        ByteBuffer wrap = ByteBuffer.wrap(ENDL);
-        b.mark();
-        b.position(b.limit() - ENDL.length);
+          @Override
+          public void onRead(SelectionKey key) throws Exception {
+            final SelectableChannel channel1 = key.channel();
+            final SocketChannel channel = (SocketChannel) channel1;
+            final ByteBuffer b = ByteBuffer.allocate(channel.socket().getReceiveBufferSize());
+            ((SocketChannel) channel).read(b);
+            b.flip();
+            final Object[] attachment = (Object[]) key.attachment();         //todo: nuke the attachment arrays
+            Object prev = attachment.length > 2 ? attachment[2] : null;
+            boolean stuff = false;
+            ByteBuffer wrap = ByteBuffer.wrap(ENDL);
+            b.mark();
+            b.position(b.limit() - ENDL.length);
 
-        if (0 != wrap.compareTo(b)) {
-          stuff = true;
-        }
-        b.reset();
+            if (0 != wrap.compareTo(b)) {
+              stuff = true;
+            }
+            b.reset();
 
-        Object[] objects = {b, prev};
+            Object[] objects = {b, prev};
 
-        if (stuff) {
-          Object[] ob = {attachment[0], attachment[1], objects};
-          key.attach(ob);
-        } else {
-          key.attach(new Object[]{attachment[0], attachment[1]});
-
-
-          //offload the heavy stuff to some other core if possible
-          EXECUTOR_SERVICE.submit(
-              new UpdateStreamRecvTask(objects));
-        }
+            if (stuff) {
+              Object[] ob = {this, attachment[1], objects};
+              key.attach(ob);
+            } else {
+              key.attach(new Object[]{this, attachment[1]});
+              //offload the heavy stuff to some other core if possible
+              EXECUTOR_SERVICE.submit(
+                  new UpdateStreamRecvTask(objects));
+            }
+          }
+        }, getFeedString()});
       } else {
-        String s = UTF8.decode((ByteBuffer) b.rewind()).toString();
-        if (s.startsWith("HTTP/1.1 200")) {
-          active = true;
-        } else if (s.startsWith("HTTP/1.1 201")) {
-          killswitch = true;
-          System.err.println("bailing out on 201!");
-          if (scriptExit2) System.exit(2);
-        } else {
-          String str = "PUT /" + feedname + "/ HTTP/1.1\r\n\r\n";
-          ByteBuffer encode = UTF8.encode(str);
-          attachment[1] = encode;
-          key.attach(toArray(this, encode));
-          key.interestOps(OP_WRITE);
-          System.err.println("attempting db creation (ignore 201 and restart)" + str);
-          scriptExit2 = true;
-        }
+        String str = "PUT /" + feedname + "/ HTTP/1.1\r\n\r\n";
+        ByteBuffer encode = UTF8.encode(str);
+        attachment[1] = encode;
+        key.attach(toArray(this, encode));
+        key.interestOps(OP_WRITE);
+        System.err.println("attempting db creation  " + str);
+        scriptExit2 = true;
       }
-
-
     } catch (SocketException e) {
       e.printStackTrace();  //todo: verify for a purpose
     } catch (IOException e) {
