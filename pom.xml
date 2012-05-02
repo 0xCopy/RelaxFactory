@@ -86,7 +86,7 @@
         <dependency>
             <groupId>1xio</groupId>
             <artifactId>1xio</artifactId>
-            <version>1.9.6</version>
+            <version>1.9.7</version>
         </dependency>
 
         <dependency>

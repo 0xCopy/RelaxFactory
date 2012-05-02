@@ -234,7 +234,7 @@ public class KernelImpl {
     while (null == channel && !couchDq.isEmpty()) {
 
       SocketChannel remove = (SocketChannel) couchDq.remove();
-      if (remove.isConnected()) {
+      if (remove.isConnected() && !channel.socket().isInputShutdown() && !channel.socket().isOutputShutdown()) {
         channel = remove;
       }
     }

@@ -32,8 +32,6 @@ import static one.xio.HttpMethod.UTF8;
  * Time: 12:37 PM
  */
 class RfPostWrapper extends Impl {
-
-
   public static final SimpleRequestProcessor SIMPLE_REQUEST_PROCESSOR = new SimpleRequestProcessor(ServiceLayer.create());
 
   @Override
@@ -42,12 +40,16 @@ class RfPostWrapper extends Impl {
     ByteBuffer dst = ByteBuffer.allocate(KernelImpl.getReceiveBufferSize());
     int read = 0;
     try {
+      if (channel.socket().isInputShutdown() || channel.socket().isOutputShutdown() || !channel.isConnected()) {
+        key.cancel();
+        return;
+      }
       read = channel.read(dst);
     } catch (IOException e) {
       channel.close();
     }
     if (-1 == read) {
-      key.attach(null);
+      channel.close();
     } else {
       dst.flip();
       ByteBuffer duplicate = dst.duplicate();
