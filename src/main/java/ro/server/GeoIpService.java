@@ -195,7 +195,7 @@ public class GeoIpService {
       @Override
       public void onRead(SelectionKey key) throws Exception {
         SelectableChannel channel1 = key.channel();
-        ByteBuffer dst = ByteBuffer.allocateDirect(((SocketChannel) channel1).socket().getReceiveBufferSize());
+        ByteBuffer dst = ByteBuffer.allocate(KernelImpl.getReceiveBufferSize());
         int read = ((SocketChannel) channel1).read(dst);
         System.err.println("Expected 100-continue.  Got(" + read + "): " + UTF8.decode((ByteBuffer) dst.flip()).toString().trim());
         key.interestOps(OP_WRITE);
@@ -386,7 +386,7 @@ public class GeoIpService {
       public void onRead(final SelectionKey selectionKey) throws IOException, InterruptedException {
         final AsioVisitor parent = this;
         final SocketChannel channel = (SocketChannel) selectionKey.channel();
-        ByteBuffer dst = ByteBuffer.allocateDirect(channel.socket().getReceiveBufferSize());
+        ByteBuffer dst = ByteBuffer.allocate(KernelImpl.getReceiveBufferSize());
         int read = channel.read(dst);
         dst.flip();
         System.err.println("response: " + UTF8.decode((ByteBuffer) dst.duplicate().rewind()));
@@ -492,7 +492,7 @@ public class GeoIpService {
                       @Override
                       public void onRead(SelectionKey key) throws Exception {
                         SocketChannel channel = (SocketChannel) key.channel();
-                        ByteBuffer dst1 = ByteBuffer.allocateDirect(channel.socket().getReceiveBufferSize());
+                        ByteBuffer dst1 = ByteBuffer.allocate(KernelImpl.getReceiveBufferSize());
                         int read1 = channel.read(dst1);
                         final long l2 = System.currentTimeMillis();
 //                          System.err.println("response for "+path+": "+UTF8.decode((ByteBuffer) dst1.flip()))

@@ -23,7 +23,6 @@ import ro.shared.req.SessionTool;
 public class Welcome implements EntryPoint {
   static EnumMap<UserDetails, String> gather = new EnumMap<UserDetails, String>(UserDetails.class);
   public static KernelFactory requestFactory;
-//  public static RoSessionProxy session;
 
 
   public void onModuleLoad() {
@@ -31,18 +30,8 @@ public class Welcome implements EntryPoint {
     final EventBus eventBus = new SimpleEventBus();
     requestFactory = GWT.create(KernelFactory.class);
     requestFactory.initialize(eventBus);
-////    Kernel api = requestFactory.api();
-////    Request<RoSessionProxy> currentSession = api.getCurrentSession();
-//
     doController();
-//    currentSession.fire(new Receiver<RoSessionProxy>() {
-//      private String id;
-//
-//      @Override
-//      public void onSuccess(RoSessionProxy response) {
-//
-//      }
-//    });
+
   }
 
   void doController() {

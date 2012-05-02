@@ -22,6 +22,7 @@ import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpMethod.UTF8;
 import static ro.server.KernelImpl.LOOPBACK;
+import static ro.server.KernelImpl.getReceiveBufferSize;
 
 /**
  * Created by IntelliJ IDEA.
@@ -76,8 +77,8 @@ public class CouchChangesClient extends AsioVisitor.Impl {
 
 
     try {
-      final ByteBuffer b = ByteBuffer.allocateDirect(channel.socket().getReceiveBufferSize());
-//            ByteBuffer b = ByteBuffer.allocateDirect(333);
+      final ByteBuffer b = ByteBuffer.allocate(getReceiveBufferSize());
+//            ByteBuffer b = ByteBuffer.allocate(333);
       int sofar = channel.read(b);
       final String s = UTF8.decode((ByteBuffer) b.rewind()).toString();
       if (s.startsWith("HTTP/1.1 20")) {
@@ -99,7 +100,7 @@ public class CouchChangesClient extends AsioVisitor.Impl {
           public void onRead(SelectionKey key) throws Exception {
             final SelectableChannel channel1 = key.channel();
             final SocketChannel channel = (SocketChannel) channel1;
-            final ByteBuffer b = ByteBuffer.allocate(channel.socket().getReceiveBufferSize());
+            final ByteBuffer b = ByteBuffer.allocate(getReceiveBufferSize());
             ((SocketChannel) channel).read(b);
             b.flip();
             final Object[] attachment = (Object[]) key.attachment();         //todo: nuke the attachment arrays
@@ -188,7 +189,7 @@ public class CouchChangesClient extends AsioVisitor.Impl {
       } while (null != slist);
 
       if (null == buffer) {
-        buffer = ByteBuffer.allocateDirect(bufsize);
+        buffer = ByteBuffer.allocate(bufsize);
 
         for (ByteBuffer netBuffer : linkedList) {
           buffer.put(netBuffer);

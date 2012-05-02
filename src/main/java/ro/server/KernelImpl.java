@@ -74,6 +74,8 @@ public class KernelImpl {
   //  private static ByteBuffer locBuf;
   public static InetAddress LOOPBACK = null;
   public static final ConcurrentLinkedQueue<SocketChannel> couchDq = new ConcurrentLinkedQueue<SocketChannel>();
+  private static int rbs;
+  private static int sbs;
 
   static {
     try {
@@ -269,6 +271,28 @@ public class KernelImpl {
     couchDq.add(channel);
   }
 
+  public static int getReceiveBufferSize() {
+    if (0 == rbs)
+      try {
+        rbs = createCouchConnection().socket().getReceiveBufferSize();
+      } catch (IOException e) {
+        e.printStackTrace();  //todo: verify for a purpose
+      }
+
+    return rbs;
+  }
+
+  public static int getSendBufferSize() {
+    if (0 == sbs)
+      try {
+        sbs = createCouchConnection().socket().getSendBufferSize();
+      } catch (IOException e) {
+
+
+      }
+    return sbs;
+  }
+
   static class ThreadLocalSessionHeaders {
 
     private ByteBuffer hb;
@@ -338,7 +362,7 @@ public class KernelImpl {
     serverSocketChannel.configureBlocking(false);
     HttpMethod.enqueue(serverSocketChannel, OP_ACCEPT, topLevel);
     final CouchAgent.SessionCouchAgent ro = new CouchAgent.SessionCouchAgent("ro");
-    HttpMethod.enqueue(createCouchConnection(), OP_CONNECT | OP_WRITE, new Object[]{ro, ro.getFeedString()});
+    HttpMethod.enqueue(createCouchConnection(), OP_CONNECT | OP_WRITE, ro, ro.getFeedString());
     HttpMethod.init(args, topLevel);
   }
 }

@@ -39,8 +39,7 @@ class RfPostWrapper extends Impl {
   @Override
   public void onRead(final SelectionKey key) throws IOException {
     SocketChannel channel = (SocketChannel) key.channel();
-    int receiveBufferSize = channel.socket().getReceiveBufferSize();
-    ByteBuffer dst = ByteBuffer.allocateDirect(receiveBufferSize);
+    ByteBuffer dst = ByteBuffer.allocate(KernelImpl.getReceiveBufferSize());
     int read = 0;
     try {
       read = channel.read(dst);
@@ -75,12 +74,12 @@ class RfPostWrapper extends Impl {
             KernelImpl.EXECUTOR_SERVICE.submit(new RfProcessTask(headers, dst, key));
           } else {
             if (dst.capacity() - dst.position() >= total) {
-              headers = ByteBuffer.allocateDirect(dst.position()).put(headers);
+              headers = ByteBuffer.allocate(dst.position()).put(headers);
               //alert: buhbye headers
               dst.compact().limit((int) total);
 
             } else {
-              dst = ByteBuffer.allocateDirect((int) total).put(dst);
+              dst = ByteBuffer.allocate((int) total).put(dst);
             }
             final ByteBuffer finalDst = dst;
             final ByteBuffer finalHeaders = headers;
@@ -117,7 +116,7 @@ class RfPostWrapper extends Impl {
 
 
                 final SocketChannel socketChannel = (SocketChannel) key.channel();
-                final int sendBufferSize = socketChannel.socket().getSendBufferSize();
+                final int sendBufferSize = KernelImpl.getSendBufferSize();
                 String ceString = "";
 
                 Map<String, int[]> hmap = HttpHeaders.getHeaders((ByteBuffer) headers.clear());

@@ -33,8 +33,8 @@ class JsonResponseReader extends AsioVisitor.Impl {
   public void onRead(SelectionKey key) throws IOException, InterruptedException {
     final SocketChannel channel = (SocketChannel) key.channel();
     {
-      final int receiveBufferSize = channel.socket().getReceiveBufferSize();
-      ByteBuffer dst = ByteBuffer.allocateDirect(receiveBufferSize);
+      final int receiveBufferSize = KernelImpl.getReceiveBufferSize();
+      ByteBuffer dst = ByteBuffer.allocate(receiveBufferSize);
       int read = channel.read(dst);
       dst.flip();
 
@@ -59,12 +59,12 @@ class JsonResponseReader extends AsioVisitor.Impl {
           key.attach(new Impl() {
             @Override
             public void onRead(SelectionKey key) throws InterruptedException, IOException {
-              ByteBuffer payload = ByteBuffer.allocateDirect(receiveBufferSize);
+              ByteBuffer payload = ByteBuffer.allocate(receiveBufferSize);
               int read = channel.read(payload);
               ll.add(payload);
               remaining -= read;
               if (0 == remaining) {
-                payload = ByteBuffer.allocateDirect((int) total);
+                payload = ByteBuffer.allocate((int) total);
                 ListIterator<ByteBuffer> iter = ll.listIterator();
                 while (iter.hasNext()) {
                   ByteBuffer buffer = iter.next();
