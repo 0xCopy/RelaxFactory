@@ -86,7 +86,7 @@ class RfPostWrapper extends Impl {
 
                 final String req = "GET " + link + " HTTP/1.1\r\n" +
                     "Accept: image/*, text/*\r\n" +
-//                    "Connection: close\r\n" +
+                    "Connection: close\r\n" +
                     "\r\n";
 
                 final SocketChannel couchConnection = KernelImpl.createCouchConnection();
@@ -110,14 +110,15 @@ class RfPostWrapper extends Impl {
                           private Impl browserSlave = new Impl() {
                             @Override
                             public void onWrite(SelectionKey key) throws Exception {
-                              final int write = browserChannel.write(dst);
-//                              System.err.println("sending " + UTF8.decode((ByteBuffer) dst.duplicate().rewind().limit(40)).toString().trim());
-                              if (remaining > 0) {
-                                couchKey.interestOps(OP_READ);
-                                browserKey.interestOps(0).selector().wakeup();
-                              } else if (!dst.hasRemaining()) {
-                                browserKey.interestOps(OP_READ).attach(null);
-                                browserKey.interestOps(0).selector().wakeup();
+                              try {
+                                final int write = browserChannel.write(dst);
+                                if (!dst.hasRemaining() && remaining == 0)
+                                  browserChannel.close();
+                                browserKey.interestOps(0);
+                                couchKey.interestOps(OP_READ).selector().wakeup();
+                              } catch (Exception e) {
+                                browserChannel.close();
+                              } finally {
                               }
                             }
                           };
@@ -127,13 +128,16 @@ class RfPostWrapper extends Impl {
 
                           @Override
                           public void onRead(final SelectionKey couchKey) throws Exception {
-                            if (remaining > 0) {
-                              dst.compact();
-                              final int read = couchConnection.read(dst);
-                              remaining -= read;
+
+                            if (browserKey.isValid() && remaining != 0) {
+                              dst.compact();//threadsafety guarantee by monothreaded selector
+
+                              remaining -= couchConnection.read(dst);
                               dst.flip();
                               couchKey.interestOps(0);
                               browserKey.interestOps(OP_WRITE).selector().wakeup();
+                              ;
+
                             } else {
                               recycleChannel(couchConnection);
                             }
