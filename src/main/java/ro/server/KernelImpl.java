@@ -18,9 +18,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -73,7 +74,31 @@ public class KernelImpl {
   private static int blockCount;
   //  private static ByteBuffer locBuf;
   public static InetAddress LOOPBACK = null;
-  public static final ConcurrentLinkedQueue<SocketChannel> couchDq = new ConcurrentLinkedQueue<SocketChannel>();
+  public static final BlockingDeque couchDq = new LinkedBlockingDeque(5);static {
+    final Runnable task = new Runnable() {
+      @Override
+      public void run() {
+        while (true) {
+
+          SocketChannel channel = null;
+
+          System.err.println("opening " + new InetSocketAddress(LOOPBACK, 5984).toString());
+          try {
+            channel = SocketChannel.open();
+            channel.configureBlocking(false);
+            channel.connect(new InetSocketAddress(LOOPBACK, 5984));
+            couchDq.putLast(channel);
+          } catch (Exception e) {
+            throw new Error("couch connector down - failllling fast!");
+          }
+
+        }
+      }
+    };
+    //aggressively push two threads into 3 entries
+    EXECUTOR_SERVICE.submit(task);
+  }
+
   private static int rbs;
   private static int sbs;
 
@@ -228,24 +253,14 @@ public class KernelImpl {
     return ret;
   }
 
-  public static SocketChannel createCouchConnection() throws IOException {
+  public static SocketChannel createCouchConnection() {
 
-    SocketChannel channel = null;
-    while (null == channel && !couchDq.isEmpty()) {
-
-      SocketChannel remove = (SocketChannel) couchDq.remove();
-      if (remove.isConnected() && !channel.socket().isInputShutdown() && !channel.socket().isOutputShutdown()) {
-        channel = remove;
-      }
+    try {
+      return (SocketChannel) couchDq.take();
+    } catch (InterruptedException e) {
+      e.printStackTrace();  //todo: verify for a purpose
     }
-    if (null == channel) {
-      System.err.println("opening " + new InetSocketAddress(LOOPBACK, 5984).toString());
-      channel = SocketChannel.open();
-      channel.configureBlocking(false);
-      channel.connect(new InetSocketAddress(LOOPBACK, 5984));
-    } else System.err.println("+++ recycling " + deepToString(channel));
-
-    return channel;
+    return null;
   }
 
 

@@ -103,7 +103,12 @@ class RfPostWrapper extends Impl {
                         final int[] ints = map.get("Content-Length");
                         final int total = Integer.parseInt(UTF8.decode((ByteBuffer) headers.duplicate().clear().position(ints[0]).limit(ints[1])).toString().trim());
                         final SocketChannel browserChannel = (SocketChannel) browserKey.channel();
-                        browserChannel.write((ByteBuffer) headers.rewind());
+                        try {
+                          browserChannel.write((ByteBuffer) headers.rewind());
+                        } catch (IOException e) {
+                          couchConnection.close();
+                          return;
+                        }
 
                         couchKey.interestOps(OP_READ).attach(new Impl() {
                           final ByteBuffer sharedBuf = ByteBuffer.allocateDirect(min(total, getReceiveBufferSize()));
