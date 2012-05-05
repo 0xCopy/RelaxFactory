@@ -7,7 +7,6 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.channels.ClosedChannelException;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
@@ -255,12 +254,18 @@ public class KernelImpl {
 
   public static SocketChannel createCouchConnection() {
 
-    try {
-      return (SocketChannel) couchDq.take();
-    } catch (InterruptedException e) {
-      e.printStackTrace();  //todo: verify for a purpose
-    }
-    return null;
+      while (true) {
+
+        try {
+          SocketChannel take = (SocketChannel) couchDq.take();
+          if (take.isOpen()) {
+            return take;
+          }
+        } catch (InterruptedException e) {
+          e.printStackTrace();  //todo: verify for a purpose
+        }
+      }
+
   }
 
 
@@ -281,9 +286,9 @@ public class KernelImpl {
     return Arrays.deepToString(d);
   }
 
-  public static void recycleChannel(SocketChannel channel) throws ClosedChannelException {
-    channel.register(HttpMethod.getSelector(), 0).attach(null);
-    couchDq.add(channel);
+  public static void recycleChannel(SocketChannel channel) throws IOException {
+    final boolean offer = couchDq.offer(channel);
+    if (!offer) channel.close();
   }
 
   public static int getReceiveBufferSize() {
