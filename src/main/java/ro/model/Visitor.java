@@ -10,7 +10,7 @@ import com.google.gson.annotations.SerializedName;
  * Time: 9:57 PM
  */
 
-public class RoSession {
+public class Visitor {
 
   @SerializedName("_id")
   private String id;
@@ -20,8 +20,8 @@ public class RoSession {
   @SerializedName("_rev")
   private String version;
 
-  public static RoSession createSession() {
-    RoSession roSession = new RoSession();
+  public static Visitor createSession() {
+    Visitor roSession = new Visitor();
     roSession.setCreation(new Date());
     return roSession;
   }

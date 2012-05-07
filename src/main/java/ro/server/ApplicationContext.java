@@ -1,6 +1,6 @@
 package ro.server;
 
-import ro.model.RoSession;
+import ro.model.Visitor;
 
 /**
  * User: jim
@@ -9,12 +9,12 @@ import ro.model.RoSession;
  */
 public class ApplicationContext {
 
-  public <T > T getBean(Class<T> clazz) {
+  public <T> T getBean(Class<T> clazz) {
     T ret = null;
     try {
-      System.err.println("class called is "+clazz.getCanonicalName());
-      if (clazz == RoSession.class) {
-        ret = (T) new RoSessionLocator().create(RoSession.class);
+      System.err.println("class called is " + clazz.getCanonicalName());
+      if (clazz == Visitor.class) {
+        ret = (T) new VisitorLocator().create(Visitor.class);
       } else {
         ret = clazz.newInstance();  //To change body of created methods use File | Settings | File Templates.
       }

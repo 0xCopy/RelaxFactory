@@ -30,7 +30,7 @@ import com.google.gson.GsonBuilder;
 import one.xio.AsioVisitor;
 import one.xio.HttpHeaders;
 import one.xio.HttpMethod;
-import ro.model.RoSession;
+import ro.model.Visitor;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.min;
@@ -49,7 +49,7 @@ import static ro.server.GeoIpService.bufAbstraction;
  * Time: 11:55 PM
  */
 public class KernelImpl {
-  public static final RoSessionLocator RO_SESSION_LOCATOR = new RoSessionLocator();
+  public static final VisitorLocator RO_SESSION_LOCATOR = new VisitorLocator();
   public static final ScheduledExecutorService EXECUTOR_SERVICE = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() + 3);
   public static final ThreadLocal<ByteBuffer> ThreadLocalHeaders = new ThreadLocal<ByteBuffer>();
   public static ThreadLocal<InetAddress> ThreadLocalInetAddress = new ThreadLocal<InetAddress>();
@@ -121,7 +121,7 @@ public class KernelImpl {
 
   static public String getSessionCookieId() throws Exception {
     String id = null;
-    RoSession roSession = null;
+    Visitor roSession = null;
     try {
       ThreadLocalSessionHeaders invoke = new ThreadLocalSessionHeaders().invoke();
       ByteBuffer headerBuffer = invoke.getHb();
@@ -140,7 +140,7 @@ public class KernelImpl {
       System.err.println("cookie failure on " + id);
     }
     if (null == id) {
-      roSession = RO_SESSION_LOCATOR.create(RoSession.class);
+      roSession = RO_SESSION_LOCATOR.create(Visitor.class);
       id = roSession.getId();
 
       Map<String, String> stringMap = ThreadLocalSetCookies.get();
@@ -187,12 +187,12 @@ public class KernelImpl {
     return b;
   }
 
-  static public RoSession getCurrentSession() throws Exception {
+  static public Visitor getCurrentSession() throws Exception {
     String id = null;
-    RoSession roSession = null;
+    Visitor roSession = null;
     id = getSessionCookieId();
     if (null != id)
-      roSession = RO_SESSION_LOCATOR.find(RoSession.class, id);
+      roSession = RO_SESSION_LOCATOR.find(Visitor.class, id);
     return roSession;
   }
 
@@ -350,16 +350,16 @@ public class KernelImpl {
       public Object call() throws IOException {
         String id;
         {
-          RoSessionLocator roSessionLocator = new RoSessionLocator();
-          RoSession roSession = roSessionLocator.create(RoSession.class);
+          VisitorLocator roSessionLocator = new VisitorLocator();
+          Visitor roSession = roSessionLocator.create(Visitor.class);
           id = roSession.getId();
           String s = GSON.toJson(roSession);
           System.err.println("created: " + s);
         }
 
         {
-          RoSessionLocator roSessionLocator = new RoSessionLocator();
-          RoSession roSession = roSessionLocator.find(RoSession.class, id);
+          VisitorLocator roSessionLocator = new VisitorLocator();
+          Visitor roSession = roSessionLocator.find(Visitor.class, id);
           String s = GSON.toJson(roSession);
           System.err.println("find: " + s);
 

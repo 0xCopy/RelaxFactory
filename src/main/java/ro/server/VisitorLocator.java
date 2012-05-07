@@ -7,9 +7,9 @@ import java.util.concurrent.SynchronousQueue;
 
 import com.google.web.bindery.requestfactory.shared.Locator;
 import one.xio.HttpMethod;
-import ro.model.RoSession;
-import ro.server.rf.SessionCreateVisitor;
-import ro.server.rf.SessionLocatorVisitor;
+import ro.model.Visitor;
+import ro.server.rf.VisitorLocatorVisitor;
+import ro.server.rf.VisitorVisitor;
 
 import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_WRITE;
@@ -23,10 +23,10 @@ import static ro.server.KernelImpl.createCouchConnection;
  * Date: 4/16/12
  * Time: 1:22 PM
  */
-public class RoSessionLocator extends Locator<RoSession, String> {
+public class VisitorLocator extends Locator<Visitor, String> {
 
 
-  public static final RoSession MEMENTO = new RoSession();
+  public static final Visitor MEMENTO = new Visitor();
 
   /**
    * <pre>
@@ -44,12 +44,12 @@ public class RoSessionLocator extends Locator<RoSession, String> {
    * @return
    */
   @Override
-  public RoSession create(Class<? extends RoSession> clazz) {
-    RoSession ret = null;
+  public Visitor create(Class<? extends Visitor> clazz) {
+    Visitor ret = null;
     try {
-      Callable<RoSession> callable = new Callable<RoSession>() {
-        public RoSession call() throws Exception {
-          SessionLocatorVisitor<? extends CouchTx, ? extends RoSession> sessionVisitor = null;
+      Callable<Visitor> callable = new Callable<Visitor>() {
+        public Visitor call() throws Exception {
+          VisitorLocatorVisitor<? extends CouchTx, ? extends Visitor> sessionVisitor = null;
 //          InetSocketAddress remote = new InetSocketAddress(LOOPBACK, 5984);
 //          System.err.println("opening " + remote.toString());
 //          SocketChannel channel = SocketChannel.open();
@@ -60,7 +60,7 @@ public class RoSessionLocator extends Locator<RoSession, String> {
           try {
             SynchronousQueue<CouchTx> retVal = new SynchronousQueue<CouchTx>();
 
-            sessionVisitor = new SessionCreateVisitor(channel, retVal);
+            sessionVisitor = new VisitorVisitor(channel, retVal);
             HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, sessionVisitor);
             retVal.take();
           } finally {
@@ -72,7 +72,7 @@ public class RoSessionLocator extends Locator<RoSession, String> {
 
         }
       };
-      RoSession roSession = ret = KernelImpl.EXECUTOR_SERVICE.submit(callable).get();
+      Visitor roSession = ret = KernelImpl.EXECUTOR_SERVICE.submit(callable).get();
     } catch (Throwable e) {
       e.printStackTrace();  //todo: verify for a purpose
     }
@@ -80,7 +80,7 @@ public class RoSessionLocator extends Locator<RoSession, String> {
   }
 
   @Override
-  public RoSession find(Class<? extends RoSession> clazz, String id) {
+  public Visitor find(Class<? extends Visitor> clazz, String id) {
 
     String s = null;
     try {
@@ -96,12 +96,12 @@ public class RoSessionLocator extends Locator<RoSession, String> {
   }
 
   @Override
-  public Class<RoSession> getDomainType() {
-    return RoSession.class;
+  public Class<Visitor> getDomainType() {
+    return Visitor.class;
   }
 
   @Override
-  public String getId(RoSession domainObject) {
+  public String getId(Visitor domainObject) {
     return domainObject.getId();
   }
 
@@ -111,7 +111,7 @@ public class RoSessionLocator extends Locator<RoSession, String> {
   }
 
   @Override
-  public Object getVersion(RoSession domainObject) {
+  public Object getVersion(Visitor domainObject) {
     return domainObject.getVersion();
   }
 
