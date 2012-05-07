@@ -22,7 +22,6 @@ import static ro.server.KernelImpl.getSessionCookieId;
  */
 public class SessionToolImpl {
 
-  public static final RoSessionLocator RO_SESSION_LOCATOR = new RoSessionLocator();
   public static final String INSTANCE = "rosession";
 
   /**

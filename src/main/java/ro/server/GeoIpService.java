@@ -50,13 +50,12 @@ import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpMethod.UTF8;
-import static one.xio.HttpMethod.getSelector;
 import static ro.server.GeoIpIndexRecord.reclen;
 import static ro.server.KernelImpl.EXECUTOR_SERVICE;
 import static ro.server.KernelImpl.GSON;
-import static ro.server.KernelImpl.couchDq;
 import static ro.server.KernelImpl.createCouchConnection;
 import static ro.server.KernelImpl.moveCaretToDoubleEol;
+import static ro.server.KernelImpl.recycleChannel;
 
 //code smell
 
@@ -121,8 +120,7 @@ public class GeoIpService {
 
           }
         } finally {
-          couchConnection.register(getSelector(), 0);
-          couchDq.add(couchConnection);
+          recycleChannel(couchConnection);
         }
         return m;
 
@@ -137,10 +135,7 @@ public class GeoIpService {
       couchConnection = createCouchConnection();
       HttpMethod.enqueue(couchConnection, OP_CONNECT | OP_WRITE,
           new AsioVisitor.Impl() {
-            @Override
-            public void onConnect(SelectionKey key) throws Exception {
-              if (((SocketChannel) key.channel()).finishConnect()) key.interestOps(OP_WRITE);
-            }
+
 
             @Override
             public void onWrite(SelectionKey key) throws Exception {
@@ -165,10 +160,7 @@ public class GeoIpService {
       couchConnection = createCouchConnection();
       HttpMethod.enqueue(couchConnection, OP_CONNECT | OP_WRITE,
           new AsioVisitor.Impl() {
-            @Override
-            public void onConnect(SelectionKey key) throws Exception {
-              if (((SocketChannel) key.channel()).finishConnect()) key.interestOps(OP_WRITE);
-            }
+
 
             @Override
             public void onWrite(SelectionKey key) throws Exception {

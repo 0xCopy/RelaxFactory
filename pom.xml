@@ -6,16 +6,18 @@
     <groupId>ro</groupId>
     <artifactId>RelaxFactory</artifactId>
     <packaging>war</packaging>
-    <version>0.5.1</version>
+    <version>0.6.0</version>
     <properties>
         <java.version>1.6</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <gwt.style>OBF</gwt.style>
         <gwt.draftCompile>false</gwt.draftCompile>
-        <!--  there is too much genreated code in gwt for pmd to produce an accurate report -->
+        <gwt.version>2.5.0-rfmap-SNAPSHOT</gwt.version>
+        <gwt.plugin.version>2.4.0</gwt.plugin.version>
 
         <gwt-maven-plugin.compileReport>false</gwt-maven-plugin.compileReport>
         <gwt-maven-plugin.soycDetailed>false</gwt-maven-plugin.soycDetailed>
+        <one.xio.version>1.9.8</one.xio.version>
     </properties>
     <profiles>
         <profile>
@@ -68,7 +70,7 @@
     <repositories>
         <repository>
             <id>gwt-maven-rewraps</id>
-            <url>http://gwt-maven-rewraps.googlecode.com/hg/</url>
+            <url>http://gwt-maven-rewraps.googlecode.com/git/</url>
         </repository>
         <repository>
             <id>sonatype-snapshots</id>
@@ -86,7 +88,7 @@
         <dependency>
             <groupId>1xio</groupId>
             <artifactId>1xio</artifactId>
-            <version>1.9.7</version>
+            <version>${one.xio.version}</version>
         </dependency>
 
         <dependency>
@@ -105,20 +107,21 @@
         <dependency>
             <groupId>com.google.web.bindery</groupId>
             <artifactId>requestfactory-server</artifactId>
-            <version>2.4.0</version>
+            <version>${gwt.version}</version>
         </dependency>
 
         <!-- see sample projects for correct placement -->
         <dependency>
             <groupId>com.google.web.bindery</groupId>
             <artifactId>requestfactory-apt</artifactId>
-            <version>2.4.0</version>
+            <version>${gwt.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>com.google.gwt</groupId>
             <artifactId>gwt-user</artifactId>
-            <version>2.4.0</version>
+            <version>${gwt.version}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -214,7 +217,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.2</version>
                 <executions>
-                    <execution>
+                    <!-- unnec in 2.4 plugin <execution>
                         <phase>process-classes</phase>
                         <goals>
                             <goal>exec</goal>
@@ -230,25 +233,25 @@
                                 <argument>${project.groupId}.shared.KernelFactory</argument>
                             </arguments>
                         </configuration>
-                    </execution>
+                    </execution>-->
                 </executions>
                 <dependencies>
                     <dependency>
                         <groupId>com.google.gwt</groupId>
                         <artifactId>gwt-dev</artifactId>
-                        <version>2.4.0</version>
+                        <version>${gwt.version}</version>
                     </dependency>
                     <dependency>
                         <groupId>com.google.gwt</groupId>
                         <artifactId>gwt-user</artifactId>
-                        <version>2.4.0</version>
+                        <version>${gwt.version}</version>
                     </dependency>
                 </dependencies>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>gwt-maven-plugin</artifactId>
-                <version>2.4.0</version>
+                <version>${gwt.plugin.version}</version>
                 <configuration>
                     <logLevel>INFO</logLevel>
                     <style>PRETTY</style>
@@ -278,12 +281,12 @@
                     <dependency>
                         <groupId>com.google.gwt</groupId>
                         <artifactId>gwt-dev</artifactId>
-                        <version>2.4.0</version>
+                        <version>${gwt.version}</version>
                     </dependency>
                     <dependency>
                         <groupId>com.google.gwt</groupId>
                         <artifactId>gwt-user</artifactId>
-                        <version>2.4.0</version>
+                        <version>${gwt.version}</version>
                     </dependency>
                 </dependencies>
             </plugin>
@@ -295,7 +298,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>gwt-maven-plugin</artifactId>
-                <version>2.4.0</version>
+                <version>${gwt.plugin.version}</version>
                 <reportSets>
                     <reportSet>
                         <reports>

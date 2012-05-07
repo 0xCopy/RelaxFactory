@@ -73,7 +73,7 @@ public class KernelImpl {
   private static int blockCount;
   //  private static ByteBuffer locBuf;
   public static InetAddress LOOPBACK = null;
-  public static final BlockingDeque couchDq = new LinkedBlockingDeque(5);static {
+  public static final BlockingDeque<SocketChannel> couchDq = new LinkedBlockingDeque<SocketChannel>(5);static {
     final Runnable task = new Runnable() {
       @Override
       public void run() {
@@ -254,18 +254,18 @@ public class KernelImpl {
 
   public static SocketChannel createCouchConnection() {
 
-      while (true) {
+    while (true) {
 
-        try {
-          SocketChannel take = (SocketChannel) couchDq.take();
-          if (take.isOpen()) {
-            return take;
-          }
-        } catch (InterruptedException e) {
-          e.printStackTrace();  //todo: verify for a purpose
+      try {
+        SocketChannel take = (SocketChannel) couchDq.take();
+        if (take.isOpen()) {
+          System.err.println("createCouch" + wheresWaldo());
+          return take;
         }
+      } catch (InterruptedException e) {
+        e.printStackTrace();  //todo: verify for a purpose
       }
-
+    }
   }
 
 
@@ -283,12 +283,14 @@ public class KernelImpl {
   }
 
   static String deepToString(Object... d) {
-    return Arrays.deepToString(d);
+    return Arrays.deepToString(d) + wheresWaldo();
   }
 
   public static void recycleChannel(SocketChannel channel) throws IOException {
     final boolean offer = couchDq.offer(channel);
     if (!offer) channel.close();
+    System.err.println("--- recycling" + wheresWaldo());
+
   }
 
   public static int getReceiveBufferSize() {
@@ -385,4 +387,12 @@ public class KernelImpl {
     HttpMethod.enqueue(createCouchConnection(), OP_CONNECT | OP_WRITE, ro, ro.getFeedString());
     HttpMethod.init(args, topLevel);
   }
+
+  public static String wheresWaldo() {
+    final Throwable throwable = new Throwable();
+    final Throwable throwable1 = throwable.fillInStackTrace();
+    final StackTraceElement stackTraceElement = throwable1.getStackTrace()[2];
+    return "\tat " + stackTraceElement.getClassName() + "." + stackTraceElement.getMethodName() + "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")";
+  }
+
 }
