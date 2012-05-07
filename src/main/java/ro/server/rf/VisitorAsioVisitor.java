@@ -17,11 +17,11 @@ import static ro.server.KernelImpl.GSON;
  * Date: 4/17/12
  * Time: 7:20 PM
  */
-public class VisitorVisitor extends VisitorLocatorVisitor<CouchTx, Visitor> {
+public class VisitorAsioVisitor extends VisitorLocatorAsioVisitor<CouchTx, Visitor> {
 
   public static final CouchTx MEMENTO = new CouchTx();
 
-  public VisitorVisitor(SocketChannel channel, BlockingQueue<CouchTx> blockingQueue) {
+  public VisitorAsioVisitor(SocketChannel channel, BlockingQueue<CouchTx> blockingQueue) {
     super(blockingQueue, channel);
   }
 

@@ -27,7 +27,7 @@ import static ro.server.KernelImpl.GSON;
  *             Time: 8:18 PM
  */
 @Deprecated()
-public abstract class VisitorLocatorVisitor<TxPojo, DataPojo> extends AsioVisitor.Impl {
+public abstract class VisitorLocatorAsioVisitor<TxPojo, DataPojo> extends AsioVisitor.Impl {
   public DataPojo data;
   protected BlockingQueue<TxPojo> blockingQueue;
   protected int receiveBufferSize;
@@ -38,7 +38,7 @@ public abstract class VisitorLocatorVisitor<TxPojo, DataPojo> extends AsioVisito
   private boolean active;
   protected LinkedList<ByteBuffer> byteBufferLinkedList;
 
-  public VisitorLocatorVisitor(final BlockingQueue<TxPojo> blockingQueue, SocketChannel channel) {
+  public VisitorLocatorAsioVisitor(final BlockingQueue<TxPojo> blockingQueue, SocketChannel channel) {
     this.blockingQueue = blockingQueue;
     try {
       receiveBufferSize = channel.socket().getReceiveBufferSize();
@@ -118,7 +118,7 @@ public abstract class VisitorLocatorVisitor<TxPojo, DataPojo> extends AsioVisito
 
   abstract TxPojo getMemento();
 
-  public static <TxPojo, DataPojo> void bisectFirstPacketIntoHeaders(VisitorLocatorVisitor<TxPojo, DataPojo> sessionLocatorVisitor, SelectionKey key, ByteBuffer dst) throws InterruptedException {
+  public static <TxPojo, DataPojo> void bisectFirstPacketIntoHeaders(VisitorLocatorAsioVisitor<TxPojo, DataPojo> sessionLocatorVisitor, SelectionKey key, ByteBuffer dst) throws InterruptedException {
     boolean eol = false;
     while (dst.hasRemaining()) {
       byte b = dst.get();

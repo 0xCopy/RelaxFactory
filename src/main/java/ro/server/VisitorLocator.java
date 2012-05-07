@@ -8,8 +8,8 @@ import java.util.concurrent.SynchronousQueue;
 import com.google.web.bindery.requestfactory.shared.Locator;
 import one.xio.HttpMethod;
 import ro.model.Visitor;
-import ro.server.rf.VisitorLocatorVisitor;
-import ro.server.rf.VisitorVisitor;
+import ro.server.rf.VisitorAsioVisitor;
+import ro.server.rf.VisitorLocatorAsioVisitor;
 
 import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_WRITE;
@@ -49,7 +49,7 @@ public class VisitorLocator extends Locator<Visitor, String> {
     try {
       Callable<Visitor> callable = new Callable<Visitor>() {
         public Visitor call() throws Exception {
-          VisitorLocatorVisitor<? extends CouchTx, ? extends Visitor> sessionVisitor = null;
+          VisitorLocatorAsioVisitor<? extends CouchTx, ? extends Visitor> sessionVisitor = null;
 //          InetSocketAddress remote = new InetSocketAddress(LOOPBACK, 5984);
 //          System.err.println("opening " + remote.toString());
 //          SocketChannel channel = SocketChannel.open();
@@ -60,7 +60,7 @@ public class VisitorLocator extends Locator<Visitor, String> {
           try {
             SynchronousQueue<CouchTx> retVal = new SynchronousQueue<CouchTx>();
 
-            sessionVisitor = new VisitorVisitor(channel, retVal);
+            sessionVisitor = new VisitorAsioVisitor(channel, retVal);
             HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, sessionVisitor);
             retVal.take();
           } finally {

@@ -39,6 +39,7 @@ import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static one.xio.HttpMethod.UTF8;
+import static one.xio.HttpMethod.wheresWaldo;
 import static ro.server.GeoIpIndexRecord.reclen;
 import static ro.server.GeoIpService.IPMASK;
 import static ro.server.GeoIpService.bufAbstraction;
@@ -49,12 +50,12 @@ import static ro.server.GeoIpService.bufAbstraction;
  * Time: 11:55 PM
  */
 public class KernelImpl {
-  public static final VisitorLocator RO_SESSION_LOCATOR = new VisitorLocator();
+  public static final VisitorLocator VISITOR_LOCATOR = new VisitorLocator();
   public static final ScheduledExecutorService EXECUTOR_SERVICE = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() + 3);
   public static final ThreadLocal<ByteBuffer> ThreadLocalHeaders = new ThreadLocal<ByteBuffer>();
   public static ThreadLocal<InetAddress> ThreadLocalInetAddress = new ThreadLocal<InetAddress>();
   public static final ThreadLocal<Map<String, String>> ThreadLocalSetCookies = new ThreadLocal<Map<String, String>>();
-  private static final String MYSESSIONSTRING = KernelImpl.class.getCanonicalName();
+  private static final String VISITORSTRING = KernelImpl.class.getCanonicalName();
   public static final String YYYY_MM_DD_T_HH_MM_SS_SSSZ = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
   public static final Gson GSON = new GsonBuilder()
 //    .registerTypeAdapter(Id.class, new IdTypeAdapter())
@@ -88,7 +89,7 @@ public class KernelImpl {
             channel.connect(new InetSocketAddress(LOOPBACK, 5984));
             couchDq.putLast(channel);
           } catch (Exception e) {
-            throw new Error("couch connector down - failllling fast!");
+            throw new Error("couch connector down - failllling fast!" + wheresWaldo(3));
           }
 
         }
@@ -131,7 +132,7 @@ public class KernelImpl {
 
       if (headerIndex.containsKey(COOKIE)) {
         int[] optionalStartStopMarkers = headerIndex.get(COOKIE);
-        id = getCookieAsString(MYSESSIONSTRING, headerBuffer, optionalStartStopMarkers);
+        id = getCookieAsString(VISITORSTRING, headerBuffer, optionalStartStopMarkers);
       }
 
       /* if (null != id)
@@ -140,18 +141,18 @@ public class KernelImpl {
       System.err.println("cookie failure on " + id);
     }
     if (null == id) {
-      roSession = RO_SESSION_LOCATOR.create(Visitor.class);
+      roSession = VISITOR_LOCATOR.create(Visitor.class);
       id = roSession.getId();
 
       Map<String, String> stringMap = ThreadLocalSetCookies.get();
       if (null == stringMap) {
         Map<String, String> value = new TreeMap<String, String>();
-        value.put(MYSESSIONSTRING, id);
+        value.put(VISITORSTRING, id);
         ThreadLocalSetCookies.set(value);
       }
       Date expire = new Date(TimeUnit.DAYS.toMillis(14) + System.currentTimeMillis());
       String cookietext = MessageFormat.format("{0} ; path=/ ; expires={1} ; HttpOnly", id, expire.toGMTString());
-      ThreadLocalSetCookies.get().put(MYSESSIONSTRING, cookietext);
+      ThreadLocalSetCookies.get().put(VISITORSTRING, cookietext);
       final InetAddress inet4Address = ThreadLocalInetAddress.get();
       if (null != inet4Address) {
 
@@ -192,7 +193,7 @@ public class KernelImpl {
     Visitor roSession = null;
     id = getSessionCookieId();
     if (null != id)
-      roSession = RO_SESSION_LOCATOR.find(Visitor.class, id);
+      roSession = VISITOR_LOCATOR.find(Visitor.class, id);
     return roSession;
   }
 
@@ -386,13 +387,6 @@ public class KernelImpl {
     final CouchAgent.SessionCouchAgent ro = new CouchAgent.SessionCouchAgent("ro");
     HttpMethod.enqueue(createCouchConnection(), OP_CONNECT | OP_WRITE, ro, ro.getFeedString());
     HttpMethod.init(args, topLevel);
-  }
-
-  public static String wheresWaldo() {
-    final Throwable throwable = new Throwable();
-    final Throwable throwable1 = throwable.fillInStackTrace();
-    final StackTraceElement stackTraceElement = throwable1.getStackTrace()[2];
-    return "\tat " + stackTraceElement.getClassName() + "." + stackTraceElement.getMethodName() + "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")";
   }
 
 }
