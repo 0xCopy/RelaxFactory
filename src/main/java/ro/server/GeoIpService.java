@@ -18,6 +18,7 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
+import java.nio.IntBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.*;
 import java.text.MessageFormat;
@@ -30,8 +31,9 @@ import java.util.concurrent.SynchronousQueue;
 import static java.lang.Math.abs;
 import static java.nio.channels.SelectionKey.*;
 import static one.xio.HttpMethod.UTF8;
-import static ro.server.GeoIpIndexRecord.reclen;
 import static ro.server.KernelImpl.*;
+
+//import java.util.concurrent.ConcurrentSkipListMap;
 
 //code smell
 
@@ -53,21 +55,8 @@ public class GeoIpService {
     static MappedByteBuffer indexMMBuf;
     static MappedByteBuffer locationMMBuf;
     static int geoIpHeaderOffset;
-    static List<Long> bufAbstraction = new AbstractList<Long>() {
-        @Override
-        public Long get(int index) {
-            return IPMASK & indexMMBuf.getInt(index * reclen);
-        }
-
-        @Override
-        public int size() {
-            int limit = indexMMBuf.limit();
-            int i1 = limit % reclen;
-            limit -= i1;
-            int i = limit / reclen;
-            return i;
-        }
-    };
+    //    private static ConcurrentSkipListMap<Long, Integer> geoipMap = new ConcurrentSkipListMap<Long, Integer>();  slower
+    private static NavigableMap<Long, Integer> geoipMap = new TreeMap<Long, Integer>();
 
 
     public static void createGeoIpIndex() throws IOException, XPathExpressionException, ExecutionException, InterruptedException {
@@ -201,20 +190,6 @@ public class GeoIpService {
                 .append("\r\nExpect: 100-continue\r\nAccept: */*\r\n\r\n").toString();
     }
 
-    public static String getRevision(Map map) {
-        String rev = null;
-
-        rev = (String) map.get("_rev");
-        if (null == rev)
-            rev = (String) map.get("rev");
-        if (null == rev) {
-            rev = (String) map.get("version");
-        }
-        if (null == rev)
-            rev = (String) map.get("ver");
-        return rev;
-    }
-
     static Pair<ByteBuffer, ByteBuffer> buildGeoIpSecondPass(Triple<Integer[], ByteBuffer, ByteBuffer> triple) throws UnknownHostException {
 
         ByteBuffer indexBuf = null;
@@ -234,10 +209,9 @@ public class GeoIpService {
         int i = 0;
         while (indexBuf.hasRemaining()) {
             l1[i] = (IPMASK & indexBuf.getInt());
-            indexBuf.mark();
-            int anInt = indexBuf.getInt();
-            indexBuf.reset();
-            Integer value = index[anInt - 1];
+            int locOffset = indexBuf.asIntBuffer().get();
+
+            Integer value = index[locOffset - 1];
             indexBuf.putInt(value);
             l2[i++] = (value);
         }
@@ -247,33 +221,29 @@ public class GeoIpService {
         return new Pair<ByteBuffer, ByteBuffer>(indexBuf, locBuf);
     }
 
-    static void testMartinez(final ByteBuffer ix, ByteBuffer loc, long[] l1, int[] l2) throws UnknownHostException {
+    static void testWalnutCreek(final ByteBuffer ix, ByteBuffer loc, long[] l1, int[] l2) throws UnknownHostException {
 
         try {
             String s2 = "127.0.0.1";
             InetAddress loopBackAddr = Inet4Address.getByAddress(new byte[]{127, 0, 0, 1});
-            InetAddress martinez = Inet4Address.getByAddress(new byte[]{67, (byte) 174, (byte) 244, 11});
+            InetAddress walnutCreek = Inet4Address.getByAddress(new byte[]{67, (byte) 174, (byte) 244, 11});
+            System.err.println("|" + sortableInetAddress(Inet4Address.getByAddress(new byte[]{67, (byte) 174, (byte) 244, 103})));
+            System.err.println("|" + sortableInetAddress(Inet4Address.getByAddress(new byte[]{67, (byte) 174, (byte) 244, 103})));
+            System.err.println("|" + sortableInetAddress(Inet4Address.getByAddress(new byte[]{67, (byte) 174, (byte) 103, 11})));
             if (null != l1 && null != l2) {
                 System.err.println(arraysLookup(l2, l1, loopBackAddr, loc.duplicate()));
-                System.err.println(arraysLookup(l2, l1, martinez, loc.duplicate()));
+                System.err.println(arraysLookup(l2, l1, walnutCreek, loc.duplicate()));
             }
             try {
                 {
-                    ByteBuffer tmp = (ByteBuffer) loc.clear().position(KernelImpl.lookupInetAddress(loopBackAddr, ix, bufAbstraction)).mark();
-                    int p = tmp.position();
-                    while (tmp.get() != '\n') ;
-                    String trim = UTF8.decode((ByteBuffer) tmp.flip().position(p)).toString().trim();
 
-                    System.err.println("localhost: " + trim);
+                    System.err.println("localhost: " + mapAddressLookup(loopBackAddr));
                 }
                 {
-                    ByteBuffer tmp = (ByteBuffer) loc.clear().position(KernelImpl.lookupInetAddress(martinez, ix, bufAbstraction)).mark();
-                    int p = tmp.position();
-                    while (tmp.get() != '\n') ;
-                    String trim = UTF8.decode((ByteBuffer) tmp.flip().position(p)).toString().trim();
 
-                    System.err.println("martinez: " + trim);
+                    System.err.println("walnut creek: " + mapAddressLookup(walnutCreek));
                 }
+
             } catch (Throwable e) {
                 e.printStackTrace();  //todo: verify for a purpose
             } finally {
@@ -281,9 +251,9 @@ public class GeoIpService {
 
 //
 //
-//      lookup = KernelImpl.lookupInetAddress(martinez, indexMMBuf );
+//      lookup = KernelImpl.lookupInetAddress(walnutCreek, indexMMBuf );
 //
-//      System.err.println("martinez: " + lookup);
+//      System.err.println("walnutCreek: " + lookup);
         } catch (Throwable e) {
             e.printStackTrace();  //todo: verify for a purpose
         } finally {
@@ -315,14 +285,14 @@ public class GeoIpService {
 
         {
             try {
-                long l3 = System.currentTimeMillis();
-
-
-                for (InetAddress inetAddress : inetAddresses) {
-
-                    KernelImpl.lookupInetAddress(inetAddress, ix, bufAbstraction);
-                }
-                System.err.println("list benchmark: " + (System.currentTimeMillis() - l3));
+//                long l3 = System.currentTimeMillis();
+//
+//
+//                for (InetAddress inetAddress : inetAddresses) {
+//
+//                    KernelImpl.lookupInetAddress(inetAddress, ix, bufAbstraction);
+//                }
+//                System.err.println("list benchmark: " + (System.currentTimeMillis() - l3));
             } catch (Throwable e) {
                 e.printStackTrace();  //todo: verify for a purpose
             } finally {
@@ -353,38 +323,42 @@ public class GeoIpService {
         }
     }
 
-    private static void benchMarkMap(InetAddress[] inetAddresses, NavigableMap<Long, Integer> longIntegerConcurrentSkipListMap) {
+    private static void benchMarkMap(InetAddress[] inetAddresses, NavigableMap<Long, Integer> navigableMap) {
         long l = System.currentTimeMillis();
-        NavigableMap<Long, Integer> alt = longIntegerConcurrentSkipListMap;
+        NavigableMap<Long, Integer> map = navigableMap;
         ByteBuffer duplicate = indexMMBuf.duplicate();
         while (duplicate.hasRemaining()) {
-            alt.put(duplicate.getInt() & 0xffffffffl, duplicate.getInt());
+            map.put(duplicate.getInt() & 0xffffffffl, duplicate.getInt());
         }
 
-        System.err.println((alt.getClass().getName() + " induction time: " + (System.currentTimeMillis() - l)));
+        System.err.println((map.getClass().getName() + " induction time: " + (System.currentTimeMillis() - l)));
         long l3 = System.currentTimeMillis();
 
 
         try {
             for (InetAddress inetAddress : inetAddresses) {
-                mapAddressLookup(alt, inetAddress);
+                CharBuffer charBuffer = lookupMappedAddress(inetAddress, navigableMap);
 
             }
         } catch (Throwable e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         } finally {
         }
-        System.err.println(alt.getClass().getName() + " benchmark: " + (System.currentTimeMillis() - l3));
+        System.err.println(map.getClass().getName() + " benchmark: " + (System.currentTimeMillis() - l3));
     }
 
-    public static CharBuffer mapAddressLookup(NavigableMap<Long, Integer> alt, InetAddress inetAddress) {
+    public static CharBuffer mapAddressLookup(InetAddress inetAddress) {
+        return lookupMappedAddress(inetAddress, geoipMap);
+    }
+
+    private static CharBuffer lookupMappedAddress(InetAddress inetAddress, NavigableMap<Long, Integer> map) {
         long l4 = sortableInetAddress(inetAddress);
 
-        Map.Entry<Long, Integer> longIntegerEntry = alt.floorEntry(IPMASK & l4);
-        Integer integer = null == longIntegerEntry ? alt.firstEntry().getValue() : longIntegerEntry.getValue();
+        Map.Entry<Long, Integer> longIntegerEntry = map.floorEntry(IPMASK & l4);
+        Integer integer = null == longIntegerEntry ? map.firstEntry().getValue() : longIntegerEntry.getValue();
         ByteBuffer slice = ((ByteBuffer) (locationMMBuf.position(integer))).slice();
         while (slice.hasRemaining() && '\n' != slice.get()) ;
-        return UTF8.decode((ByteBuffer) slice.flip());
+        return ISO88591.decode((ByteBuffer) slice.flip());
     }
 
     /**
@@ -463,9 +437,13 @@ public class GeoIpService {
                                     ByteBuffer ix = (ByteBuffer) indexMMBuf.duplicate().clear();
                                     ByteBuffer loc = (ByteBuffer) locationMMBuf.duplicate().clear();
 
+                                    indexMMBuf.clear();
+                                    IntBuffer intBuffer = indexMMBuf.asIntBuffer();
+                                    while (intBuffer.hasRemaining())
+                                        geoipMap.put(intBuffer.get() & IPMASK, intBuffer.get());
 
                                     //this should report 'Martinez'
-                                    testMartinez(ix, loc, null, null);
+                                    testWalnutCreek(ix, loc, null, null);
 
 
                                     if (null != System.getenv(GEOIP_BENCHMARK_ON_STARTUP)) {

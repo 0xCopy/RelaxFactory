@@ -14,7 +14,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
@@ -23,14 +22,10 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import static java.lang.Math.abs;
-import static java.lang.Math.min;
 import static java.nio.channels.SelectionKey.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static one.xio.HttpMethod.UTF8;
 import static one.xio.HttpMethod.wheresWaldo;
-import static ro.server.GeoIpIndexRecord.reclen;
-import static ro.server.GeoIpService.IPMASK;
-import static ro.server.GeoIpService.bufAbstraction;
 
 /**
  * User: jim
@@ -150,14 +145,8 @@ public class KernelImpl {
             final InetAddress inet4Address = ThreadLocalInetAddress.get();
             if (null != inet4Address) {
 
-                int i = lookupInetAddress(inet4Address, GeoIpService.indexMMBuf, bufAbstraction);
-                ByteBuffer b = (ByteBuffer) GeoIpService.locationMMBuf.duplicate().clear().position(i);
-                while (b.hasRemaining() && '\n' != b.get()) ;
-                rtrimByteBuffer(b).position(i);
 
-                //maxmind is iso not utf
-                CharBuffer cityString = ISO88591.decode(b);//attempt a utf8 switchout here...
-                final String geoip = MessageFormat.format("{0} ; path=/ ; expires={1}", UTF8.decode(ByteBuffer.wrap(cityString.toString().getBytes(UTF8))), expire.toGMTString());
+                final String geoip = MessageFormat.format("{0} ; path=/ ; expires={1}", GeoIpService.mapAddressLookup(inet4Address), expire.toGMTString());
                 ThreadLocalSetCookies.get().put(MYGEOIPSTRING, geoip);
                 EXECUTOR_SERVICE.schedule(new Runnable() {
                     @Override
@@ -215,33 +204,6 @@ public class KernelImpl {
         return val;
     }
 
-
-    /**
-     * offset to locationcsv buffer [n] to EOL
-     *
-     * @param inet4Address
-     * @param indexRecords
-     * @param bufAbstraction
-     * @return
-     */
-    public static int lookupInetAddress(InetAddress inet4Address, final ByteBuffer indexRecords, List<Long> bufAbstraction) {
-
-        int newPosition;
-        int abs;
-        int ret;
-
-        long compare = sortableInetAddress(inet4Address);
-        int a = Collections.binarySearch(bufAbstraction, IPMASK & compare);
-        int b = bufAbstraction.size() - 1;
-        abs = min(abs(a), b);
-
-        newPosition = reclen * abs + 4;
-        indexRecords.position(newPosition);
-        ret = indexRecords.getInt();
-
-
-        return ret;
-    }
 
     public static long sortableInetAddress(InetAddress inet4Address) {
         byte[] address = inet4Address.getAddress();
@@ -318,6 +280,20 @@ public class KernelImpl {
 
             }
         return sbs;
+    }
+
+    public static String getRevision(Map map) {
+        String rev = null;
+
+        rev = (String) map.get("_rev");
+        if (null == rev)
+            rev = (String) map.get("rev");
+        if (null == rev) {
+            rev = (String) map.get("version");
+        }
+        if (null == rev)
+            rev = (String) map.get("ver");
+        return rev;
     }
 
     static class ThreadLocalSessionHeaders {
