@@ -1,4 +1,4 @@
-package ro.model;
+package ro.server;
 
 import java.util.Date;
 

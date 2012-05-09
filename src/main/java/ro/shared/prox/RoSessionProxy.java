@@ -6,7 +6,7 @@ import java.util.Date;
 
 import com.google.web.bindery.requestfactory.shared.EntityProxy;
 import com.google.web.bindery.requestfactory.shared.ProxyFor;
-import ro.model.Visitor;
+import ro.server.Visitor;
 import ro.server.VisitorLocator;
 
 @ProxyFor(value = Visitor.class, locator = VisitorLocator.class)

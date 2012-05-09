@@ -1,20 +1,19 @@
 package ro.server;
 
 import java.io.IOException;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SocketChannel;
-import java.util.concurrent.Callable;
 import java.util.concurrent.SynchronousQueue;
 
 import com.google.web.bindery.requestfactory.shared.Locator;
 import one.xio.HttpMethod;
-import ro.model.Visitor;
-import ro.server.rf.VisitorAsioVisitor;
-import ro.server.rf.VisitorLocatorAsioVisitor;
 
 import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static ro.server.KernelImpl.GSON;
 import static ro.server.KernelImpl.createCouchConnection;
+import static ro.server.KernelImpl.executeCouchRequest;
+import static ro.server.KernelImpl.recycleChannel;
 
 //import ro.server.rf.SessionFindLocatorVisitor;
 
@@ -45,36 +44,38 @@ public class VisitorLocator extends Locator<Visitor, String> {
    */
   @Override
   public Visitor create(Class<? extends Visitor> clazz) {
+    String format = "POST " +
+        /**
+         * mandatory
+         */
+        '/'
+        + clazz.getSimpleName().toLowerCase()
+        +
+        /**
+         * mandatory
+         */'/'
+        + " HTTP/1.1\r\nContent-Type: application/json;charset=utf-8\r\nContent-Length: 2" +
+//        "\r\n" + "Debug: " + wheresWaldo().trim() +
+        "\r\n\r\n{}";
+    SocketChannel couchConnection = null;
     Visitor ret = null;
     try {
-      Callable<Visitor> callable = new Callable<Visitor>() {
-        public Visitor call() throws Exception {
-          VisitorLocatorAsioVisitor<? extends CouchTx, ? extends Visitor> sessionVisitor = null;
-//          InetSocketAddress remote = new InetSocketAddress(LOOPBACK, 5984);
-//          System.err.println("opening " + remote.toString());
-//          SocketChannel channel = SocketChannel.open();
-//          channel.configureBlocking(false);
-//          channel.connect(remote);
-          final SocketChannel channel = createCouchConnection();
 
-          try {
-            SynchronousQueue<CouchTx> retVal = new SynchronousQueue<CouchTx>();
-
-            sessionVisitor = new VisitorAsioVisitor(channel, retVal);
-            HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, sessionVisitor);
-            retVal.take();
-          } finally {
-            KernelImpl.recycleChannel(channel);
-          }
-
-
-          return sessionVisitor.data;
-
-        }
-      };
-      Visitor roSession = ret = KernelImpl.EXECUTOR_SERVICE.submit(callable).get();
-    } catch (Throwable e) {
+      final SynchronousQueue<String> takeFrom = new SynchronousQueue<String>();
+      couchConnection = createCouchConnection();
+      executeCouchRequest(couchConnection, takeFrom, format);
+      String take = takeFrom.take();
+      CouchTx couchTx = GSON.fromJson(take, CouchTx.class);
+      ret = find(clazz, couchTx.id);
+    } catch (ClosedChannelException e) {
       e.printStackTrace();  //todo: verify for a purpose
+    } catch (InterruptedException e) {
+      e.printStackTrace();  //todo: verify for a purpose
+    } finally {
+      try {
+        recycleChannel(couchConnection);
+      } catch (IOException ignored) {
+      }
     }
     return ret;
   }
@@ -84,7 +85,16 @@ public class VisitorLocator extends Locator<Visitor, String> {
 
     String s = null;
     try {
-      s = SessionToolImpl.fetchSessionJsonById(id);
+      SocketChannel channel = createCouchConnection();
+      String take;
+      try {
+        SynchronousQueue<String> retVal = new SynchronousQueue<String>();
+        HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, KernelImpl.fetchJsonByIdVisitor(clazz.getSimpleName().toLowerCase() + '/' + id, channel, retVal));
+        take = retVal.take();
+      } finally {
+        recycleChannel(channel);
+      }
+      s = take;
     } catch (IOException e) {
       e.printStackTrace();  //todo: verify for a purpose
     } catch (InterruptedException e) {

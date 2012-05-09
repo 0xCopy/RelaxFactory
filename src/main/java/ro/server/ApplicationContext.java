@@ -1,7 +1,5 @@
 package ro.server;
 
-import ro.model.Visitor;
-
 /**
  * User: jim
  * Date: 4/17/12

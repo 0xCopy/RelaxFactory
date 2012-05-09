@@ -91,9 +91,9 @@ public class Welcome implements EntryPoint {
       doController();
       SessionTool couch = requestFactory.couch();
       for (Map.Entry<UserDetails, String> e : gather.entrySet()) {
-        Receiver<String> receiver = new Receiver<String>() {
+        Receiver<Void> receiver = new Receiver<Void>() {
           @Override
-          public void onSuccess(String response) {
+          public void onSuccess(Void response) {
             GWT.log("session version" + response);
           }
         };
