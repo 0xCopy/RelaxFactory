@@ -3,7 +3,5 @@
 <module>
 
     <inherits name='com.google.gwt.user.User'/>
-
-    <!--<entry-point class='rxf.client.RelaxFactoryStubs'/>-->
-                                                           <source path="shared"/>
+    <source path="shared"/>
 </module>
