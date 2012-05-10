@@ -83,8 +83,7 @@ public class CouchChangesClient extends AsioVisitor.Impl {
       final String s = UTF8.decode((ByteBuffer) b.rewind()).toString();
       if (s.startsWith("HTTP/1.1 20")) {
         active = true;
-        key.interestOps(OP_WRITE);
-        key.attach(new Object[]{new Impl() {
+        key.interestOps(OP_WRITE).attach(new Object[]{new Impl() {
           @Override
           public void onWrite(SelectionKey key) throws Exception {
             Object[] attachment = (Object[]) key.attachment();
@@ -129,9 +128,8 @@ public class CouchChangesClient extends AsioVisitor.Impl {
           }
         }, getFeedString()});
       } else {
-        key.interestOps(OP_WRITE);
         final CouchChangesClient prev = this;
-        key.attach(new Impl() {
+        key.interestOps(OP_WRITE).attach(new Impl() {
 
 
           @Override

@@ -68,7 +68,7 @@ public class CouchAgent {
   public static class SessionCouchAgent extends CouchChangesClient {
 
     public SessionCouchAgent(String prefix) {
-      feedname = prefix + "session";
+      feedname = /*prefix + */"visitors";
     }
 
     @Override

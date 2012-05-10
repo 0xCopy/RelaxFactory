@@ -301,7 +301,7 @@ public class BlobAntiPatternObject {
     return sbs;
   }
 
-  public static String getRevision(Map map) {
+  public static String inferRevision(Map map) {
     String rev = null;
 
     rev = (String) map.get("_rev");
@@ -495,7 +495,7 @@ public class BlobAntiPatternObject {
     if (rescode.startsWith("20") && rescode.length() == 3) {
       returnTo.put(trim);
     } else {
-      returnTo.put(MessageFormat.format("'{'\"responseCode\":\"{0,number,#}\",\"orig\":{1}'}'", rescode, trim));
+      returnTo.put(MessageFormat.format("'{'\"responseCode\":\"{0}\",\"orig\":{1}'}'", rescode, trim));
     }
   }
 
@@ -510,6 +510,41 @@ public class BlobAntiPatternObject {
 
     }
     return null;
+  }
+
+  public static String getGenericMapProperty(String eid, String attrKey) {
+    String s = null;
+    String canonicalName = null;
+    try {
+        s = (String) fetchMapById(eid).get(attrKey);
+      } catch (Exception e) {
+        canonicalName = VisitorPropertiesAccess.class.getCanonicalName();
+        ByteBuffer byteBuffer = ThreadLocalHeaders.get();
+        if (!UTF8.decode(byteBuffer).toString().trim().equals(canonicalName)) {
+
+          ThreadLocalHeaders.set(UTF8.encode(canonicalName));
+          return VisitorPropertiesAccess.getSessionProperty(attrKey);
+        }
+      }
+    return s;
+  }
+
+  static CouchTx setGenericDocumentProperty(String path, String key, String value) throws Exception {
+    String ret;SocketChannel channel = null;
+    try {
+        channel = createCouchConnection();
+        SynchronousQueue<String> retVal = new SynchronousQueue<String>();
+        HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, fetchJsonByIdVisitor(path, channel, retVal));
+        ret = retVal.take();
+      } finally {
+        recycleChannel(channel);
+      }
+    String take = ret;
+    LinkedHashMap linkedHashMap1 = GSON.fromJson(take, LinkedHashMap.class);
+    if (2 == linkedHashMap1.size() && linkedHashMap1.containsKey("responseCode"))
+        throw new IOException(deepToString(linkedHashMap1));
+    linkedHashMap1.put(key, value);
+    return sendJson(GSON.toJson(linkedHashMap1), path, inferRevision(linkedHashMap1));
   }
 
   static class ThreadLocalSessionHeaders {

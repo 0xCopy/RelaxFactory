@@ -1,7 +1,5 @@
 package rxf.server;
 
-import java.util.LinkedHashMap;
-
 /**
  * User: jim
  * Date: 4/20/12
@@ -12,8 +10,8 @@ public class VisitorPropertiesAccess {
 
   public static String getSessionProperty(String key) {
     try {
-      final String sessionCookieId = BlobAntiPatternObject.getSessionCookieId();
-      return BlobAntiPatternObject.getSessionProperty(key);
+      String sessionCookieId1 = BlobAntiPatternObject.getSessionCookieId();
+      return BlobAntiPatternObject.getGenericMapProperty(sessionCookieId1, key);
     } catch (Exception e) {
       e.printStackTrace();  //todo: verify for a purpose
     }
@@ -26,10 +24,11 @@ public class VisitorPropertiesAccess {
   public static void setSessionProperty(String key, String value) {
     try {
       String id = BlobAntiPatternObject.getSessionCookieId();
-      LinkedHashMap linkedHashMap = BlobAntiPatternObject.fetchMapById(id);
-      linkedHashMap.put(key, value);
-      CouchTx tx = BlobAntiPatternObject.sendJson(BlobAntiPatternObject.GSON.toJson(linkedHashMap), Visitor.class.getSimpleName().toLowerCase() + "/" + id, String.valueOf(linkedHashMap.get("_rev")));
-
+      final String instance = INSTANCE;
+      String ret;
+      String path = instance + '/' + id;
+      CouchTx tx = BlobAntiPatternObject.setGenericDocumentProperty(path, key, value);
+      System.err.println("tx: " + tx.toString());
     } catch (Throwable ignored) {
 
     }

@@ -53,12 +53,13 @@ import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpMethod.UTF8;
+import static one.xio.HttpMethod.wheresWaldo;
 import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 import static rxf.server.BlobAntiPatternObject.GSON;
 import static rxf.server.BlobAntiPatternObject.ISO88591;
 import static rxf.server.BlobAntiPatternObject.createCouchConnection;
 import static rxf.server.BlobAntiPatternObject.fetchJsonByIdVisitor;
-import static rxf.server.BlobAntiPatternObject.getRevision;
+import static rxf.server.BlobAntiPatternObject.inferRevision;
 import static rxf.server.BlobAntiPatternObject.moveCaretToDoubleEol;
 import static rxf.server.BlobAntiPatternObject.recycleChannel;
 import static rxf.server.BlobAntiPatternObject.sortableInetAddress;
@@ -91,7 +92,15 @@ public class GeoIpService {
 
   public static void createGeoIpIndex() throws IOException, XPathExpressionException, ExecutionException, InterruptedException {
     String href = scrapeMaxMindUrl();
-    Triple<Integer[], ByteBuffer, ByteBuffer> indexIndexLocTrip = buildGeoIpFirstPass(downloadMaxMindBinaryTarXz(href));
+    System.err.println("grabbing " + href + wheresWaldo());
+    final long l = System.currentTimeMillis();
+    final ByteArrayOutputStream archiveBuffer = downloadMaxMindBinaryTarXz(href);
+    final long l1 = System.currentTimeMillis() - l;
+    final int size = archiveBuffer.size();
+    final int i = size / 1024 * 1024;
+    final double v = l1 / 1000.;
+    System.err.println("download complete in " + v + " archive size: " + i + "Mb @" + i / v + " Mb/s");
+    Triple<Integer[], ByteBuffer, ByteBuffer> indexIndexLocTrip = buildGeoIpFirstPass(archiveBuffer);
     final Pair<ByteBuffer, ByteBuffer> indexLocPair = buildGeoIpSecondPass(indexIndexLocTrip);
 
     Callable<Map> callable = new Callable<Map>() {
@@ -142,7 +151,7 @@ public class GeoIpService {
 
               String fn = GEOIP_CURRENT_LOCATIONS_CSV;
               int limit = d2.limit();
-              String push = getBlobPutString(fn, limit, ctype, getRevision(map));
+              String push = getBlobPutString(fn, limit, ctype, inferRevision(map));
               System.err.println("pushing: " + push);
               putFile(key, d2, push, retVal);
             }
@@ -422,7 +431,8 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
           case 201: {
 
             final String keyDocument = GEOIP_ROOTNODE;
-            selectionKey.attach(new Impl() {
+
+            selectionKey.interestOps(OP_WRITE) .attach(new Impl() {
 
 
               @Override
@@ -436,10 +446,9 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
                   e.printStackTrace();  //todo: verify for a purpose
                 }
                 selectionKey.attach(BlobAntiPatternObject.createJsonResponseReader(retVal));
-                selectionKey.interestOps(OP_READ);
+                selectionKey.interestOps(OP_READ );
               }
             });
-            selectionKey.interestOps(OP_WRITE);
 
             Callable<Object> callable = new Callable<Object>() {
               public Object call() throws Exception {
@@ -458,9 +467,10 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
 //                  ArrayList<Callable<MappedByteBuffer>> cc = new ArrayList<Callable<MappedByteBuffer>>();
                   /*cc.add*/
                   indexMMBuf =
-                      getMappedIndexFile(GEOIP_CURRENT_INDEX).call();
-                  locationMMBuf =
-                      getMappedIndexFile(GEOIP_CURRENT_LOCATIONS_CSV).call();
+                      EXECUTOR_SERVICE.submit(
+                          getMappedIndexFile(GEOIP_CURRENT_INDEX)).get();
+                  locationMMBuf =EXECUTOR_SERVICE.submit(
+                      getMappedIndexFile(GEOIP_CURRENT_LOCATIONS_CSV)).get();
 //                  List<Future<MappedByteBuffer>> futures = EXECUTOR_SERVICE.invokeAll(cc);
 
                   ByteBuffer ix = (ByteBuffer) indexMMBuf.duplicate().clear();
@@ -513,7 +523,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
 
                   }
 
-                  void mapTmpFile(SelectionKey selectionKey, String path) throws IOException {
+                  void mapTmpFile(SelectionKey selectionKey, final String path) throws IOException {
                     String req = "GET " + path + " HTTP/1.1\r\n\r\n";
                     int write = ((SocketChannel) selectionKey.channel()).write(UTF8.encode(req));
                     selectionKey.interestOps(OP_READ);
@@ -539,7 +549,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
                           String cl = UTF8.decode((ByteBuffer) h2.clear().position(ints[0]).limit(ints[1])).toString().trim();
                           final long total = Long.parseLong(cl);
 
-                          final File geoip = File.createTempFile("geoip", ".index");
+                          final File geoip = File.createTempFile("geoip",path.substring(path.length()-5));
                           try {
                             geoip.createNewFile();
                           } catch (IOException e) {
@@ -547,8 +557,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
                           }
                           final RandomAccessFile randomAccessFile = new RandomAccessFile(geoip, "rw");
                           final FileChannel fileChannel = randomAccessFile.getChannel();
-                          int write1 = fileChannel.write(dst1);
-                          final float pos1 = write1;
+                          final float pos1 = fileChannel.write(dst1);
 
                           key.attach(new Impl() {
                             long pos = (long) pos1;
@@ -661,8 +670,10 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
     XZCompressorInputStream xzIn = new XZCompressorInputStream(in);
     byte[] buffer = new byte[4096];
     int n = 0;
+    int c = 0;
     while (-1 != (n = xzIn.read(buffer))) {
       out.write(buffer, 0, n);
+      if(0==c++%100)System.err.print(".");
     }
     out.close();
     xzIn.close();
