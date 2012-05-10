@@ -13,11 +13,7 @@
 
 
     <dependencies>
-        <dependency>
-            <artifactId>rxf-shared</artifactId>
-            <groupId>${project.groupId}</groupId>
-            <version>${project.version}</version>
-        </dependency>
+        <dependency><artifactId>rxf-shared</artifactId><groupId>${project.groupId}</groupId><version>${project.version}</version></dependency>
         <dependency>
             <groupId>1xio</groupId>
             <artifactId>1xio</artifactId>
@@ -107,83 +103,46 @@
                     </archive>
                 </configuration>
             </plugin>
+
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>1.2</version>
-                <executions>
-                    <!-- unnec in 2.4 plugin-->
-                    <execution>
-                        <phase>process-classes</phase>
-                        <goals>
-                            <!--<goal>java</goal>-->
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <classpathScope>compile</classpathScope>
-                            <!--<includePluginDependencies>true</includePluginDependencies>-->
-                            <!--<includeProjectDependencies>true</includeProjectDependencies>-->
-                            <executable>java</executable>
-                            <!--<mainClass>com.google.web.bindery.requestfactory.apt.ValidationTool</mainClass>-->
-                            <arguments>
-                                <argument>-cp</argument>
-                                <classpath/>
-                                <argument>com.google.web.bindery.requestfactory.apt.ValidationTool</argument>
-                                <argument>${project.build.outputDirectory}</argument>
-                                <argument>${project.groupId}.shared.KernelFactory</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                </executions>
-                <dependencies>
+                   <groupId>org.codehaus.mojo</groupId>
+                   <artifactId>exec-maven-plugin</artifactId>
+                   <version>1.2</version>
+                   <executions>
+                       <execution>
+                           <phase>process-classes</phase>
+                           <goals>
+                               <goal>exec</goal>
+                           </goals>
+                           <configuration>
+                               <id>VerifyRequestFactoryInterfaces</id>
+                               <executable>java</executable>
+                               <arguments>
+                                   <argument>-cp</argument>
+                                   <classpath/>
+                                   <argument>com.google.web.bindery.requestfactory.apt.ValidationTool</argument>
+                                   <argument>${project.build.outputDirectory}</argument>
+                                   <argument>rxf.shared.KernelFactory</argument>
+                               </arguments>
+                               <classpathScope>compile</classpathScope>
+                           </configuration>
+                       </execution>
+                   </executions>
+                   <dependencies>
+                       <dependency>
+                           <groupId>com.google.web.bindery</groupId>
+                           <artifactId>requestfactory-apt</artifactId>
+                           <version>${gwt.version}</version>
+                       </dependency>
+                       <dependency>
+                           <groupId>com.google.gwt</groupId>
+                           <artifactId>gwt-user</artifactId>
+                           <version>${gwt.version}</version>
+                       </dependency>
+                   </dependencies>
+               </plugin>
 
-                    <dependency>
-                        <groupId>com.google.web.bindery</groupId>
-                        <artifactId>requestfactory-server</artifactId>
-                        <version>${gwt.version}</version>
-                    </dependency>
-                    <!-- see sample projects for correct placement -->
-                    <dependency>
-                        <groupId>com.google.web.bindery</groupId>
-                        <artifactId>requestfactory-apt</artifactId>
-                        <version>${gwt.version}</version>
-                    </dependency>
-   <!--                 <dependency>
-                        <groupId>com.google.gwt</groupId>
-                        <artifactId>gwt-dev</artifactId>
-                        <version>${gwt.version}</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>com.google.gwt</groupId>
-                        <artifactId>gwt-user</artifactId>
-                        <version>${gwt.version}</version>
-                    </dependency>-->
-                </dependencies>
-            </plugin>
-
-            <!--&lt;!&ndash; Google Plugin for Eclipse (GPE) won't see the source-->
-            <!--generated above by requestfactory-apt unless it is exposed-->
-            <!--as an additional source dir&ndash;&gt;-->
-            <!--<plugin>-->
-            <!--<groupId>org.codehaus.mojo</groupId>-->
-            <!--<artifactId>build-helper-maven-plugin</artifactId>-->
-            <!--<version>1.7</version>-->
-            <!--<executions>-->
-            <!--<execution>-->
-            <!--<id>add-source</id>-->
-            <!--<phase>generate-sources</phase>-->
-            <!--<goals>-->
-            <!--<goal>add-source</goal>-->
-            <!--</goals>-->
-            <!--<configuration>-->
-            <!--<sources>-->
-            <!--<source>${project.build.directory}/generated-sources/apt</source>-->
-            <!--</sources>-->
-            <!--</configuration>-->
-            <!--</execution>-->
-            <!--</executions>-->
-            <!--</plugin>-->
-
+ 
         </plugins>
         <outputDirectory>${project.build.directory}/${project.build.finalName}/WEB-INF/classes</outputDirectory>
     </build>
