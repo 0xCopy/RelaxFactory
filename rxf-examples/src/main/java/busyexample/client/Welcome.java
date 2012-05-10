@@ -52,13 +52,14 @@ public class Welcome implements EntryPoint {
                 new Receiver<String>() {
                   @Override
                   public void onFailure(ServerFailure error) {
-                    super.onFailure(error);
+                      super.onFailure(error);
+                    GWT.log(error.getMessage());
                   }
 
                   @Override
                   public void onSuccess(String response) {
-
-                    if (null == response) {
+                    GWT.log("tx rev is "+response);
+                    if (null == response||"null".equals(response)) {
                       DialogBox dialog = userDetails.createDialog();
                       userDetails.decorateDialog(dialog, new MyRunAsyncCallback());
                       dialog.center();
