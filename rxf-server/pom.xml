@@ -107,57 +107,82 @@
                     </archive>
                 </configuration>
             </plugin>
-            <!-- requestfactory-apt runs an annotation processor (APT) to
-           instrument its service interfaces so that
-           RequestFactoryServer can decode client requests. Normally
-           you would just have a dependency on requestfactory-apt
-           with <scope>provided</scope>, but that won't work in
-           eclipse due to m2e bug
-           https://bugs.eclipse.org/bugs/show_bug.cgi?id=335036 -->
             <plugin>
-                <groupId>org.bsc.maven</groupId>
-                <artifactId>maven-processor-plugin</artifactId>
-                <version>2.0.5</version>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2</version>
                 <executions>
+                    <!-- unnec in 2.4 plugin-->
                     <execution>
-                        <id>process</id>
+                        <phase>process-classes</phase>
                         <goals>
-                            <goal>process</goal>
+                            <!--<goal>java</goal>-->
+                            <goal>exec</goal>
                         </goals>
-                        <phase>generate-sources</phase>
+                        <configuration>
+                            <classpathScope>compile</classpathScope>
+                            <!--<includePluginDependencies>true</includePluginDependencies>-->
+                            <!--<includeProjectDependencies>true</includeProjectDependencies>-->
+                            <executable>java</executable>
+                            <!--<mainClass>com.google.web.bindery.requestfactory.apt.ValidationTool</mainClass>-->
+                            <arguments>
+                                <argument>-cp</argument>
+                                <classpath/>
+                                <argument>com.google.web.bindery.requestfactory.apt.ValidationTool</argument>
+                                <argument>${project.build.outputDirectory}</argument>
+                                <argument>${project.groupId}.shared.KernelFactory</argument>
+                            </arguments>
+                        </configuration>
                     </execution>
                 </executions>
                 <dependencies>
+
+                    <dependency>
+                        <groupId>com.google.web.bindery</groupId>
+                        <artifactId>requestfactory-server</artifactId>
+                        <version>${gwt.version}</version>
+                    </dependency>
+                    <!-- see sample projects for correct placement -->
                     <dependency>
                         <groupId>com.google.web.bindery</groupId>
                         <artifactId>requestfactory-apt</artifactId>
                         <version>${gwt.version}</version>
                     </dependency>
+                    <dependency>
+                        <groupId>com.google.gwt</groupId>
+                        <artifactId>gwt-dev</artifactId>
+                        <version>${gwt.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>com.google.gwt</groupId>
+                        <artifactId>gwt-user</artifactId>
+                        <version>${gwt.version}</version>
+                    </dependency>
                 </dependencies>
             </plugin>
 
-            <!-- Google Plugin for Eclipse (GPE) won't see the source
-        generated above by requestfactory-apt unless it is exposed
-        as an additional source dir-->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <version>1.7</version>
-                <executions>
-                    <execution>
-                        <id>add-source</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>add-source</goal>
-                        </goals>
-                        <configuration>
-                            <sources>
-                                <source>${project.build.directory}/generated-sources/apt</source>
-                            </sources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
+            <!--&lt;!&ndash; Google Plugin for Eclipse (GPE) won't see the source-->
+            <!--generated above by requestfactory-apt unless it is exposed-->
+            <!--as an additional source dir&ndash;&gt;-->
+            <!--<plugin>-->
+            <!--<groupId>org.codehaus.mojo</groupId>-->
+            <!--<artifactId>build-helper-maven-plugin</artifactId>-->
+            <!--<version>1.7</version>-->
+            <!--<executions>-->
+            <!--<execution>-->
+            <!--<id>add-source</id>-->
+            <!--<phase>generate-sources</phase>-->
+            <!--<goals>-->
+            <!--<goal>add-source</goal>-->
+            <!--</goals>-->
+            <!--<configuration>-->
+            <!--<sources>-->
+            <!--<source>${project.build.directory}/generated-sources/apt</source>-->
+            <!--</sources>-->
+            <!--</configuration>-->
+            <!--</execution>-->
+            <!--</executions>-->
+            <!--</plugin>-->
 
         </plugins>
         <outputDirectory>${project.build.directory}/${project.build.finalName}/WEB-INF/classes</outputDirectory>

@@ -55,7 +55,7 @@
                         <contextPath>/${project.name}</contextPath>
                     </webAppConfig>
                 </configuration>
-            </plugin><plugin>
+            </plugin><!--<plugin>
 <groupId>org.bsc.maven</groupId>
 <artifactId>maven-processor-plugin</artifactId>
 <version>2.0.5</version>
@@ -80,7 +80,7 @@
 <version>2.5.0-rfmap-SNAPSHOT</version>
 </dependency>
 </dependencies>
-</plugin><!--
+</plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
