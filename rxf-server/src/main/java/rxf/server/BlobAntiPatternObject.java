@@ -615,7 +615,7 @@ public class BlobAntiPatternObject {
     serverSocketChannel.socket().bind(new InetSocketAddress(8888));
     serverSocketChannel.configureBlocking(false);
     HttpMethod.enqueue(serverSocketChannel, OP_ACCEPT, topLevel);
-    final CouchAgent.SessionCouchAgent ro = new CouchAgent.SessionCouchAgent("rxf");
+    final SessionCouchAgent ro = new SessionCouchAgent("rxf");
     HttpMethod.enqueue(createCouchConnection(), OP_CONNECT | OP_WRITE, ro, ro.getFeedString());
     HttpMethod.init(args, topLevel);
   }
