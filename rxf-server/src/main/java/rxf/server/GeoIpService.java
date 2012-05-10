@@ -179,6 +179,7 @@ public class GeoIpService {
             }
           });
     }
+    take = retVal.take();
   }
 
   static void putFile(SelectionKey key, final ByteBuffer d2, String push, final SynchronousQueue<String> synchronousQueue) throws IOException {
