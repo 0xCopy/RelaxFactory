@@ -29,7 +29,7 @@ class SendJsonVisitor extends AsioVisitor.Impl {
   }
 
   @Override
-  public void onWrite(final SelectionKey selectionKey) {
+  public void onWrite(final SelectionKey key) {
     String method;
     String call;
     method = idver.length == 0 ? "POST" : "PUT";
@@ -50,11 +50,11 @@ class SendJsonVisitor extends AsioVisitor.Impl {
 //    call = MessageFormat.format("{0} /{1} HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: {2}\r\n\r\n{3}", method, path, json.length(), json);
     call = MessageFormat.format("{0} /{1} HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: " + json.length() + "\r\n\r\n{2}", method, path, json);
     ByteBuffer encode = UTF8.encode(call);
-    SocketChannel channel = (SocketChannel) selectionKey.channel();
+    SocketChannel channel = (SocketChannel) key.channel();
     try {
       channel.write(encode);
-      selectionKey.attach(BlobAntiPatternObject.createJsonResponseReader(returnTo));
-      selectionKey.interestOps(SelectionKey.OP_READ);
+      key.attach(BlobAntiPatternObject.createJsonResponseReader(returnTo));
+     key.selector().wakeup(); key.interestOps(SelectionKey.OP_READ);
     } catch (IOException e) {
       e.printStackTrace();  //todo: verify for a purpose
     }
@@ -65,7 +65,7 @@ class SendJsonVisitor extends AsioVisitor.Impl {
   public void onConnect(SelectionKey key) {
     try {
       if (((SocketChannel) key.channel()).finishConnect()) {
-        key.interestOps(OP_WRITE);
+       key.selector().wakeup(); key.interestOps(OP_WRITE);
       }
     } catch (IOException e) {
       e.printStackTrace();  //todo: verify for a purpose

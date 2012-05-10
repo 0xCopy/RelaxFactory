@@ -186,7 +186,7 @@ public class GeoIpService {
     final SocketChannel channel = (SocketChannel) key.channel();
 
     int write = (channel).write(UTF8.encode(push));
-    key.interestOps(OP_READ);
+   key.selector().wakeup(); key.interestOps(OP_READ);
     key.attach(new AsioVisitor.Impl() {
       @Override
       public void onRead(SelectionKey key) throws Exception {
@@ -194,21 +194,21 @@ public class GeoIpService {
         ByteBuffer dst = ByteBuffer.allocate(BlobAntiPatternObject.getReceiveBufferSize());
         int read = ((SocketChannel) channel1).read(dst);
         System.err.println("Expected 100-continue.  Got(" + read + "): " + UTF8.decode((ByteBuffer) dst.flip()).toString().trim());
-        key.interestOps(OP_WRITE);
+       key.selector().wakeup(); key.interestOps(OP_WRITE);
         key.attach(new Impl() {
           @Override
           public void onWrite(final SelectionKey key) {
             try {
               int write = channel.write(d2);
             } catch (Throwable e) {
-              key.interestOps(OP_READ);
+             key.selector().wakeup(); key.interestOps(OP_READ);
               e.printStackTrace();  //todo: verify for a purpose
             }
             if (!d2.hasRemaining()) {
               Callable<Map> callable = new Callable<Map>() {
                 public Map call() throws Exception {
                   key.attach(BlobAntiPatternObject.createJsonResponseReader(synchronousQueue));
-                  key.interestOps(OP_READ);
+                 key.selector().wakeup(); key.interestOps(OP_READ);
 
                   return null;
                 }
@@ -413,9 +413,9 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
     SocketChannel connection = BlobAntiPatternObject.createCouchConnection();
 
     HttpMethod.enqueue(connection, OP_CONNECT | OP_WRITE, new AsioVisitor.Impl() {
-      public void onRead(final SelectionKey selectionKey) throws IOException, InterruptedException {
+      public void onRead(final SelectionKey key) throws IOException, InterruptedException {
         final AsioVisitor parent = this;
-        final SocketChannel channel = (SocketChannel) selectionKey.channel();
+        final SocketChannel channel = (SocketChannel) key.channel();
         ByteBuffer dst = ByteBuffer.allocate(BlobAntiPatternObject.getReceiveBufferSize());
         int read = channel.read(dst);
         dst.flip();
@@ -433,11 +433,11 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
 
             final String keyDocument = GEOIP_ROOTNODE;
 
-            selectionKey.interestOps(OP_WRITE) .attach(new Impl() {
+           key.selector().wakeup(); key.interestOps(OP_WRITE) .attach(new Impl() {
 
 
               @Override
-              public void onWrite(final SelectionKey selectionKey) {
+              public void onWrite(final SelectionKey key) {
 
                 try {
                   String format = (MessageFormat.format("GET /{0} HTTP/1.1\r\n\r\n", keyDocument));
@@ -446,8 +446,8 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
                 } catch (IOException e) {
                   e.printStackTrace();  //todo: verify for a purpose
                 }
-                selectionKey.attach(BlobAntiPatternObject.createJsonResponseReader(retVal));
-                selectionKey.interestOps(OP_READ );
+                key.attach(BlobAntiPatternObject.createJsonResponseReader(retVal));
+               key.selector().wakeup(); key.interestOps(OP_READ);
               }
             });
 
@@ -455,7 +455,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
               public Object call() throws Exception {
 
                 String take = retVal.take();
-                selectionKey.attach(this);
+                key.attach(this);
                 System.err.println("rootnode: " + take);
                 Map map = GSON.fromJson(take, Map.class);
 
@@ -524,11 +524,11 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
 
                   }
 
-                  void mapTmpFile(SelectionKey selectionKey, final String path) throws IOException {
+                  void mapTmpFile(SelectionKey key, final String path) throws IOException {
                     String req = "GET " + path + " HTTP/1.1\r\n\r\n";
-                    int write = ((SocketChannel) selectionKey.channel()).write(UTF8.encode(req));
-                    selectionKey.interestOps(OP_READ);
-                    selectionKey.attach(new Impl() {
+                    int write = ((SocketChannel) key.channel()).write(UTF8.encode(req));
+                   key.selector().wakeup(); key.interestOps(OP_READ);
+                    key.attach(new Impl() {
                       @Override
                       public void onRead(SelectionKey key) throws Exception {
                         SocketChannel channel = (SocketChannel) key.channel();
@@ -550,7 +550,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
                           String cl = UTF8.decode((ByteBuffer) h2.clear().position(ints[0]).limit(ints[1])).toString().trim();
                           final long total = Long.parseLong(cl);
 
-                          final File geoip = File.createTempFile("geoip",path.substring(path.length()-5));
+                          final File geoip = File.createTempFile("geoip", path.substring(path.length() - 5));
                           try {
                             geoip.createNewFile();
                           } catch (IOException e) {
@@ -593,15 +593,16 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
           }
           break;
           default:
-            selectionKey.interestOps(OP_WRITE);
-            selectionKey.attach(new Impl() {
+           key.selector().wakeup(); key.interestOps(OP_WRITE);
+            key.attach(new Impl() {
               @Override
-              public void onWrite(SelectionKey selectionKey) throws IOException {
+              public void onWrite(SelectionKey key) throws IOException {
 
                 String format = MessageFormat.format("PUT /{0} HTTP/1.1\r\nContent-Length: 0\r\nContent-type: application/json\r\n\r\n", dbinstance);
-                int write = ((SocketChannel) selectionKey.channel()).write(UTF8.encode(format));
-                selectionKey.interestOps(OP_READ);
-                selectionKey.attach(parent);
+                int write = ((SocketChannel) key.channel()).write(UTF8.encode(format));
+                key.selector().wakeup();
+                key.interestOps(OP_READ);
+                key.attach(parent);
               }
             });
 
@@ -617,15 +618,15 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
         int write = ((SocketChannel) selectionKey.channel()).write(encode);
 
         System.err.println("wrote " + write + " bytes for " + s);
-        selectionKey.interestOps(OP_READ);
+       selectionKey.selector().wakeup(); selectionKey.interestOps(OP_READ);
 
       }
 
       @Override
-      public void onConnect(SelectionKey selectionKey) throws IOException {
-        SocketChannel channel = (SocketChannel) selectionKey.channel();
+      public void onConnect(SelectionKey key) throws IOException {
+        SocketChannel channel = (SocketChannel) key.channel();
         if (channel.finishConnect()) {
-          selectionKey.interestOps(OP_WRITE);
+         key.selector().wakeup(); key.interestOps(OP_WRITE);
         }
       }
     });

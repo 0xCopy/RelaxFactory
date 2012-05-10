@@ -329,7 +329,7 @@ public class BlobAntiPatternObject {
       public void onWrite(final SelectionKey key) throws IOException {
         System.err.println("attempting connect: " + requestHeaders.trim());
         channel.write(UTF8.encode(requestHeaders));
-        key.interestOps(OP_READ).attach(createJsonResponseReader(returnTo));
+       key.selector().wakeup();  key.interestOps(OP_READ).attach(createJsonResponseReader(returnTo));
       }
     };
     HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, impl);
@@ -413,7 +413,7 @@ public class BlobAntiPatternObject {
               //
               //    synchronousQueue.clear();
               ll.add(dst.slice());
-              key.interestOps(SelectionKey.OP_READ).attach(new Impl() {
+             key.selector().wakeup(); key.interestOps(SelectionKey.OP_READ).attach(new Impl() {
                 @Override
                 public void onRead(SelectionKey key) throws InterruptedException, IOException {
                   ByteBuffer payload = ByteBuffer.allocate(receiveBufferSize);

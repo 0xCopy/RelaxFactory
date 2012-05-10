@@ -67,7 +67,7 @@ class RfPostWrapper extends Impl {
             @Override
             public void onWrite(final SelectionKey browserKey) throws Exception {
 
-              browserKey.interestOps(OP_READ);
+             browserKey.selector().wakeup(); browserKey.interestOps(OP_READ);
               String path;
               ByteBuffer headers;
               final ByteBuffer dst;
@@ -110,7 +110,7 @@ class RfPostWrapper extends Impl {
                           return;
                         }
 
-                        couchKey.interestOps(OP_READ).attach(new Impl() {
+                       couchKey.selector().wakeup(); couchKey.interestOps(OP_READ).attach(new Impl() {
                           final ByteBuffer sharedBuf = ByteBuffer.allocateDirect(min(total, getReceiveBufferSize()));
                           private Impl browserSlave = new Impl() {
                             @Override
@@ -119,8 +119,8 @@ class RfPostWrapper extends Impl {
                                 final int write = browserChannel.write(dst);
                                 if (!dst.hasRemaining() && remaining == 0)
                                   browserChannel.close();
-                                browserKey.interestOps(0);
-                                couchKey.interestOps(OP_READ).selector().wakeup();
+                               browserKey.selector().wakeup(); browserKey.interestOps(0);
+                               couchKey.selector().wakeup(); couchKey.interestOps(OP_READ).selector().wakeup();
                               } catch (Exception e) {
                                 browserChannel.close();
                               } finally {
@@ -139,8 +139,8 @@ class RfPostWrapper extends Impl {
 
                               remaining -= couchConnection.read(dst);
                               dst.flip();
-                              couchKey.interestOps(0);
-                              browserKey.interestOps(OP_WRITE).selector().wakeup();
+                             couchKey.selector().wakeup(); couchKey.interestOps(0);
+                             browserKey.selector().wakeup(); browserKey.interestOps(OP_WRITE).selector().wakeup();
                               ;
 
                             } else {
@@ -155,7 +155,7 @@ class RfPostWrapper extends Impl {
                       @Override
                       public void onWrite(SelectionKey couchKey) throws Exception {
                         couchConnection.write(UTF8.encode(req));
-                        couchKey.interestOps(OP_READ);
+                       couchKey.selector().wakeup(); couchKey.interestOps(OP_READ);
                       }
                     });
 
@@ -247,7 +247,7 @@ class RfPostWrapper extends Impl {
             final boolean b = matcher.find();
             if (b) {
 
-              key.interestOps(OP_CONNECT | OP_WRITE).attach(
+             key.selector().wakeup(); key.interestOps(OP_CONNECT | OP_WRITE).attach(
                   /**sends impl,path,headers,first block
                    */
                   new Object[]{visitorEntry.getValue(), path, headers, dst.rewind()});
@@ -261,7 +261,7 @@ class RfPostWrapper extends Impl {
           final File[] file = {filex};
 
           final String finalFname = fname;
-          key.interestOps(OP_WRITE);
+         key.selector().wakeup(); key.interestOps(OP_WRITE);
           key.attach(new Impl() {
 
             @Override
@@ -294,14 +294,14 @@ class RfPostWrapper extends Impl {
               }
 
               if (!send200) {
-                key.interestOps(OP_WRITE).attach(new Impl() {
+               key.selector().wakeup(); key.interestOps(OP_WRITE).attach(new Impl() {
                   @Override
                   public void onWrite(SelectionKey key) throws Exception {
 
                     String response = "HTTP/1.1 404 Not Found\n" +
                         "Content-Length: 0\n\n";
                     int write = socketChannel.write(UTF8.encode(response));
-                    key.interestOps(OP_READ).attach(RfPostWrapper.this);
+                   key.selector().wakeup(); key.interestOps(OP_READ).attach(RfPostWrapper.this);
                     key.selector().wakeup();
                   }
                 });
@@ -323,7 +323,7 @@ class RfPostWrapper extends Impl {
                 String response = MessageFormat.format("HTTP/1.1 200 OK\r\nContent-Type: {0}\r\nContent-Length: {1,number,#}\r\n{2}\r\n", (null == mimeType ? MimeType.bin : mimeType).contentType, length, ceString);
                 int write = socketChannel.write(UTF8.encode(response));
                 final long[] progress = {fileChannel.transferTo(0, sendBufferSize, socketChannel)};
-                key.interestOps(OP_WRITE | OP_CONNECT);
+               key.selector().wakeup(); key.interestOps(OP_WRITE | OP_CONNECT);
                 key.attach(new Impl() {
                   @Override
                   public void onWrite(SelectionKey key) throws Exception {
@@ -333,7 +333,7 @@ class RfPostWrapper extends Impl {
                     if (remaining == 0) {
                       fileChannel.close();
                       randomAccessFile.close();
-                      key.interestOps(OP_READ);
+                     key.selector().wakeup(); key.interestOps(OP_READ);
                       key.attach(new Object[0]);
                     }
                   }
@@ -398,10 +398,10 @@ class RfPostWrapper extends Impl {
           ((SocketChannel) key.channel()).write(UTF8.encode(s1 + process));
           System.err.println("debug: " + s1 + process);
           key.attach(null);
-          key.interestOps(OP_READ);
+         key.selector().wakeup(); key.interestOps(OP_READ);
         }
       });
-      key.interestOps(SelectionKey.OP_WRITE);
+     key.selector().wakeup(); key.interestOps(SelectionKey.OP_WRITE);
 
       } catch (Throwable e) {
         e.printStackTrace();  //todo: verify for a purpose

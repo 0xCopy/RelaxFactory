@@ -61,7 +61,7 @@ public class CouchChangesClient extends AsioVisitor.Impl {
     System.err.println("attempting " + str);
     attachment[1] = UTF8.encode(str);
     channel.write(ByteBuffer.wrap(str.getBytes()));
-    key.interestOps(OP_READ);
+   key.selector().wakeup(); key.interestOps(OP_READ);
   }
 
 
@@ -83,7 +83,7 @@ public class CouchChangesClient extends AsioVisitor.Impl {
       final String s = UTF8.decode((ByteBuffer) b.rewind()).toString();
       if (s.startsWith("HTTP/1.1 20")) {
         active = true;
-        key.interestOps(OP_WRITE).attach(new Object[]{new Impl() {
+       key.selector().wakeup(); key.interestOps(OP_WRITE).attach(new Object[]{new Impl() {
           @Override
           public void onWrite(SelectionKey key) throws Exception {
             Object[] attachment = (Object[]) key.attachment();
@@ -92,7 +92,7 @@ public class CouchChangesClient extends AsioVisitor.Impl {
             System.err.println("attempting " + str);
             attachment[1] = UTF8.encode(str);
             channel.write(ByteBuffer.wrap(str.getBytes()));
-            key.interestOps(OP_READ);
+           key.selector().wakeup(); key.interestOps(OP_READ);
           }
 
           @Override
@@ -129,7 +129,7 @@ public class CouchChangesClient extends AsioVisitor.Impl {
         }, getFeedString()});
       } else {
         final CouchChangesClient prev = this;
-        key.interestOps(OP_WRITE).attach(new Impl() {
+       key.selector().wakeup(); key.interestOps(OP_WRITE).attach(new Impl() {
 
 
           @Override
@@ -139,7 +139,7 @@ public class CouchChangesClient extends AsioVisitor.Impl {
             ByteBuffer encode = UTF8.encode(str);
             System.err.println("attempting db creation  " + str);
             ((SocketChannel) key.channel()).write(ByteBuffer.wrap(str.getBytes()));
-            key.interestOps(OP_READ);
+           key.selector().wakeup(); key.interestOps(OP_READ);
             key.attach(prev);
             scriptExit2 = true;
           }
