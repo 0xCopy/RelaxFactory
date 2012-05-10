@@ -13,6 +13,7 @@
 
 
     <dependencies>
+        <dependency><artifactId>rxf-shared</artifactId><groupId>${project.groupId}</groupId><version>${project.version}</version></dependency>
         <dependency>
             <groupId>1xio</groupId>
             <artifactId>1xio</artifactId>

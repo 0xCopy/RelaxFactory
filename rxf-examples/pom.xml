@@ -55,31 +55,69 @@
                         <contextPath>/${project.name}</contextPath>
                     </webAppConfig>
                 </configuration>
-            </plugin>
+            </plugin><plugin>
+<groupId>org.bsc.maven</groupId>
+<artifactId>maven-processor-plugin</artifactId>
+<version>2.0.5</version>
+<executions>
+<execution>
+<id>process</id>
+<goals>
+<goal>process</goal>
+</goals>
+<phase>generate-sources</phase>
+</execution>
+</executions>
+<dependencies>
+<dependency>
+<groupId>com.google.web.bindery</groupId>
+<artifactId>requestfactory-apt</artifactId>
+<version>2.5.0-rfmap-SNAPSHOT</version>
+</dependency>
+<dependency>
+<groupId>com.google.web.bindery</groupId>
+<artifactId>requestfactory-server</artifactId>
+<version>2.5.0-rfmap-SNAPSHOT</version>
+</dependency>
+</dependencies>
+</plugin><!--
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.2</version>
                 <executions>
-                    <!-- unnec in 2.4 plugin <execution>
+                    &lt;!&ndash; unnec in 2.4 plugin&ndash;&gt;
+                    <execution>
                         <phase>process-classes</phase>
                         <goals>
                             <goal>exec</goal>
+                            <goal>java</goal>
                         </goals>
                         <configuration>
-                            <id>VerifyRequestFactoryInterfaces</id>
                             <executable>java</executable>
+                            <mainClass>com.google.web.bindery.requestfactory.apt.ValidationTool</mainClass>
                             <arguments>
                                 <argument>-cp</argument>
                                 <classpath/>
-                                <argument>com.google.web.bindery.requestfactory.apt.ValidationTool</argument>
                                 <argument>${project.build.outputDirectory}</argument>
                                 <argument>${project.groupId}.shared.KernelFactory</argument>
                             </arguments>
                         </configuration>
-                    </execution>-->
+                    </execution>
                 </executions>
                 <dependencies>
+
+                       <dependency>
+                           <groupId>com.google.web.bindery</groupId>
+                           <artifactId>requestfactory-server</artifactId>
+                           <version>${gwt.version}</version>
+                       </dependency>
+                    &lt;!&ndash; see sample projects for correct placement &ndash;&gt;
+                       <dependency>
+                           <groupId>com.google.web.bindery</groupId>
+                           <artifactId>requestfactory-apt</artifactId>
+                           <version>${gwt.version}</version>
+                       </dependency>
                     <dependency>
                         <groupId>com.google.gwt</groupId>
                         <artifactId>gwt-dev</artifactId>
@@ -91,7 +129,7 @@
                         <version>${gwt.version}</version>
                     </dependency>
                 </dependencies>
-            </plugin>
+            </plugin>-->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>gwt-maven-plugin</artifactId>

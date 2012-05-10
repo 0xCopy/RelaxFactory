@@ -1,4 +1,6 @@
 package rxf.server;
 
-public class CouchTx{boolean ok;
-  public String id,rev,error,reason;}
+public class CouchTx {
+  public Boolean ok;
+  public String id, rev, error, reason;
+}
