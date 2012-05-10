@@ -109,7 +109,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.2</version>
                 <executions>
-                    <!-- unnec in 2.4 plugin <execution>
+                    <execution>
                         <phase>process-classes</phase>
                         <goals>
                             <goal>exec</goal>
@@ -122,15 +122,16 @@
                                 <classpath/>
                                 <argument>com.google.web.bindery.requestfactory.apt.ValidationTool</argument>
                                 <argument>${project.build.outputDirectory}</argument>
-                                <argument>${project.groupId}.shared.KernelFactory</argument>
+                                <argument>rxf.shared.KernelFactory</argument>
                             </arguments>
+                            <classpathScope>compile</classpathScope>
                         </configuration>
-                    </execution>-->
+                    </execution>
                 </executions>
                 <dependencies>
                     <dependency>
-                        <groupId>com.google.gwt</groupId>
-                        <artifactId>gwt-dev</artifactId>
+                        <groupId>com.google.web.bindery</groupId>
+                        <artifactId>requestfactory-apt</artifactId>
                         <version>${gwt.version}</version>
                     </dependency>
                     <dependency>
