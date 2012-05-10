@@ -51,14 +51,14 @@ import static one.xio.HttpMethod.wheresWaldo;
  * Date: 4/17/12
  * Time: 11:55 PM
  */
-public class KernelImpl {
+public class BlobAntiPatternObject {
   public static final VisitorLocator VISITOR_LOCATOR = new VisitorLocator();
   public static final ScheduledExecutorService EXECUTOR_SERVICE = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() + 3);
   private static Queue<SocketChannel> lazyQueue = new ConcurrentLinkedQueue<SocketChannel>();
   public static final ThreadLocal<ByteBuffer> ThreadLocalHeaders = new ThreadLocal<ByteBuffer>();
   public static ThreadLocal<InetAddress> ThreadLocalInetAddress = new ThreadLocal<InetAddress>();
   public static final ThreadLocal<Map<String, String>> ThreadLocalSetCookies = new ThreadLocal<Map<String, String>>();
-  private static final String VISITORSTRING = KernelImpl.class.getCanonicalName();
+  private static final String VISITORSTRING = BlobAntiPatternObject.class.getCanonicalName();
   public static final String YYYY_MM_DD_T_HH_MM_SS_SSSZ = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
   public static final Gson GSON = new GsonBuilder()
 //    .registerTypeAdapter(Id.class, new IdTypeAdapter())
@@ -113,9 +113,9 @@ public class KernelImpl {
   static {
     try {
       try {
-        KernelImpl.LOOPBACK = (InetAddress) InetAddress.class.getMethod("getLoopBackAddress").invoke(null);
+        BlobAntiPatternObject.LOOPBACK = (InetAddress) InetAddress.class.getMethod("getLoopBackAddress").invoke(null);
       } catch (NoSuchMethodException e) {
-        KernelImpl.LOOPBACK = InetAddress.getByAddress(new byte[]{127, 0, 0, 1});
+        BlobAntiPatternObject.LOOPBACK = InetAddress.getByAddress(new byte[]{127, 0, 0, 1});
         System.err.println("java 6 LOOPBACK detected");
       } catch (InvocationTargetException e) {
         e.printStackTrace();
@@ -336,7 +336,7 @@ public class KernelImpl {
   //maximum wastefulness
   static public String setSessionProperty(String key, String value) throws Exception {
     try {
-      String id = KernelImpl.getSessionCookieId();
+      String id = BlobAntiPatternObject.getSessionCookieId();
       Map linkedHashMap = fetchMapById(id);
       linkedHashMap.put(key, value);
       CouchTx tx = sendJson(GSON.toJson(linkedHashMap), VisitorPropertiesAccess.INSTANCE + "/" + id, String.valueOf(linkedHashMap.get("_rev")));
@@ -422,7 +422,7 @@ public class KernelImpl {
       public void onRead(SelectionKey key) throws IOException, InterruptedException {
         final SocketChannel channel = (SocketChannel) key.channel();
         {
-          final int receiveBufferSize = KernelImpl.getReceiveBufferSize();
+          final int receiveBufferSize = BlobAntiPatternObject.getReceiveBufferSize();
           ByteBuffer dst = ByteBuffer.allocate(receiveBufferSize);
           int read = channel.read(dst);
           if (-1 == read) {
@@ -437,9 +437,9 @@ public class KernelImpl {
 
           dst.flip();
 
-          final String rescode = KernelImpl.parseResponseCode(dst);
+          final String rescode = BlobAntiPatternObject.parseResponseCode(dst);
 
-          KernelImpl.moveCaretToDoubleEol(dst);
+          BlobAntiPatternObject.moveCaretToDoubleEol(dst);
           System.err.println("result: " + UTF8.decode((ByteBuffer) dst.duplicate().flip()));
           int[] bounds = HttpHeaders.getHeaders((ByteBuffer) dst.duplicate().flip()).get("Content-Length");
           if (null != bounds) {
@@ -449,7 +449,7 @@ public class KernelImpl {
             ByteBuffer payload;
             if (remaining <= 0) {
               payload = dst.slice();
-              KernelImpl.returnJsonStringOrErrorResponse(returnTo, key, rescode, payload);
+              BlobAntiPatternObject.returnJsonStringOrErrorResponse(returnTo, key, rescode, payload);
             } else {
               final LinkedList<ByteBuffer> ll = new LinkedList<ByteBuffer>();
               //
@@ -473,7 +473,7 @@ public class KernelImpl {
                       else
                         payload.put(buffer);     //todo: rewrite this up-kernel
                     }
-                    KernelImpl.returnJsonStringOrErrorResponse(returnTo, key, rescode, payload);
+                    BlobAntiPatternObject.returnJsonStringOrErrorResponse(returnTo, key, rescode, payload);
                   }
                 }
               });

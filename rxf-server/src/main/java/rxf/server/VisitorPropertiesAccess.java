@@ -12,8 +12,8 @@ public class VisitorPropertiesAccess {
 
   public static String getSessionProperty(String key) {
     try {
-      final String sessionCookieId = KernelImpl.getSessionCookieId();
-      return KernelImpl.getSessionProperty(key);
+      final String sessionCookieId = BlobAntiPatternObject.getSessionCookieId();
+      return BlobAntiPatternObject.getSessionProperty(key);
     } catch (Exception e) {
       e.printStackTrace();  //todo: verify for a purpose
     }
@@ -25,10 +25,10 @@ public class VisitorPropertiesAccess {
    */
   public static void setSessionProperty(String key, String value) {
     try {
-      String id = KernelImpl.getSessionCookieId();
-      LinkedHashMap linkedHashMap = KernelImpl.fetchMapById(id);
+      String id = BlobAntiPatternObject.getSessionCookieId();
+      LinkedHashMap linkedHashMap = BlobAntiPatternObject.fetchMapById(id);
       linkedHashMap.put(key, value);
-      CouchTx tx = KernelImpl.sendJson(KernelImpl.GSON.toJson(linkedHashMap), Visitor.class.getSimpleName().toLowerCase() + "/" + id, String.valueOf(linkedHashMap.get("_rev")));
+      CouchTx tx = BlobAntiPatternObject.sendJson(BlobAntiPatternObject.GSON.toJson(linkedHashMap), Visitor.class.getSimpleName().toLowerCase() + "/" + id, String.valueOf(linkedHashMap.get("_rev")));
 
     } catch (Throwable ignored) {
 

@@ -57,7 +57,7 @@ public class CouchAgent {
 
 
     for (CouchChangesClient changeHandler : changeHandlers) {
-      final SocketChannel channel = KernelImpl.createCouchConnection();
+      final SocketChannel channel = BlobAntiPatternObject.createCouchConnection();
       String feedString = changeHandler.getFeedString();
       System.err.println("feedstring: " + feedString);
       HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, changeHandler, feedString);

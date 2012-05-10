@@ -10,7 +10,7 @@ import java.util.Map;
 import one.xio.AsioVisitor;
 
 import static one.xio.HttpMethod.UTF8;
-import static rxf.server.KernelImpl.ThreadLocalSetCookies;
+import static rxf.server.BlobAntiPatternObject.ThreadLocalSetCookies;
 
 /**
  * User: jim

@@ -21,8 +21,8 @@ import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpMethod.UTF8;
-import static rxf.server.KernelImpl.LOOPBACK;
-import static rxf.server.KernelImpl.getReceiveBufferSize;
+import static rxf.server.BlobAntiPatternObject.LOOPBACK;
+import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
 
 /**
  * Created by IntelliJ IDEA.
@@ -210,7 +210,7 @@ public class CouchChangesClient extends AsioVisitor.Impl {
         ByteBuffer handoff = (ByteBuffer) buffer.slice().limit(integer);
         final String trim = UTF8.decode(handoff).toString().trim();
         //        System.err.println("RecordId: " + trim);
-        final LinkedHashMap couchChange = KernelImpl.GSON.fromJson(trim, LinkedHashMap.class);
+        final LinkedHashMap couchChange = BlobAntiPatternObject.GSON.fromJson(trim, LinkedHashMap.class);
 
         EXECUTOR_SERVICE.submit(getDocUpdateHandler(couchChange));
         buffer.position(handoff.limit() + ENDL.length);

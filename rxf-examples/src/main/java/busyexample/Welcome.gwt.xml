@@ -4,7 +4,6 @@
 
     <inherits name='com.google.gwt.user.User'/>
     <inherits name="com.google.web.bindery.requestfactory.RequestFactory"/>
-    <inherits name="com.google.gwt.query.Query"/>
     <inherits name="com.google.gwt.user.theme.standard.Standard"/>
     <inherits name="rxf.RelaxFactoryStubs"/>
     <inherits name="com.google.gwt.precompress.Precompress"/>

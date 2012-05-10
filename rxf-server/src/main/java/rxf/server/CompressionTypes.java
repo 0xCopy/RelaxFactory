@@ -10,9 +10,6 @@ enum CompressionTypes {
   public String suffix;
 
   CompressionTypes(String... suffix) {
-    if (suffix.length == 0) {
-      this.suffix = name();
-    } else
-      this.suffix = suffix[0];
+    this.suffix = suffix.length == 0 ? name() : suffix[0];
   }
 }

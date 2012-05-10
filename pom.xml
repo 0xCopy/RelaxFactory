@@ -1,11 +1,96 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>rxf</groupId>
-  <artifactId>relaxfactory</artifactId>
-  <version>0.7.0</version>
-  <packaging>pom</packaging>
-  <modules>
-    <module>rxf-server</module>
-  </modules>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>rxf</groupId>
+    <artifactId>relaxfactory</artifactId>
+    <version>0.7.0</version>
+    <packaging>pom</packaging>
+    <properties>
+        <java.version>1.6</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <gwt.style>OBF</gwt.style>
+        <gwt.draftCompile>false</gwt.draftCompile>
+        <gwt.version>2.5.0-rfmap-SNAPSHOT</gwt.version>
+        <gwt.plugin.version>2.4.0</gwt.plugin.version>
+        <gwt-maven-plugin.compileReport>false</gwt-maven-plugin.compileReport>
+        <gwt-maven-plugin.soycDetailed>false</gwt-maven-plugin.soycDetailed>
+        <one.xio.version>1.9.8</one.xio.version>
+    </properties>
+    <profiles>
+        <profile>
+            <!--big box-->
+            <id>soyc</id>
+            <properties>
+                <gwt.style>DETAILED</gwt.style>
+                <gwt.draftCompile>true</gwt.draftCompile>
+                <gwt.compiler.optimizationLevel>0</gwt.compiler.optimizationLevel>
+                <gwt.extraJvmArgs>-Xmx6g</gwt.extraJvmArgs>
+                <gwt-maven-plugin.compileReport>true</gwt-maven-plugin.compileReport>
+                <gwt-maven-plugin.soycDetailed>true</gwt-maven-plugin.soycDetailed>
+            </properties>
+        </profile>
+        <profile>
+            <!--big box-->
+            <id>dev</id>
+            <properties>
+                <gwt.style>PRETTY</gwt.style>
+                <gwt.draftCompile>true</gwt.draftCompile>
+                <gwt.compiler.optimizationLevel>0</gwt.compiler.optimizationLevel>
+                <gwt.extraJvmArgs>-Xmx6g</gwt.extraJvmArgs>
+            </properties>
+        </profile>
+        <profile>
+            <!-- Simplified a few of the default GWT compiler settings in an effort to speed up dev builds -->
+            <id>rel</id>
+            <properties>
+                <gwt.style>OBF</gwt.style>
+                <gwt.draftCompile>false</gwt.draftCompile>
+                <gwt.compiler.optimizationLevel>9</gwt.compiler.optimizationLevel>
+                <gwt.extraJvmArgs>-Xmx6g</gwt.extraJvmArgs>
+            </properties>
+        </profile>
+        <profile>
+
+            <id>linode</id>
+            <properties>
+                <gwt.style>OBF</gwt.style>
+                <gwt.draftCompile>true</gwt.draftCompile>
+                <gwt.extraJvmArgs>-Xmx224m</gwt.extraJvmArgs>
+                <gwt.compiler.optimizationLevel>0</gwt.compiler.optimizationLevel>
+                <!--128 too small-->
+                <gwt.compiler.localWorkers>1</gwt.compiler.localWorkers>
+
+                <!--linode 119 seconds, 600 without-->
+            </properties>
+        </profile>
+    </profiles>
+    <repositories>
+        <repository>
+            <id>gwt-maven-rewraps</id>
+            <url>http://gwt-maven-rewraps.googlecode.com/git/</url>
+        </repository>
+        <repository>
+            <id>sonatype-snapshots</id>
+            <url>http://oss.sonatype.org/content/repositories/snapshots</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
+
+    </repositories>     <dependencies>    <dependency>
+            <groupId>com.google.gwt</groupId>
+            <artifactId>gwt-user</artifactId>
+            <version>${gwt.version}</version>
+            <scope>provided</scope>
+        </dependency>
+</dependencies>
+    <modules>
+        <module>rxf-shared</module>
+        <module>rxf-server</module>
+        <module>rxf-examples</module>
+    </modules>
 </project>

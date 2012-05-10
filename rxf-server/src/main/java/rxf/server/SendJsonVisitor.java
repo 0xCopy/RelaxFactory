@@ -53,7 +53,7 @@ class SendJsonVisitor extends AsioVisitor.Impl {
     SocketChannel channel = (SocketChannel) selectionKey.channel();
     try {
       channel.write(encode);
-      selectionKey.attach(KernelImpl.createJsonResponseReader(returnTo));
+      selectionKey.attach(BlobAntiPatternObject.createJsonResponseReader(returnTo));
       selectionKey.interestOps(SelectionKey.OP_READ);
     } catch (IOException e) {
       e.printStackTrace();  //todo: verify for a purpose

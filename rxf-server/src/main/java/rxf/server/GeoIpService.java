@@ -53,15 +53,15 @@ import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpMethod.UTF8;
-import static rxf.server.KernelImpl.EXECUTOR_SERVICE;
-import static rxf.server.KernelImpl.GSON;
-import static rxf.server.KernelImpl.ISO88591;
-import static rxf.server.KernelImpl.createCouchConnection;
-import static rxf.server.KernelImpl.fetchJsonByIdVisitor;
-import static rxf.server.KernelImpl.getRevision;
-import static rxf.server.KernelImpl.moveCaretToDoubleEol;
-import static rxf.server.KernelImpl.recycleChannel;
-import static rxf.server.KernelImpl.sortableInetAddress;
+import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
+import static rxf.server.BlobAntiPatternObject.GSON;
+import static rxf.server.BlobAntiPatternObject.ISO88591;
+import static rxf.server.BlobAntiPatternObject.createCouchConnection;
+import static rxf.server.BlobAntiPatternObject.fetchJsonByIdVisitor;
+import static rxf.server.BlobAntiPatternObject.getRevision;
+import static rxf.server.BlobAntiPatternObject.moveCaretToDoubleEol;
+import static rxf.server.BlobAntiPatternObject.recycleChannel;
+import static rxf.server.BlobAntiPatternObject.sortableInetAddress;
 
 //import java.util.concurrent.ConcurrentSkipListMap;
 
@@ -97,7 +97,7 @@ public class GeoIpService {
     Callable<Map> callable = new Callable<Map>() {
       public Map call() throws Exception {
         Map m = null;
-        SocketChannel couchConnection = KernelImpl.createCouchConnection();
+        SocketChannel couchConnection = BlobAntiPatternObject.createCouchConnection();
         try {
           SynchronousQueue<String> retVal = new SynchronousQueue<String>();
           fetchJsonByIdVisitor(GEOIP_ROOTNODE, couchConnection, retVal);
@@ -135,7 +135,7 @@ public class GeoIpService {
             @Override
             public void onWrite(SelectionKey key) throws Exception {
 
-              String ctype = "text/csv; charset=" + KernelImpl.ISO88591.name();
+              String ctype = "text/csv; charset=" + BlobAntiPatternObject.ISO88591.name();
 
 
               ByteBuffer d2 = (ByteBuffer) indexLocPair.getB().duplicate().rewind();
@@ -181,7 +181,7 @@ public class GeoIpService {
       @Override
       public void onRead(SelectionKey key) throws Exception {
         SelectableChannel channel1 = key.channel();
-        ByteBuffer dst = ByteBuffer.allocate(KernelImpl.getReceiveBufferSize());
+        ByteBuffer dst = ByteBuffer.allocate(BlobAntiPatternObject.getReceiveBufferSize());
         int read = ((SocketChannel) channel1).read(dst);
         System.err.println("Expected 100-continue.  Got(" + read + "): " + UTF8.decode((ByteBuffer) dst.flip()).toString().trim());
         key.interestOps(OP_WRITE);
@@ -197,7 +197,7 @@ public class GeoIpService {
             if (!d2.hasRemaining()) {
               Callable<Map> callable = new Callable<Map>() {
                 public Map call() throws Exception {
-                  key.attach(KernelImpl.createJsonResponseReader(synchronousQueue));
+                  key.attach(BlobAntiPatternObject.createJsonResponseReader(synchronousQueue));
                   key.interestOps(OP_READ);
 
                   return null;
@@ -400,13 +400,13 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
    */
   static void startGeoIpService(final String dbinstance) throws IOException, XPathExpressionException, InterruptedException {
     final SynchronousQueue<String> retVal = new SynchronousQueue<String>();
-    SocketChannel connection = KernelImpl.createCouchConnection();
+    SocketChannel connection = BlobAntiPatternObject.createCouchConnection();
 
     HttpMethod.enqueue(connection, OP_CONNECT | OP_WRITE, new AsioVisitor.Impl() {
       public void onRead(final SelectionKey selectionKey) throws IOException, InterruptedException {
         final AsioVisitor parent = this;
         final SocketChannel channel = (SocketChannel) selectionKey.channel();
-        ByteBuffer dst = ByteBuffer.allocate(KernelImpl.getReceiveBufferSize());
+        ByteBuffer dst = ByteBuffer.allocate(BlobAntiPatternObject.getReceiveBufferSize());
         int read = channel.read(dst);
         dst.flip();
         System.err.println("response: " + UTF8.decode((ByteBuffer) dst.duplicate().rewind()));
@@ -435,7 +435,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
                 } catch (IOException e) {
                   e.printStackTrace();  //todo: verify for a purpose
                 }
-                selectionKey.attach(KernelImpl.createJsonResponseReader(retVal));
+                selectionKey.attach(BlobAntiPatternObject.createJsonResponseReader(retVal));
                 selectionKey.interestOps(OP_READ);
               }
             });
@@ -521,7 +521,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
                       @Override
                       public void onRead(SelectionKey key) throws Exception {
                         SocketChannel channel = (SocketChannel) key.channel();
-                        ByteBuffer dst1 = ByteBuffer.allocate(KernelImpl.getReceiveBufferSize());
+                        ByteBuffer dst1 = ByteBuffer.allocate(BlobAntiPatternObject.getReceiveBufferSize());
                         int read1 = channel.read(dst1);
                         final long l2 = System.currentTimeMillis();
 //                          System.err.println("response for "+path+": "+UTF8.decode((ByteBuffer) dst1.flip()))
@@ -579,7 +579,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
               }
             };
 
-            KernelImpl.EXECUTOR_SERVICE.submit(callable);
+            BlobAntiPatternObject.EXECUTOR_SERVICE.submit(callable);
           }
           break;
           default:

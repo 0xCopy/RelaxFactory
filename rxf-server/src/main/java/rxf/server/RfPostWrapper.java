@@ -32,10 +32,10 @@ import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpMethod.GET;
 import static one.xio.HttpMethod.UTF8;
-import static rxf.server.KernelImpl.EXECUTOR_SERVICE;
-import static rxf.server.KernelImpl.getReceiveBufferSize;
-import static rxf.server.KernelImpl.moveCaretToDoubleEol;
-import static rxf.server.KernelImpl.recycleChannel;
+import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
+import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
+import static rxf.server.BlobAntiPatternObject.moveCaretToDoubleEol;
+import static rxf.server.BlobAntiPatternObject.recycleChannel;
 
 /**
  * a POST interception wrapper for http protocol cracking
@@ -89,7 +89,7 @@ class RfPostWrapper extends Impl {
                     "Connection: close\r\n" +
                     "\r\n";
 
-                final SocketChannel couchConnection = KernelImpl.createCouchConnection();
+                final SocketChannel couchConnection = BlobAntiPatternObject.createCouchConnection();
                 HttpMethod.enqueue(couchConnection, OP_CONNECT | OP_WRITE,
                     new Impl() {
                       @Override
@@ -174,7 +174,7 @@ class RfPostWrapper extends Impl {
   @Override
   public void onRead(final SelectionKey key) throws IOException {
     SocketChannel channel = (SocketChannel) key.channel();
-    ByteBuffer dst = ByteBuffer.allocate(KernelImpl.getReceiveBufferSize());
+    ByteBuffer dst = ByteBuffer.allocate(BlobAntiPatternObject.getReceiveBufferSize());
     int read = 0;
     try {
       if (channel.socket().isInputShutdown() || channel.socket().isOutputShutdown() || !channel.isConnected()) {
@@ -197,7 +197,7 @@ class RfPostWrapper extends Impl {
       key.attach(dst);
       switch (method) {
         case POST: {
-          KernelImpl.moveCaretToDoubleEol(dst);
+          BlobAntiPatternObject.moveCaretToDoubleEol(dst);
           ByteBuffer headers = (ByteBuffer) dst.duplicate().flip();
           System.err.println("+++ headers: " + UTF8.decode((ByteBuffer) headers.duplicate().rewind()).toString());
           Map<String, int[]> headers1 = HttpHeaders.getHeaders(headers);
@@ -210,7 +210,7 @@ class RfPostWrapper extends Impl {
 
           long[] remaining = {total - dst.remaining()};
           if (0 == remaining[0]) {
-            KernelImpl.EXECUTOR_SERVICE.submit(new RfProcessTask(headers, dst, key));
+            BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new RfProcessTask(headers, dst, key));
           } else {
             if (dst.capacity() - dst.position() >= total) {
               headers = ByteBuffer.allocate(dst.position()).put(headers);
@@ -235,7 +235,7 @@ class RfPostWrapper extends Impl {
           break;
         }
         case GET: {
-          KernelImpl.moveCaretToDoubleEol(dst);
+          BlobAntiPatternObject.moveCaretToDoubleEol(dst);
           final ByteBuffer headers = ((ByteBuffer) dst.duplicate().flip()).slice();
           while (!Character.isWhitespace(headers.get())) ;
           int position = headers.position();
@@ -267,7 +267,7 @@ class RfPostWrapper extends Impl {
             @Override
             public void onWrite(SelectionKey key) throws Exception {
               final SocketChannel socketChannel = (SocketChannel) key.channel();
-              final int sendBufferSize = KernelImpl.getSendBufferSize();
+              final int sendBufferSize = BlobAntiPatternObject.getSendBufferSize();
               String ceString = "";
 
               Map<String, int[]> hmap = HttpHeaders.getHeaders((ByteBuffer) headers.clear());
@@ -379,10 +379,10 @@ class RfPostWrapper extends Impl {
 
     @Override
     public void run() {
-      KernelImpl.ThreadLocalHeaders.set(headers);
+      BlobAntiPatternObject.ThreadLocalHeaders.set(headers);
       SocketChannel socketChannel = (SocketChannel) key.channel();
       InetAddress remoteSocketAddress = socketChannel.socket().getInetAddress();
-      KernelImpl.ThreadLocalInetAddress.set(remoteSocketAddress);
+      BlobAntiPatternObject.ThreadLocalInetAddress.set(remoteSocketAddress);
       String trim = UTF8.decode(data).toString().trim();
       final String process = SIMPLE_REQUEST_PROCESSOR.process(trim);
       String sc = setOutboundCookies();
@@ -406,7 +406,7 @@ class RfPostWrapper extends Impl {
 
     String setOutboundCookies() {
       System.err.println("+++ headers " + UTF8.decode((ByteBuffer) headers.rewind()).toString());
-      Map setCookiesMap = KernelImpl.ThreadLocalSetCookies.get();
+      Map setCookiesMap = BlobAntiPatternObject.ThreadLocalSetCookies.get();
       String sc = "";
       if (null != setCookiesMap && !setCookiesMap.isEmpty()) {
         sc = "";

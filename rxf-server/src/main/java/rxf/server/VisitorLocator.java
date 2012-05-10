@@ -10,10 +10,10 @@ import one.xio.HttpMethod;
 
 import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_WRITE;
-import static rxf.server.KernelImpl.GSON;
-import static rxf.server.KernelImpl.createCouchConnection;
-import static rxf.server.KernelImpl.executeCouchRequest;
-import static rxf.server.KernelImpl.recycleChannel;
+import static rxf.server.BlobAntiPatternObject.GSON;
+import static rxf.server.BlobAntiPatternObject.createCouchConnection;
+import static rxf.server.BlobAntiPatternObject.executeCouchRequest;
+import static rxf.server.BlobAntiPatternObject.recycleChannel;
 
 //import rxf.server.rf.SessionFindLocatorVisitor;
 
@@ -89,7 +89,7 @@ public class VisitorLocator extends Locator<Visitor, String> {
       String take;
       try {
         SynchronousQueue<String> retVal = new SynchronousQueue<String>();
-        HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, KernelImpl.fetchJsonByIdVisitor(clazz.getSimpleName().toLowerCase() + '/' + id, channel, retVal));
+        HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, BlobAntiPatternObject.fetchJsonByIdVisitor(clazz.getSimpleName().toLowerCase() + '/' + id, channel, retVal));
         take = retVal.take();
       } finally {
         recycleChannel(channel);
