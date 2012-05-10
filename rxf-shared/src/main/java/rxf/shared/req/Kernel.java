@@ -8,7 +8,7 @@ import com.google.web.bindery.requestfactory.shared.ServiceName;
 import rxf.shared.prox.VisitorProxy;
 
 
-@ServiceName("rxf.server.KernelImpl.class")
+@ServiceName("rxf.server.BlobAntiPatternObject")
 public interface Kernel extends RequestContext {
   Request<VisitorProxy> getCurrentSession();
 }

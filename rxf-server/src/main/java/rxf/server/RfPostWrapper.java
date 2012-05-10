@@ -384,8 +384,9 @@ class RfPostWrapper extends Impl {
       InetAddress remoteSocketAddress = socketChannel.socket().getInetAddress();
       BlobAntiPatternObject.ThreadLocalInetAddress.set(remoteSocketAddress);
       String trim = UTF8.decode(data).toString().trim();
-      final String process = SIMPLE_REQUEST_PROCESSOR.process(trim);
-      String sc = setOutboundCookies();
+      final String process;
+      try {
+        process = SIMPLE_REQUEST_PROCESSOR.process(trim);String sc = setOutboundCookies();
       int length = process.length();
       final String s1 = "HTTP/1.1 200 OK\r\n" +
           sc +
@@ -401,6 +402,11 @@ class RfPostWrapper extends Impl {
         }
       });
       key.interestOps(SelectionKey.OP_WRITE);
+
+      } catch (Throwable e) {
+        e.printStackTrace();  //todo: verify for a purpose
+      } finally {
+      }
 
     }
 

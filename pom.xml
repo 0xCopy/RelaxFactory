@@ -11,8 +11,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <gwt.style>OBF</gwt.style>
         <gwt.draftCompile>false</gwt.draftCompile>
-        <gwt.version>2.5.0-rfmap-SNAPSHOT</gwt.version>
         <gwt.plugin.version>2.4.0</gwt.plugin.version>
+        <!--<gwt.version>2.5.0-rfmap-SNAPSHOT</gwt.version>-->
+        <gwt.version>2.4.0</gwt.version>
         <gwt-maven-plugin.compileReport>false</gwt-maven-plugin.compileReport>
         <gwt-maven-plugin.soycDetailed>false</gwt-maven-plugin.soycDetailed>
         <one.xio.version>1.9.8</one.xio.version>
