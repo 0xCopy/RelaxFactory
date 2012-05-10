@@ -14,6 +14,7 @@
     <dependencies>
         <dependency><artifactId>rxf-shared</artifactId><groupId>${project.groupId}</groupId><version>${project.version}</version></dependency>
         <!--<dependency><artifactId>rxf-server</artifactId><groupId>${project.groupId}</groupId><version>${project.version}</version></dependency>-->
+
     </dependencies>
     <build>
         <plugins>
