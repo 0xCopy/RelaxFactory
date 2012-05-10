@@ -105,11 +105,10 @@ enum UserDetails {
         @Override
         public void onClick(ClickEvent event) {
           final String text = w.getText();
-          requestFactory.couch().setSessionProperty(key, text).fire(new Receiver<Void>() {
+          requestFactory.couch().setSessionProperty(key, text).fire(new Receiver<String>() {
 
             @Override
-            public void onSuccess(Void response) {
-//              session.setVersion(response);
+            public void onSuccess(String ver) {
               gather.put(UserDetails.this, text);
               dialog.hide();
               GWT.runAsync(callback);

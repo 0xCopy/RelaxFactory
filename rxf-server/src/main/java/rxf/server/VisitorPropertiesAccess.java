@@ -6,32 +6,27 @@ package rxf.server;
  * Time: 5:04 PM
  */
 public class VisitorPropertiesAccess {
-  static public String INSTANCE = Visitor.class.getSimpleName().toLowerCase();//default
 
-  public static String getSessionProperty(String key) {
-    try {
-      String sessionCookieId1 = BlobAntiPatternObject.getSessionCookieId();
-      return BlobAntiPatternObject.getGenericMapProperty(sessionCookieId1, key);
-    } catch (Exception e) {
-      e.printStackTrace();  //todo: verify for a purpose
+
+  public static final CouchPropertiesAccess<Visitor> VISITOR_COUCH_PROPERTIES_ACCESS = new CouchPropertiesAccess<Visitor>(BlobAntiPatternObject.VISITOR_LOCATOR);
+
+
+ static   public String getSessionProperty( String key) {
+      try {
+        return VISITOR_COUCH_PROPERTIES_ACCESS.getSessionProperty(BlobAntiPatternObject.getSessionCookieId(), key);
+      } catch (Exception e) {
+        e.printStackTrace();  //todo: verify for a purpose
+      }
+      return key;
     }
-    return null;
-  }
 
-  /**
-   * @return new version string
-   */
-  public static void setSessionProperty(String key, String value) {
-    try {
-      String id = BlobAntiPatternObject.getSessionCookieId();
-      final String instance = INSTANCE;
-      String ret;
-      String path = instance + '/' + id;
-      CouchTx tx = BlobAntiPatternObject.setGenericDocumentProperty(path, key, value);
-      System.err.println("tx: " + tx.toString());
-    } catch (Throwable ignored) {
-
+    static public String setSessionProperty(String key, String value) {
+      try {
+        return VISITOR_COUCH_PROPERTIES_ACCESS.setSessionProperty( BlobAntiPatternObject.getSessionCookieId(), key, value);
+      } catch (Exception e) {
+        e.printStackTrace();  //todo: verify for a purpose
+      }
+      return key;
     }
-  }
 
 }

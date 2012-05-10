@@ -109,6 +109,7 @@ public class BlobAntiPatternObject {
 
   private static int rbs;
   private static int sbs;
+  public static final VisitorPropertiesAccess SESSION_PROPERTIES_ACCESS = new VisitorPropertiesAccess();
 
   static {
     try {
@@ -172,8 +173,8 @@ public class BlobAntiPatternObject {
           public void run() {
             try {
 
-              setSessionProperty(InetAddress.class.getCanonicalName(), inet4Address.getCanonicalHostName());
-              setSessionProperty("geoip", geoip);
+              SESSION_PROPERTIES_ACCESS.setSessionProperty(InetAddress.class.getCanonicalName(), inet4Address.getCanonicalHostName());
+              SESSION_PROPERTIES_ACCESS.setSessionProperty("geoip", geoip);
 
             } catch (Throwable ignored) {
             }
@@ -269,9 +270,12 @@ public class BlobAntiPatternObject {
     return Arrays.deepToString(d) + wheresWaldo();
   }
 
-  public static void recycleChannel(SocketChannel channel) throws IOException {
-    lazyQueue.add(channel);
-    System.err.println("--- recycling" + wheresWaldo());
+  public static void recycleChannel(SocketChannel channel) {
+    try {
+      lazyQueue.add(channel);
+      System.err.println("--- recycling" + wheresWaldo());
+    } catch (Exception e) {
+    }
 
   }
 
@@ -315,7 +319,7 @@ public class BlobAntiPatternObject {
     return rev;
   }
 
-  public static AsioVisitor fetchJsonByIdVisitor(final String path, final SocketChannel channel, final SynchronousQueue<String> returnTo) throws ClosedChannelException {
+  public static AsioVisitor fetchJsonByPath(final String path, final SocketChannel channel, final SynchronousQueue<String> returnTo) throws ClosedChannelException {
     final String format = (MessageFormat.format("GET /{0} HTTP/1.1\r\n\r\n", path.trim()));
     return executeCouchRequest(channel, returnTo, format);
   }
@@ -331,48 +335,6 @@ public class BlobAntiPatternObject {
     };
     HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, impl);
     return impl;
-  }
-
-  //maximum wastefulness
-  static public String setSessionProperty(String key, String value) throws Exception {
-    try {
-      String id = BlobAntiPatternObject.getSessionCookieId();
-      Map linkedHashMap = fetchMapById(id);
-      linkedHashMap.put(key, value);
-      CouchTx tx = sendJson(GSON.toJson(linkedHashMap), VisitorPropertiesAccess.INSTANCE + "/" + id, String.valueOf(linkedHashMap.get("_rev")));
-
-      return tx.rev;
-    } catch (Throwable ignored) {
-
-    }
-    return null;
-  }
-
-  /**
-   * particular to security
-   *
-   * @param key
-   * @return
-   * @throws InterruptedException
-   */
-  static public String getSessionProperty(String key) throws Exception {
-
-
-    String sessionCookieId = getSessionCookieId();
-    String s = null;
-    String canonicalName = null;
-    try {
-      s = (String) fetchMapById(sessionCookieId).get(key);
-    } catch (Exception e) {
-      canonicalName = VisitorPropertiesAccess.class.getCanonicalName();
-      ByteBuffer byteBuffer = ThreadLocalHeaders.get();
-      if (!UTF8.decode(byteBuffer).toString().trim().equals(canonicalName)) {
-
-        ThreadLocalHeaders.set(UTF8.encode(canonicalName));
-        return getSessionProperty(key);
-      }
-    }
-    return s;
   }
 
   /**
@@ -396,12 +358,12 @@ public class BlobAntiPatternObject {
     return GSON.fromJson(take, CouchTx.class);
   }
 
-  public static LinkedHashMap fetchMapById(String key) throws IOException, InterruptedException {
+  public static LinkedHashMap fetchMapById(CouchLocator locator, String key) throws IOException, InterruptedException {
     SocketChannel channel = createCouchConnection();
     String take1;
     try {
       SynchronousQueue<String> retVal = new SynchronousQueue<String>();
-      HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, fetchJsonByIdVisitor(VisitorPropertiesAccess.INSTANCE + '/' + key, channel, retVal));
+      HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, fetchJsonByPath(locator.getPathPrefix() + '/' + key, channel, retVal));
       take1 = retVal.take();
     } finally {
       recycleChannel(channel);
@@ -512,40 +474,42 @@ public class BlobAntiPatternObject {
     return null;
   }
 
-  public static String getGenericMapProperty(String eid, String attrKey) {
-    String s = null;
-    String canonicalName = null;
-    try {
-        s = (String) fetchMapById(eid).get(attrKey);
-      } catch (Exception e) {
-        canonicalName = VisitorPropertiesAccess.class.getCanonicalName();
-        ByteBuffer byteBuffer = ThreadLocalHeaders.get();
-        if (!UTF8.decode(byteBuffer).toString().trim().equals(canonicalName)) {
-
-          ThreadLocalHeaders.set(UTF8.encode(canonicalName));
-          return VisitorPropertiesAccess.getSessionProperty(attrKey);
-        }
-      }
-    return s;
-  }
-
   static CouchTx setGenericDocumentProperty(String path, String key, String value) throws Exception {
-    String ret;SocketChannel channel = null;
+    String ret;
+    SocketChannel channel = null;
     try {
-        channel = createCouchConnection();
-        SynchronousQueue<String> retVal = new SynchronousQueue<String>();
-        HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, fetchJsonByIdVisitor(path, channel, retVal));
-        ret = retVal.take();
-      } finally {
-        recycleChannel(channel);
-      }
+      channel = createCouchConnection();
+      SynchronousQueue<String> retVal = new SynchronousQueue<String>();
+      HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, fetchJsonByPath(path, channel, retVal));
+      ret = retVal.take();
+    } finally {
+      recycleChannel(channel);
+    }
     String take = ret;
     LinkedHashMap linkedHashMap1 = GSON.fromJson(take, LinkedHashMap.class);
     if (2 == linkedHashMap1.size() && linkedHashMap1.containsKey("responseCode"))
-        throw new IOException(deepToString(linkedHashMap1));
+      throw new IOException(deepToString(linkedHashMap1));
     linkedHashMap1.put(key, value);
     return sendJson(GSON.toJson(linkedHashMap1), path, inferRevision(linkedHashMap1));
   }
+
+  public static String getGenericDocumentProperty(String path, String key) throws IOException {
+    SocketChannel couchConnection = null;
+    try {
+      final SynchronousQueue<String> returnTo = new SynchronousQueue<String>();
+      couchConnection = createCouchConnection();
+      fetchJsonByPath(path, couchConnection, returnTo);
+      final String take = returnTo.take();
+      final Map map = GSON.fromJson(take, Map.class);
+      return String.valueOf(map.get(key));
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      recycleChannel(couchConnection);
+    }
+    return path;
+  }
+
 
   static class ThreadLocalSessionHeaders {
 
@@ -615,7 +579,7 @@ public class BlobAntiPatternObject {
     serverSocketChannel.socket().bind(new InetSocketAddress(8888));
     serverSocketChannel.configureBlocking(false);
     HttpMethod.enqueue(serverSocketChannel, OP_ACCEPT, topLevel);
-    final SessionCouchAgent ro = new SessionCouchAgent("rxf");
+    final SessionCouchAgent<Visitor, String, Class<Visitor>> ro = new SessionCouchAgent<Visitor, String, Class<Visitor>>(VISITOR_LOCATOR);
     HttpMethod.enqueue(createCouchConnection(), OP_CONNECT | OP_WRITE, ro, ro.getFeedString());
     HttpMethod.init(args, topLevel);
   }

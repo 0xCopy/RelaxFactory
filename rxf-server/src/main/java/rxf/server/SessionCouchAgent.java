@@ -2,18 +2,15 @@ package rxf.server;
 
 import java.util.LinkedHashMap;
 
-import com.google.web.bindery.requestfactory.shared.Locator;
-
 /**
 * User: jim
 * Date: 5/10/12
 * Time: 7:24 AM
 */
-public class SessionCouchAgent<T,C extends Class<?extends T>>extends CouchChangesClient {
+public class SessionCouchAgent<T,I,C extends Class<?extends T>>extends CouchChangesClient {
 
-  public SessionCouchAgent(Locator locator) {
-    final Class SessionPojo = locator.getDomainType();
-    feedname = SessionPojo.getSimpleName().toLowerCase();
+  public SessionCouchAgent(CouchLocator<T> locator) {
+    feedname =  (locator).getPathPrefix();
   }
 
   @Override

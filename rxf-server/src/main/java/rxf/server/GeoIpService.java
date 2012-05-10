@@ -58,7 +58,7 @@ import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 import static rxf.server.BlobAntiPatternObject.GSON;
 import static rxf.server.BlobAntiPatternObject.ISO88591;
 import static rxf.server.BlobAntiPatternObject.createCouchConnection;
-import static rxf.server.BlobAntiPatternObject.fetchJsonByIdVisitor;
+import static rxf.server.BlobAntiPatternObject.fetchJsonByPath;
 import static rxf.server.BlobAntiPatternObject.inferRevision;
 import static rxf.server.BlobAntiPatternObject.moveCaretToDoubleEol;
 import static rxf.server.BlobAntiPatternObject.recycleChannel;
@@ -109,7 +109,7 @@ public class GeoIpService {
         SocketChannel couchConnection = BlobAntiPatternObject.createCouchConnection();
         try {
           SynchronousQueue<String> retVal = new SynchronousQueue<String>();
-          fetchJsonByIdVisitor(GEOIP_ROOTNODE, couchConnection, retVal);
+          fetchJsonByPath(GEOIP_ROOTNODE, couchConnection, retVal);
 
           m = GSON.fromJson(retVal.take(), Map.class);
           if (2 == m.size() && m.containsKey("responseCode")) {
