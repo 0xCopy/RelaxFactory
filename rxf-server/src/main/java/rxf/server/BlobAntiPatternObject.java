@@ -43,7 +43,6 @@ import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static one.xio.HttpMethod.UTF8;
-import static one.xio.HttpMethod.getSelector;
 import static one.xio.HttpMethod.wheresWaldo;
 
 /**
@@ -350,10 +349,7 @@ public class BlobAntiPatternObject {
       HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, new SendJsonVisitor(json, retVal, idver));
       take = retVal.take();
     } finally {
-      if (null != channel) {
-        channel.register(getSelector(), 0);
-        couchDq.add(channel);
-      }
+      recycleChannel(channel);
     }
     return GSON.fromJson(take, CouchTx.class);
   }
