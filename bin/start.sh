@@ -30,7 +30,7 @@ s=$(grep '<version>' ${rt}/../pom.xml | head -n1 | sed -e 's,[^>]*>\([^<]*\).*,\
         PATHSEP=":"
         [[ "${OS}" = "Windows_NT" ]] && PATHSEP=';'
         FP="WEB-INF/classes${PATHSEP}${CP}"
-    	java -cp ${FP} -jar $LAUNCHME $@ 
+    	java -Xmx4g -cp ${FP} -jar $LAUNCHME $@ 
     }
     popd
 }
