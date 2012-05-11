@@ -96,8 +96,8 @@
                            <goals>
                                <goal>exec</goal>
                            </goals>
+                           <id>VerifyRequestFactoryInterfaces</id>
                            <configuration>
-                               <id>VerifyRequestFactoryInterfaces</id>
                                <executable>java</executable>
                                <arguments>
                                    <argument>-cp</argument>
