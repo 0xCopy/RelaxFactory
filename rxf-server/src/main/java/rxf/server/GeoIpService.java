@@ -87,7 +87,8 @@ public class GeoIpService {
   static MappedByteBuffer locationMMBuf;
   static int geoIpHeaderOffset;
   //    private static ConcurrentSkipListMap<Long, Integer> geoipMap = new ConcurrentSkipListMap<Long, Integer>();  slower
-  private static NavigableMap<Long, Integer> geoipMap = new TreeMap<Long, Integer>();
+  private final  static NavigableMap<Long, Integer> geoipMap = new TreeMap<Long, Integer>() ;
+  public static final int MEG = (1024 * 1024);
 
 
   public static void createGeoIpIndex() throws IOException, XPathExpressionException, ExecutionException, InterruptedException {
@@ -97,9 +98,9 @@ public class GeoIpService {
     final ByteArrayOutputStream archiveBuffer = downloadMaxMindBinaryTarXz(href);
     final long l1 = System.currentTimeMillis() - l;
     final int size = archiveBuffer.size();
-    final int i = size / 1024 * 1024;
+    final int i = size / MEG;
     final double v = l1 / 1000.;
-    System.err.println("download complete in " + v + " archive size: " + i + "Mb @" + i / v + " Mb/s");
+    System.err.println(MessageFormat.format("download complete in {0} archive size: {1,number,#.##}Mb @{2,number,#.##} Mb/s", v, i / MEG, i / v));
     Triple<Integer[], ByteBuffer, ByteBuffer> indexIndexLocTrip = buildGeoIpFirstPass(archiveBuffer);
     final Pair<ByteBuffer, ByteBuffer> indexLocPair = buildGeoIpSecondPass(indexIndexLocTrip);
 
@@ -263,23 +264,19 @@ public class GeoIpService {
   static void testWalnutCreek(final ByteBuffer ix, ByteBuffer loc, long[] l1, int[] l2) throws UnknownHostException {
 
     try {
-      String s2 = "127.0.0.1";
-      InetAddress loopBackAddr = Inet4Address.getByAddress(new byte[]{127, 0, 0, 1});
+//      String s2 = "127.0.0.1";
+//      InetAddress loopBackAddr = Inet4Address.getByAddress(new byte[]{127, 0, 0, 1});
       InetAddress walnutCreek = Inet4Address.getByAddress(new byte[]{67, (byte) 174, (byte) 244, 11});
-      System.err.println("|" + sortableInetAddress(Inet4Address.getByAddress(new byte[]{67, (byte) 174, (byte) 244, 103})));
-      System.err.println("|" + sortableInetAddress(Inet4Address.getByAddress(new byte[]{67, (byte) 174, (byte) 244, 103})));
-      System.err.println("|" + sortableInetAddress(Inet4Address.getByAddress(new byte[]{67, (byte) 174, (byte) 103, 11})));
-      if (null != l1 && null != l2) {
-        System.err.println(arraysLookup(l2, l1, loopBackAddr, loc.duplicate()));
-        System.err.println(arraysLookup(l2, l1, walnutCreek, loc.duplicate()));
-      }
+//      System.err.println("|" + sortableInetAddress(Inet4Address.getByAddress(new byte[]{67, (byte) 174, (byte) 244, 103})));
+//      System.err.println("|" + sortableInetAddress(Inet4Address.getByAddress(new byte[]{67, (byte) 174, (byte) 244, 103})));
+//      System.err.println("|" + sortableInetAddress(Inet4Address.getByAddress(new byte[]{67, (byte) 174, (byte) 103, 11})));
+//      if (null != l1 && null != l2) {
+//        System.err.println(arraysLookup(l2, l1, loopBackAddr, loc.duplicate()));
+//        System.err.println(arraysLookup(l2, l1, walnutCreek, loc.duplicate()));
+//      }
       try {
+        installLocalhostDeveloperGeoIp();
         {
-
-          System.err.println("localhost: " + mapAddressLookup(loopBackAddr));
-        }
-        {
-
           System.err.println("walnut creek: " + mapAddressLookup(walnutCreek));
         }
 
@@ -298,6 +295,21 @@ public class GeoIpService {
     } finally {
     }
 
+  }
+
+  /**
+   * this installs the csv headers on geo lookups for 127.0.0.1
+   *
+   */
+   public static void installLocalhostDeveloperGeoIp() throws UnknownHostException {
+    long key = sortableInetAddress(Inet4Address.getByAddress(new byte[]{(byte) 127, (byte) 0, (byte) 0, (byte) 1}));
+
+    System.err.println("lo lookup should be ... "+key);
+    locationMMBuf.rewind();
+    while (','!=locationMMBuf.get());//skip to first comma in header line
+    geoipMap.put(key, locationMMBuf.position());
+
+    System.err.println("geoip headers: " + mapAddressLookup( BlobAntiPatternObject.LOOPBACK));
   }
 
   public static void runGeoIpLookupBenchMark(ByteBuffer loc, long[] l1, int[] l2, final ByteBuffer ix) throws UnknownHostException {

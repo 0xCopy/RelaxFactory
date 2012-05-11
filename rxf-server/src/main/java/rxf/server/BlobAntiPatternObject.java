@@ -77,39 +77,7 @@ public class BlobAntiPatternObject {
   //  private static ByteBuffer locBuf;
   public static InetAddress LOOPBACK = null;
 
-  public static final BlockingDeque<SocketChannel> couchDq = new LinkedBlockingDeque<SocketChannel>(5);static {
-    final Runnable task = new Runnable() {
-      @Override
-      public void run() {
-        while (!HttpMethod.killswitch) {
-
-          SocketChannel channel = null;
-
-          System.err.println("opening " + new InetSocketAddress(LOOPBACK, 5984).toString());
-
-          try {
-            channel = (SocketChannel) lazyQueue.poll();
-            if (channel == null) {
-              channel = SocketChannel.open();
-              channel.configureBlocking(false);
-              channel.connect(new InetSocketAddress(LOOPBACK, 5984));
-            } else couchDq.putFirst(channel);
-            couchDq.putLast(channel);
-          } catch (Exception e) {
-            throw new Error("couch connector down - failllling fast!" + wheresWaldo(3));
-          }
-
-        }
-      }
-    };
-    //aggressively push two threads into 3 entries
-    EXECUTOR_SERVICE.submit(task);
-  }
-
-  private static int rbs;
-  private static int sbs;
   public static final VisitorPropertiesAccess SESSION_PROPERTIES_ACCESS = new VisitorPropertiesAccess();
-
   static {
     try {
       try {
@@ -127,7 +95,6 @@ public class BlobAntiPatternObject {
     }
   }
 
-
   static public String getSessionCookieId() throws Exception {
     String id = null;
     Visitor roSession = null;
@@ -135,17 +102,12 @@ public class BlobAntiPatternObject {
       ThreadLocalSessionHeaders invoke = new ThreadLocalSessionHeaders().invoke();
       ByteBuffer headerBuffer = invoke.getHb();
       Map<String, int[]> headerIndex = invoke.getHeaders();
-//      String s = UTF8.decode((ByteBuffer) hb.rewind()).toString().trim();
-//      System.err.println("gsci:" + s);
 
       if (headerIndex.containsKey(COOKIE)) {
         int[] optionalStartStopMarkers = headerIndex.get(COOKIE);
         id = getCookieAsString(VISITORSTRING, headerBuffer, optionalStartStopMarkers);
       }
-
-      /* if (null != id)
-   roSession = RO_SESSION_LOCATOR.find(RoSession.class, id);*/
-    } catch (Throwable e) {
+ } catch (Throwable e) {
       System.err.println("cookie failure on " + id);
     }
     if (null == id) {
@@ -184,10 +146,40 @@ public class BlobAntiPatternObject {
     return id;
   }
 
-  private static ByteBuffer rtrimByteBuffer(ByteBuffer b) {
+
+  public static ByteBuffer rtrimByteBuffer(ByteBuffer b) {
     while (Character.isWhitespace(b.get(b.position() - 1))) b.position(b.position() - 1);
     b.flip();
     return b;
+  }
+
+  public static final BlockingDeque<SocketChannel> couchDq = new LinkedBlockingDeque<SocketChannel>(5);static {
+    final Runnable task = new Runnable() {
+      @Override
+      public void run() {
+        while (!HttpMethod.killswitch) {
+
+          SocketChannel channel = null;
+
+          System.err.println("opening " + new InetSocketAddress(LOOPBACK, 5984).toString());
+
+          try {
+            channel = lazyQueue.poll();
+            if (channel == null) {
+              channel = SocketChannel.open();
+              channel.configureBlocking(false);
+              channel.connect(new InetSocketAddress(LOOPBACK, 5984));
+            } else couchDq.putFirst(channel);
+            couchDq.putLast(channel);
+          } catch (Exception e) {
+            throw new Error("couch connector down - failllling fast!" + wheresWaldo(3));
+          }
+
+        }
+      }
+    };
+    //aggressively push two threads into 3 entries
+    EXECUTOR_SERVICE.submit(task);
   }
 
   static public Visitor getCurrentSession() throws Exception {
@@ -278,30 +270,31 @@ public class BlobAntiPatternObject {
 
   }
 
+
+  private static int receiveBufferSize;
+  private static int sendBufferSize;
+
   public static int getReceiveBufferSize() {
-    if (0 == rbs)
+    if (0 == receiveBufferSize)
       try {
         SocketChannel couchConnection = createCouchConnection();
-        rbs = couchConnection.socket().getReceiveBufferSize();
+        receiveBufferSize = couchConnection.socket().getReceiveBufferSize();
         recycleChannel(couchConnection);
       } catch (IOException ignored) {
-
       }
 
-    return rbs;
+    return receiveBufferSize;
   }
 
   public static int getSendBufferSize() {
-    if (0 == sbs)
+    if (0 == sendBufferSize)
       try {
         SocketChannel couchConnection = createCouchConnection();
-        sbs = couchConnection.socket().getReceiveBufferSize();
+        sendBufferSize = couchConnection.socket().getReceiveBufferSize();
         recycleChannel(couchConnection);
       } catch (IOException ignored) {
-
-
       }
-    return sbs;
+    return sendBufferSize;
   }
 
   public static String inferRevision(Map map) {

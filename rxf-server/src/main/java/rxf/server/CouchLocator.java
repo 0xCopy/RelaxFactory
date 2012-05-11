@@ -1,6 +1,5 @@
 package rxf.server;
 
-import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.SynchronousQueue;
@@ -55,7 +54,7 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
         /**
          * mandatory
          */'/'
-        + " HTTP/1.1\r\nContent-Type: application/json;charset=utf-8\r\nContent-Length: 2" +
+        + " HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: 2" +
 //        "\r\n" + "Debug: " + wheresWaldo().trim() +
         "\r\n\r\n{}";
     SocketChannel couchConnection = null;
@@ -93,10 +92,8 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
         recycleChannel(channel);
       }
       s = take;
-    } catch (IOException e) {
-      e.printStackTrace();  //todo: verify for a purpose
-    } catch (InterruptedException e) {
-      e.printStackTrace();  //todo: verify for a purpose
+    } catch ( Exception ignored) {
+
     }
 
     return GSON.fromJson(s, getDomainType());
