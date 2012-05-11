@@ -1,6 +1,5 @@
 package rxf.server;
 
-//import rxf.server.rf.SessionFindLocatorVisitor;
 
 /**
  * User: jim
@@ -10,16 +9,16 @@ package rxf.server;
 public class VisitorLocator extends CouchLocator <Visitor>{
   @Override
   public Class<Visitor> getDomainType() {
-    return Visitor.class;  //todo: verify for a purpose
+    return Visitor.class;
   }
 
   @Override
   public String getId(Visitor domainObject) {
-    return domainObject.getId();  //todo: verify for a purpose
+    return domainObject.getId();
   }
 
   @Override
   public Object getVersion(Visitor domainObject) {
-    return domainObject.getVersion();  //todo: verify for a purpose
+    return domainObject.getVersion();
   }
 }

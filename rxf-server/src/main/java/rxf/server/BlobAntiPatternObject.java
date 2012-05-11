@@ -72,12 +72,11 @@ public class BlobAntiPatternObject {
   public static final String MYGEOIPSTRING = "mygeoipstring";
 
   public static final String COOKIE = "Cookie";
-  //  private static ByteBuffer indexBuf;
-  private static int blockCount;
   //  private static ByteBuffer locBuf;
   public static InetAddress LOOPBACK = null;
 
   public static final VisitorPropertiesAccess SESSION_PROPERTIES_ACCESS = new VisitorPropertiesAccess();
+
   static {
     try {
       try {
@@ -107,7 +106,7 @@ public class BlobAntiPatternObject {
         int[] optionalStartStopMarkers = headerIndex.get(COOKIE);
         id = getCookieAsString(VISITORSTRING, headerBuffer, optionalStartStopMarkers);
       }
- } catch (Throwable e) {
+    } catch (Throwable e) {
       System.err.println("cookie failure on " + id);
     }
     if (null == id) {
@@ -298,9 +297,7 @@ public class BlobAntiPatternObject {
   }
 
   public static String inferRevision(Map map) {
-    String rev = null;
-
-    rev = (String) map.get("_rev");
+    String rev = (String) map.get("_rev");
     if (null == rev)
       rev = (String) map.get("rev");
     if (null == rev) {
@@ -309,6 +306,11 @@ public class BlobAntiPatternObject {
     if (null == rev)
       rev = (String) map.get("ver");
     return rev;
+  }
+
+  public static AsioVisitor fetchHeadByPath(final String path, final SocketChannel channel, final SynchronousQueue<String> returnTo) throws ClosedChannelException {
+    final String format = (MessageFormat.format("HEAD /{0} HTTP/1.1\r\n\r\n", path.trim()));
+    return executeCouchRequest(channel, returnTo, format);
   }
 
   public static AsioVisitor fetchJsonByPath(final String path, final SocketChannel channel, final SynchronousQueue<String> returnTo) throws ClosedChannelException {
@@ -322,7 +324,8 @@ public class BlobAntiPatternObject {
       public void onWrite(final SelectionKey key) throws IOException {
         System.err.println("attempting connect: " + requestHeaders.trim());
         channel.write(UTF8.encode(requestHeaders));
-       key.selector().wakeup();  key.interestOps(OP_READ).attach(createJsonResponseReader(returnTo));
+        key.selector().wakeup();
+        key.interestOps(OP_READ).attach(createJsonResponseReader(returnTo));
       }
     };
     HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, impl);
@@ -406,7 +409,8 @@ public class BlobAntiPatternObject {
               //
               //    synchronousQueue.clear();
               ll.add(dst.slice());
-             key.selector().wakeup(); key.interestOps(SelectionKey.OP_READ).attach(new Impl() {
+              key.selector().wakeup();
+              key.interestOps(SelectionKey.OP_READ).attach(new Impl() {
                 @Override
                 public void onRead(SelectionKey key) throws InterruptedException, IOException {
                   ByteBuffer payload = ByteBuffer.allocate(receiveBufferSize);
@@ -476,10 +480,15 @@ public class BlobAntiPatternObject {
     }
     String take = ret;
     LinkedHashMap linkedHashMap1 = GSON.fromJson(take, LinkedHashMap.class);
-    if (2 == linkedHashMap1.size() && linkedHashMap1.containsKey("responseCode"))
-      throw new IOException(deepToString(linkedHashMap1));
-    linkedHashMap1.put(key, value);
-    return sendJson(GSON.toJson(linkedHashMap1), path, inferRevision(linkedHashMap1));
+    if (2 == linkedHashMap1.size() && linkedHashMap1.containsKey("responseCode")) {
+      linkedHashMap1.clear();
+      linkedHashMap1.put(key, value);
+      return sendJson(GSON.toJson(linkedHashMap1), path);
+    }
+    {
+      linkedHashMap1.put(key, value);
+      return sendJson(GSON.toJson(linkedHashMap1), path, inferRevision(linkedHashMap1));
+    }
   }
 
   public static String getGenericDocumentProperty(String path, String key) throws IOException {
@@ -532,7 +541,7 @@ public class BlobAntiPatternObject {
     EXECUTOR_SERVICE.submit(new Callable<Object>() {
 
 
-      public Object call() throws IOException {
+      public Object call() throws IOException, InterruptedException {
         String id;
         {
           VisitorLocator roSessionLocator = new VisitorLocator();
@@ -547,15 +556,20 @@ public class BlobAntiPatternObject {
           Visitor roSession = roSessionLocator.find(Visitor.class, id);
           String s = GSON.toJson(roSession);
           System.err.println("find: " + s);
+        }
 
+        {
+          final SynchronousQueue<String> returnTo = new SynchronousQueue<String>();
+          final SocketChannel couchConnection = createCouchConnection();
+          final AsioVisitor asioVisitor = fetchHeadByPath("/geoip/current", couchConnection, returnTo);
+          System.err.println("head: " + returnTo.take());
+          recycleChannel(couchConnection);
         }
 
         return null;
       }
     });
-
     startServer(args);
-
   }
 
   public static void startServer(String... args) throws IOException {
@@ -572,5 +586,4 @@ public class BlobAntiPatternObject {
     HttpMethod.enqueue(createCouchConnection(), OP_CONNECT | OP_WRITE, ro, ro.getFeedString());
     HttpMethod.init(args, topLevel);
   }
-
 }
