@@ -12,7 +12,7 @@ public class ApplicationContext {
     try {
       System.err.println("class called is " + clazz.getCanonicalName());
       if (clazz == Visitor.class) {
-        ret = (T) new VisitorLocator().create(Visitor.class);
+        ret = (T) Visitor.createLocator().create(Visitor.class);
       } else {
         ret = clazz.newInstance();  //To change body of created methods use File | Settings | File Templates.
       }

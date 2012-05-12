@@ -11,6 +11,24 @@ import com.google.gson.annotations.SerializedName;
  */
 
 public class Visitor {
+  public static CouchLocator<Visitor> createLocator() {
+    return new CouchLocator<Visitor>() {
+      @Override
+      public Class<Visitor> getDomainType() {
+        return Visitor.class;
+      }
+
+      @Override
+      public String getId(Visitor domainObject) {
+        return domainObject.getId();
+      }
+
+      @Override
+      public Object getVersion(Visitor domainObject) {
+        return domainObject.getVersion();
+      }
+    };
+  }
 
   @SerializedName("_id")
   private String id;

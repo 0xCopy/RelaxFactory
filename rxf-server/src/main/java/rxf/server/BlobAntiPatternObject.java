@@ -51,7 +51,7 @@ import static one.xio.HttpMethod.wheresWaldo;
  * Time: 11:55 PM
  */
 public class BlobAntiPatternObject {
-  public static final VisitorLocator VISITOR_LOCATOR = new VisitorLocator();
+  public static final CouchLocator<Visitor> VISITOR_LOCATOR = Visitor.createLocator();
   public static final ScheduledExecutorService EXECUTOR_SERVICE = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() + 3);
   private static Queue<SocketChannel> lazyQueue = new ConcurrentLinkedQueue<SocketChannel>();
   public static final ThreadLocal<ByteBuffer> ThreadLocalHeaders = new ThreadLocal<ByteBuffer>();
@@ -544,7 +544,7 @@ public class BlobAntiPatternObject {
       public Object call() throws IOException, InterruptedException {
         String id;
         {
-          VisitorLocator roSessionLocator = new VisitorLocator();
+          CouchLocator<Visitor> roSessionLocator = Visitor.createLocator();
           Visitor roSession = roSessionLocator.create(Visitor.class);
           id = roSession.getId();
           String s = GSON.toJson(roSession);
@@ -552,7 +552,8 @@ public class BlobAntiPatternObject {
         }
 
         {
-          VisitorLocator roSessionLocator = new VisitorLocator();
+          CouchLocator<Visitor> roSessionLocator = Visitor.createLocator();
+
           Visitor roSession = roSessionLocator.find(Visitor.class, id);
           String s = GSON.toJson(roSession);
           System.err.println("find: " + s);
