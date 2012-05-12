@@ -33,10 +33,10 @@ public class Visitor {
   @SerializedName("_id")
   private String id;
 
-  private Date creation;
-
   @SerializedName("_rev")
   private String version;
+
+  private Date creation;
 
   public static Visitor createSession() {
     Visitor roSession = new Visitor();
