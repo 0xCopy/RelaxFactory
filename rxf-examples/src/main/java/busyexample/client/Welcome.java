@@ -52,14 +52,14 @@ public class Welcome implements EntryPoint {
                 new Receiver<String>() {
                   @Override
                   public void onFailure(ServerFailure error) {
-                      super.onFailure(error);
-                    GWT.log(error.getMessage());
+                    super.onFailure(error);
+                    System.err.println(error.getMessage());
                   }
 
                   @Override
                   public void onSuccess(String response) {
-                    GWT.log("tx rev is "+response);
-                    if (null == response||"null".equals(response)) {
+                    System.err.println("tx rev is " + response);
+                    if (null == response || "null".equals(response)) {
                       DialogBox dialog = userDetails.createDialog();
                       userDetails.decorateDialog(dialog, new MyRunAsyncCallback());
                       dialog.center();
@@ -82,7 +82,7 @@ public class Welcome implements EntryPoint {
   class MyRunAsyncCallback implements RunAsyncCallback {
     @Override
     public void onFailure(Throwable reason) {
-      GWT.log("failure");
+      System.err.println("failure");
       RuntimeException runtimeException = new RuntimeException();
       throw runtimeException;
     }
@@ -96,7 +96,7 @@ public class Welcome implements EntryPoint {
 
           @Override
           public void onSuccess(String response) {
-            GWT.log("session version" + response);
+            System.err.println("session version " + response);
 
           }
         };
