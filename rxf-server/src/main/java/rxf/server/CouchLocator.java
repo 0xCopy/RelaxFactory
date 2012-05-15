@@ -1,7 +1,7 @@
 package rxf.server;
 
-import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SocketChannel;
+import java.util.List;
 import java.util.concurrent.SynchronousQueue;
 
 import com.google.web.bindery.requestfactory.shared.Locator;
@@ -23,8 +23,8 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
 
   private String orgname = "rxf_";//default
 
-  public String getPathPrefix(   ) {
-    return getOrgname()+ getDomainType().getSimpleName().toLowerCase();
+  public String getPathPrefix() {
+    return getOrgname() + getDomainType().getSimpleName().toLowerCase();
   }
 
   /**
@@ -67,9 +67,7 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
       String take = takeFrom.take();
       CouchTx couchTx = GSON.fromJson(take, CouchTx.class);
       ret = find(clazz, couchTx.id);
-    } catch (ClosedChannelException e) {
-      e.printStackTrace();  //todo: verify for a purpose
-    } catch (InterruptedException e) {
+    } catch (Exception e) {
       e.printStackTrace();  //todo: verify for a purpose
     } finally {
       recycleChannel(couchConnection);
@@ -92,7 +90,7 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
         recycleChannel(channel);
       }
       s = take;
-    } catch ( Exception ignored) {
+    } catch (Exception ignored) {
 
     }
 
@@ -120,5 +118,34 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
 
   public String getOrgname() {
     return orgname;
+  }
+
+  CouchTx update(T domainObject) throws Exception {
+    final String id = getId(domainObject);
+    String[] idver = null == id ? new String[0] : new String[]{id, getVersion(domainObject).toString()};
+
+    return BlobAntiPatternObject.sendJson(GSON.toJson(domainObject), idver);
+  }
+
+  CouchTx save(T domainObject) throws Exception {
+    return update(domainObject);  //To change body of created methods use File | Settings | File Templates.
+  }
+
+  List<T> findAll() {
+    return null;  //To change body of created methods use File | Settings | File Templates.
+  }
+
+  List<T> search(String queryParm) {
+    return null;  //To change body of created methods use File | Settings | File Templates.
+  }
+
+  /**
+   * tbd -- longpolling feed rf token
+   *
+   * @param queryParm
+   * @return
+   */
+  String searchAsync(String queryParm) {
+    return null;  //To change body of created methods use File | Settings | File Templates.
   }
 }
