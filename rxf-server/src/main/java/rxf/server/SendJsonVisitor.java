@@ -32,7 +32,7 @@ class SendJsonVisitor extends AsioVisitor.Impl {
   public void onWrite(final SelectionKey key) {
     String method;
     String call;
-    method = idver.length == 0 ? "POST" : "PUT";
+    method = idver.length < 2 ? "POST" : "PUT";
 
     String path = "";
     for (int i = 0; i < idver.length; i++) {
@@ -54,7 +54,8 @@ class SendJsonVisitor extends AsioVisitor.Impl {
     try {
       channel.write(encode);
       key.attach(BlobAntiPatternObject.createJsonResponseReader(returnTo));
-     key.selector().wakeup(); key.interestOps(SelectionKey.OP_READ);
+      key.selector().wakeup();
+      key.interestOps(SelectionKey.OP_READ);
     } catch (IOException e) {
       e.printStackTrace();  //todo: verify for a purpose
     }
@@ -65,7 +66,8 @@ class SendJsonVisitor extends AsioVisitor.Impl {
   public void onConnect(SelectionKey key) {
     try {
       if (((SocketChannel) key.channel()).finishConnect()) {
-       key.selector().wakeup(); key.interestOps(OP_WRITE);
+        key.selector().wakeup();
+        key.interestOps(OP_WRITE);
       }
     } catch (IOException e) {
       e.printStackTrace();  //todo: verify for a purpose

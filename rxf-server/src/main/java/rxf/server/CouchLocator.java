@@ -100,7 +100,7 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
 
   CouchTx persist(T domainObject) throws Exception {
     final String id = getId(domainObject);
-    String[] idver = null == id ? new String[0] : new String[]{id, getVersion(domainObject).toString()};
+    String[] idver = (null == id || "null".equals(id)) ? new String[]{getPathPrefix()} : new String[]{getPathPrefix() + '/' + id, getVersion(domainObject).toString()};
     return BlobAntiPatternObject.sendJson(GSON.toJson(domainObject), idver);
   }
 

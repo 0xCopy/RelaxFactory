@@ -264,7 +264,7 @@ public class BlobAntiPatternObject {
     try {
       lazyQueue.add(channel);
       System.err.println("--- recycling" + wheresWaldo());
-    } catch (Exception e) {
+    } catch (Exception ignored) {
     }
 
   }
@@ -557,7 +557,7 @@ public class BlobAntiPatternObject {
               id = persist.getId();
               s = GSON.toJson(persist);
               System.err.println("persisted: " + s);
-            } catch (Exception e) {
+            } catch (Exception ignored) {
 
             }
           }
