@@ -67,4 +67,13 @@ public class Visitor {
   public String getVersion() {
     return version;
   }
+
+  @Override
+  public String toString() {
+    return "Visitor{" +
+        "id='" + id + '\'' +
+        ", version='" + version + '\'' +
+        ", creation=" + creation +
+        '}';
+  }
 }

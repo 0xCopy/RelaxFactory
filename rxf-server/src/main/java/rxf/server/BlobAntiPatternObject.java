@@ -549,6 +549,18 @@ public class BlobAntiPatternObject {
           id = roSession.getId();
           String s = GSON.toJson(roSession);
           System.err.println("created: " + s);
+          {
+            roSessionLocator = Visitor.createLocator();
+            try {
+              final CouchTx persist = roSessionLocator.persist(roSession);
+
+              id = persist.getId();
+              s = GSON.toJson(persist);
+              System.err.println("persisted: " + s);
+            } catch (Exception e) {
+
+            }
+          }
         }
 
         {
