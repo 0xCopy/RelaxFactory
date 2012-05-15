@@ -377,7 +377,7 @@ public class BlobAntiPatternObject {
         final SocketChannel channel = (SocketChannel) key.channel();
         {
           final int receiveBufferSize = BlobAntiPatternObject.getReceiveBufferSize();
-          ByteBuffer dst = ByteBuffer.allocate(receiveBufferSize);
+          ByteBuffer dst = ByteBuffer.allocateDirect(receiveBufferSize);
           int read = channel.read(dst);
           if (-1 == read) {
             channel.socket().close();
@@ -413,12 +413,12 @@ public class BlobAntiPatternObject {
               key.interestOps(SelectionKey.OP_READ).attach(new Impl() {
                 @Override
                 public void onRead(SelectionKey key) throws InterruptedException, IOException {
-                  ByteBuffer payload = ByteBuffer.allocate(receiveBufferSize);
+                  ByteBuffer payload = ByteBuffer.allocateDirect(receiveBufferSize);
                   int read = channel.read(payload);
                   ll.add(payload);
                   remaining -= read;
                   if (0 == remaining) {
-                    payload = ByteBuffer.allocate((int) total);
+                    payload = ByteBuffer.allocateDirect((int) total);
                     ListIterator<ByteBuffer> iter = ll.listIterator();
                     while (iter.hasNext()) {
                       ByteBuffer buffer = iter.next();

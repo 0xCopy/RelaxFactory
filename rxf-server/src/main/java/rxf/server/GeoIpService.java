@@ -193,7 +193,7 @@ public class GeoIpService {
       @Override
       public void onRead(SelectionKey key) throws Exception {
         SelectableChannel channel1 = key.channel();
-        ByteBuffer dst = ByteBuffer.allocate(BlobAntiPatternObject.getReceiveBufferSize());
+        ByteBuffer dst = ByteBuffer.allocateDirect(BlobAntiPatternObject.getReceiveBufferSize());
         int read = ((SocketChannel) channel1).read(dst);
         System.err.println("Expected 100-continue.  Got(" + read + "): " + UTF8.decode((ByteBuffer) dst.flip()).toString().trim());
         key.selector().wakeup();
@@ -432,7 +432,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
       public void onRead(final SelectionKey key) throws IOException, InterruptedException {
         final AsioVisitor parent = this;
         final SocketChannel channel = (SocketChannel) key.channel();
-        ByteBuffer dst = ByteBuffer.allocate(BlobAntiPatternObject.getReceiveBufferSize());
+        ByteBuffer dst = ByteBuffer.allocateDirect(BlobAntiPatternObject.getReceiveBufferSize());
         int read = channel.read(dst);
         dst.flip();
         System.err.println("response: " + UTF8.decode((ByteBuffer) dst.duplicate().rewind()));
@@ -551,7 +551,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
                       @Override
                       public void onRead(SelectionKey key) throws Exception {
                         SocketChannel channel = (SocketChannel) key.channel();
-                        ByteBuffer dst1 = ByteBuffer.allocate(BlobAntiPatternObject.getReceiveBufferSize());
+                        ByteBuffer dst1 = ByteBuffer.allocateDirect(BlobAntiPatternObject.getReceiveBufferSize());
                         int read1 = channel.read(dst1);
                         final long l2 = System.currentTimeMillis();
 //                          System.err.println("response for "+path+": "+UTF8.decode((ByteBuffer) dst1.flip()))

@@ -67,7 +67,8 @@ class RfPostWrapper extends Impl {
             @Override
             public void onWrite(final SelectionKey browserKey) throws Exception {
 
-             browserKey.selector().wakeup(); browserKey.interestOps(OP_READ);
+              browserKey.selector().wakeup();
+              browserKey.interestOps(OP_READ);
               String path;
               ByteBuffer headers;
               final ByteBuffer dst;
@@ -110,7 +111,8 @@ class RfPostWrapper extends Impl {
                           return;
                         }
 
-                       couchKey.selector().wakeup(); couchKey.interestOps(OP_READ).attach(new Impl() {
+                        couchKey.selector().wakeup();
+                        couchKey.interestOps(OP_READ).attach(new Impl() {
                           final ByteBuffer sharedBuf = ByteBuffer.allocateDirect(min(total, getReceiveBufferSize()));
                           private Impl browserSlave = new Impl() {
                             @Override
@@ -119,8 +121,10 @@ class RfPostWrapper extends Impl {
                                 final int write = browserChannel.write(dst);
                                 if (!dst.hasRemaining() && remaining == 0)
                                   browserChannel.close();
-                               browserKey.selector().wakeup(); browserKey.interestOps(0);
-                               couchKey.selector().wakeup(); couchKey.interestOps(OP_READ).selector().wakeup();
+                                browserKey.selector().wakeup();
+                                browserKey.interestOps(0);
+                                couchKey.selector().wakeup();
+                                couchKey.interestOps(OP_READ).selector().wakeup();
                               } catch (Exception e) {
                                 browserChannel.close();
                               } finally {
@@ -139,8 +143,10 @@ class RfPostWrapper extends Impl {
 
                               remaining -= couchConnection.read(dst);
                               dst.flip();
-                             couchKey.selector().wakeup(); couchKey.interestOps(0);
-                             browserKey.selector().wakeup(); browserKey.interestOps(OP_WRITE).selector().wakeup();
+                              couchKey.selector().wakeup();
+                              couchKey.interestOps(0);
+                              browserKey.selector().wakeup();
+                              browserKey.interestOps(OP_WRITE).selector().wakeup();
                               ;
 
                             } else {
@@ -155,7 +161,8 @@ class RfPostWrapper extends Impl {
                       @Override
                       public void onWrite(SelectionKey couchKey) throws Exception {
                         couchConnection.write(UTF8.encode(req));
-                       couchKey.selector().wakeup(); couchKey.interestOps(OP_READ);
+                        couchKey.selector().wakeup();
+                        couchKey.interestOps(OP_READ);
                       }
                     });
 
@@ -174,7 +181,7 @@ class RfPostWrapper extends Impl {
   @Override
   public void onRead(final SelectionKey key) throws IOException {
     SocketChannel channel = (SocketChannel) key.channel();
-    ByteBuffer dst = ByteBuffer.allocate(BlobAntiPatternObject.getReceiveBufferSize());
+    ByteBuffer dst = ByteBuffer.allocateDirect(BlobAntiPatternObject.getReceiveBufferSize());
     int read = 0;
     try {
       if (channel.socket().isInputShutdown() || channel.socket().isOutputShutdown() || !channel.isConnected()) {
@@ -213,12 +220,12 @@ class RfPostWrapper extends Impl {
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new RfProcessTask(headers, dst, key));
           } else {
             if (dst.capacity() - dst.position() >= total) {
-              headers = ByteBuffer.allocate(dst.position()).put(headers);
+              headers = ByteBuffer.allocateDirect(dst.position()).put(headers);
               //alert: buhbye headers
               dst.compact().limit((int) total);
 
             } else {
-              dst = ByteBuffer.allocate((int) total).put(dst);
+              dst = ByteBuffer.allocateDirect((int) total).put(dst);
             }
             final ByteBuffer finalDst = dst;
             final ByteBuffer finalHeaders = headers;
@@ -247,7 +254,8 @@ class RfPostWrapper extends Impl {
             final boolean b = matcher.find();
             if (b) {
 
-             key.selector().wakeup(); key.interestOps(OP_CONNECT | OP_WRITE).attach(
+              key.selector().wakeup();
+              key.interestOps(OP_CONNECT | OP_WRITE).attach(
                   /**sends impl,path,headers,first block
                    */
                   new Object[]{visitorEntry.getValue(), path, headers, dst.rewind()});
@@ -261,7 +269,8 @@ class RfPostWrapper extends Impl {
           final File[] file = {filex};
 
           final String finalFname = fname;
-         key.selector().wakeup(); key.interestOps(OP_WRITE);
+          key.selector().wakeup();
+          key.interestOps(OP_WRITE);
           key.attach(new Impl() {
 
             @Override
@@ -294,14 +303,16 @@ class RfPostWrapper extends Impl {
               }
 
               if (!send200) {
-               key.selector().wakeup(); key.interestOps(OP_WRITE).attach(new Impl() {
+                key.selector().wakeup();
+                key.interestOps(OP_WRITE).attach(new Impl() {
                   @Override
                   public void onWrite(SelectionKey key) throws Exception {
 
                     String response = "HTTP/1.1 404 Not Found\n" +
                         "Content-Length: 0\n\n";
                     int write = socketChannel.write(UTF8.encode(response));
-                   key.selector().wakeup(); key.interestOps(OP_READ).attach(RfPostWrapper.this);
+                    key.selector().wakeup();
+                    key.interestOps(OP_READ).attach(RfPostWrapper.this);
                     key.selector().wakeup();
                   }
                 });
@@ -323,7 +334,8 @@ class RfPostWrapper extends Impl {
                 String response = MessageFormat.format("HTTP/1.1 200 OK\r\nContent-Type: {0}\r\nContent-Length: {1,number,#}\r\n{2}\r\n", (null == mimeType ? MimeType.bin : mimeType).contentType, length, ceString);
                 int write = socketChannel.write(UTF8.encode(response));
                 final long[] progress = {fileChannel.transferTo(0, sendBufferSize, socketChannel)};
-               key.selector().wakeup(); key.interestOps(OP_WRITE | OP_CONNECT);
+                key.selector().wakeup();
+                key.interestOps(OP_WRITE | OP_CONNECT);
                 key.attach(new Impl() {
                   @Override
                   public void onWrite(SelectionKey key) throws Exception {
@@ -333,7 +345,8 @@ class RfPostWrapper extends Impl {
                     if (remaining == 0) {
                       fileChannel.close();
                       randomAccessFile.close();
-                     key.selector().wakeup(); key.interestOps(OP_READ);
+                      key.selector().wakeup();
+                      key.interestOps(OP_READ);
                       key.attach(new Object[0]);
                     }
                   }
@@ -386,22 +399,25 @@ class RfPostWrapper extends Impl {
       String trim = UTF8.decode(data).toString().trim();
       final String process;
       try {
-        process = SIMPLE_REQUEST_PROCESSOR.process(trim);String sc = setOutboundCookies();
-      int length = process.length();
-      final String s1 = "HTTP/1.1 200 OK\r\n" +
-          sc +
-          "Content-Type: application/json ; charset=utf-8\r\n" +
-          "Content-Length: " + length + "\r\n\r\n";
-      key.attach(new AsioVisitor.Impl() {
-        @Override
-        public void onWrite(SelectionKey selectionKey) throws IOException {
-          ((SocketChannel) key.channel()).write(UTF8.encode(s1 + process));
-          System.err.println("debug: " + s1 + process);
-          key.attach(null);
-         key.selector().wakeup(); key.interestOps(OP_READ);
-        }
-      });
-     key.selector().wakeup(); key.interestOps(SelectionKey.OP_WRITE);
+        process = SIMPLE_REQUEST_PROCESSOR.process(trim);
+        String sc = setOutboundCookies();
+        int length = process.length();
+        final String s1 = "HTTP/1.1 200 OK\r\n" +
+            sc +
+            "Content-Type: application/json ; charset=utf-8\r\n" +
+            "Content-Length: " + length + "\r\n\r\n";
+        key.attach(new AsioVisitor.Impl() {
+          @Override
+          public void onWrite(SelectionKey selectionKey) throws IOException {
+            ((SocketChannel) key.channel()).write(UTF8.encode(s1 + process));
+            System.err.println("debug: " + s1 + process);
+            key.attach(null);
+            key.selector().wakeup();
+            key.interestOps(OP_READ);
+          }
+        });
+        key.selector().wakeup();
+        key.interestOps(SelectionKey.OP_WRITE);
 
       } catch (Throwable e) {
         e.printStackTrace();  //todo: verify for a purpose

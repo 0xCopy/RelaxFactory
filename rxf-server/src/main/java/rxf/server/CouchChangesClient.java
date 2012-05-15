@@ -61,7 +61,8 @@ public class CouchChangesClient extends AsioVisitor.Impl {
     System.err.println("attempting " + str);
     attachment[1] = UTF8.encode(str);
     channel.write(ByteBuffer.wrap(str.getBytes()));
-   key.selector().wakeup(); key.interestOps(OP_READ);
+    key.selector().wakeup();
+    key.interestOps(OP_READ);
   }
 
 
@@ -77,13 +78,14 @@ public class CouchChangesClient extends AsioVisitor.Impl {
 
 
     try {
-      final ByteBuffer b = ByteBuffer.allocate(getReceiveBufferSize());
-//            ByteBuffer b = ByteBuffer.allocate(333);
+      final ByteBuffer b = ByteBuffer.allocateDirect(getReceiveBufferSize());
+//            ByteBuffer b = ByteBuffer.allocateDirect(333);
       int sofar = channel.read(b);
       final String s = UTF8.decode((ByteBuffer) b.rewind()).toString();
       if (s.startsWith("HTTP/1.1 20")) {
         active = true;
-       key.selector().wakeup(); key.interestOps(OP_WRITE).attach(new Object[]{new Impl() {
+        key.selector().wakeup();
+        key.interestOps(OP_WRITE).attach(new Object[]{new Impl() {
           @Override
           public void onWrite(SelectionKey key) throws Exception {
             Object[] attachment = (Object[]) key.attachment();
@@ -92,14 +94,15 @@ public class CouchChangesClient extends AsioVisitor.Impl {
             System.err.println("attempting " + str);
             attachment[1] = UTF8.encode(str);
             channel.write(ByteBuffer.wrap(str.getBytes()));
-           key.selector().wakeup(); key.interestOps(OP_READ);
+            key.selector().wakeup();
+            key.interestOps(OP_READ);
           }
 
           @Override
           public void onRead(SelectionKey key) throws Exception {
             final SelectableChannel channel1 = key.channel();
             final SocketChannel channel = (SocketChannel) channel1;
-            final ByteBuffer b = ByteBuffer.allocate(getReceiveBufferSize());
+            final ByteBuffer b = ByteBuffer.allocateDirect(getReceiveBufferSize());
             ((SocketChannel) channel).read(b);
             b.flip();
             final Object[] attachment = (Object[]) key.attachment();         //todo: nuke the attachment arrays
@@ -129,7 +132,8 @@ public class CouchChangesClient extends AsioVisitor.Impl {
         }, getFeedString()});
       } else {
         final CouchChangesClient prev = this;
-       key.selector().wakeup(); key.interestOps(OP_WRITE).attach(new Impl() {
+        key.selector().wakeup();
+        key.interestOps(OP_WRITE).attach(new Impl() {
 
 
           @Override
@@ -139,7 +143,8 @@ public class CouchChangesClient extends AsioVisitor.Impl {
             ByteBuffer encode = UTF8.encode(str);
             System.err.println("attempting db creation  " + str);
             ((SocketChannel) key.channel()).write(ByteBuffer.wrap(str.getBytes()));
-           key.selector().wakeup(); key.interestOps(OP_READ);
+            key.selector().wakeup();
+            key.interestOps(OP_READ);
             key.attach(prev);
             scriptExit2 = true;
           }
@@ -187,7 +192,7 @@ public class CouchChangesClient extends AsioVisitor.Impl {
       } while (null != slist);
 
       if (null == buffer) {
-        buffer = ByteBuffer.allocate(bufsize);
+        buffer = ByteBuffer.allocateDirect(bufsize);
 
         for (ByteBuffer netBuffer : linkedList) {
           buffer.put(netBuffer);
