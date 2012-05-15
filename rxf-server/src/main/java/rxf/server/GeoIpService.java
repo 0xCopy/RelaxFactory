@@ -281,7 +281,8 @@ public class GeoIpService {
       try {
         installLocalhostDeveloperGeoIp();
         {
-          System.err.println("walnut creek: " + mapAddressLookup(walnutCreek));
+          System.err.println("jim: " + mapAddressLookup(walnutCreek));
+          System.err.println("c: " + mapAddressLookup(Inet4Address.getByName("ppp-69-217-127-68.dsl.chcgil.ameritech.net")));
         }
 
       } catch (Throwable e) {

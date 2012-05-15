@@ -11,7 +11,6 @@ import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static rxf.server.BlobAntiPatternObject.GSON;
 import static rxf.server.BlobAntiPatternObject.createCouchConnection;
-import static rxf.server.BlobAntiPatternObject.executeCouchRequest;
 import static rxf.server.BlobAntiPatternObject.recycleChannel;
 
 /**
@@ -44,35 +43,14 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
    */
   @Override
   public T create(Class<? extends T> clazz) {
-    String format = "POST " +
-        /**
-         * mandatory
-         */
-        '/'
-        + getPathPrefix()
-        +
-        /**
-         * mandatory
-         */'/'
-        + " HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: 2" +
-//        "\r\n" + "Debug: " + wheresWaldo().trim() +
-        "\r\n\r\n{}";
-    SocketChannel couchConnection = null;
-    T ret = null;
     try {
-
-      final SynchronousQueue<String> takeFrom = new SynchronousQueue<String>();
-      couchConnection = createCouchConnection();
-      executeCouchRequest(couchConnection, takeFrom, format);
-      String take = takeFrom.take();
-      CouchTx couchTx = GSON.fromJson(take, CouchTx.class);
-      ret = find(clazz, couchTx.getId());
-    } catch (Exception e) {
+      return clazz.newInstance();
+    } catch (InstantiationException e) {
       e.printStackTrace();  //todo: verify for a purpose
-    } finally {
-      recycleChannel(couchConnection);
+    } catch (IllegalAccessException e) {
+      e.printStackTrace();  //todo: verify for a purpose
     }
-    return ret;
+    throw new UnsupportedOperationException("no default ctor " + HttpMethod.wheresWaldo(3));
   }
 
   @Override
@@ -120,15 +98,10 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
     return orgname;
   }
 
-  CouchTx update(T domainObject) throws Exception {
+  CouchTx persist(T domainObject) throws Exception {
     final String id = getId(domainObject);
     String[] idver = null == id ? new String[0] : new String[]{id, getVersion(domainObject).toString()};
-
     return BlobAntiPatternObject.sendJson(GSON.toJson(domainObject), idver);
-  }
-
-  CouchTx save(T domainObject) throws Exception {
-    return update(domainObject);  //To change body of created methods use File | Settings | File Templates.
   }
 
   List<T> findAll() {
