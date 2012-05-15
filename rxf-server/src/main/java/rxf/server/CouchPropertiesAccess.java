@@ -7,7 +7,7 @@ import static rxf.server.BlobAntiPatternObject.setGenericDocumentProperty;
  * Date: 5/10/12
  * Time: 7:59 AM
  */
-public class CouchPropertiesAccess <T>{
+public class CouchPropertiesAccess<T> {
 
   private CouchLocator<T> locator;
 
@@ -15,10 +15,10 @@ public class CouchPropertiesAccess <T>{
     this.locator = locator;
   }
 
-  public   String getSessionProperty(String eid, String key) {
+  public String getSessionProperty(String eid, String key) {
     try {
-    String path = locator.getPathPrefix()+ '/' + eid;
-      return BlobAntiPatternObject.getGenericDocumentProperty(path,key);
+      String path = locator.getPathPrefix() + '/' + eid;
+      return BlobAntiPatternObject.getGenericDocumentProperty(path, key);
     } catch (Exception e) {
       e.printStackTrace();  //todo: verify for a purpose
     }
@@ -28,14 +28,14 @@ public class CouchPropertiesAccess <T>{
   /**
    * @return new version string
    */
-  public   String setSessionProperty(String eid, String key, String value) {
+  public String setSessionProperty(String eid, String key, String value) {
 
-    String path = locator.getPathPrefix()+ '/' + eid;
+    String path = locator.getPathPrefix() + '/' + eid;
     CouchTx tx = null;
     try {
       tx = setGenericDocumentProperty(path, key, value);
       System.err.println("tx: " + tx.toString());
-      return tx.rev;
+      return tx.getRev();
     } catch (Exception e) {
       e.printStackTrace();  //todo: verify for a purpose
     }

@@ -87,7 +87,7 @@ public class GeoIpService {
   static MappedByteBuffer locationMMBuf;
   static int geoIpHeaderOffset;
   //    private static ConcurrentSkipListMap<Long, Integer> geoipMap = new ConcurrentSkipListMap<Long, Integer>();  slower
-  private final  static NavigableMap<Long, Integer> geoipMap = new TreeMap<Long, Integer>() ;
+  private final static NavigableMap<Long, Integer> geoipMap = new TreeMap<Long, Integer>();
   public static final int MEG = (1024 * 1024);
 
 
@@ -173,7 +173,7 @@ public class GeoIpService {
               String fn = GEOIP_CURRENT_INDEX;
               int limit = d2.limit();
               String ctype = "application/octet-stream";
-              String push = getBlobPutString(fn, limit, ctype, couchTx.rev);
+              String push = getBlobPutString(fn, limit, ctype, couchTx.getRev());
               System.err.println("pushing: " + push);
 
               putFile(key, d2, push, retVal);
@@ -187,7 +187,8 @@ public class GeoIpService {
     final SocketChannel channel = (SocketChannel) key.channel();
 
     int write = (channel).write(UTF8.encode(push));
-   key.selector().wakeup(); key.interestOps(OP_READ);
+    key.selector().wakeup();
+    key.interestOps(OP_READ);
     key.attach(new AsioVisitor.Impl() {
       @Override
       public void onRead(SelectionKey key) throws Exception {
@@ -195,21 +196,24 @@ public class GeoIpService {
         ByteBuffer dst = ByteBuffer.allocate(BlobAntiPatternObject.getReceiveBufferSize());
         int read = ((SocketChannel) channel1).read(dst);
         System.err.println("Expected 100-continue.  Got(" + read + "): " + UTF8.decode((ByteBuffer) dst.flip()).toString().trim());
-       key.selector().wakeup(); key.interestOps(OP_WRITE);
+        key.selector().wakeup();
+        key.interestOps(OP_WRITE);
         key.attach(new Impl() {
           @Override
           public void onWrite(final SelectionKey key) {
             try {
               int write = channel.write(d2);
             } catch (Throwable e) {
-             key.selector().wakeup(); key.interestOps(OP_READ);
+              key.selector().wakeup();
+              key.interestOps(OP_READ);
               e.printStackTrace();  //todo: verify for a purpose
             }
             if (!d2.hasRemaining()) {
               Callable<Map> callable = new Callable<Map>() {
                 public Map call() throws Exception {
                   key.attach(BlobAntiPatternObject.createJsonResponseReader(synchronousQueue));
-                 key.selector().wakeup(); key.interestOps(OP_READ);
+                  key.selector().wakeup();
+                  key.interestOps(OP_READ);
 
                   return null;
                 }
@@ -299,17 +303,16 @@ public class GeoIpService {
 
   /**
    * this installs the csv headers on geo lookups for 127.0.0.1
-   *
    */
-   public static void installLocalhostDeveloperGeoIp() throws UnknownHostException {
+  public static void installLocalhostDeveloperGeoIp() throws UnknownHostException {
     long key = sortableInetAddress(Inet4Address.getByAddress(new byte[]{(byte) 127, (byte) 0, (byte) 0, (byte) 1}));
 
-    System.err.println("lo lookup should be ... "+key);
+    System.err.println("lo lookup should be ... " + key);
     locationMMBuf.rewind();
-    while (','!=locationMMBuf.get());//skip to first comma in header line
+    while (',' != locationMMBuf.get()) ;//skip to first comma in header line
     geoipMap.put(key, locationMMBuf.position());
 
-    System.err.println("geoip headers: " + mapAddressLookup( BlobAntiPatternObject.LOOPBACK));
+    System.err.println("geoip headers: " + mapAddressLookup(BlobAntiPatternObject.LOOPBACK));
   }
 
   public static void runGeoIpLookupBenchMark(ByteBuffer loc, long[] l1, int[] l2, final ByteBuffer ix) throws UnknownHostException {
@@ -445,7 +448,8 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
 
             final String keyDocument = GEOIP_ROOTNODE;
 
-           key.selector().wakeup(); key.interestOps(OP_WRITE) .attach(new Impl() {
+            key.selector().wakeup();
+            key.interestOps(OP_WRITE).attach(new Impl() {
 
 
               @Override
@@ -459,7 +463,8 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
                   e.printStackTrace();  //todo: verify for a purpose
                 }
                 key.attach(BlobAntiPatternObject.createJsonResponseReader(retVal));
-               key.selector().wakeup(); key.interestOps(OP_READ);
+                key.selector().wakeup();
+                key.interestOps(OP_READ);
               }
             });
 
@@ -482,7 +487,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
                   indexMMBuf =
                       EXECUTOR_SERVICE.submit(
                           getMappedIndexFile(GEOIP_CURRENT_INDEX)).get();
-                  locationMMBuf =EXECUTOR_SERVICE.submit(
+                  locationMMBuf = EXECUTOR_SERVICE.submit(
                       getMappedIndexFile(GEOIP_CURRENT_LOCATIONS_CSV)).get();
 //                  List<Future<MappedByteBuffer>> futures = EXECUTOR_SERVICE.invokeAll(cc);
 
@@ -539,7 +544,8 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
                   void mapTmpFile(SelectionKey key, final String path) throws IOException {
                     String req = "GET " + path + " HTTP/1.1\r\n\r\n";
                     int write = ((SocketChannel) key.channel()).write(UTF8.encode(req));
-                   key.selector().wakeup(); key.interestOps(OP_READ);
+                    key.selector().wakeup();
+                    key.interestOps(OP_READ);
                     key.attach(new Impl() {
                       @Override
                       public void onRead(SelectionKey key) throws Exception {
@@ -605,7 +611,8 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
           }
           break;
           default:
-           key.selector().wakeup(); key.interestOps(OP_WRITE);
+            key.selector().wakeup();
+            key.interestOps(OP_WRITE);
             key.attach(new Impl() {
               @Override
               public void onWrite(SelectionKey key) throws IOException {
@@ -630,7 +637,8 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
         int write = ((SocketChannel) selectionKey.channel()).write(encode);
 
         System.err.println("wrote " + write + " bytes for " + s);
-       selectionKey.selector().wakeup(); selectionKey.interestOps(OP_READ);
+        selectionKey.selector().wakeup();
+        selectionKey.interestOps(OP_READ);
 
       }
 
@@ -638,7 +646,8 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
       public void onConnect(SelectionKey key) throws IOException {
         SocketChannel channel = (SocketChannel) key.channel();
         if (channel.finishConnect()) {
-         key.selector().wakeup(); key.interestOps(OP_WRITE);
+          key.selector().wakeup();
+          key.interestOps(OP_WRITE);
         }
       }
     });
@@ -687,7 +696,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
     int c = 0;
     while (-1 != (n = xzIn.read(buffer))) {
       out.write(buffer, 0, n);
-      if(0==c++%100)System.err.print(".");
+      if (0 == c++ % 100) System.err.print(".");
     }
     out.close();
     xzIn.close();

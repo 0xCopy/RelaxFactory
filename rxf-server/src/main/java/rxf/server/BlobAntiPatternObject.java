@@ -382,8 +382,8 @@ public class BlobAntiPatternObject {
           if (-1 == read) {
             channel.socket().close();
             final String o = GSON.toJson(new CouchTx() {{
-              error = "closed socket";
-              reason = "closed socket";
+              setError("closed socket");
+              setReason("closed socket");
             }});
             returnTo.put(o);
             throw new IOException(o);

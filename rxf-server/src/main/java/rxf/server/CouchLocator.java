@@ -66,7 +66,7 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
       executeCouchRequest(couchConnection, takeFrom, format);
       String take = takeFrom.take();
       CouchTx couchTx = GSON.fromJson(take, CouchTx.class);
-      ret = find(clazz, couchTx.id);
+      ret = find(clazz, couchTx.getId());
     } catch (Exception e) {
       e.printStackTrace();  //todo: verify for a purpose
     } finally {
