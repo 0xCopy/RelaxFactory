@@ -14,6 +14,7 @@ import java.nio.charset.Charset;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.ListIterator;
@@ -28,6 +29,8 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
@@ -37,11 +40,13 @@ import one.xio.HttpHeaders;
 import one.xio.HttpMethod;
 
 import static java.lang.Math.abs;
+import static java.lang.Math.min;
 import static java.nio.channels.SelectionKey.OP_ACCEPT;
 import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static one.xio.HttpMethod.GET;
 import static one.xio.HttpMethod.UTF8;
 import static one.xio.HttpMethod.wheresWaldo;
 
@@ -76,6 +81,125 @@ public class BlobAntiPatternObject {
   public static InetAddress LOOPBACK = null;
 
   public static final VisitorPropertiesAccess SESSION_PROPERTIES_ACCESS = new VisitorPropertiesAccess();
+  public static final EnumMap<HttpMethod, LinkedHashMap<Pattern, AsioVisitor>> NAMESPACE = new EnumMap<HttpMethod, LinkedHashMap<Pattern, AsioVisitor>>(HttpMethod.class) {
+    {
+      final Pattern passthroughExpr = Pattern.compile("^/i(/.*)$");
+      put(GET, new LinkedHashMap<Pattern, AsioVisitor>() {
+        {
+          put(passthroughExpr, new AsioVisitor.Impl() {
+            @Override
+            public void onWrite(final SelectionKey browserKey) throws Exception {
+
+              browserKey.selector().wakeup();
+              browserKey.interestOps(OP_READ);
+              String path;
+              ByteBuffer headers;
+              final ByteBuffer dst;
+              //receives impl,path,headers,first block
+              final Object attachment = browserKey.attachment();
+              if (!(attachment instanceof Object[])) {
+                throw new UnsupportedOperationException("this GET proxy requires attach(this,path,headers,block0) to function correctly");
+              }
+              Object[] objects = (Object[]) attachment;
+              path = (String) objects[1];
+              headers = (ByteBuffer) objects[2];
+              dst = (ByteBuffer) objects[3];
+              final Matcher matcher = passthroughExpr.matcher(path);
+              if (matcher.matches()) {
+                String link = matcher.group(1);
+
+                final String req = "GET " + link + " HTTP/1.1\r\n" +
+                    "Accept: image/*, text/*\r\n" +
+                    "Connection: close\r\n" +
+                    "\r\n";
+
+                final SocketChannel couchConnection = createCouchConnection();
+                HttpMethod.enqueue(couchConnection, OP_CONNECT | OP_WRITE,
+                    new Impl() {
+                      @Override
+                      public void onRead(final SelectionKey couchKey) throws Exception {
+                        final SocketChannel channel = (SocketChannel) couchKey.channel();
+                        channel.read((ByteBuffer) dst.clear());
+                        moveCaretToDoubleEol((ByteBuffer) dst.flip());
+                        ByteBuffer headers = ((ByteBuffer) dst.duplicate().flip()).slice();
+
+                        final Map<String, int[]> map = HttpHeaders.getHeaders((ByteBuffer) headers.rewind());
+                        final int[] ints = map.get("Content-Length");
+                        final int total = Integer.parseInt(UTF8.decode((ByteBuffer) headers.duplicate().clear().position(ints[0]).limit(ints[1])).toString().trim());
+                        final SocketChannel browserChannel = (SocketChannel) browserKey.channel();
+                        try {
+                          browserChannel.write((ByteBuffer) headers.rewind());
+                        } catch (IOException e) {
+                          couchConnection.close();
+                          return;
+                        }
+
+                        couchKey.selector().wakeup();
+                        couchKey.interestOps(OP_READ).attach(new Impl() {
+                          final ByteBuffer sharedBuf = ByteBuffer.allocateDirect(min(total, getReceiveBufferSize()));
+                          private Impl browserSlave = new Impl() {
+                            @Override
+                            public void onWrite(SelectionKey key) throws Exception {
+                              try {
+                                final int write = browserChannel.write(dst);
+                                if (!dst.hasRemaining() && remaining == 0)
+                                  browserChannel.close();
+                                browserKey.selector().wakeup();
+                                browserKey.interestOps(0);
+                                couchKey.selector().wakeup();
+                                couchKey.interestOps(OP_READ).selector().wakeup();
+                              } catch (Exception e) {
+                                browserChannel.close();
+                              } finally {
+                              }
+                            }
+                          };
+                          public int remaining = total; {
+                            browserKey.attach(browserSlave);
+                          }
+
+                          @Override
+                          public void onRead(final SelectionKey couchKey) throws Exception {
+
+                            if (browserKey.isValid() && remaining != 0) {
+                              dst.compact();//threadsafety guarantee by monothreaded selector
+
+                              remaining -= couchConnection.read(dst);
+                              dst.flip();
+                              couchKey.selector().wakeup();
+                              couchKey.interestOps(0);
+                              browserKey.selector().wakeup();
+                              browserKey.interestOps(OP_WRITE).selector().wakeup();
+                              ;
+
+                            } else {
+                              recycleChannel(couchConnection);
+                            }
+                          }
+                        });
+
+
+                      }
+
+                      @Override
+                      public void onWrite(SelectionKey couchKey) throws Exception {
+                        couchConnection.write(UTF8.encode(req));
+                        couchKey.selector().wakeup();
+                        couchKey.interestOps(OP_READ);
+                      }
+                    });
+
+
+              }
+            }
+
+          });
+        }
+      });
+
+
+    }
+  };
 
   static {
     try {
@@ -506,6 +630,10 @@ public class BlobAntiPatternObject {
       recycleChannel(couchConnection);
     }
     return path;
+  }
+
+  public static EnumMap<HttpMethod, LinkedHashMap<Pattern, AsioVisitor>> getNamespace() {
+    return NAMESPACE;
   }
 
 
