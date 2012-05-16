@@ -518,8 +518,9 @@ public class BlobAntiPatternObject {
           final String rescode = BlobAntiPatternObject.parseResponseCode(dst);
 
           BlobAntiPatternObject.moveCaretToDoubleEol(dst);
-          System.err.println("result: " + UTF8.decode((ByteBuffer) dst.duplicate().flip()));
-          int[] bounds = HttpHeaders.getHeaders((ByteBuffer) dst.duplicate().flip()).get("Content-Length");
+          final ByteBuffer headerBuf = (ByteBuffer) dst.duplicate().flip();
+          System.err.println("result: " + UTF8.decode((ByteBuffer) headerBuf.rewind()));
+          int[] bounds = HttpHeaders.getHeaders((ByteBuffer) headerBuf.rewind()).get("Content-Length");
           if (null != bounds) {
             total = Long.parseLong(UTF8.decode((ByteBuffer) dst.duplicate().limit(bounds[1]).position(bounds[0])).toString().trim());
             remaining = total - dst.remaining();
@@ -530,8 +531,6 @@ public class BlobAntiPatternObject {
               BlobAntiPatternObject.returnJsonStringOrErrorResponse(returnTo, key, rescode, payload);
             } else {
               final LinkedList<ByteBuffer> ll = new LinkedList<ByteBuffer>();
-              //
-              //    synchronousQueue.clear();
               ll.add(dst.slice());
               key.selector().wakeup();
               key.interestOps(SelectionKey.OP_READ).attach(new Impl() {
@@ -539,6 +538,10 @@ public class BlobAntiPatternObject {
                 public void onRead(SelectionKey key) throws InterruptedException, IOException {
                   ByteBuffer payload = ByteBuffer.allocateDirect(receiveBufferSize);
                   int read = channel.read(payload);
+                  if (-1 == read) {
+                    key.channel().close();
+                    return;
+                  }
                   ll.add(payload);
                   remaining -= read;
                   if (0 == remaining) {
@@ -558,6 +561,14 @@ public class BlobAntiPatternObject {
               });
               key.selector().wakeup();
             }
+          } else {
+            channel.socket().close();
+            final String o = GSON.toJson(new CouchTx() {{
+              setError("bad parse");
+              setReason(UTF8.decode(headerBuf).toString().trim());
+            }});
+            returnTo.put(o);
+            throw new IOException(o);
           }
         }
       }

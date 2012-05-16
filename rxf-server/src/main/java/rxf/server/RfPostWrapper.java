@@ -229,7 +229,7 @@ public class RfPostWrapper extends Impl {
 
 
   public void onConnect(SelectionKey key) {
-    HttpMethod.$.onConnect(key);
+    HttpMethod.$.onConnect(key);         // hugely deprecated
   }
 
 
