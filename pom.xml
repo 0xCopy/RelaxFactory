@@ -70,6 +70,12 @@
         <repository>
             <id>gwt-maven-rewraps</id>
             <url>http://gwt-maven-rewraps.googlecode.com/git/</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
         </repository>
         <repository>
             <id>sonatype-snapshots</id>
@@ -81,8 +87,19 @@
                 <enabled>true</enabled>
             </releases>
         </repository>
-
     </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>gwt-maven-rewraps</id>
+            <url>http://gwt-maven-rewraps.googlecode.com/git/</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </pluginRepository>
+    </pluginRepositories>
     <dependencies>
         <dependency>
             <groupId>com.google.gwt</groupId>
