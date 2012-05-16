@@ -43,7 +43,7 @@ import static rxf.server.BlobAntiPatternObject.recycleChannel;
  * Date: 4/18/12
  * Time: 12:37 PM
  */
-class RfPostWrapper extends Impl {
+public class RfPostWrapper extends Impl {
   public static void main(String... a) {
     final Pattern compile = Pattern.compile("^/i(/.*)$");
 
@@ -58,7 +58,7 @@ class RfPostWrapper extends Impl {
   public static final SimpleRequestProcessor SIMPLE_REQUEST_PROCESSOR = new SimpleRequestProcessor(ServiceLayer.create());
 
 
-  public static final EnumMap<HttpMethod, LinkedHashMap<Pattern, AsioVisitor>> NAMESPACE = new EnumMap<HttpMethod, LinkedHashMap<Pattern, AsioVisitor>>(HttpMethod.class) {
+  private static final EnumMap<HttpMethod, LinkedHashMap<Pattern, AsioVisitor>> NAMESPACE = new EnumMap<HttpMethod, LinkedHashMap<Pattern, AsioVisitor>>(HttpMethod.class) {
     {
       final Pattern passthroughExpr = Pattern.compile("^/i(/.*)$");
       put(GET, new LinkedHashMap<Pattern, AsioVisitor>() {
@@ -178,6 +178,10 @@ class RfPostWrapper extends Impl {
     }
   };
 
+  public static EnumMap<HttpMethod, LinkedHashMap<Pattern, AsioVisitor>> getNamespace() {
+    return NAMESPACE;
+  }
+
   @Override
   public void onRead(final SelectionKey key) throws IOException {
     SocketChannel channel = (SocketChannel) key.channel();
@@ -249,7 +253,7 @@ class RfPostWrapper extends Impl {
           while (!Character.isWhitespace(headers.get())) ;
 
           String path = URLDecoder.decode(UTF8.decode((ByteBuffer) headers.flip().position(position)).toString().trim());
-          for (Map.Entry<Pattern, AsioVisitor> visitorEntry : NAMESPACE.get(method).entrySet()) {
+          for (Map.Entry<Pattern, AsioVisitor> visitorEntry : getNamespace().get(method).entrySet()) {
             final Matcher matcher = visitorEntry.getKey().matcher(path);
             final boolean b = matcher.find();
             if (b) {
