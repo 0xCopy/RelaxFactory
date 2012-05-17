@@ -529,7 +529,7 @@ public class BlobAntiPatternObject {
                 LinkedList<ByteBuffer> ret = new LinkedList<ByteBuffer>();
 
                 @Override
-                public void onRead(SelectionKey key) throws Exception, Exception {//chuksizeparser
+                public void onRead(SelectionKey key) throws Exception {//chuksizeparser
                   if (cursor == null) {
                     cursor = ByteBuffer.allocate(receiveBufferSize);
                     final int read1 = channel.read(cursor);
@@ -568,16 +568,7 @@ public class BlobAntiPatternObject {
 
                   }
                   final ByteBuffer dest = ByteBuffer.allocate((int) chunkSize);
-                  final boolean single = cursor.remaining() > chunkSize;
-                  final ByteBuffer src;
-                  if (single) {
-                    src = (ByteBuffer) cursor.slice().limit((int) chunkSize);
-                    cursor.position((int) (cursor.position() + chunkSize + 2));
-//                      cursor = dest;
-                    dest.put(src);
-                    ret.add(dest);
-                    onRead(key);      // a goto
-                  } else {//fragments to assemble
+                  if (!(chunkSize < cursor.remaining())) {//fragments to assemble
 
                     dest.put(cursor);
                     key.attach(new Impl() {
@@ -592,7 +583,13 @@ public class BlobAntiPatternObject {
                         }
                       }
                     });
-
+                  } else {
+                    ByteBuffer src = (ByteBuffer) cursor.slice().limit((int) chunkSize);
+                    cursor.position((int) (cursor.position() + chunkSize + 2));
+//                      cursor = dest;
+                    dest.put(src);
+                    ret.add(dest);
+                    onRead(key);      // a goto
                   }
 
                 }
