@@ -9,8 +9,8 @@ import java.util.concurrent.SynchronousQueue;
 
 import one.xio.AsioVisitor;
 
-import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpMethod.UTF8;
+import static one.xio.HttpMethod.wheresWaldo;
 
 /**
  * User: jim
@@ -18,6 +18,7 @@ import static one.xio.HttpMethod.UTF8;
  * Time: 10:20 PM
  */
 class SendJsonVisitor extends AsioVisitor.Impl {
+  public static final boolean DEBUG_SENDJSON = System.getenv().containsKey("DEBUG_SENDJSON");
   private final String json;
   private final String[] idver;
   private final SynchronousQueue<String> returnTo;
@@ -32,7 +33,7 @@ class SendJsonVisitor extends AsioVisitor.Impl {
   public void onWrite(final SelectionKey key) {
     String method;
     String call;
-    method = idver.length < 2 ? "POST" : "PUT";
+    method = idver.length < 1 ? "POST" : "PUT";
 
     String path = "";
     for (int i = 0; i < idver.length; i++) {
@@ -46,9 +47,11 @@ class SendJsonVisitor extends AsioVisitor.Impl {
           break;
       }
     }
-
 //    call = MessageFormat.format("{0} /{1} HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: {2}\r\n\r\n{3}", method, path, json.length(), json);
-    call = MessageFormat.format("{0} /{1} HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: " + json.length() + "\r\n\r\n{2}", method, path, json);
+    call = MessageFormat.format("{0} /{1} HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: " + json.length() + "\r\n\r\n{2}", method, path, json).replace("//", "/");
+    if (DEBUG_SENDJSON) {
+      System.err.println("dsj: attempting call to " + call + " " + wheresWaldo());
+    }
     ByteBuffer encode = UTF8.encode(call);
     SocketChannel channel = (SocketChannel) key.channel();
     try {
@@ -56,19 +59,6 @@ class SendJsonVisitor extends AsioVisitor.Impl {
       key.attach(BlobAntiPatternObject.createJsonResponseReader(returnTo));
       key.selector().wakeup();
       key.interestOps(SelectionKey.OP_READ);
-    } catch (IOException e) {
-      e.printStackTrace();  //todo: verify for a purpose
-    }
-  }
-
-
-  @Override
-  public void onConnect(SelectionKey key) {
-    try {
-      if (((SocketChannel) key.channel()).finishConnect()) {
-        key.selector().wakeup();
-        key.interestOps(OP_WRITE);
-      }
     } catch (IOException e) {
       e.printStackTrace();  //todo: verify for a purpose
     }
