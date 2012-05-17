@@ -170,15 +170,12 @@ public class BlobAntiPatternObject {
                               couchKey.interestOps(0);
                               browserKey.selector().wakeup();
                               browserKey.interestOps(OP_WRITE).selector().wakeup();
-                              ;
 
                             } else {
                               recycleChannel(couchConnection);
                             }
                           }
                         });
-
-
                       }
 
                       @Override
@@ -188,8 +185,6 @@ public class BlobAntiPatternObject {
                         couchKey.interestOps(OP_READ);
                       }
                     });
-
-
               }
             }
 
@@ -380,7 +375,7 @@ public class BlobAntiPatternObject {
     return buffer;
   }
 
-  public static String deepToString(Object... d) {
+  public static <T> String deepToString(T... d) {
     return Arrays.deepToString(d) + wheresWaldo();
   }
 
@@ -540,7 +535,7 @@ public class BlobAntiPatternObject {
                     final int read1 = channel.read(cursor);
                     cursor.flip();
                   }
-                  System.err.println("chunking: " + UTF8.decode((ByteBuffer) cursor.duplicate().rewind()));
+                  System.err.println("chunking: " + UTF8.decode(cursor.duplicate()));
                   final int anchor = cursor.position();
                   while (cursor.hasRemaining() && cursor.get() != '\n') ;
                   final ByteBuffer line = (ByteBuffer) cursor.duplicate().position(anchor).limit(cursor.position());
@@ -555,16 +550,18 @@ public class BlobAntiPatternObject {
 
                       int sum = 0;
                       for (ByteBuffer byteBuffer : ret) {
-                        sum = byteBuffer.limit();
+                        sum += byteBuffer.limit();
                       }
                       final ByteBuffer allocate = ByteBuffer.allocate(sum);
                       for (ByteBuffer byteBuffer : ret) {
                         allocate.put((ByteBuffer) byteBuffer.flip());
                       }
 
-                      final String o = UTF8.decode(allocate).toString();
+                      final String o = UTF8.decode((ByteBuffer) allocate.flip()).toString();
                       System.err.println("total chunked bundle was: " + o);
                       returnTo.put(o);
+                      key.attach(null);
+                      return;
                     }
                   } catch (NumberFormatException e) {
 
@@ -575,11 +572,11 @@ public class BlobAntiPatternObject {
                   final ByteBuffer src;
                   if (single) {
                     src = (ByteBuffer) cursor.slice().limit((int) chunkSize);
-                    cursor.position((int) (cursor.position() + chunkSize));
+                    cursor.position((int) (cursor.position() + chunkSize + 2));
 //                      cursor = dest;
                     dest.put(src);
                     ret.add(dest);
-                    onRead(key);
+                    onRead(key);      // a goto
                   } else {//fragments to assemble
 
                     dest.put(cursor);
@@ -592,7 +589,6 @@ public class BlobAntiPatternObject {
                           key.attach(prev);
                           cursor = null;
                           ret.add(dest);
-
                         }
                       }
                     });
