@@ -380,7 +380,7 @@ public class BlobAntiPatternObject {
     return buffer;
   }
 
-  static String deepToString(Object... d) {
+  public static String deepToString(Object... d) {
     return Arrays.deepToString(d) + wheresWaldo();
   }
 
