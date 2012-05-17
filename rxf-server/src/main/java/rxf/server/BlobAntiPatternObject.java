@@ -438,7 +438,7 @@ public class BlobAntiPatternObject {
   }
 
   public static AsioVisitor fetchJsonByPath(final String path, final SocketChannel channel, final SynchronousQueue<String> returnTo) throws ClosedChannelException {
-    final String format = (MessageFormat.format("GET /{0} HTTP/1.1\r\n\r\n", path.trim()));
+    final String format = (MessageFormat.format("GET /{0} HTTP/1.1\r\n\r\n", path.trim())).replace("//", "/");
     return executeCouchRequest(channel, returnTo, format);
   }
 
@@ -474,7 +474,7 @@ public class BlobAntiPatternObject {
     return GSON.fromJson(take, CouchTx.class);
   }
 
-  public static LinkedHashMap fetchMapById(CouchLocator locator, String key) throws IOException, InterruptedException {
+  public static Map fetchMapById(CouchLocator locator, String key) throws IOException, InterruptedException {
     SocketChannel channel = createCouchConnection();
     String take1;
     try {
@@ -501,7 +501,7 @@ public class BlobAntiPatternObject {
         final SocketChannel channel = (SocketChannel) key.channel();
         {
           final int receiveBufferSize = BlobAntiPatternObject.getReceiveBufferSize();
-          ByteBuffer dst = ByteBuffer.allocateDirect(receiveBufferSize);
+          final ByteBuffer dst = ByteBuffer.allocateDirect(receiveBufferSize);
           int read = channel.read(dst);
           if (-1 == read) {
             channel.socket().close();
@@ -518,10 +518,94 @@ public class BlobAntiPatternObject {
           final String rescode = BlobAntiPatternObject.parseResponseCode(dst);
 
           BlobAntiPatternObject.moveCaretToDoubleEol(dst);
-          final ByteBuffer headerBuf = (ByteBuffer) dst.duplicate().flip();
-          System.err.println("result: " + UTF8.decode((ByteBuffer) headerBuf.rewind()));
-          int[] bounds = HttpHeaders.getHeaders((ByteBuffer) headerBuf.rewind()).get("Content-Length");
-          if (null != bounds) {
+          final ByteBuffer[] headerBuf = {(ByteBuffer) dst.duplicate().flip()};
+          System.err.println("result: " + UTF8.decode((ByteBuffer) headerBuf[0].rewind()));
+          int[] bounds = HttpHeaders.getHeaders((ByteBuffer) headerBuf[0].rewind()).get("Content-Length");
+          if (null == bounds) {
+
+            bounds = HttpHeaders.getHeaders((ByteBuffer) headerBuf[0].rewind()).get("Transfer-Encoding");
+
+            if (null != bounds) {
+
+              key.attach(new Impl() {
+                ByteBuffer cursor = dst.slice();
+
+                private Impl prev = this;
+                LinkedList<ByteBuffer> ret = new LinkedList<ByteBuffer>();
+
+                @Override
+                public void onRead(SelectionKey key) throws Exception, Exception {//chuksizeparser
+                  if (cursor == null) {
+                    cursor = ByteBuffer.allocate(receiveBufferSize);
+                    final int read1 = channel.read(cursor);
+                    cursor.flip();
+                  }
+                  System.err.println("chunking: " + UTF8.decode((ByteBuffer) cursor.duplicate().rewind()));
+                  final int anchor = cursor.position();
+                  while (cursor.hasRemaining() && cursor.get() != '\n') ;
+                  final ByteBuffer line = (ByteBuffer) cursor.duplicate().position(anchor).limit(cursor.position());
+                  String res = UTF8.decode(line).toString().trim();
+                  long chunkSize = 0;
+                  try {
+
+                    chunkSize = Long.parseLong(res, 0x10);
+
+
+                    if (0 == chunkSize) {
+
+                      int sum = 0;
+                      for (ByteBuffer byteBuffer : ret) {
+                        sum = byteBuffer.limit();
+                      }
+                      final ByteBuffer allocate = ByteBuffer.allocate(sum);
+                      for (ByteBuffer byteBuffer : ret) {
+                        allocate.put((ByteBuffer) byteBuffer.flip());
+                      }
+
+                      final String o = UTF8.decode(allocate).toString();
+                      System.err.println("total chunked bundle was: " + o);
+                      returnTo.put(o);
+                    }
+                  } catch (NumberFormatException e) {
+
+
+                  }
+                  final ByteBuffer dest = ByteBuffer.allocate((int) chunkSize);
+                  final boolean single = cursor.remaining() > chunkSize;
+                  final ByteBuffer src;
+                  if (single) {
+                    src = (ByteBuffer) cursor.slice().limit((int) chunkSize);
+                    cursor.position((int) (cursor.position() + chunkSize));
+//                      cursor = dest;
+                    dest.put(src);
+                    ret.add(dest);
+                    onRead(key);
+                  } else {//fragments to assemble
+
+                    dest.put(cursor);
+                    key.attach(new Impl() {
+                      @Override
+                      public void onRead(SelectionKey key) throws Exception {
+                        final int read1 = channel.read(dest);
+                        key.selector().wakeup();
+                        if (!dest.hasRemaining()) {
+                          key.attach(prev);
+                          cursor = null;
+                          ret.add(dest);
+
+                        }
+                      }
+                    });
+
+                  }
+
+                }
+              });
+
+            }//doChunked
+
+
+          } else {
             total = Long.parseLong(UTF8.decode((ByteBuffer) dst.duplicate().limit(bounds[1]).position(bounds[0])).toString().trim());
             remaining = total - dst.remaining();
 
@@ -559,16 +643,7 @@ public class BlobAntiPatternObject {
                   }
                 }
               });
-              key.selector().wakeup();
             }
-          } else {
-            channel.socket().close();
-            final String o = GSON.toJson(new CouchTx() {{
-              setError("bad parse");
-              setReason(UTF8.decode(headerBuf).toString().trim());
-            }});
-            returnTo.put(o);
-            throw new IOException(o);
           }
         }
       }
