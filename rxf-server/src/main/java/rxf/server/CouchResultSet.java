@@ -13,7 +13,7 @@ public class CouchResultSet<T> {
   public long totalRows;
   public long offset;
 
-  public class tuple<T> {
+  public static class tuple<T> {
     String id, key;
     public T value;
   }
