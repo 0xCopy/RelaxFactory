@@ -686,14 +686,13 @@ public class BlobAntiPatternObject {
     }
     String take = ret;
     LinkedHashMap linkedHashMap1 = GSON.fromJson(take, LinkedHashMap.class);
-    if (2 == linkedHashMap1.size() && linkedHashMap1.containsKey("responseCode")) {
+    if (2 != linkedHashMap1.size() || !linkedHashMap1.containsKey("responseCode")) {//success
+      linkedHashMap1.put(key, value);
+      return sendJson(GSON.toJson(linkedHashMap1), path, inferRevision(linkedHashMap1));
+    } else {//failure
       linkedHashMap1.clear();
       linkedHashMap1.put(key, value);
       return sendJson(GSON.toJson(linkedHashMap1), path);
-    }
-    {
-      linkedHashMap1.put(key, value);
-      return sendJson(GSON.toJson(linkedHashMap1), path, inferRevision(linkedHashMap1));
     }
   }
 

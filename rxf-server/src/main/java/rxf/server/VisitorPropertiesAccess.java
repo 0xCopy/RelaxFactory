@@ -6,11 +6,12 @@ package rxf.server;
  * Time: 5:04 PM
  */
 public class VisitorPropertiesAccess {
-  public static final CouchPropertiesAccess<Visitor> VISITOR_COUCH_PROPERTIES_ACCESS = new CouchPropertiesAccess<Visitor>(BlobAntiPatternObject.VISITOR_LOCATOR);
+
+  private static CouchPropertiesAccess<Visitor> visitorCouchPropertiesAccess = new CouchPropertiesAccess<Visitor>(BlobAntiPatternObject.VISITOR_LOCATOR);
 
   static public String getSessionProperty(String key) {
     try {
-      return VISITOR_COUCH_PROPERTIES_ACCESS.getSessionProperty(BlobAntiPatternObject.getSessionCookieId(), key);
+      return visitorCouchPropertiesAccess.getSessionProperty(BlobAntiPatternObject.getSessionCookieId(), key);
     } catch (Exception e) {
       e.printStackTrace();  //todo: verify for a purpose
     }
@@ -19,7 +20,7 @@ public class VisitorPropertiesAccess {
 
   static public String setSessionProperty(String key, String value) {
     try {
-      return VISITOR_COUCH_PROPERTIES_ACCESS.setSessionProperty(BlobAntiPatternObject.getSessionCookieId(), key, value);
+      return new CouchPropertiesAccess<Visitor>(BlobAntiPatternObject.VISITOR_LOCATOR).setSessionProperty(BlobAntiPatternObject.getSessionCookieId(), key, value);
     } catch (Exception e) {
       e.printStackTrace();  //todo: verify for a purpose
     }
