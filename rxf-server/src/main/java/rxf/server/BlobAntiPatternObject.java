@@ -547,7 +547,9 @@ public class BlobAntiPatternObject {
 
 
                     if (0 == chunkSize) {
-
+                        //send the unwrap to threadpool.
+                      EXECUTOR_SERVICE.submit(new Callable() {
+                        public Void call() throws InterruptedException {
                       int sum = 0;
                       for (ByteBuffer byteBuffer : ret) {
                         sum += byteBuffer.limit();
@@ -560,6 +562,7 @@ public class BlobAntiPatternObject {
                       final String o = UTF8.decode((ByteBuffer) allocate.flip()).toString();
                       System.err.println("total chunked bundle was: " + o);
                       returnTo.put(o);
+                      return null; } }); key.selector().wakeup(); key.interestOps(OP_READ);
                       key.attach(null);
                       return;
                     }
