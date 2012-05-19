@@ -29,6 +29,8 @@ class SendJsonVisitor extends AsioVisitor.Impl {
     this.returnTo = returnTo;
     this.pathIdVer = pathIdVer;
     assert this.pathIdVer.length > 1;
+    if (SendJsonVisitor.DEBUG_SENDJSON)
+      System.err.println("sendJson audit: " + wheresWaldo());
   }
 
   @Override
