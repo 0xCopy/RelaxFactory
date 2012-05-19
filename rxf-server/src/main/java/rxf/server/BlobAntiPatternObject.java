@@ -97,11 +97,11 @@ public class BlobAntiPatternObject {
               ByteBuffer headers;
               final ByteBuffer dst;
               //receives impl,path,headers,first block
-              final Object attachment = browserKey.attachment();
+              final Object[] attachment = (Object[]) browserKey.attachment();
               if (!(attachment instanceof Object[])) {
-                throw new UnsupportedOperationException("this GET proxy requires attach(this,path,headers,block0) to function correctly");
+                throw new UnsupportedOperationException("this GET proxy requires attach(this,path,headers,block0) to function correctly"); //todo: tailcall and inner classes
               }
-              Object[] objects = (Object[]) attachment;
+              Object[] objects = attachment;
               path = (String) objects[1];
               headers = (ByteBuffer) objects[2];
               dst = (ByteBuffer) objects[3];
@@ -429,13 +429,25 @@ public class BlobAntiPatternObject {
     return rev;
   }
 
-  public static AsioVisitor fetchHeadByPath(final String path, final SocketChannel channel, final SynchronousQueue<String> returnTo) throws ClosedChannelException {
-    final String format = (MessageFormat.format("HEAD /{0} HTTP/1.1\r\n\r\n", path.trim()));
+  public static String getPathIdVer(String... pathIdVer) {
+    StringBuilder path = new StringBuilder();
+    for (int i = 0; i < 2; i++) {
+      String s = pathIdVer[i];
+      path.append('/').append(s);
+    }
+    if (pathIdVer.length > 2) {
+      path.append("?rev=").append(pathIdVer[2]);
+    }
+    return path.toString();
+  }
+
+  public static AsioVisitor fetchHeadByPath(final SocketChannel channel, final SynchronousQueue<String> returnTo, final String... pathIdVer) throws ClosedChannelException {
+    final String format = ( (new StringBuilder().append("HEAD ").append(getPathIdVer(pathIdVer)).append(" HTTP/1.1\r\n\r\n").toString()));
     return executeCouchRequest(channel, returnTo, format);
   }
 
   public static AsioVisitor fetchJsonByPath(final SocketChannel channel, final SynchronousQueue<String> returnTo, final String... pathIdVer) throws ClosedChannelException {
-    final String format = (MessageFormat.format("GET /{0} HTTP/1.1\r\n\r\n", pathIdVer )).replace("//", "/");
+    final String format = ( (new StringBuilder().append("GET ").append(getPathIdVer(pathIdVer)).append(" HTTP/1.1\r\n\r\n").toString())).replace("//", "/");
     return executeCouchRequest(channel, returnTo, format);
   }
 
@@ -471,7 +483,7 @@ public class BlobAntiPatternObject {
     return GSON.fromJson(take, CouchTx.class);
   }
 
-  public static Map fetchMapById(CouchLocator locator, String key) throws IOException, InterruptedException {
+  public static Map<? extends Object, ? extends Object> fetchMapById(CouchLocator locator, String key) throws IOException, InterruptedException {
     SocketChannel channel = createCouchConnection();
     String take1;
     try {
@@ -482,7 +494,7 @@ public class BlobAntiPatternObject {
       recycleChannel(channel);
     }
     String take = take1;
-    LinkedHashMap linkedHashMap = GSON.fromJson(take, LinkedHashMap.class);
+     Map<? extends Object, ? extends Object> linkedHashMap = GSON.fromJson(take, LinkedHashMap.class);
     if (2 == linkedHashMap.size() && linkedHashMap.containsKey("responseCode"))
       throw new IOException(deepToString(linkedHashMap));
     return linkedHashMap;
@@ -575,7 +587,7 @@ public class BlobAntiPatternObject {
                       key.attach(null);
                       return;
                     }
-                  } catch (NumberFormatException e) {
+                  } catch (NumberFormatException ignored) {
 
 
                   }
@@ -617,7 +629,7 @@ public class BlobAntiPatternObject {
             ByteBuffer payload;
             if (remaining <= 0) {
               payload = dst.slice();
-              BlobAntiPatternObject.returnJsonStringOrErrorResponse(returnTo, key, rescode, payload);
+              BlobAntiPatternObject.returnJsonString(returnTo, key, rescode, payload);
             } else {
               final LinkedList<ByteBuffer> ll = new LinkedList<ByteBuffer>();
               ll.add(dst.slice());
@@ -644,7 +656,7 @@ public class BlobAntiPatternObject {
                       else
                         payload.put(buffer);     //todo: rewrite this up-kernel
                     }
-                    BlobAntiPatternObject.returnJsonStringOrErrorResponse(returnTo, key, rescode, payload);
+                    BlobAntiPatternObject.returnJsonString(returnTo, key, rescode, payload);
                   }
                 }
               });
@@ -655,18 +667,14 @@ public class BlobAntiPatternObject {
     };
   }
 
-  static void returnJsonStringOrErrorResponse(SynchronousQueue<String> returnTo, SelectionKey key, String rescode, ByteBuffer payload) throws InterruptedException {
+  static String returnJsonString(SynchronousQueue<String> returnTo, SelectionKey key, String rescode, ByteBuffer payload) throws InterruptedException {
     key.attach(null);
     System.err.println("payload: " + UTF8.decode((ByteBuffer) payload.duplicate().rewind()));
     if (!payload.hasRemaining())
       payload.rewind();
 
-    String trim = UTF8.decode(payload).toString().trim();
-    if (rescode.startsWith("20") && rescode.length() == 3) {
-      returnTo.put(trim);
-    } else {
-      returnTo.put(MessageFormat.format("'{'\"responseCode\":\"{0}\",\"orig\":{1}'}'", rescode, trim));
-    }
+    returnTo.put(UTF8.decode(payload).toString().trim());
+    return rescode;
   }
 
   static String parseResponseCode(ByteBuffer dst) {
@@ -688,7 +696,7 @@ public class BlobAntiPatternObject {
     try {
       channel = createCouchConnection();
       SynchronousQueue<String> retVal = new SynchronousQueue<String>();
-      HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, fetchJsonByPath(channel, retVal,pathIdVer));
+      HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, fetchJsonByPath(channel, retVal, pathIdVer));
       ret = retVal.take();
     } finally {
       recycleChannel(channel);
@@ -698,7 +706,7 @@ public class BlobAntiPatternObject {
     if (2 != linkedHashMap1.size() || !linkedHashMap1.containsKey("responseCode")) {//success
       linkedHashMap1.put(key, value);
       final List<String> strings = Arrays.asList(pathIdVer);
-      strings.add(inferRevision(linkedHashMap1))                             ;
+      strings.add(inferRevision(linkedHashMap1));
       return sendJson(GSON.toJson(linkedHashMap1), strings.toArray(new String[strings.size()]));
     } else {//failure
       linkedHashMap1.clear();
@@ -794,7 +802,7 @@ public class BlobAntiPatternObject {
         {
           final SynchronousQueue<String> returnTo = new SynchronousQueue<String>();
           final SocketChannel couchConnection = createCouchConnection();
-          final AsioVisitor asioVisitor = fetchHeadByPath("/geoip/current", couchConnection, returnTo);
+          final AsioVisitor asioVisitor = fetchHeadByPath(couchConnection, returnTo,"/geoip/current" );
           System.err.println("head: " + returnTo.take());
           recycleChannel(couchConnection);
         }
