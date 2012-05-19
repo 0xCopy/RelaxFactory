@@ -17,6 +17,7 @@ import java.util.Date;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Queue;
@@ -195,6 +196,7 @@ public class BlobAntiPatternObject {
 
     }
   };
+  public static final Charset UTF8CHARSET = Charset.forName(UTF8.name());
 
   static {
     try {
@@ -432,8 +434,8 @@ public class BlobAntiPatternObject {
     return executeCouchRequest(channel, returnTo, format);
   }
 
-  public static AsioVisitor fetchJsonByPath(final String path, final SocketChannel channel, final SynchronousQueue<String> returnTo) throws ClosedChannelException {
-    final String format = (MessageFormat.format("GET /{0} HTTP/1.1\r\n\r\n", path.trim())).replace("//", "/");
+  public static AsioVisitor fetchJsonByPath(final SocketChannel channel, final SynchronousQueue<String> returnTo, final String... pathIdVer) throws ClosedChannelException {
+    final String format = (MessageFormat.format("GET /{0} HTTP/1.1\r\n\r\n", pathIdVer )).replace("//", "/");
     return executeCouchRequest(channel, returnTo, format);
   }
 
@@ -455,13 +457,13 @@ public class BlobAntiPatternObject {
    * @param json
    * @return new _rev
    */
-  public static CouchTx sendJson(String json, String... idver) throws Exception {
+  public static CouchTx sendJson(String json, String... pathIdVer) throws Exception {
     String take;
     SocketChannel channel = null;
     try {
       channel = createCouchConnection();
       SynchronousQueue<String> retVal = new SynchronousQueue<String>();
-      HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, new SendJsonVisitor(json, retVal, idver));
+      HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, new SendJsonVisitor(json, retVal, pathIdVer));
       take = retVal.take();
     } finally {
       recycleChannel(channel);
@@ -474,7 +476,7 @@ public class BlobAntiPatternObject {
     String take1;
     try {
       SynchronousQueue<String> retVal = new SynchronousQueue<String>();
-      HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, fetchJsonByPath(locator.getPathPrefix() + '/' + key, channel, retVal));
+      HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, fetchJsonByPath(channel, retVal));
       take1 = retVal.take();
     } finally {
       recycleChannel(channel);
@@ -514,7 +516,10 @@ public class BlobAntiPatternObject {
 
           BlobAntiPatternObject.moveCaretToDoubleEol(dst);
           final ByteBuffer[] headerBuf = {(ByteBuffer) dst.duplicate().flip()};
-          System.err.println("result: " + UTF8.decode((ByteBuffer) headerBuf[0].rewind()));
+          if (SendJsonVisitor.DEBUG_SENDJSON) {
+            System.err.println("result: " + UTF8.decode((ByteBuffer) headerBuf[0].rewind()));
+          }
+
           int[] bounds = HttpHeaders.getHeaders((ByteBuffer) headerBuf[0].rewind()).get("Content-Length");
           if (null == bounds) {
 
@@ -547,22 +552,26 @@ public class BlobAntiPatternObject {
 
 
                     if (0 == chunkSize) {
-                        //send the unwrap to threadpool.
+                      //send the unwrap to threadpool.
                       EXECUTOR_SERVICE.submit(new Callable() {
                         public Void call() throws InterruptedException {
-                      int sum = 0;
-                      for (ByteBuffer byteBuffer : ret) {
-                        sum += byteBuffer.limit();
-                      }
-                      final ByteBuffer allocate = ByteBuffer.allocate(sum);
-                      for (ByteBuffer byteBuffer : ret) {
-                        allocate.put((ByteBuffer) byteBuffer.flip());
-                      }
+                          int sum = 0;
+                          for (ByteBuffer byteBuffer : ret) {
+                            sum += byteBuffer.limit();
+                          }
+                          final ByteBuffer allocate = ByteBuffer.allocate(sum);
+                          for (ByteBuffer byteBuffer : ret) {
+                            allocate.put((ByteBuffer) byteBuffer.flip());
+                          }
 
-                      final String o = UTF8.decode((ByteBuffer) allocate.flip()).toString();
-                      System.err.println("total chunked bundle was: " + o);
-                      returnTo.put(o);
-                      return null; } }); key.selector().wakeup(); key.interestOps(OP_READ);
+                          final String o = UTF8.decode((ByteBuffer) allocate.flip()).toString();
+                          System.err.println("total chunked bundle was: " + o);
+                          returnTo.put(o);
+                          return null;
+                        }
+                      });
+                      key.selector().wakeup();
+                      key.interestOps(OP_READ);
                       key.attach(null);
                       return;
                     }
@@ -673,13 +682,13 @@ public class BlobAntiPatternObject {
     return null;
   }
 
-  static CouchTx setGenericDocumentProperty(String path, String key, String value) throws Exception {
+  static CouchTx setGenericDocumentProperty(String key, String value, String... pathIdVer) throws Exception {
     String ret;
     SocketChannel channel = null;
     try {
       channel = createCouchConnection();
       SynchronousQueue<String> retVal = new SynchronousQueue<String>();
-      HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, fetchJsonByPath(path, channel, retVal));
+      HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, fetchJsonByPath(channel, retVal,pathIdVer));
       ret = retVal.take();
     } finally {
       recycleChannel(channel);
@@ -688,11 +697,13 @@ public class BlobAntiPatternObject {
     LinkedHashMap linkedHashMap1 = GSON.fromJson(take, LinkedHashMap.class);
     if (2 != linkedHashMap1.size() || !linkedHashMap1.containsKey("responseCode")) {//success
       linkedHashMap1.put(key, value);
-      return sendJson(GSON.toJson(linkedHashMap1), path, inferRevision(linkedHashMap1));
+      final List<String> strings = Arrays.asList(pathIdVer);
+      strings.add(inferRevision(linkedHashMap1))                             ;
+      return sendJson(GSON.toJson(linkedHashMap1), strings.toArray(new String[strings.size()]));
     } else {//failure
       linkedHashMap1.clear();
       linkedHashMap1.put(key, value);
-      return sendJson(GSON.toJson(linkedHashMap1), path);
+      return sendJson(GSON.toJson(linkedHashMap1), pathIdVer);
     }
   }
 
@@ -701,7 +712,7 @@ public class BlobAntiPatternObject {
     try {
       final SynchronousQueue<String> returnTo = new SynchronousQueue<String>();
       couchConnection = createCouchConnection();
-      fetchJsonByPath(path, couchConnection, returnTo);
+      fetchJsonByPath(couchConnection, returnTo);
       final String take = returnTo.take();
       final Map map = GSON.fromJson(take, Map.class);
       return String.valueOf(map.get(key));

@@ -33,7 +33,7 @@ public class CouchPropertiesAccess<T> {
     String path = locator.getPathPrefix() + '/' + eid;
     CouchTx tx = null;
     try {
-      tx = setGenericDocumentProperty(path, key, value);
+      tx = setGenericDocumentProperty(key, value,path);
       System.err.println("tx: " + tx.toString());
       return tx.getRev();
     } catch (Exception e) {

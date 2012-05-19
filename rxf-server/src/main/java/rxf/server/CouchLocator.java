@@ -62,7 +62,7 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
       String take;
       try {
         SynchronousQueue<String> retVal = new SynchronousQueue<String>();
-        HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, BlobAntiPatternObject.fetchJsonByPath(getPathPrefix() + '/' + id, channel, retVal));
+        HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, BlobAntiPatternObject.fetchJsonByPath(channel, retVal));
         take = retVal.take();
       } finally {
         recycleChannel(channel);
@@ -99,9 +99,12 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
   }
 
   public CouchTx persist(T domainObject) throws Exception {
+    System.err.println("attempting to persist " + domainObject.toString());
     final String id = getId(domainObject);
-    String[] idver = (null == id || "null".equals(id)) ? new String[]{getPathPrefix()} : new String[]{getPathPrefix() + '/' + id, getVersion(domainObject).toString()};
-    return BlobAntiPatternObject.sendJson(GSON.toJson(domainObject), idver);
+    String[] idver = (null == id || "null".equals(id)) ? new String[]{getPathPrefix()+'/'} : new String[]{getPathPrefix() + '/' + id, getVersion(domainObject).toString()};
+    final CouchTx couchTx = BlobAntiPatternObject.sendJson(GSON.toJson(domainObject), idver);
+    System.err.println("attempt resulted in " + couchTx.toString());
+    return couchTx;
   }
 
   List<T> findAll() {

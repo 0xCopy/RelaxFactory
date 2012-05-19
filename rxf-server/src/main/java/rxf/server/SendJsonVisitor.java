@@ -1,10 +1,10 @@
 package rxf.server;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
-import java.text.MessageFormat;
 import java.util.concurrent.SynchronousQueue;
 
 import one.xio.AsioVisitor;
@@ -19,36 +19,41 @@ import static one.xio.HttpMethod.wheresWaldo;
  */
 class SendJsonVisitor extends AsioVisitor.Impl {
   public static final boolean DEBUG_SENDJSON = System.getenv().containsKey("DEBUG_SENDJSON");
+
   private final String json;
-  private final String[] idver;
+  private final String[] pathIdVer;
   private final SynchronousQueue<String> returnTo;
 
-  public SendJsonVisitor(String json, SynchronousQueue<String> returnTo, String... idver) {
+  public SendJsonVisitor(String json, SynchronousQueue<String> returnTo, String... pathIdVer) {
     this.json = json;
     this.returnTo = returnTo;
-    this.idver = idver;
+    this.pathIdVer = pathIdVer;
+    assert this.pathIdVer.length > 1;
   }
 
   @Override
-  public void onWrite(final SelectionKey key) {
+  public void onWrite(final SelectionKey key) throws UnsupportedEncodingException {
     String method;
     String call;
-    method = idver.length < 1 ? "POST" : "PUT";
+
+    final boolean fresh = pathIdVer.length < 3;
+
+    method = fresh ? "POST" : "PUT";
+
 
     String path = "";
-    for (int i = 0; i < idver.length; i++) {
-      String s = idver[i];
+    for (int i = 0; i < pathIdVer.length; i++) {
+      String s = pathIdVer[i];
       switch (i) {
-        case 0:
-          path += s;
-          break;
-        case 1:
+        case 2:
           path += "?rev=" + s;
           break;
+        default:
+          path += '/' + s;
       }
     }
 //    call = MessageFormat.format("{0} /{1} HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: {2}\r\n\r\n{3}", method, path, json.length(), json);
-    call = MessageFormat.format("{0} /{1} HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: " + json.length() + "\r\n\r\n{2}", method, path, json).replace("//", "/");
+    call = (new StringBuilder().append(method).append(" ").append(path).append(" HTTP/1.1\r\nContent-Type: application/json;charset=utf-8\r\nContent-Length: ").append(json.getBytes(BlobAntiPatternObject.UTF8CHARSET).length).append("\r\n\r\n").append(json).toString()).replace("//", "/");
     if (DEBUG_SENDJSON) {
       System.err.println("dsj: attempting call to " + call + " " + wheresWaldo());
     }
