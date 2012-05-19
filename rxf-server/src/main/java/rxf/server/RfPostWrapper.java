@@ -16,8 +16,10 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.google.web.bindery.requestfactory.server.ExceptionHandler;
 import com.google.web.bindery.requestfactory.server.ServiceLayer;
 import com.google.web.bindery.requestfactory.server.SimpleRequestProcessor;
+import com.google.web.bindery.requestfactory.shared.ServerFailure;
 import one.xio.AsioVisitor;
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpHeaders;
@@ -29,6 +31,7 @@ import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpMethod.UTF8;
+import static one.xio.HttpMethod.wheresWaldo;
 import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 
 /**
@@ -41,6 +44,17 @@ public class RfPostWrapper extends Impl {
 
   public static final SimpleRequestProcessor SIMPLE_REQUEST_PROCESSOR = new SimpleRequestProcessor(ServiceLayer.create());
 
+  {
+    SIMPLE_REQUEST_PROCESSOR.setExceptionHandler(new ExceptionHandler() {
+      @Override
+      public ServerFailure createServerFailure(Throwable throwable) {
+        throwable.fillInStackTrace();
+        System.err.println("BOOM! in rfpw");
+        throwable.printStackTrace();
+        return new ServerFailure(wheresWaldo());
+      }
+    });
+  }
 
   @Override
   public void onRead(final SelectionKey key) throws IOException {
