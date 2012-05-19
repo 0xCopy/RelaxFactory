@@ -282,7 +282,7 @@ public class RfPostWrapper extends Impl {
         int length = process.length();
         final String s1 = "HTTP/1.1 200 OK\r\n" +
             sc +
-            "Content-Type: application/json ; charset=utf-8\r\n" +
+            "Content-Type: application/json\r\n" +
             "Content-Length: " + length + "\r\n\r\n";
         key.attach(new AsioVisitor.Impl() {
           @Override

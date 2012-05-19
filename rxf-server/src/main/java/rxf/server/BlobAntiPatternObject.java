@@ -435,15 +435,24 @@ public class BlobAntiPatternObject {
   }
 
   public static String getPathIdVer(String... pathIdVer) {
-    StringBuilder path = new StringBuilder();
-    for (int i = 0; i < 2; i++) {
-      String s = pathIdVer[i];
-      path.append('/').append(s);
+    int c = 0;
+    StringBuilder r = new StringBuilder();
+    for (String s : pathIdVer) {
+      switch (c) {
+        case 2:
+          r.append("?rev=").append(s);
+          break;
+        case 0:
+          r.append('/').append(s).append('/');
+          break;
+        default:
+          r.append('/').append(s);
+          break;
+
+      }
+      c++;
     }
-    if (pathIdVer.length > 2) {
-      path.append("?rev=").append(pathIdVer[2]);
-    }
-    return path.toString();
+    return r.toString().trim().replace("//", "/");
   }
 
   public static AsioVisitor fetchHeadByPath(final SocketChannel channel, final SynchronousQueue<String> returnTo, final String... pathIdVer) throws ClosedChannelException {
