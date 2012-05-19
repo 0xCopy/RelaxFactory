@@ -29,15 +29,16 @@ class SendJsonVisitor extends AsioVisitor.Impl {
     this.returnTo = returnTo;
     this.pathIdVer = pathIdVer;
     assert this.pathIdVer.length > 1;
-    if (SendJsonVisitor.DEBUG_SENDJSON)
-      System.err.println("sendJson audit: " + wheresWaldo());
+    if (SendJsonVisitor.DEBUG_SENDJSON) {
+      System.err.println("sendJson audit: " + BlobAntiPatternObject.arrToString(pathIdVer) + wheresWaldo());
+      if (pathIdVer.length < 1) throw new Error("new path code required here");
+    }
   }
 
   @Override
   public void onWrite(final SelectionKey key) throws UnsupportedEncodingException {
     String method;
     String call;
-
     final boolean fresh = pathIdVer.length < 3;
 
     method = fresh ? "POST" : "PUT";

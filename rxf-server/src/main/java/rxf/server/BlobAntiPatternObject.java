@@ -370,6 +370,7 @@ public class BlobAntiPatternObject {
     do {
       int prev = eol;
       while (buffer.hasRemaining() && '\n' != buffer.get()) ;
+
       eol = buffer.position();
       distance = abs(eol - prev);
       if (2 == distance && '\r' == buffer.get(eol - 2)) break;
@@ -379,6 +380,10 @@ public class BlobAntiPatternObject {
 
   public static <T> String deepToString(T... d) {
     return Arrays.deepToString(d) + wheresWaldo();
+  }
+
+  public static <T> String arrToString(T... d) {
+    return Arrays.deepToString(d);
   }
 
   public static void recycleChannel(SocketChannel channel) {
@@ -476,14 +481,14 @@ public class BlobAntiPatternObject {
       channel = createCouchConnection();
       SynchronousQueue<String> retVal = new SynchronousQueue<String>();
       HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, new SendJsonVisitor(json, retVal, pathIdVer));
-      take = retVal.take();
+      take = retVal.poll(250, MILLISECONDS);
     } finally {
       recycleChannel(channel);
     }
     return GSON.fromJson(take, CouchTx.class);
   }
 
-  public static Map<? extends Object, ? extends Object> fetchMapById(CouchLocator locator, String key) throws IOException, InterruptedException {
+  public static Map fetchMapById(CouchLocator locator, String key) throws IOException, InterruptedException {
     SocketChannel channel = createCouchConnection();
     String take1;
     try {
