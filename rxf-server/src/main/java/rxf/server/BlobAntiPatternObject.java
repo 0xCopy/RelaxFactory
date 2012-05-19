@@ -1,5 +1,12 @@
 package rxf.server;
 
+import com.google.gson.FieldNamingPolicy;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import one.xio.AsioVisitor;
+import one.xio.HttpHeaders;
+import one.xio.HttpMethod;
+
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
@@ -12,44 +19,16 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.text.MessageFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.EnumMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.Queue;
-import java.util.TreeMap;
-import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.google.gson.FieldNamingPolicy;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import one.xio.AsioVisitor;
-import one.xio.HttpHeaders;
-import one.xio.HttpMethod;
-
 import static java.lang.Math.abs;
 import static java.lang.Math.min;
-import static java.nio.channels.SelectionKey.OP_ACCEPT;
-import static java.nio.channels.SelectionKey.OP_CONNECT;
-import static java.nio.channels.SelectionKey.OP_READ;
-import static java.nio.channels.SelectionKey.OP_WRITE;
+import static java.nio.channels.SelectionKey.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static one.xio.HttpMethod.GET;
-import static one.xio.HttpMethod.UTF8;
-import static one.xio.HttpMethod.wheresWaldo;
+import static one.xio.HttpMethod.*;
 
 /**
  * User: jim
@@ -435,7 +414,7 @@ public class BlobAntiPatternObject {
   }
 
   public static String getPathIdVer(String... pathIdVer) {
-    StringBuilder path = new StringBuilder();
+    StringBuilder path = new StringBuilder('/');
     for (int i = 0; i < 2; i++) {
       String s = pathIdVer[i];
       path.append('/').append(s);
