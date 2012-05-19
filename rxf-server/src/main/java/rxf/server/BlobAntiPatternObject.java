@@ -481,7 +481,7 @@ public class BlobAntiPatternObject {
       channel = createCouchConnection();
       SynchronousQueue<String> retVal = new SynchronousQueue<String>();
       HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, new SendJsonVisitor(json, retVal, pathIdVer));
-      take = retVal.poll(250, MILLISECONDS);
+      take = retVal.take();/*retVal.poll(250, MILLISECONDS);*/
     } finally {
       recycleChannel(channel);
     }
