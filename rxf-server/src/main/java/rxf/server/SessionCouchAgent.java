@@ -3,14 +3,14 @@ package rxf.server;
 import java.util.LinkedHashMap;
 
 /**
-* User: jim
-* Date: 5/10/12
-* Time: 7:24 AM
-*/
-public class SessionCouchAgent<T,I,C extends Class<?extends T>>extends CouchChangesClient {
+ * User: jim
+ * Date: 5/10/12
+ * Time: 7:24 AM
+ */
+public class SessionCouchAgent<T> extends CouchChangesClient {
 
   public SessionCouchAgent(CouchLocator<T> locator) {
-    feedname =  (locator).getPathPrefix();
+    feedname = (locator).getPathPrefix();
   }
 
   @Override

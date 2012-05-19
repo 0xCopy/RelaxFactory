@@ -442,12 +442,12 @@ public class BlobAntiPatternObject {
   }
 
   public static AsioVisitor fetchHeadByPath(final SocketChannel channel, final SynchronousQueue<String> returnTo, final String... pathIdVer) throws ClosedChannelException {
-    final String format = ( (new StringBuilder().append("HEAD ").append(getPathIdVer(pathIdVer)).append(" HTTP/1.1\r\n\r\n").toString()));
+    final String format = ((new StringBuilder().append("HEAD ").append(getPathIdVer(pathIdVer)).append(" HTTP/1.1\r\n\r\n").toString()));
     return executeCouchRequest(channel, returnTo, format);
   }
 
   public static AsioVisitor fetchJsonByPath(final SocketChannel channel, final SynchronousQueue<String> returnTo, final String... pathIdVer) throws ClosedChannelException {
-    final String format = ( (new StringBuilder().append("GET ").append(getPathIdVer(pathIdVer)).append(" HTTP/1.1\r\n\r\n").toString())).replace("//", "/");
+    final String format = ((new StringBuilder().append("GET ").append(getPathIdVer(pathIdVer)).append(" HTTP/1.1\r\n\r\n").toString())).replace("//", "/");
     return executeCouchRequest(channel, returnTo, format);
   }
 
@@ -494,7 +494,7 @@ public class BlobAntiPatternObject {
       recycleChannel(channel);
     }
     String take = take1;
-     Map<? extends Object, ? extends Object> linkedHashMap = GSON.fromJson(take, LinkedHashMap.class);
+    Map<? extends Object, ? extends Object> linkedHashMap = GSON.fromJson(take, LinkedHashMap.class);
     if (2 == linkedHashMap.size() && linkedHashMap.containsKey("responseCode"))
       throw new IOException(deepToString(linkedHashMap));
     return linkedHashMap;
@@ -802,7 +802,7 @@ public class BlobAntiPatternObject {
         {
           final SynchronousQueue<String> returnTo = new SynchronousQueue<String>();
           final SocketChannel couchConnection = createCouchConnection();
-          final AsioVisitor asioVisitor = fetchHeadByPath(couchConnection, returnTo,"/geoip/current" );
+          final AsioVisitor asioVisitor = fetchHeadByPath(couchConnection, returnTo, "/geoip/current");
           System.err.println("head: " + returnTo.take());
           recycleChannel(couchConnection);
         }
@@ -823,7 +823,7 @@ public class BlobAntiPatternObject {
     serverSocketChannel.socket().bind(new InetSocketAddress(8888));
     serverSocketChannel.configureBlocking(false);
     HttpMethod.enqueue(serverSocketChannel, OP_ACCEPT, topLevel);
-    final SessionCouchAgent<Visitor, String, Class<Visitor>> ro = new SessionCouchAgent<Visitor, String, Class<Visitor>>(VISITOR_LOCATOR);
+    final SessionCouchAgent<Visitor> ro = new SessionCouchAgent<Visitor>(VISITOR_LOCATOR);
     HttpMethod.enqueue(createCouchConnection(), OP_CONNECT | OP_WRITE, ro, ro.getFeedString());
     HttpMethod.init(args, topLevel);
   }
