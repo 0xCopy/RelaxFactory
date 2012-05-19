@@ -5,7 +5,6 @@ import one.xio.AsioVisitor;
 import one.xio.HttpHeaders;
 import one.xio.HttpMethod;
 
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
@@ -15,6 +14,7 @@ import java.util.concurrent.SynchronousQueue;
 
 import static java.lang.Math.max;
 import static java.nio.channels.SelectionKey.*;
+import static one.xio.HttpMethod.UTF8;
 import static rxf.server.BlobAntiPatternObject.*;
 
 /**
@@ -107,103 +107,123 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
         HttpMethod method = HttpMethod.POST;
         String[] pathIdPrefix = {getPathPrefix()};
         String deliver, payload = deliver = GSON.toJson(domainObject);
-        final ByteBuffer encode1 = UTF8CHARSET.encode(deliver);
+        final ByteBuffer encode1 = UTF8.encode(deliver);
 
 
         Map cheat = null;
-        do {
-            cheat = GSON.fromJson(payload, Map.class);
-            boolean hasRev = cheat.containsKey("_rev");
-            boolean hasId = cheat.containsKey("_id");
-            if (hasId)
-                if (!hasRev) {
-                    pathIdPrefix = new String[]{getPathPrefix(), (String) cheat.get("_id")};
-                    method = HttpMethod.HEAD;
-                } else {
-                    pathIdPrefix = new String[]{getPathPrefix(), (String) cheat.get("_id"), (String) cheat.get("_rev"),};
-                    method = HttpMethod.PUT;
-                }
-
-            String m = method.name() + " " + getPathIdVer(pathIdPrefix) + " HTTP/1.1\r\n";
-
-            switch (method) {
-                case POST: {
-
-                    m += "Content-Length: " + encode1.limit() + "\r\nContent-Type: application/json\r\n\r\n";
-                    final ByteBuffer encode = UTF8CHARSET.encode(m);
-
-                    final SynchronousQueue<Buffer> sq = new SynchronousQueue<Buffer>();
-                    HttpMethod.enqueue(couchConnection, OP_WRITE, new AsioVisitor.Impl() {
-                        ByteBuffer buf = (ByteBuffer) ByteBuffer.allocateDirect(max(getSendBufferSize(), encode.limit() + encode1.limit())).put(encode).put(encode1).flip();
-
-                        @Override
-                        public void onWrite(SelectionKey key) throws Exception {
-                            couchConnection.write(buf);
-                            if (!buf.hasRemaining()) {
-                                buf.clear();
-                                key.selector().wakeup();
-                                key.interestOps(OP_READ).attach(new Impl() {
-                                    @Override
-                                    public void onRead(SelectionKey key) throws Exception {
-                                        int read = couchConnection.read(buf);
-                                        int position = moveCaretToDoubleEol((ByteBuffer) buf.flip()).position();
-                                        if (position == buf.limit()) {
-                                            buf.clear().position(position);
-                                            return;
-                                        }//still reading headers.
-                                        ByteBuffer headers = ((ByteBuffer) buf.duplicate().flip()).slice();
-                                        Map<String, int[]> map = HttpHeaders.getHeaders(headers);
-                                        if (map.containsKey("Content-Length")) {
-                                            int[] bounds = map.get("Content-Length");
-                                            String trim = UTF8CHARSET.decode((ByteBuffer) headers.clear().position(bounds[0]).limit(bounds[1])).toString().trim();
-                                            long l = Long.parseLong(trim);
-                                            final ByteBuffer cursor = ByteBuffer.allocateDirect((int) l).put(buf);
-                                            if(!cursor.hasRemaining()){sq.put(cursor.flip());}
-                                            Impl prev = this;
-                                            key.attach(new Impl() {
-                                                @Override
-                                                public void onRead(SelectionKey key) throws Exception {
-                                                    int read1 = couchConnection.read(cursor);
-                                                    if(!cursor.hasRemaining()){sq.put(cursor.flip());}
-                                                }
-                                            });
-
-                                        }
-
-
-                                    }
-                                });
-                            }
-
-                        }
-                    });
-                    break;
-                }
-                case GET:
-                    break;
-                case PUT:
-                    break;
-                case HEAD:
-                    break;
-                case DELETE:
-                    break;
-                case TRACE:
-                    break;
-                case CONNECT:
-                    break;
-                case OPTIONS:
-                    break;
-                case HELP:
-                    break;
-                case VERSION:
-                    break;
-                case $:
-                    break;
+        cheat = GSON.fromJson(payload, Map.class);
+        boolean hasRev = cheat.containsKey("_rev");
+        boolean hasId = cheat.containsKey("_id");
+        Object id = cheat.get("_id");
+        if (hasId)
+            if (!hasRev) {
+                pathIdPrefix = new String[]{getPathPrefix(), (String) id};
+                method = HttpMethod.HEAD;
+            } else {
+                Object rev = cheat.get("_rev");
+                pathIdPrefix = new String[]{getPathPrefix(), (String) id, (String) rev,};
+                method = HttpMethod.PUT;
             }
 
 
-        } while (!HttpMethod.killswitch);
-        return null;
+        switch (method) {
+            case HEAD: {
+                String m = method.name() + " " + getPathIdVer(pathIdPrefix) + " HTTP/1.1\r\n";
+                m += "\r\n";
+                final SynchronousQueue<ByteBuffer> sq = new SynchronousQueue<ByteBuffer>();
+                final String finalM = m;
+                HttpMethod.enqueue(couchConnection, OP_WRITE, new AsioVisitor.Impl() {
+
+                    @Override
+                    public void onRead(SelectionKey key) throws Exception {
+//                        fetch from  ETag: "3-9a5fe45b4e065e3604f1f746816c1926"
+                        ByteBuffer headerBuf = ByteBuffer.allocateDirect(getReceiveBufferSize());
+                        int read = couchConnection.read(headerBuf);
+
+                        headerBuf.flip();
+                        while (headerBuf.hasRemaining() && '\n' == (headerBuf.get())) ;//pv
+
+                        int mark = headerBuf.position();
+                        ByteBuffer methodBuf = (ByteBuffer) headerBuf.duplicate().flip().position(mark);
+                        String[] resCode = UTF8.decode(methodBuf).toString().trim().split(" ");
+                        if ((resCode[1]).startsWith("20")) {
+                            int[] headers = HttpHeaders.getHeaders((ByteBuffer) headerBuf.clear()).get("ETag");
+                            sq.put((ByteBuffer) headerBuf.position(headers[0]).limit(headers[1]));
+                        }
+                    }
+
+                    @Override
+                    public void onWrite(SelectionKey key) throws Exception {
+                        couchConnection.write(UTF8.encode(finalM));
+                        key.interestOps(OP_READ);
+                    }
+                });
+                ByteBuffer take = sq.take();
+                String newVer = UTF8.decode(take).toString();
+                System.err.println("HEAD appends " + arrToString(pathIdPrefix) + " with " + newVer);
+                pathIdPrefix = new String[]{getPathPrefix(), (String) id, newVer};
+            }
+            case PUT:
+            case POST: {
+                String m = method.name() + " " + getPathIdVer(pathIdPrefix) + " HTTP/1.1\r\n";
+
+                m += "Content-Length: " + encode1.limit() + "\r\nContent-Type: application/json\r\n\r\n";
+                final ByteBuffer encode = UTF8.encode(m);
+
+                final SynchronousQueue<ByteBuffer> sq = new SynchronousQueue<ByteBuffer>();
+                HttpMethod.enqueue(couchConnection, OP_WRITE, new AsioVisitor.Impl() {
+                    ByteBuffer buf = (ByteBuffer) ByteBuffer.allocateDirect(max(getSendBufferSize(), encode.limit() + encode1.limit())).put(encode).put(encode1).flip();
+
+                    @Override
+                    public void onWrite(SelectionKey key) throws Exception {
+                        couchConnection.write(buf);
+                        if (!buf.hasRemaining()) {
+                            buf.clear();
+                            key.selector().wakeup();
+                            key.interestOps(OP_READ).attach(new Impl() {
+                                @Override
+                                public void onRead(SelectionKey key) throws Exception {
+                                    int read = couchConnection.read(buf);
+                                    int position = moveCaretToDoubleEol((ByteBuffer) buf.flip()).position();
+                                    if (position == buf.limit()) {
+                                        buf.clear().position(position);
+                                        return;
+                                    }//still reading headers.
+                                    ByteBuffer headers = ((ByteBuffer) buf.duplicate().flip()).slice();
+                                    Map<String, int[]> map = HttpHeaders.getHeaders(headers);
+                                    if (map.containsKey("Content-Length")) {
+                                        int[] bounds = map.get("Content-Length");
+                                        String trim = UTF8.decode((ByteBuffer) headers.clear().position(bounds[0]).limit(bounds[1])).toString().trim();
+                                        long l = Long.parseLong(trim);
+                                        final ByteBuffer cursor = ByteBuffer.allocateDirect((int) l).put(buf);
+                                        if (!cursor.hasRemaining()) {
+                                            sq.put((ByteBuffer) cursor.flip());
+                                            return;
+                                        }
+                                        Impl prev = this;
+                                        key.attach(new Impl() {
+                                            @Override
+                                            public void onRead(SelectionKey key) throws Exception {
+                                                int read1 = couchConnection.read(cursor);
+                                                if (!cursor.hasRemaining()) {
+                                                    sq.put((ByteBuffer) cursor.flip());
+                                                }
+                                            }
+                                        });
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+                //rf pausing...
+                ByteBuffer take = (ByteBuffer) sq.take(); //mission accomplished
+                recycleChannel(couchConnection);
+                return GSON.fromJson(UTF8.decode(take).toString(), CouchTx.class);
+            }
+            default:
+                return null;
+        }
     }
 
     List<T> findAll() {
