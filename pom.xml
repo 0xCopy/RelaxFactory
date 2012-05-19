@@ -16,6 +16,7 @@
         <!--<gwt.version>2.4.0</gwt.version>-->
         <gwt-maven-plugin.compileReport>false</gwt-maven-plugin.compileReport>
         <gwt-maven-plugin.soycDetailed>false</gwt-maven-plugin.soycDetailed>
+        <gwt-maven-plugin.strict>false</gwt-maven-plugin.strict>
         <one.xio.version>1.9.9</one.xio.version>
     </properties>
     <profiles>
@@ -35,6 +36,7 @@
             <!--big box-->
             <id>dev</id>
             <properties>
+        <gwt-maven-plugin.strict>true</gwt-maven-plugin.strict>
                 <gwt.style>PRETTY</gwt.style>
                 <gwt.draftCompile>true</gwt.draftCompile>
                 <gwt.compiler.optimizationLevel>0</gwt.compiler.optimizationLevel>
