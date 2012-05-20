@@ -214,8 +214,9 @@ public class CouchChangesClient extends AsioVisitor.Impl {
         final String trim = UTF8.decode(handoff).toString().trim();
         //        System.err.println("RecordId: " + trim);
         final LinkedHashMap couchChange = BlobAntiPatternObject.GSON.fromJson(trim, LinkedHashMap.class);
-        if (couchChange.containsKey("id"))
+        if (couchChange.containsKey("id")) {
           EXECUTOR_SERVICE.submit(getDocUpdateHandler(couchChange));
+        }
         buffer.position(handoff.limit() + ENDL.length);
         buffer = buffer.slice();
       } while (buffer.hasRemaining());
