@@ -25,9 +25,9 @@ import static rxf.server.BlobAntiPatternObject.moveCaretToDoubleEol;
 public class Rfc822HeaderState {
   private String[] headers = {};
   private String[] cookies = {};
-  private ByteBuffer cursor;
+
   private ByteBuffer headerBuf;
-  private Map headerStrings;
+  private Map<String, String> headerStrings;
   private Map<String, String> cookieStrings;
   private String methodProtocol;
   private String pathRescode;
@@ -37,9 +37,6 @@ public class Rfc822HeaderState {
     this.headers = headers;
   }
 
-  public ByteBuffer getCursor() {
-    return cursor;
-  }
 
   public ByteBuffer getHeaderBuf() {
     return headerBuf;
@@ -92,23 +89,24 @@ public class Rfc822HeaderState {
     if (!cursor.hasRemaining()) cursor.flip();
     final int anchor = cursor.position();
     final ByteBuffer slice1 = cursor.duplicate().slice();
-    while (slice1.get() != ' ') ;
+    while ( slice1.hasRemaining()&&slice1.get() != ' ') ;
     methodProtocol = UTF8.decode((ByteBuffer) slice1.flip()).toString().trim();
-    while (cursor.get() != ' ') ; //method/proto
+    while (cursor.hasRemaining()&&cursor.get() != ' ') ; //method/proto
     final ByteBuffer slice = cursor.slice();
-    while (slice.get() != ' ') ;
+    while (slice.hasRemaining()&&slice.get() != ' ') ;
     pathRescode = UTF8.decode((ByteBuffer) slice.flip()).toString().trim();
     headerBuf = null;
-    final boolean wantsCookies = cookies.length > 1;
-    final boolean wantsHeaders = wantsCookies || headers.length > 1;
+    final boolean wantsCookies = cookies!=null&&cookies.length > 0;
+    final boolean wantsHeaders = wantsCookies || headers.length > 0;
     headerBuf = (ByteBuffer) moveCaretToDoubleEol(cursor).duplicate().flip();
     headerStrings = null;
     cookieStrings = null;
     if (wantsHeaders) {
-      Map headerMap = HttpHeaders.getHeaders((ByteBuffer) headerBuf.rewind());
-      headerStrings = new LinkedHashMap<String, List>();
-      for (Object o : headerMap.keySet()) {
-        headerStrings.put(o, headerMap.get(o));
+      Map<String, int[]> headerMap = HttpHeaders.getHeaders((ByteBuffer) headerBuf.rewind());
+      headerStrings = new LinkedHashMap<String, String>();
+      for (String o : headers  ) {
+        int[] o1 = headerMap.get(o);if(null!=o1)
+        headerStrings.put(o, UTF8.decode((ByteBuffer) headerBuf. duplicate().clear().position(o1[0]).limit(o1[1])).toString().trim());
       }
 
     }

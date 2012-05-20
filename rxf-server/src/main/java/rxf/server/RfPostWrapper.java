@@ -12,13 +12,16 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.text.MessageFormat;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Exchanger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.google.web.bindery.requestfactory.server.ExceptionHandler;
-import com.google.web.bindery.requestfactory.server.ServiceLayer;
+import com.google.web.bindery.requestfactory.server.ServiceLayerDecorator;
 import com.google.web.bindery.requestfactory.server.SimpleRequestProcessor;
 import com.google.web.bindery.requestfactory.shared.ServerFailure;
 import one.xio.AsioVisitor;
@@ -35,6 +38,7 @@ import static one.xio.HttpMethod.UTF8;
 import static one.xio.HttpMethod.wheresWaldo;
 import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 import static rxf.server.BlobAntiPatternObject.ThreadLocalHeaders;
+import static rxf.server.BlobAntiPatternObject.ThreadLocalInetAddress;
 
 /**
  * a POST interception wrapper for http protocol cracking
@@ -44,7 +48,8 @@ import static rxf.server.BlobAntiPatternObject.ThreadLocalHeaders;
  */
 public class RfPostWrapper extends Impl {
 
-  public static final SimpleRequestProcessor SIMPLE_REQUEST_PROCESSOR = new SimpleRequestProcessor(ServiceLayer.create());
+  public static final ServiceLayerDecorator SERVICE_LAYER = new ServiceLayerDecorator();
+  public static final SimpleRequestProcessor SIMPLE_REQUEST_PROCESSOR = new SimpleRequestProcessor(SERVICE_LAYER);
   public static final String CONTENT_LENGTH = "Content-Length";
 
   {
@@ -61,74 +66,108 @@ public class RfPostWrapper extends Impl {
 
   @Override
   public void onRead(final SelectionKey key) throws IOException {
-    final ByteBuffer dst = ByteBuffer.allocateDirect(BlobAntiPatternObject.getReceiveBufferSize());
+    ByteBuffer dst = ByteBuffer.allocateDirect(BlobAntiPatternObject.getReceiveBufferSize());
     final SocketChannel channel = (SocketChannel) key.channel();
     int read = channel.read(dst);
 
 
     final Rfc822HeaderState rfc822HeaderState = new Rfc822HeaderState(CONTENT_LENGTH).apply((ByteBuffer) dst.flip()).cookies(BlobAntiPatternObject.MYGEOIPSTRING, BlobAntiPatternObject.class.getCanonicalName());
-    ThreadLocalHeaders.set(rfc822HeaderState);
+
     HttpMethod method = HttpMethod.valueOf(rfc822HeaderState.getMethodProtocol());
+    if (null == method) {
+      key.cancel();
+    }
     switch (method) {
       case POST: {
+
+        final Exchanger<ByteBuffer> exchanger = new Exchanger<ByteBuffer>();
+        final Object o = rfc822HeaderState.getHeaderStrings().get(RfPostWrapper.CONTENT_LENGTH);
+        int remaining = Integer.parseInt((String) o);
+
+        final ByteBuffer cursor = ByteBuffer.allocateDirect(remaining).put(dst);
         EXECUTOR_SERVICE.submit(new Callable<Void>() {
           public Void call() throws Exception {
-            int remaining = Integer.parseInt((String) rfc822HeaderState.getHeaderStrings().get(RfPostWrapper.CONTENT_LENGTH));
-            final ByteBuffer cursor = ByteBuffer.allocateDirect(remaining).put(dst);
-
             if (cursor.hasRemaining()) key.interestOps(OP_READ).attach(new Impl() {
               @Override
               public void onRead(final SelectionKey key) throws Exception {
                 channel.read(cursor);
                 if (!cursor.hasRemaining()) {
                   /////////////////////////////////////////////////////////////////////////////////////////////////////
-                  EXECUTOR_SERVICE.submit(    new RfProcessTask(rfc822HeaderState.getHeaderBuf(),cursor, key));
+
+                  exchanger.exchange(cursor);
+                  return;
 
                 }
               }
             });        //////
-                  EXECUTOR_SERVICE.submit(    new RfProcessTask(rfc822HeaderState.getHeaderBuf(),cursor, key));
+            exchanger.exchange(cursor);
             return null;
           }
         });
+        try {
+          dst = exchanger.exchange(null);
 
+          String trim = UTF8.decode((ByteBuffer) dst.flip()).toString().trim();
+          System.err.println("exchanger says: " + UTF8.decode((ByteBuffer) dst.duplicate().rewind()));
+          InetAddress remoteSocketAddress = channel.socket().getInetAddress();
+            String process = null;
+          try {
+            try {
+          ThreadLocalHeaders.set(rfc822HeaderState);
+          ThreadLocalInetAddress.set(remoteSocketAddress);
+              SERVICE_LAYER.
+              process = SIMPLE_REQUEST_PROCESSOR.process(trim);
+            } catch (RuntimeException e) {
+              e.printStackTrace();  //todo: verify for a purpose
+            } finally {
+            }
+            System.err.println("+++ headers " + UTF8.decode((ByteBuffer) rfc822HeaderState.getHeaderBuf().rewind()).toString());
+            Map<String, String> setCookiesMap = BlobAntiPatternObject.ThreadLocalSetCookies.get();
+            String sc1 = "";
+            if (null != setCookiesMap && !setCookiesMap.isEmpty()) {
+              sc1 = "";
 
-/*        BlobAntiPatternObject.moveCaretToDoubleEol(dst);
-ByteBuffer headers = (ByteBuffer) dst.duplicate().flip();
-System.err.println("+++ headers: " + UTF8.decode((ByteBuffer) headers.duplicate().rewind()).toString());
-Map<String, int[]> headers1 = HttpHeaders.getHeaders(headers);
-int[] ints = headers1.get(RfPostWrapper.CONTENT_LENGTH);
+              Iterator<Map.Entry<String, String>> iterator = setCookiesMap.entrySet().iterator();
+              if (iterator.hasNext()) {
+                do {
+                  Map.Entry<String, String> stringStringEntry = iterator.next();
+                  sc1 += "Set-Cookie: " + stringStringEntry.getKey() + "=" + stringStringEntry.getValue().trim();
+                  if (iterator.hasNext()) sc1 += "; ";
+                  sc1 += "\r\n";
+                } while (iterator.hasNext());
+              }
 
+            }
+            String sc = sc1;
+            int length = process.length();
+            final String s1 = "HTTP/1.1 200 OK\r\n" +
+                sc +
+                "Content-Type: application/json\r\n" +
+                "Content-Length: " + length + "\r\n\r\n";
+            final String finalProcess = process;
+            key.attach(new Impl() {
+              @Override
+              public void onWrite(SelectionKey selectionKey) throws IOException {
+                channel.write(UTF8.encode(s1 + finalProcess));
+                System.err.println("debug: " + s1 + finalProcess);
+                key.attach(null);
+                key.selector().wakeup();
+                key.interestOps(OP_READ);
+              }
+            });
+            key.selector().wakeup();
+            key.interestOps(SelectionKey.OP_WRITE);
 
-ByteBuffer duplicate1 = (ByteBuffer) headers.duplicate().rewind();
-String trim1 = UTF8.decode((ByteBuffer) duplicate1.limit(ints[1]).position(ints[0])).toString().trim();
-long total = Long.parseLong(trim1);
+          } catch (Throwable e) {
+            e.printStackTrace();  //todo: verify for a purpose
+          } finally {
+          }
 
-long[] remaining = {total - dst.remaining()};
-if (0 == remaining[0]) {
-  BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new RfProcessTask(headers, dst, key));
-} else {
-  if (dst.capacity() - dst.position() >= total) {
-    headers = ByteBuffer.allocateDirect(dst.position()).put(headers);
-    //alert: buhbye headers
-    dst.compact().limit((int) total);
+        } catch (Throwable e) {
+          e.printStackTrace();  //todo: verify for a purpose
+        }
 
-  } else {
-    dst = ByteBuffer.allocateDirect((int) total).put(dst);
-  }
-  final ByteBuffer finalDst = dst;
-  final ByteBuffer finalHeaders = headers;
-  key.attach(new Impl() {
-    @Override
-    public void onRead(SelectionKey selectionKey) throws IOException {
-      ((SocketChannel) selectionKey.channel()).read(finalDst);
-      if (!finalDst.hasRemaining()) {
-        EXECUTOR_SERVICE.submit(new RfProcessTask(finalHeaders, finalDst, key));
-      }
-    }
-  });
-}
-break;*/
+        break;
       }
       case GET: {
         BlobAntiPatternObject.moveCaretToDoubleEol(dst);
@@ -138,7 +177,13 @@ break;*/
         while (!Character.isWhitespace(headers.get())) ;
 
         String path = URLDecoder.decode(UTF8.decode((ByteBuffer) headers.flip().position(position)).toString().trim());
-        for (Map.Entry<Pattern, AsioVisitor> visitorEntry : BlobAntiPatternObject.getNamespace().get(method).entrySet()) {
+        LinkedHashMap<Pattern, AsioVisitor> patternAsioVisitorLinkedHashMap = BlobAntiPatternObject.getNamespace().get(method);
+        if (null == patternAsioVisitorLinkedHashMap) {
+          patternAsioVisitorLinkedHashMap = new LinkedHashMap<Pattern, AsioVisitor>();
+          BlobAntiPatternObject.getNamespace().put(method, patternAsioVisitorLinkedHashMap);
+        }              //should also be for POST
+        final Set<Map.Entry<Pattern, AsioVisitor>> entries = patternAsioVisitorLinkedHashMap.entrySet();
+        for (Map.Entry<Pattern, AsioVisitor> visitorEntry : entries) {
           final Matcher matcher = visitorEntry.getKey().matcher(path);
           final boolean b = matcher.find();
           if (b) {
@@ -282,7 +327,7 @@ break;*/
     public void run() {
       SocketChannel socketChannel = (SocketChannel) key.channel();
       InetAddress remoteSocketAddress = socketChannel.socket().getInetAddress();
-      BlobAntiPatternObject.ThreadLocalInetAddress.set(remoteSocketAddress);
+      ThreadLocalInetAddress.set(remoteSocketAddress);
       String trim = UTF8.decode(data).toString().trim();
       final String process;
       try {
@@ -315,7 +360,7 @@ break;*/
 
     String setOutboundCookies() {
       System.err.println("+++ headers " + UTF8.decode((ByteBuffer) headers.rewind()).toString());
-      Map setCookiesMap = BlobAntiPatternObject.ThreadLocalSetCookies.get();
+      Map<String, String> setCookiesMap = BlobAntiPatternObject.ThreadLocalSetCookies.get();
       String sc = "";
       if (null != setCookiesMap && !setCookiesMap.isEmpty()) {
         sc = "";

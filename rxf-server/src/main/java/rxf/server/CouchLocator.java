@@ -195,7 +195,7 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
             public ByteBuffer call() {
               try {
                 final Selector selector = getSelector();
-HttpMethod.enqueue( createCouchConnection() ,OP_CONNECT | OP_WRITE,new AsioVisitor.Impl() {
+                HttpMethod.enqueue(createCouchConnection(), OP_CONNECT | OP_WRITE, new AsioVisitor.Impl() {
                   @Override
                   public void onWrite(SelectionKey key) throws IOException {
                     final SocketChannel channel = (SocketChannel) key.channel();
