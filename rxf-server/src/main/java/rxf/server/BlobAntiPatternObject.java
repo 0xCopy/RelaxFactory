@@ -527,13 +527,8 @@ public class BlobAntiPatternObject {
           final ByteBuffer dst = ByteBuffer.allocateDirect(receiveBufferSize);
           int read = channel.read(dst);
           if (-1 == read) {
-            channel.socket().close();
-            final String o = GSON.toJson(new CouchTx() {{
-              setError("closed socket");
-              setReason("closed socket");
-            }});
-            returnTo.put(o);
-            throw new IOException(o);
+            key.cancel();
+            returnTo.put("{\"error\":\"connection closed\" ,\"reason\":\"buggered\"}");   return;
           }
 
           dst.flip();
