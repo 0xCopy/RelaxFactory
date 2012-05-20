@@ -82,7 +82,7 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
       String take;
       try {
         SynchronousQueue<String> retVal = new SynchronousQueue<String>();
-        HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, BlobAntiPatternObject.fetchJsonByPath(channel, retVal));
+        HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, BlobAntiPatternObject.fetchJsonByPath(channel, retVal, getPathPrefix(), id));
         take = retVal.take();
       } finally {
         recycleChannel(channel);
