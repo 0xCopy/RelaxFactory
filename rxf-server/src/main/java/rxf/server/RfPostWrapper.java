@@ -115,7 +115,7 @@ public class RfPostWrapper extends Impl {
             try {
           ThreadLocalHeaders.set(rfc822HeaderState);
           ThreadLocalInetAddress.set(remoteSocketAddress);
-              SERVICE_LAYER.
+//              SERVICE_LAYER.
               process = SIMPLE_REQUEST_PROCESSOR.process(trim);
             } catch (RuntimeException e) {
               e.printStackTrace();  //todo: verify for a purpose
