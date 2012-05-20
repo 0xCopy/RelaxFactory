@@ -28,10 +28,9 @@ public class Rfc822HeaderPrefix {
   private Map cookieStrings;
   private String rescode;
 
-  public Rfc822HeaderPrefix(String[] headers, String... cookies) {
+  public Rfc822HeaderPrefix(String... headers) {
 
     this.headers = headers;
-    this.cookies = cookies;
   }
 
   public ByteBuffer getCursor() {
@@ -54,6 +53,17 @@ public class Rfc822HeaderPrefix {
     return rescode;
   }
 
+  public Rfc822HeaderPrefix cookies(String... cookies) {
+
+    this.cookies = cookies;
+    {
+      cookieStrings = new LinkedHashMap();
+      //todo something to parse cookies
+      cookieStrings.put("", "");
+    }
+    return this;
+  }
+
   public Rfc822HeaderPrefix apply(ByteBuffer cursor) {
 
     while (cursor.get() != ' ') ;
@@ -71,11 +81,7 @@ public class Rfc822HeaderPrefix {
       for (Object o : headerMap.keySet()) {
         headerStrings.put(o, headerMap.get(o));
       }
-      if (wantsCookies) {
-        cookieStrings = new LinkedHashMap();
-        //todo something to parse cookies
-        cookieStrings.put("", "");
-      }
+
     }
     rescode = UTF8.decode((ByteBuffer) slice.flip()).toString().trim();
     return this;
