@@ -1,7 +1,6 @@
 package rxf.server;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Type;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
@@ -28,39 +27,19 @@ import static rxf.server.BlobAntiPatternObject.getPathIdVer;
 import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
 import static rxf.server.BlobAntiPatternObject.getSendBufferSize;
 import static rxf.server.BlobAntiPatternObject.inferRevision;
-import static rxf.server.BlobAntiPatternObject.recycleChannel;
 
 /**
  * User: jim
  * Date: 5/10/12
  * Time: 7:59 AM
  */
-public class CouchPropertiesAccess<T> {
-  public final Class<T> TYPE = (Class<T>) new TypeToken<T>() {
-  }.getType();
-  CouchLocator<T> memento = new CouchLocator<T>() {
-    @Override
-    public Class<T> getDomainType() {
-      return TYPE;  //todo: verify for a purpose
-    }
-
-    @Override
-    public String getId(T domainObject) {
-      final String method = "getId";
-      return callMethod(domainObject, method);
-    }
-
-    @Override
-    public Object getVersion(T domainObject) {
-      final String method = "getVersion";
-      return callMethod(domainObject, method);
-    }
-  };
-
+public abstract class CouchPropertiesAccess<T> {
+  private CouchLocator<T> memento;
   private String callMethod(T domainObject, String method) {
     Object id = null;
     try {
-      id = TYPE.getMethod(method).invoke(domainObject);
+      id = ((Class<T>) new TypeToken<T>() {
+        }.getType()).getMethod(method).invoke(domainObject);
     } catch (IllegalAccessException e) {
       e.printStackTrace();  //todo: verify for a purpose
     } catch (InvocationTargetException e) {
@@ -71,13 +50,12 @@ public class CouchPropertiesAccess<T> {
     return (String) id;
   }
 
-  public CouchPropertiesAccess(CouchLocator<T> locator) {
-//    this.locator = locator;
+  public CouchPropertiesAccess( ) {
   }
 
   public String getSessionProperty(String eid, String key) {
     try {
-      String path = memento.getPathPrefix() + '/' + eid;
+      String path = getLocator().getPathPrefix() + '/' + eid;
       return BlobAntiPatternObject.getGenericDocumentProperty(path, key);
     } catch (Exception e) {
       e.printStackTrace();  //todo: verify for a purpose
@@ -100,8 +78,8 @@ public class CouchPropertiesAccess<T> {
 
       @Override
       public void onWrite(SelectionKey key) throws Exception {
-        final String pathPrefix = memento.getPathPrefix();
-        final String path = pathPrefix + '/' + Type.class.getSimpleName();
+        final String pathPrefix = getLocator().getPathPrefix();
+        final String path = pathPrefix  ;
         final String id = BlobAntiPatternObject.getSessionCookieId();
         String ver = null;
         BlobAntiPatternObject.getPathIdVer(path, id);
@@ -115,12 +93,12 @@ public class CouchPropertiesAccess<T> {
             final ByteBuffer cursor = ByteBuffer.allocateDirect(getReceiveBufferSize());
             final int read = ((SocketChannel) channel).read(cursor);
             cursor.flip();
-            final Rfc822HeaderPrefix rfc822HeaderPrefix = new Rfc822HeaderPrefix("Content-Length");
-            final String rescode = rfc822HeaderPrefix.apply(cursor).cookies(BlobAntiPatternObject.MYGEOIPSTRING).getRescode();
+            final Rfc822HeaderState rfc822HeaderPrefix = new Rfc822HeaderState(RfPostWrapper.CONTENT_LENGTH);
+            final String rescode = rfc822HeaderPrefix.apply(cursor).cookies(BlobAntiPatternObject.MYGEOIPSTRING).getPathRescode();
             if (rescode.equals("200")) {
               Callable<Void> callable = new Callable<Void>() {
                 public Void call() throws Exception {
-                  final int remaining = Integer.parseInt((String) rfc822HeaderPrefix.getHeaderStrings().get("Content-Length"));
+                  final int remaining = Integer.parseInt((String) rfc822HeaderPrefix.getHeaderStrings().get(RfPostWrapper.CONTENT_LENGTH));
                   final ByteBuffer payload;
                   final Exchanger<ByteBuffer> inner = new Exchanger<ByteBuffer>();
                   if (remaining == cursor.remaining()) inner.exchange(cursor.slice());
@@ -169,8 +147,8 @@ public class CouchPropertiesAccess<T> {
                             final ByteBuffer dst = ByteBuffer.allocateDirect(getSendBufferSize());
                             channel.read(dst);
 
-                            final Rfc822HeaderPrefix etag = new Rfc822HeaderPrefix("Etag").apply((ByteBuffer) dst.flip());
-                            if (rfc822HeaderPrefix.getRescode().startsWith("20")) {
+                            final Rfc822HeaderState etag = new Rfc822HeaderState("Etag").apply((ByteBuffer) dst.flip());
+                            if (rfc822HeaderPrefix.getPathRescode().startsWith("20")) {
                               outer.exchange(rfc822HeaderPrefix.getCookieStrings().get("Etag"));
                             } else {
                               outer.exchange("error: " + UTF8.decode((ByteBuffer) dst.rewind()).toString().trim());
@@ -193,4 +171,8 @@ public class CouchPropertiesAccess<T> {
     });
     return key;
   }
+                              abstract
+  public CouchLocator<T> getLocator();
+
+
 }

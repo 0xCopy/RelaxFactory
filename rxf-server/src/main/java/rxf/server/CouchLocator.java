@@ -218,8 +218,8 @@ HttpMethod.enqueue( createCouchConnection() ,OP_CONNECT | OP_WRITE,new AsioVisit
                             if (buf.hasRemaining()) {
                               ByteBuffer headers = ((ByteBuffer) buf.duplicate().flip()).slice();
                               Map<String, int[]> map = HttpHeaders.getHeaders(headers);
-                              if (map.containsKey("Content-Length")) {
-                                int[] bounds = map.get("Content-Length");
+                              if (map.containsKey(RfPostWrapper.CONTENT_LENGTH)) {
+                                int[] bounds = map.get(RfPostWrapper.CONTENT_LENGTH);
                                 String trim = UTF8.decode((ByteBuffer) headers.clear().position(bounds[0]).limit(bounds[1])).toString().trim();
                                 long l = Long.parseLong(trim);
                                 final ByteBuffer cursor = ByteBuffer.allocateDirect((int) l).put(buf);

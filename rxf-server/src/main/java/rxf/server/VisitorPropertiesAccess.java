@@ -7,7 +7,28 @@ package rxf.server;
  */
 public class VisitorPropertiesAccess {
 
-  private static CouchPropertiesAccess<Visitor> visitorCouchPropertiesAccess = new CouchPropertiesAccess<Visitor>(BlobAntiPatternObject.VISITOR_LOCATOR);
+  private static CouchPropertiesAccess<Visitor> visitorCouchPropertiesAccess = new CouchPropertiesAccess<Visitor>() {
+    @Override
+    public CouchLocator<Visitor> getLocator() {
+      return new CouchLocator<Visitor>() {
+        @Override
+        public Class<Visitor> getDomainType() {
+          return Visitor.class;
+
+        }
+
+        @Override
+        public String getId(Visitor domainObject) {
+          return domainObject.getId();
+        }
+
+        @Override
+        public Object getVersion(Visitor domainObject) {
+          return domainObject.getVersion();
+        }
+      };
+    }
+  };
 
   static public String getSessionProperty(String key) {
     try {

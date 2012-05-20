@@ -440,8 +440,8 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
         final SocketChannel channel = (SocketChannel) key.channel();
         ByteBuffer cursor = ByteBuffer.allocateDirect(BlobAntiPatternObject.getReceiveBufferSize());
         int read = channel.read(cursor);
-        final Rfc822HeaderPrefix apply = new Rfc822HeaderPrefix(new String[]{"Etag"}).apply((ByteBuffer) cursor.flip());
-        if (apply.getRescode().startsWith("20")) {
+        final Rfc822HeaderState apply = new Rfc822HeaderState(new String[]{"Etag"}).apply((ByteBuffer) cursor.flip());
+        if (apply.getPathRescode().startsWith("20")) {
 
           final String keyDocument = GEOIP_ROOTNODE;
 
@@ -561,7 +561,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
                       int rc = Integer.parseInt(UTF8.decode(h2).toString().trim());
                       if (200 == rc) {
                         Map<String, int[]> hm = HttpHeaders.getHeaders((ByteBuffer) headers.rewind());
-                        int[] ints = hm.get("Content-Length");
+                        int[] ints = hm.get(RfPostWrapper.CONTENT_LENGTH);
                         String cl = UTF8.decode((ByteBuffer) h2.clear().position(ints[0]).limit(ints[1])).toString().trim();
                         final long total = Long.parseLong(cl);
 

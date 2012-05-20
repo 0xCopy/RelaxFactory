@@ -60,7 +60,7 @@ public class BlobAntiPatternObject {
   public static final rxf.server.CouchLocator<rxf.server.Visitor> VISITOR_LOCATOR = rxf.server.Visitor.createLocator();
   public static final ScheduledExecutorService EXECUTOR_SERVICE = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() + 3);
   private static Queue<SocketChannel> lazyQueue = new ConcurrentLinkedQueue<SocketChannel>();
-  public static final ThreadLocal<ByteBuffer> ThreadLocalHeaders = new ThreadLocal<ByteBuffer>();
+  public static final ThreadLocal<Rfc822HeaderState> ThreadLocalHeaders = new ThreadLocal<Rfc822HeaderState>();
   public static ThreadLocal<InetAddress> ThreadLocalInetAddress = new ThreadLocal<InetAddress>();
   public static final ThreadLocal<Map<String, String>> ThreadLocalSetCookies = new ThreadLocal<Map<String, String>>();
   private static final String VISITORSTRING = BlobAntiPatternObject.class.getCanonicalName();
@@ -81,7 +81,6 @@ public class BlobAntiPatternObject {
   //  private static ByteBuffer locBuf;
   public static InetAddress LOOPBACK = null;
 
-  public static final VisitorPropertiesAccess SESSION_PROPERTIES_ACCESS = new VisitorPropertiesAccess();
   public static final EnumMap<HttpMethod, LinkedHashMap<Pattern, AsioVisitor>> NAMESPACE = new EnumMap<HttpMethod, LinkedHashMap<Pattern, AsioVisitor>>(HttpMethod.class) {
     {
       final Pattern passthroughExpr = Pattern.compile("^/i(/.*)$");
@@ -125,7 +124,7 @@ public class BlobAntiPatternObject {
                         ByteBuffer headers = ((ByteBuffer) dst.duplicate().flip()).slice();
 
                         final Map<String, int[]> map = HttpHeaders.getHeaders((ByteBuffer) headers.rewind());
-                        final int[] ints = map.get("Content-Length");
+                        final int[] ints = map.get(RfPostWrapper.CONTENT_LENGTH);
                         final int total = Integer.parseInt(UTF8.decode((ByteBuffer) headers.duplicate().clear().position(ints[0]).limit(ints[1])).toString().trim());
                         final SocketChannel browserChannel = (SocketChannel) browserKey.channel();
                         try {
@@ -197,6 +196,7 @@ public class BlobAntiPatternObject {
     }
   };
   public static final Charset UTF8CHARSET = Charset.forName(UTF8.name());
+  public static final VisitorPropertiesAccess VISITOR_PROPERTIES_ACCESS = new VisitorPropertiesAccess();
 
   static {
     try {
@@ -219,14 +219,9 @@ public class BlobAntiPatternObject {
     String id = null;
     Visitor roSession = null;
     try {
-      ThreadLocalSessionHeaders invoke = new ThreadLocalSessionHeaders().invoke();
-      ByteBuffer headerBuffer = invoke.getHb();
-      Map<String, int[]> headerIndex = invoke.getHeaders();
+      final Rfc822HeaderState rfc822HeaderPrefix = ThreadLocalHeaders.get();
+      id = rfc822HeaderPrefix.getCookieStrings().get(VISITORSTRING);
 
-      if (headerIndex.containsKey(COOKIE)) {
-        int[] optionalStartStopMarkers = headerIndex.get(COOKIE);
-        id = getCookieAsString(VISITORSTRING, headerBuffer, optionalStartStopMarkers);
-      }
     } catch (Throwable e) {
       System.err.println("cookie failure on " + id);
     }
@@ -253,9 +248,10 @@ public class BlobAntiPatternObject {
           @Override
           public void run() {
             try {
+              final VisitorPropertiesAccess visitorPropertiesAccess = VISITOR_PROPERTIES_ACCESS;
 
-              SESSION_PROPERTIES_ACCESS.setSessionProperty(InetAddress.class.getCanonicalName(), inet4Address.getCanonicalHostName());
-              SESSION_PROPERTIES_ACCESS.setSessionProperty("geoip", geoip);
+              VISITOR_PROPERTIES_ACCESS.setSessionProperty(InetAddress.class.getCanonicalName(), inet4Address.getCanonicalHostName());
+              VISITOR_PROPERTIES_ACCESS.setSessionProperty("geoip", geoip);
 
             } catch (Throwable ignored) {
             }
@@ -311,30 +307,6 @@ public class BlobAntiPatternObject {
     return roSession;
   }
 
-  public static String getCookieAsString(String cookieKey, ByteBuffer headerBuffer, int... optionalStartStopMarkers) {
-
-    if (0 < optionalStartStopMarkers.length) {
-      if (1 < optionalStartStopMarkers.length) {
-        headerBuffer.limit(optionalStartStopMarkers[1]);
-      }
-      headerBuffer.position(optionalStartStopMarkers[0]);
-    }
-    String coo =
-        UTF8.decode(headerBuffer).toString().trim();
-
-    String[] split = coo.split(";");
-    String val = null;
-    for (String s : split) {
-      String[] chunk = s.split("=");
-      String cname = chunk[0];
-      if (cookieKey.equals(cname.trim())) {
-        val = chunk[1].trim();
-        break;
-      }
-    }
-    return val;
-  }
-
 
   public static long sortableInetAddress(InetAddress inet4Address) {
     byte[] address = inet4Address.getAddress();
@@ -361,7 +333,6 @@ public class BlobAntiPatternObject {
     }
     return null;
   }
-
 
   public static ByteBuffer moveCaretToDoubleEol(ByteBuffer buffer) {
     int distance;
@@ -543,7 +514,7 @@ public class BlobAntiPatternObject {
             System.err.println("result: " + UTF8.decode((ByteBuffer) headerBuf[0].rewind()));
           }
 
-          int[] bounds = HttpHeaders.getHeaders((ByteBuffer) headerBuf[0].rewind()).get("Content-Length");
+          int[] bounds = HttpHeaders.getHeaders((ByteBuffer) headerBuf[0].rewind()).get(RfPostWrapper.CONTENT_LENGTH);
           if (null == bounds) {
 
             bounds = HttpHeaders.getHeaders((ByteBuffer) headerBuf[0].rewind()).get("Transfer-Encoding");
@@ -747,28 +718,6 @@ public class BlobAntiPatternObject {
     return NAMESPACE;
   }
 
-
-  static class ThreadLocalSessionHeaders {
-
-    private ByteBuffer hb;
-
-    private Map<String, int[]> headers;
-
-    public ByteBuffer getHb() {
-      return hb;
-    }
-
-    public Map<String, int[]> getHeaders() {
-      return headers;
-    }
-
-    public ThreadLocalSessionHeaders invoke() {
-      hb = ThreadLocalHeaders.get();
-      headers = HttpHeaders.getHeaders((ByteBuffer) hb.rewind());
-      return this;
-    }
-
-  }
 
   //test
   public static void main(String... args) throws Exception {
