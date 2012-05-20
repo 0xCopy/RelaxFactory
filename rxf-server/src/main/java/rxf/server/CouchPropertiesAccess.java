@@ -1,6 +1,34 @@
 package rxf.server;
 
-import static rxf.server.BlobAntiPatternObject.setGenericDocumentProperty;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Type;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
+import java.nio.channels.SelectableChannel;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.SocketChannel;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Exchanger;
+
+import com.google.gson.reflect.TypeToken;
+import one.xio.AsioVisitor;
+import one.xio.HttpMethod;
+
+import static java.nio.channels.SelectionKey.OP_CONNECT;
+import static java.nio.channels.SelectionKey.OP_READ;
+import static java.nio.channels.SelectionKey.OP_WRITE;
+import static one.xio.HttpMethod.UTF8;
+import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
+import static rxf.server.BlobAntiPatternObject.GSON;
+import static rxf.server.BlobAntiPatternObject.UTF8CHARSET;
+import static rxf.server.BlobAntiPatternObject.createCouchConnection;
+import static rxf.server.BlobAntiPatternObject.getPathIdVer;
+import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
+import static rxf.server.BlobAntiPatternObject.getSendBufferSize;
+import static rxf.server.BlobAntiPatternObject.inferRevision;
+import static rxf.server.BlobAntiPatternObject.recycleChannel;
 
 /**
  * User: jim
@@ -8,16 +36,48 @@ import static rxf.server.BlobAntiPatternObject.setGenericDocumentProperty;
  * Time: 7:59 AM
  */
 public class CouchPropertiesAccess<T> {
+  public final Class<T> TYPE = (Class<T>) new TypeToken<T>() {
+  }.getType();
+  CouchLocator<T> memento = new CouchLocator<T>() {
+    @Override
+    public Class<T> getDomainType() {
+      return TYPE;  //todo: verify for a purpose
+    }
 
-  private CouchLocator<T> locator;
+    @Override
+    public String getId(T domainObject) {
+      final String method = "getId";
+      return callMethod(domainObject, method);
+    }
+
+    @Override
+    public Object getVersion(T domainObject) {
+      final String method = "getVersion";
+      return callMethod(domainObject, method);
+    }
+  };
+
+  private String callMethod(T domainObject, String method) {
+    Object id = null;
+    try {
+      id = TYPE.getMethod(method).invoke(domainObject);
+    } catch (IllegalAccessException e) {
+      e.printStackTrace();  //todo: verify for a purpose
+    } catch (InvocationTargetException e) {
+      e.printStackTrace();  //todo: verify for a purpose
+    } catch (NoSuchMethodException e) {
+      e.printStackTrace();  //todo: verify for a purpose
+    }
+    return (String) id;
+  }
 
   public CouchPropertiesAccess(CouchLocator<T> locator) {
-    this.locator = locator;
+//    this.locator = locator;
   }
 
   public String getSessionProperty(String eid, String key) {
     try {
-      String path = locator.getPathPrefix() + '/' + eid;
+      String path = memento.getPathPrefix() + '/' + eid;
       return BlobAntiPatternObject.getGenericDocumentProperty(path, key);
     } catch (Exception e) {
       e.printStackTrace();  //todo: verify for a purpose
@@ -26,21 +86,111 @@ public class CouchPropertiesAccess<T> {
   }
 
   /**
+   * @param key
+   * @param value
    * @return new version string
+   * @throws java.nio.channels.ClosedChannelException
+   *
+   * @throws InterruptedException
    */
-  public String setSessionProperty(String eid, String key, String value) {
+  public String setSessionProperty(String key, final String value) throws ClosedChannelException, InterruptedException {
+    final Exchanger outer = new Exchanger();
 
-    String path = locator.getPathPrefix() + '/' + eid;
-    CouchTx tx = null;
-    try {
-      tx = setGenericDocumentProperty(key, value,path);
-      System.err.println("tx: " + tx.toString());
-      return tx.getRev();
-    } catch (Exception e) {
-      e.printStackTrace();  //todo: verify for a purpose
-    }
+    HttpMethod.enqueue(createCouchConnection(), OP_WRITE | OP_CONNECT, new AsioVisitor.Impl() {
+
+      @Override
+      public void onWrite(SelectionKey key) throws Exception {
+        final String pathPrefix = memento.getPathPrefix();
+        final String path = pathPrefix + '/' + Type.class.getSimpleName();
+        final String id = BlobAntiPatternObject.getSessionCookieId();
+        String ver = null;
+        BlobAntiPatternObject.getPathIdVer(path, id);
+        final String hdr = "GET " + path + " HTTP/1.1\r\nAccept: */*\r\n\r\n";
+        final SelectableChannel channel = key.channel();
+        ((SocketChannel) channel).write(UTF8CHARSET.encode(hdr));
+        key.interestOps(OP_READ).selector().wakeup();
+        key.attach(new Impl() {
+          @Override
+          public void onRead(final SelectionKey key) throws Exception {
+            final ByteBuffer cursor = ByteBuffer.allocateDirect(getReceiveBufferSize());
+            final int read = ((SocketChannel) channel).read(cursor);
+            cursor.flip();
+            final Rfc822HeaderPrefix rfc822HeaderPrefix = new Rfc822HeaderPrefix("Content-Length");
+            final String rescode = rfc822HeaderPrefix.apply(cursor).cookies(BlobAntiPatternObject.MYGEOIPSTRING).getRescode();
+            if (rescode.equals("200")) {
+              Callable<Void> callable = new Callable<Void>() {
+                public Void call() throws Exception {
+                  final int remaining = Integer.parseInt((String) rfc822HeaderPrefix.getHeaderStrings().get("Content-Length"));
+                  final ByteBuffer payload;
+                  final Exchanger<ByteBuffer> inner = new Exchanger<ByteBuffer>();
+                  if (remaining == cursor.remaining()) inner.exchange(cursor.slice());
+                  else {
+                    payload = ByteBuffer.allocateDirect(remaining).put(cursor);
+
+                    key.attach(new Impl() {
+                      @Override
+                      public void onRead(SelectionKey key) throws Exception {
+                        ((SocketChannel) channel).read(payload);
+
+                        if (!payload.hasRemaining()) {
+                          inner.exchange((ByteBuffer) payload.flip());
+
+                        }
+                      }
+                    });
+                  }
+                  final ByteBuffer exchange = inner.exchange(null);
+                  final String json = UTF8.decode(exchange).toString();
 
 
-    return eid;
+
+                  final Map data = BlobAntiPatternObject.GSON.fromJson(UTF8.decode(exchange).toString().trim(), Map.class);
+                  final String ver = inferRevision(data);
+                  final String pathIdVer = getPathIdVer(path, id, ver);
+                  data.put(key, value);
+                  final String outbound = GSON.toJson(data);
+                  final ByteBuffer endBuffer = UTF8.encode(outbound);
+
+                  String hdr = "PUT " + pathIdVer + " HTTP/1.1\r\nContent-Length: " + endBuffer.limit() +
+                      "\r\nAccept: */*\r\n\r\n" + json;
+                  final ByteBuffer encode = UTF8.encode(hdr);//short
+
+
+                  HttpMethod.enqueue(createCouchConnection(), OP_WRITE, new Impl() {
+                    @Override
+                    public void onWrite(final SelectionKey key) throws Exception {
+                      final SocketChannel channel = (SocketChannel) key.channel();
+                      channel.write(encode);
+                      if (!encode.hasRemaining()) {
+                        final Buffer clear = encode.clear();
+                        key.interestOps(OP_READ).attach(new Impl() {
+                          @Override
+                          public void onRead(SelectionKey key) throws Exception {
+                            final ByteBuffer dst = ByteBuffer.allocateDirect(getSendBufferSize());
+                            channel.read(dst);
+
+                            final Rfc822HeaderPrefix etag = new Rfc822HeaderPrefix("Etag").apply((ByteBuffer) dst.flip());
+                            if (rfc822HeaderPrefix.getRescode().startsWith("20")) {
+                              outer.exchange(rfc822HeaderPrefix.getCookieStrings().get("Etag"));
+                            } else {
+                              outer.exchange("error: " + UTF8.decode((ByteBuffer) dst.rewind()).toString().trim());
+                            }
+                          }
+                        });
+
+                      }
+                    }
+                  });
+
+                  return null;
+                }
+              };
+              EXECUTOR_SERVICE.submit(callable);
+            }
+          }
+        });
+      }
+    });
+    return key;
   }
 }

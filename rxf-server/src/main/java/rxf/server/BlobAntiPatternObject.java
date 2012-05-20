@@ -57,7 +57,7 @@ import static one.xio.HttpMethod.wheresWaldo;
  * Time: 11:55 PM
  */
 public class BlobAntiPatternObject {
-  public static final CouchLocator<Visitor> VISITOR_LOCATOR = Visitor.createLocator();
+  public static final rxf.server.CouchLocator<rxf.server.Visitor> VISITOR_LOCATOR = rxf.server.Visitor.createLocator();
   public static final ScheduledExecutorService EXECUTOR_SERVICE = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() + 3);
   private static Queue<SocketChannel> lazyQueue = new ConcurrentLinkedQueue<SocketChannel>();
   public static final ThreadLocal<ByteBuffer> ThreadLocalHeaders = new ThreadLocal<ByteBuffer>();
@@ -440,7 +440,8 @@ public class BlobAntiPatternObject {
     for (String s : pathIdVer) {
       switch (c) {
         case 2:
-          r.append("?rev=").append(s);
+          if (null != s && !"null".equals(s))
+            r.append("?rev=").append(s);
           break;
         case 0:
           r.append('/').append(s).append('/');
@@ -528,7 +529,8 @@ public class BlobAntiPatternObject {
           int read = channel.read(dst);
           if (-1 == read) {
             key.cancel();
-            returnTo.put("{\"error\":\"connection closed\" ,\"reason\":\"buggered\"}");   return;
+            returnTo.put("{\"error\":\"connection closed\" ,\"reason\":\"buggered\"}");
+            return;
           }
 
           dst.flip();

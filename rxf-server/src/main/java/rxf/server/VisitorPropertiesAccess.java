@@ -20,7 +20,7 @@ public class VisitorPropertiesAccess {
 
   static public String setSessionProperty(String key, String value) {
     try {
-      return visitorCouchPropertiesAccess.setSessionProperty(BlobAntiPatternObject.getSessionCookieId(), key, value);
+      return visitorCouchPropertiesAccess.setSessionProperty(key, value);
     } catch (Exception e) {
       e.printStackTrace();  //todo: verify for a purpose
     }
