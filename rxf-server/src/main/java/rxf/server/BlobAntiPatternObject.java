@@ -817,7 +817,7 @@ public class BlobAntiPatternObject {
           final SynchronousQueue<String> returnTo = new SynchronousQueue<String>();
           final SocketChannel couchConnection = createCouchConnection();
           final AsioVisitor asioVisitor = fetchHeadByPath(couchConnection, returnTo, "/geoip/current");
-          System.err.println("head: " + returnTo.take());
+          //System.err.println("head: " + returnTo.take());
           recycleChannel(couchConnection);
         }
 
