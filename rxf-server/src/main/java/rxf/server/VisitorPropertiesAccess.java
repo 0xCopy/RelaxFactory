@@ -7,7 +7,7 @@ package rxf.server;
  */
 public class VisitorPropertiesAccess {
 
-  private static CouchPropertiesAccess<Visitor> visitorCouchPropertiesAccess = new CouchPropertiesAccess<Visitor>() {
+  public static CouchPropertiesAccess<Visitor> visitorCouchPropertiesAccess = new CouchPropertiesAccess<Visitor>() {
     @Override
     public CouchLocator<Visitor> getLocator() {
       return new CouchLocator<Visitor>() {

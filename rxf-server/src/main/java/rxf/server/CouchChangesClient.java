@@ -256,6 +256,6 @@ public class CouchChangesClient extends AsioVisitor.Impl {
     String feedString = couchChangesClient.getFeedString();
     System.err.println("feedstring: " + feedString);
     HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, couchChangesClient, feedString);
-    HttpMethod.init(args, HttpMethod.$); // no http
+    HttpMethod.init(args, HttpMethod.$, 1000); // no http
   }
 }
