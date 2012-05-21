@@ -25,11 +25,13 @@ import java.util.TreeMap;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Exchanger;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -49,6 +51,7 @@ import static java.nio.channels.SelectionKey.OP_WRITE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static one.xio.HttpMethod.GET;
 import static one.xio.HttpMethod.UTF8;
+import static one.xio.HttpMethod.enqueue;
 import static one.xio.HttpMethod.wheresWaldo;
 
 /**
@@ -216,50 +219,92 @@ public class BlobAntiPatternObject {
   }
 
   static public String getSessionCookieId() throws Exception {
-    String id = null;
+    final AtomicReference<String> id = new AtomicReference<String>(null);
     Visitor roSession = null;
     try {
       final Rfc822HeaderState rfc822HeaderPrefix = ThreadLocalHeaders.get();
-      id = rfc822HeaderPrefix.getCookieStrings().get(VISITORSTRING);
+      id.set(rfc822HeaderPrefix.getCookieStrings().get(VISITORSTRING));
 
     } catch (Throwable e) {
       System.err.println("cookie failure on " + id);
     }
-    if (null == id) {
-      roSession = VISITOR_LOCATOR.create(Visitor.class);
-      id = roSession.getId();
+    if (null == id.get()) {
+      EXECUTOR_SERVICE.submit(new Runnable() {
+        public void run() {
+          try {
+            final Exchanger exchanger = new Exchanger();
+            enqueue(createCouchConnection(), OP_WRITE, new AsioVisitor.Impl() {
+              @Override
+              public void onWrite(SelectionKey key) throws Exception {
+                final SocketChannel channel = (SocketChannel) key.channel();
+                final String rxf_visitor = getPathIdVer("rxf_visitor");
+                final String s = "POST " + rxf_visitor + " HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: 2" + "\r\n\r\n{}";
+                final ByteBuffer wrap = ByteBuffer.wrap(s.getBytes());
+                final int write = channel.write(wrap);
+                key.interestOps(OP_READ).attach(new Impl() {
+                  @Override
+                  public void onRead(SelectionKey key) throws Exception {
+                    final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
+                    final int read = channel.read(dst);
+                    final Rfc822HeaderState ETag = new Rfc822HeaderState("ETag").apply((ByteBuffer) dst.flip());
+                    final String pathRescode = ETag.getPathRescode();
+//                    final String next = (String) ETag.getHeaderStrings().values().iterator().next();
+//                    System.err.println("ETag===: " + next);
 
-      Map<String, String> stringMap = ThreadLocalSetCookies.get();
-      if (null == stringMap) {
-        Map<String, String> value = new TreeMap<String, String>();
-        value.put(VISITORSTRING, id);
-        ThreadLocalSetCookies.set(value);
-      }
-      Date expire = new Date(TimeUnit.DAYS.toMillis(14) + System.currentTimeMillis());
-      String cookietext = MessageFormat.format("{0} ; path=/ ; expires={1} ; HttpOnly", id, expire.toGMTString());
-      ThreadLocalSetCookies.get().put(VISITORSTRING, cookietext);
-      final InetAddress inet4Address = ThreadLocalInetAddress.get();
-      if (null != inet4Address) {
-
-
-        final String geoip = MessageFormat.format("{0} ; path=/ ; expires={1}", GeoIpService.mapAddressLookup(inet4Address), expire.toGMTString());
-        ThreadLocalSetCookies.get().put(MYGEOIPSTRING, geoip);
-        EXECUTOR_SERVICE.schedule(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              final VisitorPropertiesAccess visitorPropertiesAccess = VISITOR_PROPERTIES_ACCESS;
-
-              VISITOR_PROPERTIES_ACCESS.setSessionProperty(InetAddress.class.getCanonicalName(), inet4Address.getCanonicalHostName());
-              VISITOR_PROPERTIES_ACCESS.setSessionProperty("geoip", geoip);
-
-            } catch (Throwable ignored) {
-            }
+                    final Map map = GSON.fromJson(UTF8.decode(dst).toString(), Map.class);
+                    id.set((String) map.get("id"));
+                    exchanger.exchange(null);
+                    //    V
+                  } //    V
+                  //      V
+                } //     zot!
+                    //    V
+                );//      V
+                //        V
+                //        V
+              } //        V
+            } //          V
+            ); //         V
+            exchanger.exchange(null);
+          } catch (ClosedChannelException e) {
+            e.printStackTrace();  //todo: verify for a purpose
+          } catch (InterruptedException e) {
+            e.printStackTrace();  //todo: verify for a purpose
           }
-        }, 250, MILLISECONDS);
-      }
+
+          Map<String, String> stringMap = ThreadLocalSetCookies.get();
+          if (null == stringMap) {
+            Map<String, String> value = new TreeMap<String, String>();
+            value.put(VISITORSTRING, id.get());
+            ThreadLocalSetCookies.set(value);
+          }
+          Date expire = new Date(TimeUnit.DAYS.toMillis(14) + System.currentTimeMillis());
+          String cookietext = MessageFormat.format("{0} ; path=/ ; expires={1} ; HttpOnly", id.get(), expire.toGMTString());
+          ThreadLocalSetCookies.get().put(VISITORSTRING, cookietext);
+          final InetAddress inet4Address = ThreadLocalInetAddress.get();
+          if (null != inet4Address) {
+
+
+            final String geoip = MessageFormat.format("{0} ; path=/ ; expires={1}", GeoIpService.mapAddressLookup(inet4Address), expire.toGMTString());
+            ThreadLocalSetCookies.get().put(MYGEOIPSTRING, geoip);
+            EXECUTOR_SERVICE.schedule(new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  final VisitorPropertiesAccess visitorPropertiesAccess = VISITOR_PROPERTIES_ACCESS;
+
+                  VISITOR_PROPERTIES_ACCESS.setSessionProperty(InetAddress.class.getCanonicalName(), inet4Address.getCanonicalHostName());
+                  VISITOR_PROPERTIES_ACCESS.setSessionProperty("geoip", geoip);
+
+                } catch (Throwable ignored) {
+                }
+              }
+            }, 250, MILLISECONDS);
+          }
+        }
+      });
     }
-    return id;
+    return id.get();
   }
 
 

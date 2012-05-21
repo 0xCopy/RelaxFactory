@@ -28,11 +28,11 @@ class SendJsonVisitor extends AsioVisitor.Impl {
     this.json = json;
     this.returnTo = returnTo;
     this.pathIdVer = pathIdVer;
-    assert this.pathIdVer.length > 1;
-    if (SendJsonVisitor.DEBUG_SENDJSON) {
+//    assert this.pathIdVer.length > 1;
+    /*  if (SendJsonVisitor.DEBUG_SENDJSON) {
       System.err.println("sendJson audit: " + BlobAntiPatternObject.arrToString(pathIdVer) + wheresWaldo());
       if (pathIdVer.length < 1) throw new Error("new path code required here");
-    }
+    }*/
   }
 
   @Override
@@ -56,7 +56,7 @@ class SendJsonVisitor extends AsioVisitor.Impl {
       }
     }
 //    call = MessageFormat.format("{0} /{1} HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: {2}\r\n\r\n{3}", method, path, json.length(), json);
-    call = (new StringBuilder().append(method).append(" ").append(path).append(" HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: ").append(json.getBytes(BlobAntiPatternObject.UTF8CHARSET).length).append("\r\n\r\n").append(json).toString()).replace("//", "/");
+    call = (new StringBuilder().append(method).append(" ").append(path.replace("//", "/")).append(" HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: ").append(json.getBytes(BlobAntiPatternObject.UTF8CHARSET).length).append("\r\n\r\n").append(json).toString()).replace("//", "/");
     if (DEBUG_SENDJSON) {
       System.err.println("dsj: attempting call to " + call + " " + wheresWaldo());
     }

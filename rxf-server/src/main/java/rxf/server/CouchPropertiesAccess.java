@@ -147,9 +147,9 @@ public abstract class CouchPropertiesAccess<T> {
                             final ByteBuffer dst = ByteBuffer.allocateDirect(getSendBufferSize());
                             channel.read(dst);
 
-                            final Rfc822HeaderState etag = new Rfc822HeaderState("Etag").apply((ByteBuffer) dst.flip());
+                            final Rfc822HeaderState ETag = new Rfc822HeaderState("ETag").apply((ByteBuffer) dst.flip());
                             if (rfc822HeaderPrefix.getPathRescode().startsWith("20")) {
-                              outer.exchange(rfc822HeaderPrefix.getCookieStrings().get("Etag"));
+                              outer.exchange(rfc822HeaderPrefix.getCookieStrings().get("ETag"));
                             } else {
                               outer.exchange("error: " + UTF8.decode((ByteBuffer) dst.rewind()).toString().trim());
                             }

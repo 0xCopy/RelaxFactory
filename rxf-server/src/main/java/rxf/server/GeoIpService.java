@@ -440,7 +440,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
         final SocketChannel channel = (SocketChannel) key.channel();
         ByteBuffer cursor = ByteBuffer.allocateDirect(BlobAntiPatternObject.getReceiveBufferSize());
         int read = channel.read(cursor);
-        final Rfc822HeaderState apply = new Rfc822HeaderState(new String[]{"Etag"}).apply((ByteBuffer) cursor.flip());
+        final Rfc822HeaderState apply = new Rfc822HeaderState(new String[]{"ETag"}).apply((ByteBuffer) cursor.flip());
         if (apply.getPathRescode().startsWith("20")) {
 
           final String keyDocument = GEOIP_ROOTNODE;
