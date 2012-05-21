@@ -199,8 +199,9 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
 
                     final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
                     channel.read(dst);
-                    final Rfc822HeaderState rfc822HeaderState = new Rfc822HeaderState(CONTENT_LENGTH).apply(dst);
-                    if (rfc822HeaderState.getPathRescode().startsWith("20")) {
+                    final Rfc822HeaderState rfc822HeaderState = new Rfc822HeaderState(CONTENT_LENGTH).apply((ByteBuffer) dst.flip());
+                    final String pathRescode = rfc822HeaderState.getPathRescode();
+                    if (pathRescode.startsWith("20")) {
                       final int len = Integer.parseInt((String) rfc822HeaderState.getHeaderStrings().get(CONTENT_LENGTH));
                       final ByteBuffer cursor = ByteBuffer.allocate(len).put(dst);
                       if (!cursor.hasRemaining()) {
@@ -225,7 +226,8 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
             }
           });
           final ByteBuffer exchange = (ByteBuffer) exchanger.exchange(null).flip();
-          return GSON.fromJson(UTF8.decode(exchange).toString(), CouchTx.class);
+          final String json = UTF8.decode(exchange).toString();
+          return GSON.fromJson(json, CouchTx.class);
         } catch (Throwable e) {
           e.printStackTrace();
         }

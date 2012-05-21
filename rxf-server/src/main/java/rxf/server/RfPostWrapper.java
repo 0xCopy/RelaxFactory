@@ -15,7 +15,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Exchanger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -67,7 +66,7 @@ public class RfPostWrapper extends Impl {
 
   @Override
   public void onRead(final SelectionKey key) throws IOException {
-    ByteBuffer dst = ByteBuffer.allocateDirect(BlobAntiPatternObject.getReceiveBufferSize());
+    final ByteBuffer dst = ByteBuffer.allocateDirect(BlobAntiPatternObject.getReceiveBufferSize());
     final SocketChannel channel = (SocketChannel) key.channel();
     int read = channel.read(dst);
 
@@ -81,91 +80,103 @@ public class RfPostWrapper extends Impl {
     switch (method) {
       case POST: {
 
-        final Exchanger<ByteBuffer> exchanger = new Exchanger<ByteBuffer>();
-        final Object o = rfc822HeaderState.getHeaderStrings().get(RfPostWrapper.CONTENT_LENGTH);
-        int remaining = Integer.parseInt((String) o);
+        EXECUTOR_SERVICE.submit(new Runnable() {
+          public void run() {
+            final Exchanger<ByteBuffer> exchanger = new Exchanger<ByteBuffer>();
+            final Object o = rfc822HeaderState.getHeaderStrings().get(RfPostWrapper.CONTENT_LENGTH);
+            int remaining = Integer.parseInt((String) o);
 
-        final ByteBuffer cursor = ByteBuffer.allocateDirect(remaining).put(dst);
-        EXECUTOR_SERVICE.submit(new Callable<Void>() {
-          public Void call() throws Exception {
-            if (cursor.hasRemaining()) key.interestOps(OP_READ).attach(new Impl() {
-              @Override
-              public void onRead(final SelectionKey key) throws Exception {
-                channel.read(cursor);
-                if (!cursor.hasRemaining()) {
-                  /////////////////////////////////////////////////////////////////////////////////////////////////////
+            final ByteBuffer cursor = ByteBuffer.allocateDirect(remaining).put(dst);
+            EXECUTOR_SERVICE.submit(new Runnable() {
+              public void run() {
+                try {
+                  if (cursor.hasRemaining()) key.interestOps(OP_READ).attach(new Impl() {
+                    @Override
+                    public void onRead(final SelectionKey key) throws Exception {
+                      channel.read(cursor);
+                      if (!cursor.hasRemaining()) {
+                        /////////////////////////////////////////////////////////////////////////////////////////////////////
 
+                        exchanger.exchange(cursor);
+                        return;
+
+                      }
+                    }
+                  });        //////
                   exchanger.exchange(cursor);
-                  return;
-
+                } catch (Throwable e) {
+                  e.printStackTrace();  //todo: verify for a purpose
+                } finally {
                 }
               }
-            });        //////
-            exchanger.exchange(cursor);
-            return null;
-          }
-        });
-        try {
-          dst = exchanger.exchange(null);
-
-          String trim = UTF8.decode((ByteBuffer) dst.flip()).toString().trim();
-          System.err.println("exchanger says: " + UTF8.decode((ByteBuffer) dst.duplicate().rewind()));
-          InetAddress remoteSocketAddress = channel.socket().getInetAddress();
-          String process = null;
-          try {
+            });
             try {
-              ThreadLocalHeaders.set(rfc822HeaderState);
-              ThreadLocalInetAddress.set(remoteSocketAddress);
-//              SERVICE_LAYER.
-              process = SIMPLE_REQUEST_PROCESSOR.process(trim);
-            } catch (RuntimeException e) {
+              {
+                ByteBuffer dst = exchanger.exchange(null);
+
+                String trim = UTF8.decode((ByteBuffer) dst.flip()).toString().trim();
+                System.err.println("exchanger says: " + UTF8.decode((ByteBuffer) dst.duplicate().rewind()));
+                InetAddress remoteSocketAddress = channel.socket().getInetAddress();
+                String process = null;
+                try {
+                  try {
+                    ThreadLocalHeaders.set(rfc822HeaderState);
+                    ThreadLocalInetAddress.set(remoteSocketAddress);
+                    //              SERVICE_LAYER.
+                    process = SIMPLE_REQUEST_PROCESSOR.process(trim);
+                  } catch (RuntimeException e) {
+                    e.printStackTrace();  //todo: verify for a purpose
+                  } catch (Throwable e) {
+                    e.printStackTrace();  //todo: verify for a purpose
+                  } finally {
+                  }
+                  System.err.println("+++ headers " + UTF8.decode((ByteBuffer) rfc822HeaderState.getHeaderBuf().rewind()).toString());
+                  Map<String, String> setCookiesMap = BlobAntiPatternObject.ThreadLocalSetCookies.get();
+                  String sc1 = "";
+                  if (null != setCookiesMap && !setCookiesMap.isEmpty()) {
+                    sc1 = "";
+
+                    Iterator<Map.Entry<String, String>> iterator = setCookiesMap.entrySet().iterator();
+                    if (iterator.hasNext()) {
+                      do {
+                        Map.Entry<String, String> stringStringEntry = iterator.next();
+                        sc1 += "Set-Cookie: " + stringStringEntry.getKey() + "=" + stringStringEntry.getValue().trim();
+                        if (iterator.hasNext()) sc1 += "; ";
+                        sc1 += "\r\n";
+                      } while (iterator.hasNext());
+                    }
+
+                  }
+                  String sc = sc1;
+                  int length = process.length();
+                  final String s1 = "HTTP/1.1 200 OK\r\n" +
+                      sc +
+                      "Content-Type: application/json\r\n" +
+                      "Content-Length: " + length + "\r\n\r\n";
+                  final String finalProcess = process;
+                  key.attach(new Impl() {
+                    @Override
+                    public void onWrite(SelectionKey selectionKey) throws IOException {
+                      channel.write(UTF8.encode(s1 + finalProcess));
+                      System.err.println("debug: " + s1 + finalProcess);
+                      key.attach(null);
+                      key.selector().wakeup();
+                      key.interestOps(OP_READ);
+                    }
+                  });
+                } catch (Throwable e) {
+                  e.printStackTrace();  //todo: verify for a purpose
+                } finally {
+                }
+
+              }
+            } catch (InterruptedException e) {
               e.printStackTrace();  //todo: verify for a purpose
             } finally {
             }
-            System.err.println("+++ headers " + UTF8.decode((ByteBuffer) rfc822HeaderState.getHeaderBuf().rewind()).toString());
-            Map<String, String> setCookiesMap = BlobAntiPatternObject.ThreadLocalSetCookies.get();
-            String sc1 = "";
-            if (null != setCookiesMap && !setCookiesMap.isEmpty()) {
-              sc1 = "";
-
-              Iterator<Map.Entry<String, String>> iterator = setCookiesMap.entrySet().iterator();
-              if (iterator.hasNext()) {
-                do {
-                  Map.Entry<String, String> stringStringEntry = iterator.next();
-                  sc1 += "Set-Cookie: " + stringStringEntry.getKey() + "=" + stringStringEntry.getValue().trim();
-                  if (iterator.hasNext()) sc1 += "; ";
-                  sc1 += "\r\n";
-                } while (iterator.hasNext());
-              }
-
-            }
-            String sc = sc1;
-            int length = process.length();
-            final String s1 = "HTTP/1.1 200 OK\r\n" +
-                sc +
-                "Content-Type: application/json\r\n" +
-                "Content-Length: " + length + "\r\n\r\n";
-            final String finalProcess = process;
-            key.attach(new Impl() {
-              @Override
-              public void onWrite(SelectionKey selectionKey) throws IOException {
-                channel.write(UTF8.encode(s1 + finalProcess));
-                System.err.println("debug: " + s1 + finalProcess);
-                key.attach(null);
-                key.selector().wakeup();
-                key.interestOps(OP_READ);
-              }
-            });
-          } catch (Throwable e) {
-            e.printStackTrace();  //todo: verify for a purpose
-          } finally {
           }
-
-        } catch (Throwable e) {
-          e.printStackTrace();  //todo: verify for a purpose
-        }
-
-        break;
+        });
+        return;
       }
       case GET: {
         BlobAntiPatternObject.moveCaretToDoubleEol(dst);
