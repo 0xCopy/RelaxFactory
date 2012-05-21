@@ -39,7 +39,6 @@ import static one.xio.HttpMethod.UTF8;
 import static one.xio.HttpMethod.wheresWaldo;
 import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 import static rxf.server.BlobAntiPatternObject.ThreadLocalHeaders;
-import static rxf.server.BlobAntiPatternObject.ThreadLocalInetAddress;
 
 /**
  * a POST interception wrapper for http protocol cracking
@@ -78,8 +77,8 @@ public class RfPostWrapper extends Impl {
       channel.close();
       return;
     } else if (read > 0) {
-      final Rfc822HeaderState rfc822HeaderState = new Rfc822HeaderState(CONTENT_LENGTH).apply((ByteBuffer) dst.flip()).cookies(BlobAntiPatternObject.MYGEOIPSTRING, BlobAntiPatternObject.class.getCanonicalName());
-
+      final Rfc822HeaderState rfc822HeaderState = new Rfc822HeaderState(CONTENT_LENGTH).apply((ByteBuffer) dst.flip()).cookies(BlobAntiPatternObject.MYGEOIPSTRING, BlobAntiPatternObject.class.getCanonicalName()).sourceKey(key);
+                                                  ThreadLocalHeaders.set(rfc822HeaderState);
       HttpMethod method = HttpMethod.valueOf(rfc822HeaderState.getMethodProtocol());
       if ($DBG) {
         ORIGINS.put(key, rfc822HeaderState);
@@ -89,7 +88,8 @@ public class RfPostWrapper extends Impl {
           case POST: {
 
             EXECUTOR_SERVICE.submit(new Runnable() {
-              public void run() {
+              public void run() {                                                                                                                       ThreadLocalHeaders.set(rfc822HeaderState);
+
                 final Exchanger<ByteBuffer> exchanger = new Exchanger<ByteBuffer>();
                 final Object o = rfc822HeaderState.getHeaderStrings().get(RfPostWrapper.CONTENT_LENGTH);
                 int remaining = Integer.parseInt((String) o);
@@ -97,6 +97,7 @@ public class RfPostWrapper extends Impl {
                 final ByteBuffer cursor = ByteBuffer.allocateDirect(remaining).put(dst);
                 EXECUTOR_SERVICE.submit(new Runnable() {
                   public void run() {
+                    ThreadLocalHeaders.set(rfc822HeaderState);
                     try {
                       if (cursor.hasRemaining()) key.interestOps(OP_READ).attach(new Impl() {
                         @Override
@@ -127,7 +128,7 @@ public class RfPostWrapper extends Impl {
                     try {
                       try {
                         ThreadLocalHeaders.set(rfc822HeaderState);
-                        ThreadLocalInetAddress.set(remoteSocketAddress);
+//                        ThreadLocalInetAddress.set(remoteSocketAddress);
                         //              SERVICE_LAYER.
                         process = SIMPLE_REQUEST_PROCESSOR.process(trim);
                         System.err.println("+++ headers " + UTF8.decode((ByteBuffer) rfc822HeaderState.getHeaderBuf().rewind()).toString());
@@ -198,6 +199,7 @@ public class RfPostWrapper extends Impl {
               final Matcher matcher = visitorEntry.getKey().matcher(path);
               final boolean b = matcher.find();
               if (b) {
+                                                                     ThreadLocalHeaders.set(rfc822HeaderState);
 
                 key.selector().wakeup();
                 key.interestOps(OP_CONNECT | OP_WRITE).attach(
@@ -220,6 +222,8 @@ public class RfPostWrapper extends Impl {
 
               @Override
               public void onWrite(SelectionKey key) throws Exception {
+                ThreadLocalHeaders.set(rfc822HeaderState);
+
                 final SocketChannel socketChannel = (SocketChannel) key.channel();
                 final int sendBufferSize = BlobAntiPatternObject.getSendBufferSize();
                 String ceString = "";
@@ -344,8 +348,8 @@ public class RfPostWrapper extends Impl {
     @Override
     public void run() {
       SocketChannel socketChannel = (SocketChannel) key.channel();
-      InetAddress remoteSocketAddress = socketChannel.socket().getInetAddress();
-      ThreadLocalInetAddress.set(remoteSocketAddress);
+//      InetAddress remoteSocketAddress = socketChannel.socket().getInetAddress();
+//      ThreadLocalInetAddress.set(remoteSocketAddress);
       String trim = UTF8.decode(data).toString().trim();
       final String process;
       try {

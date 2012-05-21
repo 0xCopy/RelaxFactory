@@ -1,6 +1,10 @@
 package rxf.server;
 
+import java.io.IOException;
+import java.net.InetAddress;
 import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -25,10 +29,15 @@ import static rxf.server.BlobAntiPatternObject.moveCaretToDoubleEol;
 public class Rfc822HeaderState {
   private String[] headers = {};
   private String[] cookies = {};
+  private InetAddress sourceRoute;
 
   @Override
   public String toString() {
-    return "Rfc822HeaderState{headers=" + (headers == null ? null : Arrays.asList(headers)) + ", cookies=" + (cookies == null ? null : Arrays.asList(cookies)) + ", headerBuf=" + headerBuf +
+    return "Rfc822HeaderState{" +
+        "headers=" + (headers == null ? null : Arrays.asList(headers)) +
+        ", cookies=" + (cookies == null ? null : Arrays.asList(cookies)) +
+        ", sourceRoute=" + sourceRoute +
+        ", headerBuf=" + headerBuf +
         ", headerStrings=" + headerStrings +
         ", cookieStrings=" + cookieStrings +
         ", methodProtocol='" + methodProtocol + '\'' +
@@ -47,6 +56,13 @@ public class Rfc822HeaderState {
     this.headers = headers;
   }
 
+  public Rfc822HeaderState  sourceKey(SelectionKey key
+  ) throws IOException {
+    final SocketChannel channel = (SocketChannel) key.channel();
+    final InetAddress inetAddress1 = channel.socket().getInetAddress();
+    final InetAddress inetAddress = sourceRoute = inetAddress1;
+    return this;
+  }
 
   public ByteBuffer getHeaderBuf() {
     return headerBuf;
@@ -131,4 +147,9 @@ public class Rfc822HeaderState {
   public void setMethodProtocol(String methodProtocol) {
     this.methodProtocol = methodProtocol;
   }
+
+  public InetAddress getSourceRoute() {
+    return sourceRoute;
+  }
+
 }
