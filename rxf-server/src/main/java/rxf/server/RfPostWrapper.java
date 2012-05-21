@@ -75,245 +75,249 @@ public class RfPostWrapper extends Impl {
         System.err.println($DBG + ": closing " + ORIGINS.get(key).getPathRescode());
       }
       channel.close();
-      return;
-    } else if (read > 0) {
-      final Rfc822HeaderState rfc822HeaderState = new Rfc822HeaderState(CONTENT_LENGTH).apply((ByteBuffer) dst.flip()).cookies(BlobAntiPatternObject.MYGEOIPSTRING, BlobAntiPatternObject.class.getCanonicalName()).sourceKey(key);
-                                                  ThreadLocalHeaders.set(rfc822HeaderState);
-      HttpMethod method = HttpMethod.valueOf(rfc822HeaderState.getMethodProtocol());
-      if ($DBG) {
-        ORIGINS.put(key, rfc822HeaderState);
-      }
-      if (null != method) {
-        switch (method) {
-          case POST: {
+    } else {
+      if (read > 0) {
+        final Rfc822HeaderState rfc822HeaderState = new Rfc822HeaderState(CONTENT_LENGTH).apply((ByteBuffer) dst.flip()).cookies(BlobAntiPatternObject.MYGEOIPSTRING, BlobAntiPatternObject.class.getCanonicalName()).sourceKey(key);
+        ThreadLocalHeaders.set(rfc822HeaderState);
+        HttpMethod method = HttpMethod.valueOf(rfc822HeaderState.getMethodProtocol());
+        if ($DBG) {
+          ORIGINS.put(key, rfc822HeaderState);
+        }
+        if (null != method) {
+          switch (method) {
+            case POST: {
 
-            EXECUTOR_SERVICE.submit(new Runnable() {
-              public void run() {                                                                                                                       ThreadLocalHeaders.set(rfc822HeaderState);
+              EXECUTOR_SERVICE.submit(new Runnable() {
+                public void run() {
+                  ThreadLocalHeaders.set(rfc822HeaderState);
 
-                final Exchanger<ByteBuffer> exchanger = new Exchanger<ByteBuffer>();
-                final Object o = rfc822HeaderState.getHeaderStrings().get(RfPostWrapper.CONTENT_LENGTH);
-                int remaining = Integer.parseInt((String) o);
+                  final Exchanger<ByteBuffer> exchanger = new Exchanger<ByteBuffer>();
+                  final Object o = rfc822HeaderState.getHeaderStrings().get(RfPostWrapper.CONTENT_LENGTH);
+                  int remaining = Integer.parseInt((String) o);
 
-                final ByteBuffer cursor = ByteBuffer.allocateDirect(remaining).put(dst);
-                EXECUTOR_SERVICE.submit(new Runnable() {
-                  public void run() {
-                    ThreadLocalHeaders.set(rfc822HeaderState);
-                    try {
-                      if (cursor.hasRemaining()) key.interestOps(OP_READ).attach(new Impl() {
-                        @Override
-                        public void onRead(final SelectionKey key) throws Exception {
-                          channel.read(cursor);
-                          if (!cursor.hasRemaining()) {
-                            /////////////////////////////////////////////////////////////////////////////////////////////////////
-
-                            exchanger.exchange(cursor);
-
-                          }
-                        }
-                      });        //////
-                      exchanger.exchange(cursor);
-                    } catch (Throwable e) {
-                      e.printStackTrace();  //
-                    }
-                  }
-                });
-                try {
-                  {
-                    ByteBuffer dst = exchanger.exchange(null);
-
-                    String trim = UTF8.decode((ByteBuffer) dst.flip()).toString().trim();
-                    System.err.println("exchanger says: " + UTF8.decode((ByteBuffer) dst.duplicate().rewind()));
-                    InetAddress remoteSocketAddress = channel.socket().getInetAddress();
-                    String process = null;
-                    try {
+                  final ByteBuffer cursor = ByteBuffer.allocateDirect(remaining).put(dst);
+                  EXECUTOR_SERVICE.submit(new Runnable() {
+                    public void run() {
+                      ThreadLocalHeaders.set(rfc822HeaderState);
                       try {
-                        ThreadLocalHeaders.set(rfc822HeaderState);
-//                        ThreadLocalInetAddress.set(remoteSocketAddress);
-                        //              SERVICE_LAYER.
-                        process = SIMPLE_REQUEST_PROCESSOR.process(trim);
-                        System.err.println("+++ headers " + UTF8.decode((ByteBuffer) rfc822HeaderState.getHeaderBuf().rewind()).toString());
-                        Map<String, String> setCookiesMap = BlobAntiPatternObject.ThreadLocalSetCookies.get();
-                        String sc1 = "";
-                        if (null != setCookiesMap && !setCookiesMap.isEmpty()) {
-                          sc1 = "";
-
-                          Iterator<Map.Entry<String, String>> iterator = setCookiesMap.entrySet().iterator();
-                          if (iterator.hasNext()) {
-                            do {
-                              Map.Entry<String, String> stringStringEntry = iterator.next();
-                              sc1 += "Set-Cookie: " + stringStringEntry.getKey() + "=" + stringStringEntry.getValue().trim();
-                              if (iterator.hasNext()) sc1 += "; ";
-                              sc1 += "\r\n";
-                            } while (iterator.hasNext());
-                          }
-
-                        }
-                        int length = process.length();
-                        final String s1 = "HTTP/1.1 200 OK\r\n" +
-                            sc1 +
-                            "Content-Type: application/json\r\n" +
-                            "Content-Length: " + length + "\r\n\r\n";
-                        final String finalProcess = process;
-                        key.interestOps(OP_WRITE).attach(new Impl() {
-
-                          private ByteBuffer payload = UTF8.encode(s1 + finalProcess);
-
+                        if (cursor.hasRemaining()) key.interestOps(OP_READ).attach(new Impl() {
                           @Override
-                          public void onWrite(SelectionKey selectionKey) throws IOException {
-                            channel.write(payload);
-                            if (!payload.hasRemaining()) { key.interestOps(OP_READ).attach(null);
+                          public void onRead(final SelectionKey key) throws Exception {
+                            channel.read(cursor);
+                            if (!cursor.hasRemaining()) {
+                              /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+                              exchanger.exchange(cursor);
+
                             }
                           }
-                        });
-                      } finally {
-
-                      }
-
-                    } catch (Throwable e) {
-                      e.printStackTrace();  //
-                    }
-
-                  }
-                } catch (InterruptedException e) {
-                  e.printStackTrace();  //
-                }
-              }
-            });
-            return;
-          }
-          case GET: {
-            BlobAntiPatternObject.moveCaretToDoubleEol(dst);
-            final ByteBuffer headers = ((ByteBuffer) dst.duplicate().flip()).slice();
-            while (!Character.isWhitespace(headers.get())) ;
-            int position = headers.position();
-            while (!Character.isWhitespace(headers.get())) ;
-
-            String path = URLDecoder.decode(UTF8.decode((ByteBuffer) headers.flip().position(position)).toString().trim());
-            LinkedHashMap<Pattern, AsioVisitor> patternAsioVisitorLinkedHashMap = BlobAntiPatternObject.getNamespace().get(method);
-            if (null == patternAsioVisitorLinkedHashMap) {
-              patternAsioVisitorLinkedHashMap = new LinkedHashMap<Pattern, AsioVisitor>();
-              BlobAntiPatternObject.getNamespace().put(method, patternAsioVisitorLinkedHashMap);
-            }              //should also be for POST
-            final Set<Map.Entry<Pattern, AsioVisitor>> entries = patternAsioVisitorLinkedHashMap.entrySet();
-            for (Map.Entry<Pattern, AsioVisitor> visitorEntry : entries) {
-              final Matcher matcher = visitorEntry.getKey().matcher(path);
-              final boolean b = matcher.find();
-              if (b) {
-                                                                     ThreadLocalHeaders.set(rfc822HeaderState);
-
-                key.selector().wakeup();
-                key.interestOps(OP_CONNECT | OP_WRITE).attach(
-                    /**sends impl,path,headers,first block
-                     */
-                    new Object[]{visitorEntry.getValue(), path, headers, dst.rewind()});
-                key.selector().wakeup();
-                return;
-              }
-            }
-            String fname = MessageFormat.format("./{0}", path.split("[\\#\\?]")).replace("//", "/").replace("../", "./");
-
-            final File filex = new File(fname);
-            final File[] file = {filex};
-
-            final String finalFname = fname;
-            key.selector().wakeup();
-            key.interestOps(OP_WRITE);
-            key.attach(new Impl() {
-
-              @Override
-              public void onWrite(SelectionKey key) throws Exception {
-                ThreadLocalHeaders.set(rfc822HeaderState);
-
-                final SocketChannel socketChannel = (SocketChannel) key.channel();
-                final int sendBufferSize = BlobAntiPatternObject.getSendBufferSize();
-                String ceString = "";
-
-                Map<String, int[]> hmap = HttpHeaders.getHeaders((ByteBuffer) headers.clear());
-                int[] ints = hmap.get("Accept-Encoding");
-                if (null != ints) {
-                  String accepts = UTF8.decode((ByteBuffer) headers.clear().limit(ints[1]).position(ints[0])).toString().trim();
-                  for (CompressionTypes compType : CompressionTypes.values()) {
-                    if (accepts.contains(compType.name())) {
-                      File file1 = new File(finalFname + "." + compType.suffix);
-                      if (file1.isFile()) {
-                        file[0] = file1;
-                        System.err.println("sending compressed archive: " + file1.getAbsolutePath());
-                        ceString = MessageFormat.format("Content-Encoding: {0}\r\n", compType.name());
-                        break;
-                      }
-                    }
-                  }
-                }
-                boolean send200 = false;
-                try {
-                  send200 = file[0].canRead();
-                } finally {
-
-                }
-
-                if (!send200) {
-                  key.selector().wakeup();
-                  key.interestOps(OP_WRITE).attach(new Impl() {
-                    @Override
-                    public void onWrite(SelectionKey key) throws Exception {
-
-                      String response = "HTTP/1.1 404 Not Found\n\n";
-                      int write = socketChannel.write(UTF8.encode(response));
-                      key.channel().close();
-                    }
-                  });
-                } else {
-                  final RandomAccessFile randomAccessFile = new RandomAccessFile(file[0], "r");
-                  final long total = randomAccessFile.length();
-                  final FileChannel fileChannel = randomAccessFile.getChannel();
-
-
-                  String substring = finalFname.substring(finalFname.lastIndexOf('.') + 1);
-                  MimeType mimeType = MimeType.valueOf(substring);
-                  long length;
-                  /* try {
-                length = filex.length();
-              } catch (Exception e) */
-                  {
-                    length = randomAccessFile.length();
-                  }
-                  String response = MessageFormat.format("HTTP/1.1 200 OK\r\nContent-Type: {0}\r\nContent-Length: {1,number,#}\r\n{2}\r\n", (null == mimeType ? MimeType.bin : mimeType).contentType, length, ceString);
-                  int write = socketChannel.write(UTF8.encode(response));
-                  final long[] progress = {fileChannel.transferTo(0, sendBufferSize, socketChannel)};
-                  key.selector().wakeup();
-                  key.interestOps(OP_WRITE | OP_CONNECT);
-                  key.attach(new Impl() {
-                    @Override
-                    public void onWrite(SelectionKey key) throws Exception {
-                      long remaining = total - progress[0];
-                      progress[0] += fileChannel.transferTo(progress[0], min(sendBufferSize, remaining), socketChannel);
-                      remaining = total - progress[0];
-                      if (remaining == 0) {
-                        fileChannel.close();
-                        randomAccessFile.close();
-                        key.selector().wakeup();
-                        key.interestOps(OP_READ);
-                        key.attach(new Object[0]);
+                        });        //////
+                        exchanger.exchange(cursor);
+                      } catch (Throwable e) {
+                        e.printStackTrace();  //
                       }
                     }
                   });
+                  try {
+                    {
+                      ByteBuffer dst = exchanger.exchange(null);
+
+                      String trim = UTF8.decode((ByteBuffer) dst.flip()).toString().trim();
+                      System.err.println("exchanger says: " + UTF8.decode((ByteBuffer) dst.duplicate().rewind()));
+                      InetAddress remoteSocketAddress = channel.socket().getInetAddress();
+                      String process = null;
+                      try {
+                        try {
+                          ThreadLocalHeaders.set(rfc822HeaderState);
+  //                        ThreadLocalInetAddress.set(remoteSocketAddress);
+                          //              SERVICE_LAYER.
+                          process = SIMPLE_REQUEST_PROCESSOR.process(trim);
+                          System.err.println("+++ headers " + UTF8.decode((ByteBuffer) rfc822HeaderState.getHeaderBuf().rewind()).toString());
+
+                          String sc1 = "";
+                          if (rfc822HeaderState.isDirty()) {
+                            sc1 = "";
+
+                            final Map<String, String> rfc822HeaderStateCookieStrings = rfc822HeaderState.getCookieStrings();
+                            Iterator<Map.Entry<String, String>> iterator = rfc822HeaderStateCookieStrings.entrySet().iterator();
+                            if (iterator.hasNext()) {
+                              do {
+                                Map.Entry<String, String> stringStringEntry = iterator.next();
+                                sc1 += "Set-Cookie: " + stringStringEntry.getKey() + "=" + stringStringEntry.getValue().trim();
+                                if (iterator.hasNext()) sc1 += "; ";
+                                sc1 += "\r\n";
+                              } while (iterator.hasNext());
+                            }
+
+                          }
+                          int length = process.length();
+                          final String s1 = "HTTP/1.1 200 OK\r\n" +
+                              sc1 +
+                              "Content-Type: application/json\r\n" +
+                              "Content-Length: " + length + "\r\n\r\n";
+                          final String finalProcess = process;
+                          key.interestOps(OP_WRITE).attach(new Impl() {
+
+                            private ByteBuffer payload = UTF8.encode(s1 + finalProcess);
+
+                            @Override
+                            public void onWrite(SelectionKey selectionKey) throws IOException {
+                              channel.write(payload);
+                              if (!payload.hasRemaining()) {
+                                key.interestOps(OP_READ).attach(null);
+                              }
+                            }
+                          });
+                        } finally {
+
+                        }
+
+                      } catch (Throwable e) {
+                        e.printStackTrace();  //
+                      }
+
+                    }
+                  } catch (InterruptedException e) {
+                    e.printStackTrace();  //
+                  }
+                }
+              });
+              return;
+            }
+            case GET: {
+              BlobAntiPatternObject.moveCaretToDoubleEol(dst);
+              final ByteBuffer headers = ((ByteBuffer) dst.duplicate().flip()).slice();
+              while (!Character.isWhitespace(headers.get())) ;
+              int position = headers.position();
+              while (!Character.isWhitespace(headers.get())) ;
+
+              String path = URLDecoder.decode(UTF8.decode((ByteBuffer) headers.flip().position(position)).toString().trim());
+              LinkedHashMap<Pattern, AsioVisitor> patternAsioVisitorLinkedHashMap = BlobAntiPatternObject.getNamespace().get(method);
+              if (null == patternAsioVisitorLinkedHashMap) {
+                patternAsioVisitorLinkedHashMap = new LinkedHashMap<Pattern, AsioVisitor>();
+                BlobAntiPatternObject.getNamespace().put(method, patternAsioVisitorLinkedHashMap);
+              }              //should also be for POST
+              final Set<Map.Entry<Pattern, AsioVisitor>> entries = patternAsioVisitorLinkedHashMap.entrySet();
+              for (Map.Entry<Pattern, AsioVisitor> visitorEntry : entries) {
+                final Matcher matcher = visitorEntry.getKey().matcher(path);
+                final boolean b = matcher.find();
+                if (b) {
+                  ThreadLocalHeaders.set(rfc822HeaderState);
+
+                  key.selector().wakeup();
+                  key.interestOps(OP_CONNECT | OP_WRITE).attach(
+                      /**sends impl,path,headers,first block
+                       */
+                      new Object[]{visitorEntry.getValue(), path, headers, dst.rewind()});
+                  key.selector().wakeup();
+                  return;
                 }
               }
-            });
-            break;
-          }
-          default:
-            if ($DBG) {
-              final Rfc822HeaderState rfc822HeaderState1 = ORIGINS.get(key);
-              final String pathRescode = rfc822HeaderState1.getPathRescode();
-              System.err.println("going down in flames:" + pathRescode);
-              channel.close();
+              String fname = MessageFormat.format("./{0}", path.split("[\\#\\?]")).replace("//", "/").replace("../", "./");
+
+              final File filex = new File(fname);
+              final File[] file = {filex};
+
+              final String finalFname = fname;
+              key.selector().wakeup();
+              key.interestOps(OP_WRITE);
+              key.attach(new Impl() {
+
+                @Override
+                public void onWrite(SelectionKey key) throws Exception {
+                  ThreadLocalHeaders.set(rfc822HeaderState);
+
+                  final SocketChannel socketChannel = (SocketChannel) key.channel();
+                  final int sendBufferSize = BlobAntiPatternObject.getSendBufferSize();
+                  String ceString = "";
+
+                  Map<String, int[]> hmap = HttpHeaders.getHeaders((ByteBuffer) headers.clear());
+                  int[] ints = hmap.get("Accept-Encoding");
+                  if (null != ints) {
+                    String accepts = UTF8.decode((ByteBuffer) headers.clear().limit(ints[1]).position(ints[0])).toString().trim();
+                    for (CompressionTypes compType : CompressionTypes.values()) {
+                      if (accepts.contains(compType.name())) {
+                        File file1 = new File(finalFname + "." + compType.suffix);
+                        if (file1.isFile()) {
+                          file[0] = file1;
+                          System.err.println("sending compressed archive: " + file1.getAbsolutePath());
+                          ceString = MessageFormat.format("Content-Encoding: {0}\r\n", compType.name());
+                          break;
+                        }
+                      }
+                    }
+                  }
+                  boolean send200 = false;
+                  try {
+                    send200 = file[0].canRead();
+                  } finally {
+
+                  }
+
+                  if (!send200) {
+                    key.selector().wakeup();
+                    key.interestOps(OP_WRITE).attach(new Impl() {
+                      @Override
+                      public void onWrite(SelectionKey key) throws Exception {
+
+                        String response = "HTTP/1.1 404 Not Found\n\n";
+                        int write = socketChannel.write(UTF8.encode(response));
+                        key.channel().close();
+                      }
+                    });
+                  } else {
+                    final RandomAccessFile randomAccessFile = new RandomAccessFile(file[0], "r");
+                    final long total = randomAccessFile.length();
+                    final FileChannel fileChannel = randomAccessFile.getChannel();
+
+
+                    String substring = finalFname.substring(finalFname.lastIndexOf('.') + 1);
+                    MimeType mimeType = MimeType.valueOf(substring);
+                    long length;
+                    /* try {
+                  length = filex.length();
+                } catch (Exception e) */
+                    {
+                      length = randomAccessFile.length();
+                    }
+                    String response = MessageFormat.format("HTTP/1.1 200 OK\r\nContent-Type: {0}\r\nContent-Length: {1,number,#}\r\n{2}\r\n", (null == mimeType ? MimeType.bin : mimeType).contentType, length, ceString);
+                    int write = socketChannel.write(UTF8.encode(response));
+                    final long[] progress = {fileChannel.transferTo(0, sendBufferSize, socketChannel)};
+                    key.selector().wakeup();
+                    key.interestOps(OP_WRITE | OP_CONNECT);
+                    key.attach(new Impl() {
+                      @Override
+                      public void onWrite(SelectionKey key) throws Exception {
+                        long remaining = total - progress[0];
+                        progress[0] += fileChannel.transferTo(progress[0], min(sendBufferSize, remaining), socketChannel);
+                        remaining = total - progress[0];
+                        if (remaining == 0) {
+                          fileChannel.close();
+                          randomAccessFile.close();
+                          key.selector().wakeup();
+                          key.interestOps(OP_READ);
+                          key.attach(new Object[0]);
+                        }
+                      }
+                    });
+                  }
+                }
+              });
+              break;
             }
-            break;
+            default:
+              if ($DBG) {
+                final Rfc822HeaderState rfc822HeaderState1 = ORIGINS.get(key);
+                final String pathRescode = rfc822HeaderState1.getPathRescode();
+                System.err.println("going down in flames:" + pathRescode);
+                channel.close();
+              }
+              break;
+          }
+        } else {
+
+          key.cancel();
         }
-      } else {
-
-        key.cancel();
       }
     }
   }
@@ -333,72 +337,5 @@ public class RfPostWrapper extends Impl {
 
   }
 
-  public static class RfProcessTask implements Runnable {
-    private final ByteBuffer headers;
-    private final ByteBuffer data;
-    SelectionKey key;
-
-    public RfProcessTask(ByteBuffer headers, ByteBuffer data, SelectionKey key) {
-      this.headers = headers;
-      this.data = data;
-      this.key = key;
-
-    }
-
-    @Override
-    public void run() {
-      SocketChannel socketChannel = (SocketChannel) key.channel();
-//      InetAddress remoteSocketAddress = socketChannel.socket().getInetAddress();
-//      ThreadLocalInetAddress.set(remoteSocketAddress);
-      String trim = UTF8.decode(data).toString().trim();
-      final String process;
-      try {
-        process = SIMPLE_REQUEST_PROCESSOR.process(trim);
-        String sc = setOutboundCookies();
-        int length = process.length();
-        final String s1 = "HTTP/1.1 200 OK\r\n" +
-            sc +
-            "Content-Type: application/json\r\n" +
-            "Content-Length: " + length + "\r\n\r\n";
-        key.attach(new AsioVisitor.Impl() {
-          @Override
-          public void onWrite(SelectionKey selectionKey) throws IOException {
-            ((SocketChannel) key.channel()).write(UTF8.encode(s1 + process));
-            System.err.println("debug: " + s1 + process);
-            key.attach(null);
-            key.selector().wakeup();
-            key.interestOps(OP_READ);
-          }
-        });
-        key.selector().wakeup();
-        key.interestOps(SelectionKey.OP_WRITE);
-
-      } catch (Throwable e) {
-        e.printStackTrace();  //
-      }
-
-    }
-
-    String setOutboundCookies() {
-      System.err.println("+++ headers " + UTF8.decode((ByteBuffer) headers.rewind()).toString());
-      Map<String, String> setCookiesMap = BlobAntiPatternObject.ThreadLocalSetCookies.get();
-      String sc = "";
-      if (null != setCookiesMap && !setCookiesMap.isEmpty()) {
-        sc = "";
-
-        Iterator<Map.Entry<String, String>> iterator = setCookiesMap.entrySet().iterator();
-        if (iterator.hasNext()) {
-          do {
-            Map.Entry<String, String> stringStringEntry = iterator.next();
-            sc += "Set-Cookie: " + stringStringEntry.getKey() + "=" + stringStringEntry.getValue().trim();
-            if (iterator.hasNext()) sc += "; ";
-            sc += "\r\n";
-          } while (iterator.hasNext());
-        }
-
-      }
-      return sc;
-    }
-  }
 }
 

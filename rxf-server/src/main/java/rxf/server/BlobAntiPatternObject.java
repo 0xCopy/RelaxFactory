@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Queue;
-import java.util.TreeMap;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -48,7 +47,6 @@ import static java.nio.channels.SelectionKey.OP_ACCEPT;
 import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static one.xio.HttpMethod.GET;
 import static one.xio.HttpMethod.UTF8;
 import static one.xio.HttpMethod.enqueue;
@@ -64,8 +62,8 @@ public class BlobAntiPatternObject {
   public static final ScheduledExecutorService EXECUTOR_SERVICE = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() + 3);
   private static Queue<SocketChannel> lazyQueue = new ConcurrentLinkedQueue<SocketChannel>();
   public static final ThreadLocal<Rfc822HeaderState> ThreadLocalHeaders = new ThreadLocal<Rfc822HeaderState>();
-//  public static ThreadLocal<InetAddress> ThreadLocalInetAddress = new ThreadLocal<InetAddress>();
-  public static final ThreadLocal<Map<String, String>> ThreadLocalSetCookies = new ThreadLocal<Map<String, String>>();
+  //  public static ThreadLocal<InetAddress> ThreadLocalInetAddress = new ThreadLocal<InetAddress>();
+//  public static final ThreadLocal<Map<String, String>> ThreadLocalSetCookies = new ThreadLocal<Map<String, String>>();
   private static final String VISITORSTRING = BlobAntiPatternObject.class.getCanonicalName();
   public static final String YYYY_MM_DD_T_HH_MM_SS_SSSZ = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
   public static final Gson GSON = new GsonBuilder()
@@ -219,10 +217,10 @@ public class BlobAntiPatternObject {
   }
 
   static public String getSessionCookieId() {
-     final Rfc822HeaderState rfc822HeaderPrefix = ThreadLocalHeaders.get();
-
-    final AtomicReference<String> id = new AtomicReference<String>(null);
-    Visitor roSession = null;
+    final Rfc822HeaderState rfc822HeaderPrefix = ThreadLocalHeaders.get();
+    final AtomicReference<InetAddress> inet4Address = new AtomicReference<InetAddress>();
+    final AtomicReference<String> charBuffer = new AtomicReference<String>();
+    final AtomicReference<String> id = new AtomicReference<String>();
     try {
       id.set(rfc822HeaderPrefix.getCookieStrings().get(VISITORSTRING));
 
@@ -239,7 +237,18 @@ public class BlobAntiPatternObject {
               public void onWrite(SelectionKey key) throws Exception {
                 final SocketChannel channel = (SocketChannel) key.channel();
                 final String rxf_visitor = getPathIdVer("rxf_visitor");
-                final String s = "POST " + rxf_visitor + " HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: 2" + "\r\n\r\n{}";
+                final LinkedHashMap linkedHashMap = new LinkedHashMap();
+                final InetAddress sourceRoute = rfc822HeaderPrefix.getSourceRoute();
+                if (sourceRoute != null) {
+                  inet4Address.set(rfc822HeaderPrefix.getSourceRoute());
+                  charBuffer.set(GeoIpService.mapAddressLookup(inet4Address.get()).toString());
+                  linkedHashMap.put(InetAddress.class.getCanonicalName(), inet4Address.get().toString());
+                  linkedHashMap.put("geoip", charBuffer.get());
+                }
+                final String s1 = GSON.toJson(linkedHashMap);
+                final byte[] bytes = s1.getBytes(UTF8);
+                final String s = "POST " + rxf_visitor + " HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: " + bytes.length + "\r\n\r\n" + s1;
+
                 final ByteBuffer wrap = ByteBuffer.wrap(s.getBytes());
                 final int write = channel.write(wrap);
                 key.interestOps(OP_READ).attach(new Impl() {
@@ -250,8 +259,6 @@ public class BlobAntiPatternObject {
                     final int read = channel.read(dst);
                     final Rfc822HeaderState ETag = new Rfc822HeaderState("ETag").apply((ByteBuffer) dst.flip());
                     final String pathRescode = ETag.getPathRescode();
-//                    final String next = (String) ETag.getHeaderStrings().values().iterator().next();
-//                    System.err.println("ETag===: " + next);
 
                     final Map map = GSON.fromJson(UTF8.decode(dst).toString(), Map.class);
                     id.set((String) map.get("id"));
@@ -269,42 +276,33 @@ public class BlobAntiPatternObject {
             ); //         V
             exchanger.exchange(null);
           } catch (ClosedChannelException e) {
-            e.printStackTrace();  //todo: verify for a purpose
+            e.printStackTrace();
           } catch (InterruptedException e) {
-            e.printStackTrace();  //todo: verify for a purpose
+            e.printStackTrace();
           }
-          final InetAddress inet4Address = rfc822HeaderPrefix.getSourceRoute()        ;
-          Map<String, String> stringMap = ThreadLocalSetCookies.get();
-          if (null == stringMap) {
-            Map<String, String> value = new TreeMap<String, String>();
-            value.put(VISITORSTRING, id.get());
-            ThreadLocalSetCookies.set(value);
-          }
+          rfc822HeaderPrefix.setDirty(true);
+          final Map<String, String> cookieStrings = rfc822HeaderPrefix.getCookieStrings();
+          cookieStrings.clear();
+//          Map<String, String> stringMap = ThreadLocalSetCookies.get();
+//          if (null == stringMap) {
+//            Map<String, String> value = new TreeMap<String, String>();
+//            value.put(VISITORSTRING, id.get());
+//            ThreadLocalSetCookies.set(value);
+//          }
           Date expire = new Date(TimeUnit.DAYS.toMillis(14) + System.currentTimeMillis());
           String cookietext = MessageFormat.format("{0} ; path=/ ; expires={1} ; HttpOnly", id.get(), expire.toGMTString());
-          ThreadLocalSetCookies.get().put(VISITORSTRING, cookietext);
-//          final InetAddress inet4Address = ThreadLocalInetAddress.get();
-          if (null != inet4Address) {
-            final String geoip = MessageFormat.format("{0} ; path=/ ; expires={1}", GeoIpService.mapAddressLookup(inet4Address), expire.toGMTString());
-            ThreadLocalSetCookies.get().put(MYGEOIPSTRING, geoip);
-            EXECUTOR_SERVICE.schedule(new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  final VisitorPropertiesAccess visitorPropertiesAccess = VISITOR_PROPERTIES_ACCESS;
+          cookieStrings.put(VISITORSTRING, cookietext);
+          if (null != inet4Address.get()) {
+            final String geoip = MessageFormat.format("{0} ; path=/ ; expires={1}", charBuffer.get(), expire.toGMTString());
+          cookieStrings.put(MYGEOIPSTRING, geoip);
 
-                  VISITOR_PROPERTIES_ACCESS.setSessionProperty(InetAddress.class.getCanonicalName(), inet4Address.getCanonicalHostName());
-                  VISITOR_PROPERTIES_ACCESS.setSessionProperty("geoip", geoip);
-
-                } catch (Throwable ignored) {
-                }
-              }
-            }, 250, MILLISECONDS);
           }
+
         }
       });
     }
-    return id.get();
+    final String s = id.get();
+    return s;
   }
 
 

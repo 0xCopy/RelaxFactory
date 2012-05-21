@@ -27,6 +27,7 @@ import static rxf.server.BlobAntiPatternObject.moveCaretToDoubleEol;
  * Time: 10:00 PM
  */
 public class Rfc822HeaderState {
+  public boolean dirty;
   private String[] headers = {};
   private String[] cookies = {};
   private InetAddress sourceRoute;
@@ -152,4 +153,11 @@ public class Rfc822HeaderState {
     return sourceRoute;
   }
 
+  public boolean isDirty() {
+    return dirty;
+  }
+
+  public void setDirty(boolean dirty) {
+    this.dirty = dirty;
+  }
 }
