@@ -26,6 +26,16 @@ public class Rfc822HeaderState {
   private String[] headers = {};
   private String[] cookies = {};
 
+  @Override
+  public String toString() {
+    return "Rfc822HeaderState{headers=" + (headers == null ? null : Arrays.asList(headers)) + ", cookies=" + (cookies == null ? null : Arrays.asList(cookies)) + ", headerBuf=" + headerBuf +
+        ", headerStrings=" + headerStrings +
+        ", cookieStrings=" + cookieStrings +
+        ", methodProtocol='" + methodProtocol + '\'' +
+        ", pathRescode='" + pathRescode + '\'' +
+        '}';
+  }
+
   private ByteBuffer headerBuf;
   private Map<String, String> headerStrings;
   private Map<String, String> cookieStrings;
@@ -74,29 +84,29 @@ public class Rfc822HeaderState {
   public Rfc822HeaderState cookies(String... cookies) {
     final List<? extends String> headersNamed = getHeadersNamed(COOKIE);
     cookieStrings = new LinkedHashMap<String, String>();
-    Arrays.sort( cookies);
+    Arrays.sort(cookies);
     for (String cookie : headersNamed) {
 
       final String[] split = cookie.split("^[^=]*=", 2);
       final String tag = split[0];
-                          if(Arrays.binarySearch(cookies, tag.trim())>0)
-                          cookieStrings.put(tag,split[1]);
+      if (Arrays.binarySearch(cookies, tag.trim()) > 0)
+        cookieStrings.put(tag, split[1]);
     }
-    return  this;
+    return this;
   }
 
   public Rfc822HeaderState apply(ByteBuffer cursor) {
     if (!cursor.hasRemaining()) cursor.flip();
     final int anchor = cursor.position();
     final ByteBuffer slice1 = cursor.duplicate().slice();
-    while ( slice1.hasRemaining()&&slice1.get() != ' ') ;
+    while (slice1.hasRemaining() && slice1.get() != ' ') ;
     methodProtocol = UTF8.decode((ByteBuffer) slice1.flip()).toString().trim();
-    while (cursor.hasRemaining()&&cursor.get() != ' ') ; //method/proto
+    while (cursor.hasRemaining() && cursor.get() != ' ') ; //method/proto
     final ByteBuffer slice = cursor.slice();
-    while (slice.hasRemaining()&&slice.get() != ' ') ;
+    while (slice.hasRemaining() && slice.get() != ' ') ;
     pathRescode = UTF8.decode((ByteBuffer) slice.flip()).toString().trim();
     headerBuf = null;
-    final boolean wantsCookies = cookies!=null&&cookies.length > 0;
+    final boolean wantsCookies = cookies != null && cookies.length > 0;
     final boolean wantsHeaders = wantsCookies || headers.length > 0;
     headerBuf = (ByteBuffer) moveCaretToDoubleEol(cursor).duplicate().flip();
     headerStrings = null;
@@ -104,9 +114,10 @@ public class Rfc822HeaderState {
     if (wantsHeaders) {
       Map<String, int[]> headerMap = HttpHeaders.getHeaders((ByteBuffer) headerBuf.rewind());
       headerStrings = new LinkedHashMap<String, String>();
-      for (String o : headers  ) {
-        int[] o1 = headerMap.get(o);if(null!=o1)
-        headerStrings.put(o, UTF8.decode((ByteBuffer) headerBuf. duplicate().clear().position(o1[0]).limit(o1[1])).toString().trim());
+      for (String o : headers) {
+        int[] o1 = headerMap.get(o);
+        if (null != o1)
+          headerStrings.put(o, UTF8.decode((ByteBuffer) headerBuf.duplicate().clear().position(o1[0]).limit(o1[1])).toString().trim());
       }
 
     }
