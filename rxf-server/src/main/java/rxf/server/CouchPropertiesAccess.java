@@ -35,22 +35,23 @@ import static rxf.server.BlobAntiPatternObject.inferRevision;
  */
 public abstract class CouchPropertiesAccess<T> {
   private CouchLocator<T> memento;
+
   private String callMethod(T domainObject, String method) {
     Object id = null;
     try {
       id = ((Class<T>) new TypeToken<T>() {
-        }.getType()).getMethod(method).invoke(domainObject);
+      }.getType()).getMethod(method).invoke(domainObject);
     } catch (IllegalAccessException e) {
-      e.printStackTrace();  //todo: verify for a purpose
+      e.printStackTrace();  //
     } catch (InvocationTargetException e) {
-      e.printStackTrace();  //todo: verify for a purpose
+      e.printStackTrace();  //
     } catch (NoSuchMethodException e) {
-      e.printStackTrace();  //todo: verify for a purpose
+      e.printStackTrace();  //
     }
     return (String) id;
   }
 
-  public CouchPropertiesAccess( ) {
+  public CouchPropertiesAccess() {
   }
 
   public String getSessionProperty(String eid, String key) {
@@ -58,7 +59,7 @@ public abstract class CouchPropertiesAccess<T> {
       String path = getLocator().getPathPrefix() + '/' + eid;
       return BlobAntiPatternObject.getGenericDocumentProperty(path, key);
     } catch (Exception e) {
-      e.printStackTrace();  //todo: verify for a purpose
+      e.printStackTrace();  //
     }
     return null;
   }
@@ -79,7 +80,7 @@ public abstract class CouchPropertiesAccess<T> {
       @Override
       public void onWrite(SelectionKey key) throws Exception {
         final String pathPrefix = getLocator().getPathPrefix();
-        final String path = pathPrefix  ;
+        final String path = pathPrefix;
         final String id = BlobAntiPatternObject.getSessionCookieId();
         String ver = null;
         BlobAntiPatternObject.getPathIdVer(path, id);
@@ -119,7 +120,6 @@ public abstract class CouchPropertiesAccess<T> {
                   }
                   final ByteBuffer exchange = inner.exchange(null);
                   final String json = UTF8.decode(exchange).toString();
-
 
 
                   final Map data = BlobAntiPatternObject.GSON.fromJson(UTF8.decode(exchange).toString().trim(), Map.class);
@@ -171,7 +171,8 @@ public abstract class CouchPropertiesAccess<T> {
     });
     return key;
   }
-                              abstract
+
+  abstract
   public CouchLocator<T> getLocator();
 
 

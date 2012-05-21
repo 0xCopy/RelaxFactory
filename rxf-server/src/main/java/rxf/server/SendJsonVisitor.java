@@ -67,7 +67,7 @@ class SendJsonVisitor extends AsioVisitor.Impl {
       key.selector().wakeup();
       key.interestOps(SelectionKey.OP_READ).attach(BlobAntiPatternObject.createJsonResponseReader(returnTo));
     } catch (IOException e) {
-      e.printStackTrace();  //todo: verify for a purpose
+      e.printStackTrace();  //
     }
   }
 }

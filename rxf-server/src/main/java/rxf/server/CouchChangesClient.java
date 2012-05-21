@@ -105,7 +105,7 @@ public class CouchChangesClient extends AsioVisitor.Impl {
             final ByteBuffer b = ByteBuffer.allocateDirect(getReceiveBufferSize());
             ((SocketChannel) channel).read(b);
             b.flip();
-            final Object[] attachment = (Object[]) key.attachment();         //todo: nuke the attachment arrays
+            final Object[] attachment = (Object[]) key.attachment();         //todo: nuke the attachment arrays.  close!
             Object prev = attachment.length > 2 ? attachment[2] : null;
             boolean stuff = false;
             ByteBuffer wrap = ByteBuffer.wrap(ENDL);
@@ -151,9 +151,9 @@ public class CouchChangesClient extends AsioVisitor.Impl {
         });
       }
     } catch (SocketException e) {
-      e.printStackTrace();  //todo: verify for a purpose
+      e.printStackTrace();
     } catch (IOException e) {
-      e.printStackTrace();  //todo: verify for a purpose
+      e.printStackTrace();
     }
   }
 

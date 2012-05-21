@@ -17,9 +17,9 @@ public class ApplicationContext {
         ret = clazz.newInstance();  //To change body of created methods use File | Settings | File Templates.
       }
     } catch (InstantiationException e) {
-      e.printStackTrace();  //todo: verify for a purpose
+      e.printStackTrace();
     } catch (IllegalAccessException e) {
-      e.printStackTrace();  //todo: verify for a purpose
+      e.printStackTrace();
     }
     return ret;
   }

@@ -328,7 +328,7 @@ public class BlobAntiPatternObject {
           return take;
         }
       } catch (InterruptedException e) {
-        e.printStackTrace();  //todo: verify for a purpose
+        e.printStackTrace();
       }
     }
     return null;
@@ -636,7 +636,7 @@ public class BlobAntiPatternObject {
                       if (buffer.position() == total)
                         payload = (ByteBuffer) buffer.flip();
                       else
-                        payload.put(buffer);     //todo: rewrite this up-kernel
+                        payload.put(buffer);
                     }
                     BlobAntiPatternObject.returnJsonString(returnTo, key, rescode, payload);
                   }

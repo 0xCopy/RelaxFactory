@@ -106,11 +106,5 @@ public class Welcome implements EntryPoint {
       if (couch.isChanged()) couch.fire();
     }
 
-    private class StringReceiver extends Receiver<String> {
-      @Override
-      public void onSuccess(String response) {
-        //todo: verify for a purpose
-      }
-    }
   }
 }

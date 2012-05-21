@@ -34,7 +34,7 @@ public class VisitorPropertiesAccess {
     try {
       return visitorCouchPropertiesAccess.getSessionProperty(BlobAntiPatternObject.getSessionCookieId(), key);
     } catch (Exception e) {
-      e.printStackTrace();  //todo: verify for a purpose
+      e.printStackTrace();  //
     }
     return key;
   }
@@ -43,7 +43,7 @@ public class VisitorPropertiesAccess {
     try {
       return visitorCouchPropertiesAccess.setSessionProperty(key, value);
     } catch (Exception e) {
-      e.printStackTrace();  //todo: verify for a purpose
+      e.printStackTrace();  //
     }
     return key;
   }

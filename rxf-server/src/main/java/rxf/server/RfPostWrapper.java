@@ -105,7 +105,7 @@ public class RfPostWrapper extends Impl {
                   });        //////
                   exchanger.exchange(cursor);
                 } catch (Throwable e) {
-                  e.printStackTrace();  //todo: verify for a purpose
+                  e.printStackTrace();  //
                 } finally {
                 }
               }
@@ -125,9 +125,9 @@ public class RfPostWrapper extends Impl {
                     //              SERVICE_LAYER.
                     process = SIMPLE_REQUEST_PROCESSOR.process(trim);
                   } catch (RuntimeException e) {
-                    e.printStackTrace();  //todo: verify for a purpose
+                    e.printStackTrace();  //
                   } catch (Throwable e) {
-                    e.printStackTrace();  //todo: verify for a purpose
+                    e.printStackTrace();  //
                   } finally {
                   }
                   System.err.println("+++ headers " + UTF8.decode((ByteBuffer) rfc822HeaderState.getHeaderBuf().rewind()).toString());
@@ -165,13 +165,13 @@ public class RfPostWrapper extends Impl {
                     }
                   });
                 } catch (Throwable e) {
-                  e.printStackTrace();  //todo: verify for a purpose
+                  e.printStackTrace();  //
                 } finally {
                 }
 
               }
             } catch (InterruptedException e) {
-              e.printStackTrace();  //todo: verify for a purpose
+              e.printStackTrace();  //
             } finally {
             }
           }
@@ -361,7 +361,7 @@ public class RfPostWrapper extends Impl {
         key.interestOps(SelectionKey.OP_WRITE);
 
       } catch (Throwable e) {
-        e.printStackTrace();  //todo: verify for a purpose
+        e.printStackTrace();  //
       } finally {
       }
 

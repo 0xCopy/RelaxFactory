@@ -206,7 +206,7 @@ public class GeoIpService {
             } catch (Throwable e) {
               key.selector().wakeup();
               key.interestOps(OP_READ);
-              e.printStackTrace();  //todo: verify for a purpose
+              e.printStackTrace();  //
             }
             if (!d2.hasRemaining()) {
               Callable<Map> callable = new Callable<Map>() {
@@ -292,7 +292,7 @@ public class GeoIpService {
         }
 
       } catch (Throwable e) {
-        e.printStackTrace();  //todo: verify for a purpose
+        e.printStackTrace();  //
       } finally {
       }
 
@@ -302,7 +302,7 @@ public class GeoIpService {
 //
 //      System.err.println("walnutCreek: " + lookup);
     } catch (Throwable e) {
-      e.printStackTrace();  //todo: verify for a purpose
+      e.printStackTrace();  //
     } finally {
     }
 
@@ -355,7 +355,7 @@ public class GeoIpService {
 //                }
 //                System.err.println("list benchmark: " + (System.currentTimeMillis() - l3));
       } catch (Throwable e) {
-        e.printStackTrace();  //todo: verify for a purpose
+        e.printStackTrace();  //
       } finally {
       }
     }
@@ -457,7 +457,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
                 System.err.println("attempting connect: " + format.trim());
                 channel.write(UTF8.encode(format));
               } catch (IOException e) {
-                e.printStackTrace();  //todo: verify for a purpose
+                e.printStackTrace();  //
               }
               key.attach(BlobAntiPatternObject.createJsonResponseReader(retVal));
               key.selector().wakeup();
@@ -525,7 +525,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
               Callable<MappedByteBuffer> callable = new Callable<MappedByteBuffer>() {
                 @Override
                 public MappedByteBuffer call() throws Exception {
-                  return retVal.take();  //todo: verify for a purpose
+                  return retVal.take();  //
                 }
               };
 
@@ -569,7 +569,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
                         try {
                           geoip.createNewFile();
                         } catch (IOException e) {
-                          e.printStackTrace();  //todo: verify for a purpose
+                          e.printStackTrace();  //
                         }
                         final RandomAccessFile randomAccessFile = new RandomAccessFile(geoip, "rw");
                         final FileChannel fileChannel = randomAccessFile.getChannel();

@@ -60,9 +60,9 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
     try {
       return clazz.newInstance();
     } catch (InstantiationException e) {
-      e.printStackTrace();  //todo: verify for a purpose
+      e.printStackTrace();
     } catch (IllegalAccessException e) {
-      e.printStackTrace();  //todo: verify for a purpose
+      e.printStackTrace();
     }
     throw new UnsupportedOperationException("no default ctor " + HttpMethod.wheresWaldo(3));
   }
@@ -231,8 +231,9 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
           return GSON.fromJson(json, CouchTx.class);
 
         } catch (Throwable e) {
-          e.printStackTrace();            return ;
+          e.printStackTrace();
         }
+        return null;
       }
       default:
         return null;
