@@ -227,9 +227,11 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
           });
           final ByteBuffer exchange = (ByteBuffer) exchanger.exchange(null).flip();
           final String json = UTF8.decode(exchange).toString();
+
           return GSON.fromJson(json, CouchTx.class);
+
         } catch (Throwable e) {
-          e.printStackTrace();
+          e.printStackTrace();            return ;
         }
       }
       default:
