@@ -1,17 +1,13 @@
 package rxf.server;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Exchanger;
 import java.util.concurrent.SynchronousQueue;
 
-import com.google.gson.JsonSyntaxException;
 import com.google.web.bindery.requestfactory.shared.Locator;
 import one.xio.AsioVisitor;
 import one.xio.HttpHeaders;
@@ -22,15 +18,12 @@ import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpMethod.UTF8;
-import static one.xio.HttpMethod.getSelector;
-import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 import static rxf.server.BlobAntiPatternObject.GSON;
 import static rxf.server.BlobAntiPatternObject.arrToString;
 import static rxf.server.BlobAntiPatternObject.createCouchConnection;
 import static rxf.server.BlobAntiPatternObject.getPathIdVer;
 import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
 import static rxf.server.BlobAntiPatternObject.getSendBufferSize;
-import static rxf.server.BlobAntiPatternObject.moveCaretToDoubleEol;
 import static rxf.server.BlobAntiPatternObject.recycleChannel;
 
 /**
@@ -40,6 +33,7 @@ import static rxf.server.BlobAntiPatternObject.recycleChannel;
  */
 public abstract class CouchLocator<T> extends Locator<T, String> {
 
+  public static final String CONTENT_LENGTH = "Content-Length";
   private String orgname = "rxf_";//default
 
   public String getPathPrefix() {
@@ -186,110 +180,69 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
       case POST: {
         try {
           StringBuilder m = new StringBuilder().append(method.name()).append(" ").append(getPathIdVer(pathIdPrefix)).append(" HTTP/1.1\r\n").append("Content-Length: ").append(encode1.limit()).append("\r\nAccept: */*\r\nContent-Type: application/json\r\n\r\n");
-          final ByteBuffer encode = UTF8.encode(m.toString());
+          final String str = m.toString();
+          final ByteBuffer encode = UTF8.encode(str);
 
 
-          final ByteBuffer buf = (ByteBuffer) ByteBuffer.allocateDirect(max(getSendBufferSize(), encode.limit() + encode1.limit())).put(encode).put(encode1).flip();
+          final ByteBuffer cursor = (ByteBuffer) ByteBuffer.allocateDirect(max(getSendBufferSize(), encode.limit() + encode1.limit())).put(encode).put(encode1).flip();
+          final Exchanger<ByteBuffer> exchanger = new Exchanger<ByteBuffer>();
 
-          final ByteBuffer take = EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
-            public ByteBuffer call() {
-              try {
-                final Selector selector = getSelector();
-                HttpMethod.enqueue(createCouchConnection(), OP_CONNECT | OP_WRITE, new AsioVisitor.Impl() {
+          HttpMethod.enqueue(createCouchConnection(), OP_WRITE | OP_CONNECT, new AsioVisitor.Impl() {
+            @Override
+            public void onWrite(SelectionKey key) throws Exception {
+              final SocketChannel channel = (SocketChannel) key.channel();
+              channel.write(cursor);
+              if (!cursor.hasRemaining()) {
+                key.interestOps(OP_READ).attach(new Impl() {
                   @Override
-                  public void onWrite(SelectionKey key) throws IOException {
-                    final SocketChannel channel = (SocketChannel) key.channel();
-                    try {
-                      channel.write(buf);
-                    } catch (IOException e) {
-                      channel.socket().close();
-                    }
-                    if (!buf.hasRemaining()) {
-                      buf.clear();
-                      key.selector().wakeup();
-                      key.interestOps(OP_READ).attach(new Impl() {
-                        @Override
-                        public void onRead(SelectionKey key) throws Exception {
+                  public void onRead(SelectionKey key) throws Exception {
 
-                          try {
-                            final SocketChannel channel = (SocketChannel) key.channel();
-                            channel.read(buf);
-                            int position = moveCaretToDoubleEol((ByteBuffer) buf.flip()).position();
-                            if (buf.hasRemaining()) {
-                              ByteBuffer headers = ((ByteBuffer) buf.duplicate().flip()).slice();
-                              Map<String, int[]> map = HttpHeaders.getHeaders(headers);
-                              if (map.containsKey(RfPostWrapper.CONTENT_LENGTH)) {
-                                int[] bounds = map.get(RfPostWrapper.CONTENT_LENGTH);
-                                String trim = UTF8.decode((ByteBuffer) headers.clear().position(bounds[0]).limit(bounds[1])).toString().trim();
-                                long l = Long.parseLong(trim);
-                                final ByteBuffer cursor = ByteBuffer.allocateDirect((int) l).put(buf);
-                                if (!cursor.hasRemaining()) {
-                                  sq.put((ByteBuffer) cursor.flip());
-                                  return;
-                                }
-                                Impl prev = this;
-                                key.attach(new Impl() {
-                                  @Override
-                                  public void onRead(SelectionKey key) throws Exception {
-                                    try {
-                                      final SocketChannel channel = (SocketChannel) key.channel();
-                                      channel.read(cursor);
-                                      if (!cursor.hasRemaining()) {
-                                        sq.put((ByteBuffer) cursor.flip());
-                                      }
-                                    } catch (Throwable e) {
-                                      e.printStackTrace();  //todo: verify for a purpose
-                                    }
-                                  }
-                                });
-                              }
-                            } else {
-                              buf.clear().position(position);
-                            }//still reading headers.
-                          } catch (RuntimeException e) {
-                            e.printStackTrace();  //todo: verify for a purpose
+                    final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
+                    channel.read(dst);
+                    final Rfc822HeaderState rfc822HeaderState = new Rfc822HeaderState(CONTENT_LENGTH).apply(dst);
+                    if (rfc822HeaderState.getPathRescode().startsWith("20")) {
+                      final int len = Integer.parseInt((String) rfc822HeaderState.getHeaderStrings().get(CONTENT_LENGTH));
+                      final ByteBuffer cursor = ByteBuffer.allocate(len).put(dst);
+                      if (!cursor.hasRemaining()) {
+                        exchanger.exchange(cursor);
+                        recycleChannel(channel);
+                      } else {
+                        key.attach(new Impl() {
+                          @Override
+                          public void onRead(SelectionKey key) throws Exception {
+                            channel.read(cursor);
+                            if (!cursor.hasRemaining()) {
+                              exchanger.exchange(cursor);
+                              recycleChannel(channel);
+                            }
                           }
-
-                        }
-                      });
+                        });
+                      }
                     }
                   }
                 });
-              } catch (RuntimeException e) {
-                e.printStackTrace();  //todo: verify for a purpose
-              } catch (Exception e) {
-                e.printStackTrace();  //todo: verify for a purpose
               }
-
-              try {
-                return sq.take();
-              } catch (RuntimeException e) {
-                e.printStackTrace();  //todo: verify for a purpose
-              } catch (InterruptedException e) {
-                e.printStackTrace();  //todo: verify for a purpose
-              }
-              return null;
             }
-          }).get();
-          return GSON.fromJson(UTF8.decode(take).toString(), CouchTx.class);
-        } catch (InterruptedException e) {
-          e.printStackTrace();  //todo: verify for a purpose
-        } catch (ExecutionException e) {
-          e.printStackTrace();  //todo: verify for a purpose
-        } catch (JsonSyntaxException e) {
-          e.printStackTrace();  //todo: verify for a purpose
+          });
+          final ByteBuffer exchange = (ByteBuffer) exchanger.exchange(null).flip();
+          return GSON.fromJson(UTF8.decode(exchange).toString(), CouchTx.class);
+        } catch (Throwable e) {
+          e.printStackTrace();
         }
       }
       default:
         return null;
     }
+
   }
 
   List<T> findAll() {
     return null;  //To change body of created methods use File | Settings | File Templates.
   }
 
-  List<T> search(String queryParm) {
+  List<T> search
+      (String
+           queryParm) {
     return null;  //To change body of created methods use File | Settings | File Templates.
   }
 
@@ -299,6 +252,7 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
    * @param queryParm
    * @return
    */
+
   String searchAsync(String queryParm) {
     return null;  //To change body of created methods use File | Settings | File Templates.
   }

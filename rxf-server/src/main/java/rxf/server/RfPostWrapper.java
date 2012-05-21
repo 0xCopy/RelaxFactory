@@ -21,6 +21,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.google.web.bindery.requestfactory.server.ExceptionHandler;
+import com.google.web.bindery.requestfactory.server.ServiceLayer;
 import com.google.web.bindery.requestfactory.server.ServiceLayerDecorator;
 import com.google.web.bindery.requestfactory.server.SimpleRequestProcessor;
 import com.google.web.bindery.requestfactory.shared.ServerFailure;
@@ -48,8 +49,8 @@ import static rxf.server.BlobAntiPatternObject.ThreadLocalInetAddress;
  */
 public class RfPostWrapper extends Impl {
 
-  public static final ServiceLayerDecorator SERVICE_LAYER = new ServiceLayerDecorator();
-  public static final SimpleRequestProcessor SIMPLE_REQUEST_PROCESSOR = new SimpleRequestProcessor(SERVICE_LAYER);
+  public static final ServiceLayerDecorator SERVICE_LAYER_DECORATOR = new ServiceLayerDecorator();
+  public static final SimpleRequestProcessor SIMPLE_REQUEST_PROCESSOR = new SimpleRequestProcessor(ServiceLayer.create(SERVICE_LAYER_DECORATOR));
   public static final String CONTENT_LENGTH = "Content-Length";
 
   {
@@ -110,11 +111,11 @@ public class RfPostWrapper extends Impl {
           String trim = UTF8.decode((ByteBuffer) dst.flip()).toString().trim();
           System.err.println("exchanger says: " + UTF8.decode((ByteBuffer) dst.duplicate().rewind()));
           InetAddress remoteSocketAddress = channel.socket().getInetAddress();
-            String process = null;
+          String process = null;
           try {
             try {
-          ThreadLocalHeaders.set(rfc822HeaderState);
-          ThreadLocalInetAddress.set(remoteSocketAddress);
+              ThreadLocalHeaders.set(rfc822HeaderState);
+              ThreadLocalInetAddress.set(remoteSocketAddress);
 //              SERVICE_LAYER.
               process = SIMPLE_REQUEST_PROCESSOR.process(trim);
             } catch (RuntimeException e) {
@@ -155,9 +156,6 @@ public class RfPostWrapper extends Impl {
                 key.interestOps(OP_READ);
               }
             });
-            key.selector().wakeup();
-            key.interestOps(SelectionKey.OP_WRITE);
-
           } catch (Throwable e) {
             e.printStackTrace();  //todo: verify for a purpose
           } finally {
