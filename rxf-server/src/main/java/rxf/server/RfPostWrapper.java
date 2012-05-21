@@ -52,9 +52,9 @@ public class RfPostWrapper extends Impl {
   public static final ServiceLayerDecorator SERVICE_LAYER_DECORATOR = new ServiceLayerDecorator();
   public static final SimpleRequestProcessor SIMPLE_REQUEST_PROCESSOR = new SimpleRequestProcessor(ServiceLayer.create(SERVICE_LAYER_DECORATOR));
   public static final String CONTENT_LENGTH = "Content-Length";
-  public static final WeakHashMap<SelectionKey, Rfc822HeaderState> ORIGINS = $DBG ?new WeakHashMap<SelectionKey, Rfc822HeaderState>():null;
+  public static final Map<SelectionKey, Rfc822HeaderState> ORIGINS = $DBG ? new WeakHashMap<SelectionKey, Rfc822HeaderState>() : null;
 
-  {
+  static {
     SIMPLE_REQUEST_PROCESSOR.setExceptionHandler(new ExceptionHandler() {
       @Override
       public ServerFailure createServerFailure(Throwable throwable) {
@@ -71,17 +71,19 @@ public class RfPostWrapper extends Impl {
     final ByteBuffer dst = ByteBuffer.allocateDirect(BlobAntiPatternObject.getReceiveBufferSize());
     final SocketChannel channel = (SocketChannel) key.channel();
     int read = channel.read(dst);
-    if (read <0) {
-      if($DBG ){
-        System.err.println($DBG+": closing "+ORIGINS.get(key).getPathRescode());
+    if (read < 0) {
+      if ($DBG && ORIGINS.containsKey(key)) {
+        System.err.println($DBG + ": closing " + ORIGINS.get(key).getPathRescode());
       }
       channel.close();
       return;
-    } else if(read>0){
+    } else if (read > 0) {
       final Rfc822HeaderState rfc822HeaderState = new Rfc822HeaderState(CONTENT_LENGTH).apply((ByteBuffer) dst.flip()).cookies(BlobAntiPatternObject.MYGEOIPSTRING, BlobAntiPatternObject.class.getCanonicalName());
 
       HttpMethod method = HttpMethod.valueOf(rfc822HeaderState.getMethodProtocol());
-      if($DBG){ORIGINS.put(key, rfc822HeaderState);}
+      if ($DBG) {
+        ORIGINS.put(key, rfc822HeaderState);
+      }
       if (null != method) {
         switch (method) {
           case POST: {
@@ -128,44 +130,44 @@ public class RfPostWrapper extends Impl {
                         ThreadLocalInetAddress.set(remoteSocketAddress);
                         //              SERVICE_LAYER.
                         process = SIMPLE_REQUEST_PROCESSOR.process(trim);
-                      } catch (RuntimeException e) {
-                        e.printStackTrace();  //
-                      } catch (Throwable e) {
-                        e.printStackTrace();  //
-                      }
-                      System.err.println("+++ headers " + UTF8.decode((ByteBuffer) rfc822HeaderState.getHeaderBuf().rewind()).toString());
-                      Map<String, String> setCookiesMap = BlobAntiPatternObject.ThreadLocalSetCookies.get();
-                      String sc1 = "";
-                      if (null != setCookiesMap && !setCookiesMap.isEmpty()) {
-                        sc1 = "";
+                        System.err.println("+++ headers " + UTF8.decode((ByteBuffer) rfc822HeaderState.getHeaderBuf().rewind()).toString());
+                        Map<String, String> setCookiesMap = BlobAntiPatternObject.ThreadLocalSetCookies.get();
+                        String sc1 = "";
+                        if (null != setCookiesMap && !setCookiesMap.isEmpty()) {
+                          sc1 = "";
 
-                        Iterator<Map.Entry<String, String>> iterator = setCookiesMap.entrySet().iterator();
-                        if (iterator.hasNext()) {
-                          do {
-                            Map.Entry<String, String> stringStringEntry = iterator.next();
-                            sc1 += "Set-Cookie: " + stringStringEntry.getKey() + "=" + stringStringEntry.getValue().trim();
-                            if (iterator.hasNext()) sc1 += "; ";
-                            sc1 += "\r\n";
-                          } while (iterator.hasNext());
+                          Iterator<Map.Entry<String, String>> iterator = setCookiesMap.entrySet().iterator();
+                          if (iterator.hasNext()) {
+                            do {
+                              Map.Entry<String, String> stringStringEntry = iterator.next();
+                              sc1 += "Set-Cookie: " + stringStringEntry.getKey() + "=" + stringStringEntry.getValue().trim();
+                              if (iterator.hasNext()) sc1 += "; ";
+                              sc1 += "\r\n";
+                            } while (iterator.hasNext());
+                          }
+
                         }
+                        int length = process.length();
+                        final String s1 = "HTTP/1.1 200 OK\r\n" +
+                            sc1 +
+                            "Content-Type: application/json\r\n" +
+                            "Content-Length: " + length + "\r\n\r\n";
+                        final String finalProcess = process;
+                        key.interestOps(OP_WRITE).attach(new Impl() {
+
+                          private ByteBuffer payload = UTF8.encode(s1 + finalProcess);
+
+                          @Override
+                          public void onWrite(SelectionKey selectionKey) throws IOException {
+                            channel.write(payload);
+                            if (!payload.hasRemaining()) { key.interestOps(OP_READ).attach(null);
+                            }
+                          }
+                        });
+                      } finally {
 
                       }
-                      int length = process.length();
-                      final String s1 = "HTTP/1.1 200 OK\r\n" +
-                          sc1 +
-                          "Content-Type: application/json\r\n" +
-                          "Content-Length: " + length + "\r\n\r\n";
-                      final String finalProcess = process;
-                      key.attach(new Impl() {
-                        @Override
-                        public void onWrite(SelectionKey selectionKey) throws IOException {
-                          channel.write(UTF8.encode(s1 + finalProcess));
-                          System.err.println("debug: " + s1 + finalProcess);
-                          key.attach(null);
-                          key.selector().wakeup();
-                          key.interestOps(OP_READ);
-                        }
-                      });
+
                     } catch (Throwable e) {
                       e.printStackTrace();  //
                     }
@@ -253,7 +255,7 @@ public class RfPostWrapper extends Impl {
 
                       String response = "HTTP/1.1 404 Not Found\n\n";
                       int write = socketChannel.write(UTF8.encode(response));
-                       key.channel().close();
+                      key.channel().close();
                     }
                   });
                 } else {
@@ -297,11 +299,12 @@ public class RfPostWrapper extends Impl {
             break;
           }
           default:
-if($DBG) {
-  final Rfc822HeaderState rfc822HeaderState1 = ORIGINS.get(key);
-  final String pathRescode = rfc822HeaderState1.getPathRescode();
-  System.err.println("going down in flames:"+pathRescode);      channel.close();
-}
+            if ($DBG) {
+              final Rfc822HeaderState rfc822HeaderState1 = ORIGINS.get(key);
+              final String pathRescode = rfc822HeaderState1.getPathRescode();
+              System.err.println("going down in flames:" + pathRescode);
+              channel.close();
+            }
             break;
         }
       } else {
