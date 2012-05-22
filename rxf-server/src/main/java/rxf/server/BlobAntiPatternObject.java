@@ -51,6 +51,7 @@ import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpMethod.$DBG;
 import static one.xio.HttpMethod.GET;
 import static one.xio.HttpMethod.UTF8;
+import static one.xio.HttpMethod.enqueue;
 import static one.xio.HttpMethod.getSelector;
 import static one.xio.HttpMethod.wheresWaldo;
 
@@ -201,6 +202,7 @@ public class BlobAntiPatternObject {
   public static final Charset UTF8CHARSET = Charset.forName(UTF8.name());
   public static final VisitorPropertiesAccess VISITOR_PROPERTIES_ACCESS = new VisitorPropertiesAccess();
   public static final boolean DEBUG_COUCH_POOL = System.getenv().containsKey("DEBUG_COUCH_POOL");
+  public static final String TRANSFER_ENCODING = "Transfer-Encoding";
 
   static {
     try {
@@ -360,7 +362,7 @@ public class BlobAntiPatternObject {
     if ($DBG) {
       final Rfc822HeaderState rfc822HeaderState = RfPostWrapper.ORIGINS.get(channel.keyFor(getSelector()));
       if (null != rfc822HeaderState) {
-        throw new Error("accidental recycle !!!!!!!! " + rfc822HeaderState.getPathRescode()+" !!! "+ wheresWaldo(5));
+        throw new Error("accidental recycle !!!!!!!! " + rfc822HeaderState.getPathRescode() + " !!! " + wheresWaldo(5));
       }
     }
     try {
@@ -444,6 +446,12 @@ public class BlobAntiPatternObject {
   }
 
   public static AsioVisitor fetchJsonByPath(final SocketChannel channel, final SynchronousQueue<String> returnTo, final String... pathIdVer) throws ClosedChannelException {
+    if ($DBG) for (String s : pathIdVer) {
+      if (s.isEmpty()) {
+        throw new Error("call with blank prefix");
+      }
+      break;
+    }
     final String format = ((new StringBuilder().append("GET ").append(getPathIdVer(pathIdVer)).append(" HTTP/1.1\r\n\r\n").toString())).replace("//", "/");
     return executeCouchRequest(channel, returnTo, format);
   }
@@ -528,89 +536,11 @@ public class BlobAntiPatternObject {
           int[] bounds = HttpHeaders.getHeaders((ByteBuffer) headerBuf[0].rewind()).get(RfPostWrapper.CONTENT_LENGTH);
           if (null == bounds) {
 
-            bounds = HttpHeaders.getHeaders((ByteBuffer) headerBuf[0].rewind()).get("Transfer-Encoding");
+            bounds = HttpHeaders.getHeaders((ByteBuffer) headerBuf[0].rewind()).get(TRANSFER_ENCODING);
 
             if (null != bounds) {
 
-              key.attach(new Impl() {
-                ByteBuffer cursor = dst.slice();
-
-                private Impl prev = this;
-                LinkedList<ByteBuffer> ret = new LinkedList<ByteBuffer>();
-
-                @Override
-                public void onRead(SelectionKey key) throws Exception {//chuksizeparser
-                  if (cursor == null) {
-                    cursor = ByteBuffer.allocate(receiveBufferSize);
-                    final int read1 = channel.read(cursor);
-                    cursor.flip();
-                  }
-                  System.err.println("chunking: " + UTF8.decode(cursor.duplicate()));
-                  final int anchor = cursor.position();
-                  while (cursor.hasRemaining() && cursor.get() != '\n') ;
-                  final ByteBuffer line = (ByteBuffer) cursor.duplicate().position(anchor).limit(cursor.position());
-                  String res = UTF8.decode(line).toString().trim();
-                  long chunkSize = 0;
-                  try {
-
-                    chunkSize = Long.parseLong(res, 0x10);
-
-
-                    if (0 == chunkSize) {
-                      //send the unwrap to threadpool.
-                      EXECUTOR_SERVICE.submit(new Callable() {
-                        public Void call() throws InterruptedException {
-                          int sum = 0;
-                          for (ByteBuffer byteBuffer : ret) {
-                            sum += byteBuffer.limit();
-                          }
-                          final ByteBuffer allocate = ByteBuffer.allocate(sum);
-                          for (ByteBuffer byteBuffer : ret) {
-                            allocate.put((ByteBuffer) byteBuffer.flip());
-                          }
-
-                          final String o = UTF8.decode((ByteBuffer) allocate.flip()).toString();
-                          System.err.println("total chunked bundle was: " + o);
-                          returnTo.put(o);
-                          return null;
-                        }
-                      });
-                      key.selector().wakeup();
-                      key.interestOps(OP_READ);
-                      key.attach(null);
-                      return;
-                    }
-                  } catch (NumberFormatException ignored) {
-
-
-                  }
-                  final ByteBuffer dest = ByteBuffer.allocate((int) chunkSize);
-                  if (!(chunkSize < cursor.remaining())) {//fragments to assemble
-
-                    dest.put(cursor);
-                    key.attach(new Impl() {
-                      @Override
-                      public void onRead(SelectionKey key) throws Exception {
-                        final int read1 = channel.read(dest);
-                        key.selector().wakeup();
-                        if (!dest.hasRemaining()) {
-                          key.attach(prev);
-                          cursor = null;
-                          ret.add(dest);
-                        }
-                      }
-                    });
-                  } else {
-                    ByteBuffer src = (ByteBuffer) cursor.slice().limit((int) chunkSize);
-                    cursor.position((int) (cursor.position() + chunkSize + 2));
-//                      cursor = dest;
-                    dest.put(src);
-                    ret.add(dest);
-                    onRead(key);      // a goto
-                  }
-
-                }
-              });
+              key.attach(new ChunkedEncodingVisitor(dst, receiveBufferSize, channel, returnTo));
 
             }//doChunked
 
@@ -797,5 +727,164 @@ public class BlobAntiPatternObject {
     final SessionCouchAgent<Visitor> ro = new SessionCouchAgent<Visitor>(VISITOR_LOCATOR);
     HttpMethod.enqueue(createCouchConnection(), OP_CONNECT | OP_WRITE, ro, ro.getFeedString());
     HttpMethod.init(args, topLevel, 1000);
+  }
+
+  String fetchJsonByPath(String path, final Rfc822HeaderState... youCanHaz) throws ClosedChannelException, InterruptedException {
+    final SynchronousQueue<String> sq = new SynchronousQueue<String>();
+    enqueue(createCouchConnection(), OP_CONNECT | OP_WRITE, new AsioVisitor.Impl() {
+
+
+      @Override
+      public void onWrite(SelectionKey key) throws Exception {
+        final SocketChannel channel = (SocketChannel) key.channel();
+        final byte[] bytes = ("GET " + key + " HTTP/1.1\r\nAccept: application/json\r\n\r\n").getBytes(UTF8);
+
+        //todo: youCanHaz headers here
+
+        final ByteBuffer wrap = ByteBuffer.wrap(bytes);
+        final int write = channel.write(wrap);
+        key.interestOps(OP_READ).attach(new Impl() {
+          @Override
+          public void onRead(SelectionKey key) throws Exception {
+
+            Rfc822HeaderState state = null;
+            for (Rfc822HeaderState rfc822HeaderState : youCanHaz) {
+              state = rfc822HeaderState;
+            }
+            final boolean sendItBack = null != state;
+            if (sendItBack)
+              state = new Rfc822HeaderState("Content-Length", "Encoding-Type"); //minimum for GET if sent in
+            //todo: youCanHaz headers here
+
+            final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
+            final int read = channel.read(dst);
+
+            assert state != null;
+            state.apply((ByteBuffer) dst.flip());
+            if (state.getPathRescode().startsWith("20")) {
+              final String o = state.getHeaderStrings().get(TRANSFER_ENCODING);
+              if (o != null) {
+                key.attach(new ChunkedEncodingVisitor(dst, 0, channel, sq));
+
+              } else {
+                String cl = state.getHeaderStrings().get(RfPostWrapper.CONTENT_LENGTH);
+                final long l = Long.parseLong(cl);
+                final ByteBuffer put = ByteBuffer.allocateDirect((int) l).put(dst);
+
+                if (put.hasRemaining()) {
+                  key.interestOps(OP_READ).attach(new Impl() {
+                    @Override
+                    public void onRead(SelectionKey key) throws Exception {
+                      channel.read(put);
+                      if (!put.hasRemaining()) {
+                        sq.put(UTF8.decode(put).toString().trim());
+                      }
+                    }
+
+
+                  });
+                } else sq.put(UTF8.decode(put).toString().trim());
+              }
+            }
+          }
+        });
+      }
+    });
+    return (sq.take());
+  }
+
+
+  private static class ChunkedEncodingVisitor extends AsioVisitor.Impl {
+    ByteBuffer cursor;
+
+    private Impl prev;
+    LinkedList<ByteBuffer> ret;
+    private final ByteBuffer dst;
+    private final int receiveBufferSize;
+    private final SocketChannel channel;
+    private final SynchronousQueue<String> returnTo;
+
+    public ChunkedEncodingVisitor(ByteBuffer dst, int receiveBufferSize, SocketChannel channel, SynchronousQueue<String> returnTo) {
+      this.dst = dst;
+      this.receiveBufferSize = receiveBufferSize;
+      this.channel = channel;
+      this.returnTo = returnTo;
+      cursor = dst.slice();
+      prev = this;
+      ret = new LinkedList<ByteBuffer>();
+    }
+
+    @Override
+    public void onRead(SelectionKey key) throws Exception {//chuksizeparser
+      if (cursor == null) {
+        cursor = ByteBuffer.allocate(receiveBufferSize);
+        final int read1 = channel.read(cursor);
+        cursor.flip();
+      }
+      System.err.println("chunking: " + UTF8.decode(cursor.duplicate()));
+      final int anchor = cursor.position();
+      while (cursor.hasRemaining() && cursor.get() != '\n') ;
+      final ByteBuffer line = (ByteBuffer) cursor.duplicate().position(anchor).limit(cursor.position());
+      String res = UTF8.decode(line).toString().trim();
+      long chunkSize = 0;
+      try {
+
+        chunkSize = Long.parseLong(res, 0x10);
+
+
+        if (0 == chunkSize) {
+          //send the unwrap to threadpool.
+          EXECUTOR_SERVICE.submit(new Callable() {
+            public Void call() throws InterruptedException {
+              int sum = 0;
+              for (ByteBuffer byteBuffer : ret) {
+                sum += byteBuffer.limit();
+              }
+              final ByteBuffer allocate = ByteBuffer.allocate(sum);
+              for (ByteBuffer byteBuffer : ret) {
+                allocate.put((ByteBuffer) byteBuffer.flip());
+              }
+
+              final String o = UTF8.decode((ByteBuffer) allocate.flip()).toString();
+              System.err.println("total chunked bundle was: " + o);
+              returnTo.put(o);
+              return null;
+            }
+          });
+          key.selector().wakeup();
+          key.interestOps(OP_READ);
+          key.attach(null);
+          return;
+        }
+      } catch (NumberFormatException ignored) {
+
+
+      }
+      final ByteBuffer dest = ByteBuffer.allocate((int) chunkSize);
+      if (!(chunkSize < cursor.remaining())) {//fragments to assemble
+
+        dest.put(cursor);
+        key.attach(new Impl() {
+          @Override
+          public void onRead(SelectionKey key) throws Exception {
+            final int read1 = channel.read(dest);
+            key.selector().wakeup();
+            if (!dest.hasRemaining()) {
+              key.attach(prev);
+              cursor = null;
+              ret.add(dest);
+            }
+          }
+        });
+      } else {
+        ByteBuffer src = (ByteBuffer) cursor.slice().limit((int) chunkSize);
+        cursor.position((int) (cursor.position() + chunkSize + 2));
+//                      cursor = dest;
+        dest.put(src);
+        ret.add(dest);
+        onRead(key);      // a goto
+      }
+
+    }
   }
 }

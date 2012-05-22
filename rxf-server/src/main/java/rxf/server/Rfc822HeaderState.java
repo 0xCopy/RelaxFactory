@@ -28,7 +28,7 @@ import static rxf.server.BlobAntiPatternObject.moveCaretToDoubleEol;
  */
 public class Rfc822HeaderState {
   public boolean dirty;
-  private String[] headers = {};
+  public String[] headers = {};
   private String[] cookies = {};
   private InetAddress sourceRoute;
 
@@ -56,16 +56,16 @@ public class Rfc822HeaderState {
     return headerBuf;
   }
 
-  public Map getHeaderStrings() {
+  public Map<String, String> getHeaderStrings() {
     return headerStrings;
-  }
-
-  public Map<String, String> getCookieStrings() {
-    return cookieStrings;
   }
 
   public String getPathRescode() {
     return pathRescode;
+  }
+
+  public Map<String, String> getCookieStrings() {
+    return cookieStrings;
   }
 
   List<String> getHeadersNamed(String header) {
@@ -95,7 +95,7 @@ public class Rfc822HeaderState {
       for (String s : cookie.split(";")) {
         final String[] split = s.split("^[^=]*=", 2);
         for (String s1 : split) {
-                                                  cookieStrings.put(split[0].trim(),split[1].trim());
+          cookieStrings.put(split[0].trim(), split[1].trim());
         }
       }
 //         final String[] split = cookie.split("^[^=]*=", 2);

@@ -164,17 +164,21 @@ public class RfPostWrapper extends Impl {
 
                           final ByteBuffer payload = UTF8.encode(s1 + finalProcess);
                           channel.write(payload);
-                          if (payload.hasRemaining())
+                          if (!payload.hasRemaining()) {
+                            key.interestOps(OP_READ).attach(RfPostWrapper.this);
+
+                          } else {
                             key.interestOps(OP_WRITE).attach(new Impl() {
 
 
                               @Override
-                              public void onWrite(SelectionKey selectionKey) throws IOException {
+                              public void onWrite(SelectionKey key) throws IOException {
                                 if (!payload.hasRemaining()) {
-                                  key.interestOps(OP_READ).attach(null);
+                                  key.interestOps(OP_READ).attach(RfPostWrapper.this);
                                 }
                               }
                             });
+                          }
                         } finally {
 
                         }
