@@ -39,7 +39,7 @@ class SendJsonVisitor extends AsioVisitor.Impl {
   public void onWrite(final SelectionKey key) throws UnsupportedEncodingException {
     String method;
     String call;
-    final boolean fresh = pathIdVer.length < 3;
+    final boolean fresh = pathIdVer.length < 2;
 
     method = fresh ? "POST" : "PUT";
 
