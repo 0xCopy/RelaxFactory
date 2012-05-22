@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import com.google.gson.reflect.TypeToken;
 import one.xio.AsioVisitor;
@@ -73,7 +74,7 @@ public abstract class CouchPropertiesAccess<T> {
    *
    * @throws InterruptedException
    */
-  public String setSessionProperty(String key, final String value) throws ClosedChannelException, InterruptedException {
+  public String setSessionProperty(String key, final String value) throws ClosedChannelException, InterruptedException, TimeoutException {
     final Exchanger<String> outer = new Exchanger<String>();
 
     HttpMethod.enqueue(createCouchConnection(), OP_WRITE | OP_CONNECT, new AsioVisitor.Impl() {
