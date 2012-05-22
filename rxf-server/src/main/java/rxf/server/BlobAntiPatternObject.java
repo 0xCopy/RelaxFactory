@@ -25,11 +25,11 @@ import java.util.UUID;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Exchanger;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
@@ -440,12 +440,12 @@ public class BlobAntiPatternObject {
     return r.toString().trim().replace("//", "/");
   }
 
-  public static AsioVisitor fetchHeadByPath(final SocketChannel channel, final SynchronousQueue<String> returnTo, final String... pathIdVer) throws ClosedChannelException {
+  public static AsioVisitor fetchHeadByPath(final SocketChannel channel, final Exchanger returnTo, final String... pathIdVer) throws ClosedChannelException {
     final String format = ((new StringBuilder().append("HEAD ").append(getPathIdVer(pathIdVer)).append(" HTTP/1.1\r\n\r\n").toString()));
     return executeCouchRequest(channel, returnTo, format);
   }
 
-  public static AsioVisitor fetchJsonByPath(final SocketChannel channel, final SynchronousQueue<String> returnTo, final String... pathIdVer) throws ClosedChannelException {
+  public static AsioVisitor fetchJsonByPath(final SocketChannel channel, final Exchanger returnTo, final String... pathIdVer) throws ClosedChannelException {
     if ($DBG) for (String s : pathIdVer) {
       if (s.isEmpty()) {
         throw new Error("call with blank prefix");
@@ -456,7 +456,7 @@ public class BlobAntiPatternObject {
     return executeCouchRequest(channel, returnTo, format);
   }
 
-  public static AsioVisitor executeCouchRequest(final SocketChannel channel, final SynchronousQueue<String> returnTo, final String requestHeaders) throws ClosedChannelException {
+  public static AsioVisitor executeCouchRequest(final SocketChannel channel, final Exchanger returnTo, final String requestHeaders) throws ClosedChannelException {
     final AsioVisitor.Impl impl = new AsioVisitor.Impl() {
       @Override
       public void onWrite(final SelectionKey key) throws IOException {
@@ -479,9 +479,9 @@ public class BlobAntiPatternObject {
     SocketChannel channel = null;
     try {
       channel = createCouchConnection();
-      SynchronousQueue<String> retVal = new SynchronousQueue<String>();
+      Exchanger<? extends String> retVal = new Exchanger<String>();
       HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, new SendJsonVisitor(json, retVal, pathIdVer));
-      take = retVal.take();/*retVal.poll(250, MILLISECONDS);*/
+      take = (String) retVal.exchange(null);/*retVal.poll(250, MILLISECONDS);*/
     } finally {
       recycleChannel(channel);
     }
@@ -492,9 +492,9 @@ public class BlobAntiPatternObject {
     SocketChannel channel = createCouchConnection();
     String take1;
     try {
-      SynchronousQueue<String> retVal = new SynchronousQueue<String>();
+      Exchanger retVal = new Exchanger();
       HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, fetchJsonByPath(channel, retVal));
-      take1 = retVal.take();
+      take1 = (String) retVal.exchange(null);
     } finally {
       recycleChannel(channel);
     }
@@ -505,7 +505,7 @@ public class BlobAntiPatternObject {
     return linkedHashMap;
   }
 
-  public static AsioVisitor createJsonResponseReader(final SynchronousQueue<String> returnTo) {
+  public static AsioVisitor createJsonResponseReader(final Exchanger returnTo) {
     return new AsioVisitor.Impl() {
       public long total;
       public long remaining;
@@ -519,7 +519,7 @@ public class BlobAntiPatternObject {
           int read = channel.read(dst);
           if (-1 == read) {
             key.cancel();
-            returnTo.put("{\"error\":\"connection closed\" ,\"reason\":\"buggered\"}");
+            returnTo.exchange("{\"error\":\"connection closed\" ,\"reason\":\"buggered\"}");
             return;
           }
 
@@ -590,13 +590,13 @@ public class BlobAntiPatternObject {
     };
   }
 
-  static String returnJsonString(SynchronousQueue<String> returnTo, SelectionKey key, String rescode, ByteBuffer payload) throws InterruptedException {
+  static String returnJsonString(Exchanger returnTo, SelectionKey key, String rescode, ByteBuffer payload) throws InterruptedException {
     key.attach(null);
     System.err.println("payload: " + UTF8.decode((ByteBuffer) payload.duplicate().rewind()));
     if (!payload.hasRemaining())
       payload.rewind();
 
-    returnTo.put(UTF8.decode(payload).toString().trim());
+    returnTo.exchange(UTF8.decode(payload).toString().trim());
     return rescode;
   }
 
@@ -618,9 +618,9 @@ public class BlobAntiPatternObject {
     SocketChannel channel = null;
     try {
       channel = createCouchConnection();
-      SynchronousQueue<String> retVal = new SynchronousQueue<String>();
+      Exchanger retVal = new Exchanger();
       HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, fetchJsonByPath(channel, retVal, pathIdVer));
-      ret = retVal.take();
+      ret = (String) retVal.exchange(null);
     } finally {
       recycleChannel(channel);
     }
@@ -641,10 +641,10 @@ public class BlobAntiPatternObject {
   public static String getGenericDocumentProperty(String path, String key) throws IOException {
     SocketChannel couchConnection = null;
     try {
-      final SynchronousQueue<String> returnTo = new SynchronousQueue<String>();
+      final Exchanger returnTo = new Exchanger();
       couchConnection = createCouchConnection();
       fetchJsonByPath(couchConnection, returnTo);
-      final String take = returnTo.take();
+      final String take = (String) returnTo.exchange(null);
       final Map map = GSON.fromJson(take, Map.class);
       return String.valueOf(map.get(key));
     } catch (Exception e) {
@@ -701,7 +701,7 @@ public class BlobAntiPatternObject {
         }
 
         {
-          final SynchronousQueue<String> returnTo = new SynchronousQueue<String>();
+          final Exchanger returnTo = new Exchanger();
           final SocketChannel couchConnection = createCouchConnection();
           final AsioVisitor asioVisitor = fetchHeadByPath(couchConnection, returnTo, "/geoip/current");
           //System.err.println("head: " + returnTo.take());
@@ -730,7 +730,9 @@ public class BlobAntiPatternObject {
   }
 
   public static String fetchJsonByPathV1(final String path, final Rfc822HeaderState... youCanHaz) throws ClosedChannelException, InterruptedException {
-    final SynchronousQueue<String> sq = new SynchronousQueue<String>();
+    final Exchanger exchanger = new Exchanger();
+
+
     enqueue(createCouchConnection(), OP_CONNECT | OP_WRITE, new AsioVisitor.Impl() {
       @Override
       public void onWrite(SelectionKey key) throws Exception {
@@ -763,7 +765,7 @@ public class BlobAntiPatternObject {
             if (state.getPathRescode().startsWith("20")) {
 //              final String o = state.getHeaderStrings().;
               if (state.getHeaderStrings().containsKey(TRANSFER_ENCODING)) {
-                key.attach(new ChunkedEncodingVisitor(dst, 0, channel, sq));
+                key.attach(new ChunkedEncodingVisitor(dst, 0, channel, exchanger));
 
               } else {
                 String cl = state.getHeaderStrings().get(RfPostWrapper.CONTENT_LENGTH);
@@ -776,20 +778,20 @@ public class BlobAntiPatternObject {
                     public void onRead(SelectionKey key) throws Exception {
                       channel.read(put);
                       if (!put.hasRemaining()) {
-                        sq.put(UTF8.decode(put).toString().trim());
+                        exchanger.exchange(UTF8.decode(put).toString().trim());
                       }
                     }
 
 
                   });
-                } else sq.put(UTF8.decode(put).toString().trim());
+                } else exchanger.exchange(UTF8.decode(put).toString().trim());
               }
             }
           }
         });
       }
     });
-    return (sq.take());
+    return (String) exchanger.exchange(null);
   }
 
 
@@ -801,9 +803,9 @@ public class BlobAntiPatternObject {
     private final ByteBuffer dst;
     private final int receiveBufferSize;
     private final SocketChannel channel;
-    private final SynchronousQueue<String> returnTo;
+    private final Exchanger<String> returnTo;
 
-    public ChunkedEncodingVisitor(ByteBuffer dst, int receiveBufferSize, SocketChannel channel, SynchronousQueue<String> returnTo) {
+    public ChunkedEncodingVisitor(ByteBuffer dst, int receiveBufferSize, SocketChannel channel, Exchanger returnTo) {
       this.dst = dst;
       this.receiveBufferSize = receiveBufferSize;
       this.channel = channel;
@@ -846,7 +848,7 @@ public class BlobAntiPatternObject {
 
               final String o = UTF8.decode((ByteBuffer) allocate.flip()).toString();
               System.err.println("total chunked bundle was: " + o);
-              returnTo.put(o);
+              returnTo.exchange(o);
               return null;
             }
           });

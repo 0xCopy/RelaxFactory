@@ -75,9 +75,9 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
       SocketChannel channel = createCouchConnection();
       String take;
       try {
-        SynchronousQueue<String> retVal = new SynchronousQueue<String>();
+        Exchanger retVal = new Exchanger();
         HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, BlobAntiPatternObject.fetchJsonByPath(channel, retVal, getPathPrefix(), id));
-        take = retVal.take();
+        take = (String) retVal.exchange(null);
       } finally {
         recycleChannel(channel);
       }
@@ -219,6 +219,8 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
                           }
                         });
                       }
+                    } else {
+                      exchanger.exchange(null);
                     }
                   }
                 });

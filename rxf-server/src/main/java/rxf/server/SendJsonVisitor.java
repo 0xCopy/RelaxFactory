@@ -5,7 +5,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
-import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.Exchanger;
 
 import one.xio.AsioVisitor;
 
@@ -22,14 +22,14 @@ class SendJsonVisitor extends AsioVisitor.Impl {
 
   private final String json;
   private final String[] pathIdVer;
-  private final SynchronousQueue<String> returnTo;
+  private final Exchanger returnTo;
 
-  public SendJsonVisitor(String json, SynchronousQueue<String> returnTo, String... pathIdVer) {
+  public SendJsonVisitor(String json, Exchanger returnTo, String... pathIdVer) {
     this.json = json;
     this.returnTo = returnTo;
     this.pathIdVer = pathIdVer;
 //    assert this.pathIdVer.length > 1;
-      if (SendJsonVisitor.DEBUG_SENDJSON) {
+    if (SendJsonVisitor.DEBUG_SENDJSON) {
       System.err.println("sendJson audit: " + BlobAntiPatternObject.arrToString(pathIdVer) + wheresWaldo());
       if (pathIdVer.length < 2) throw new Error("new path code required here");
     }

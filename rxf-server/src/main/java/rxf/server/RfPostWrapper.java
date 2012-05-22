@@ -124,69 +124,63 @@ public class RfPostWrapper extends Impl {
                     }
                   });
                   try {
-                    {
-                      ByteBuffer dst = exchanger.exchange(null);
 
-                      String trim = UTF8.decode((ByteBuffer) dst.flip()).toString().trim();
-                      System.err.println("exchanger says: " + UTF8.decode((ByteBuffer) dst.duplicate().rewind()));
-                      InetAddress remoteSocketAddress = channel.socket().getInetAddress();
-                      String process = null;
-                      try {
-                        try {
-                          ThreadLocalHeaders.set(rfc822HeaderState);
-                          //                        ThreadLocalInetAddress.set(remoteSocketAddress);
-                          //              SERVICE_LAYER.
-                          process = SIMPLE_REQUEST_PROCESSOR.process(trim);
-                          System.err.println("+++ headers " + UTF8.decode((ByteBuffer) rfc822HeaderState.getHeaderBuf().rewind()).toString());
+                    ByteBuffer dst = exchanger.exchange(null);
 
-                          String sc1 = "";
-                          if (rfc822HeaderState.isDirty()) {
-                            sc1 = "";
+                    String trim = UTF8.decode((ByteBuffer) dst.flip()).toString().trim();
+                    System.err.println("exchanger says: " + UTF8.decode((ByteBuffer) dst.duplicate().rewind()));
+                    InetAddress remoteSocketAddress = channel.socket().getInetAddress();
+                    String process = null;
+                    try {
 
-                            final Map<String, String> rfc822HeaderStateCookieStrings = rfc822HeaderState.getCookieStrings();
-                            Iterator<Map.Entry<String, String>> iterator = rfc822HeaderStateCookieStrings.entrySet().iterator();
-                            if (iterator.hasNext()) {
-                              do {
-                                Map.Entry<String, String> stringStringEntry = iterator.next();
-                                sc1 += "Set-Cookie: " + stringStringEntry.getKey() + "=" + stringStringEntry.getValue().trim();
+                      ThreadLocalHeaders.set(rfc822HeaderState);
+                      //                        ThreadLocalInetAddress.set(remoteSocketAddress);
+                      //              SERVICE_LAYER.
+                      process = SIMPLE_REQUEST_PROCESSOR.process(trim);
+                      System.err.println("+++ headers " + UTF8.decode((ByteBuffer) rfc822HeaderState.getHeaderBuf().rewind()).toString());
+
+                      String sc1 = "";
+                      if (rfc822HeaderState.isDirty()) {
+                        sc1 = "";
+
+                        final Map<String, String> rfc822HeaderStateCookieStrings = rfc822HeaderState.getCookieStrings();
+                        Iterator<Map.Entry<String, String>> iterator = rfc822HeaderStateCookieStrings.entrySet().iterator();
+                        if (iterator.hasNext()) {
+                          do {
+                            Map.Entry<String, String> stringStringEntry = iterator.next();
+                            sc1 += "Set-Cookie: " + stringStringEntry.getKey() + "=" + stringStringEntry.getValue().trim();
 //                                if (iterator.hasNext()) sc1 += "; ";
-                                sc1 += "\r\n";
-                              } while (iterator.hasNext());
-                            }
-
-                          }
-                          int length = process.length();
-                          final String s1 = "HTTP/1.1 200 OK\r\n" +
-                              sc1 +
-                              "Content-Type: application/json\r\n" +
-                              "Content-Length: " + length + "\r\n\r\n";
-                          final String finalProcess = process;
-
-                          final ByteBuffer payload = UTF8.encode(s1 + finalProcess);
-                          channel.write(payload);
-                          if (!payload.hasRemaining()) {
-                            key.interestOps(OP_READ).attach(RfPostWrapper.this);
-
-                          } else {
-                            key.interestOps(OP_WRITE).attach(new Impl() {
-
-
-                              @Override
-                              public void onWrite(SelectionKey key) throws IOException {
-                                if (!payload.hasRemaining()) {
-                                  key.interestOps(OP_READ).attach(RfPostWrapper.this);
-                                }
-                              }
-                            });
-                          }
-                        } finally {
-
+                            sc1 += "\r\n";
+                          } while (iterator.hasNext());
                         }
 
-                      } catch (Throwable e) {
-                        e.printStackTrace();  //
                       }
+                      int length = process.length();
+                      final String s1 = "HTTP/1.1 200 OK\r\n" +
+                          sc1 +
+                          "Content-Type: application/json\r\n" +
+                          "Content-Length: " + length + "\r\n\r\n";
+                      final String finalProcess = process;
 
+                      final ByteBuffer payload = UTF8.encode(s1 + finalProcess);
+                      channel.write(payload);
+                      if (!payload.hasRemaining()) {
+                        key.interestOps(OP_READ).attach(RfPostWrapper.this);
+
+                      } else {
+                        key.interestOps(OP_WRITE).attach(new Impl() {
+
+
+                          @Override
+                          public void onWrite(SelectionKey key) throws IOException {
+                            if (!payload.hasRemaining()) {
+                              key.interestOps(OP_READ).attach(RfPostWrapper.this);
+                            }
+                          }
+                        });
+                      }
+                    } catch (Throwable e) {
+                      e.printStackTrace();  //
                     }
                   } catch (InterruptedException e) {
                     e.printStackTrace();  //
