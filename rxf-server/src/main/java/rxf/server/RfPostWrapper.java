@@ -17,7 +17,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.Exchanger;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.google.web.bindery.requestfactory.server.ExceptionHandler;
@@ -108,7 +107,7 @@ public class RfPostWrapper extends Impl {
                               /////////////////////////////////////////////////////////////////////////////////////////////////////
 
                               exchanger.exchange(cursor);
-
+                              key.interestOps(0);
                             }
                           }
                         });        //////
@@ -129,7 +128,7 @@ public class RfPostWrapper extends Impl {
                       try {
                         try {
                           ThreadLocalHeaders.set(rfc822HeaderState);
-  //                        ThreadLocalInetAddress.set(remoteSocketAddress);
+                          //                        ThreadLocalInetAddress.set(remoteSocketAddress);
                           //              SERVICE_LAYER.
                           process = SIMPLE_REQUEST_PROCESSOR.process(trim);
                           System.err.println("+++ headers " + UTF8.decode((ByteBuffer) rfc822HeaderState.getHeaderBuf().rewind()).toString());
@@ -144,7 +143,7 @@ public class RfPostWrapper extends Impl {
                               do {
                                 Map.Entry<String, String> stringStringEntry = iterator.next();
                                 sc1 += "Set-Cookie: " + stringStringEntry.getKey() + "=" + stringStringEntry.getValue().trim();
-                                if (iterator.hasNext()) sc1 += "; ";
+//                                if (iterator.hasNext()) sc1 += "; ";
                                 sc1 += "\r\n";
                               } while (iterator.hasNext());
                             }
@@ -199,9 +198,7 @@ public class RfPostWrapper extends Impl {
               }              //should also be for POST
               final Set<Map.Entry<Pattern, AsioVisitor>> entries = patternAsioVisitorLinkedHashMap.entrySet();
               for (Map.Entry<Pattern, AsioVisitor> visitorEntry : entries) {
-                final Matcher matcher = visitorEntry.getKey().matcher(path);
-                final boolean b = matcher.find();
-                if (b) {
+                if (visitorEntry.getKey().matcher(path).find()) {
                   ThreadLocalHeaders.set(rfc822HeaderState);
 
                   key.selector().wakeup();

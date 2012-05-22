@@ -24,7 +24,7 @@ import java.util.Queue;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Exchanger;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ScheduledExecutorService;
@@ -49,7 +49,7 @@ import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpMethod.GET;
 import static one.xio.HttpMethod.UTF8;
-import static one.xio.HttpMethod.enqueue;
+import static one.xio.HttpMethod.getSelector;
 import static one.xio.HttpMethod.wheresWaldo;
 
 /**
@@ -216,28 +216,35 @@ public class BlobAntiPatternObject {
     }
   }
 
-  static public String getSessionCookieId() {
+  static public String getSessionCookieId() throws ExecutionException, InterruptedException {
     final Rfc822HeaderState rfc822HeaderPrefix = ThreadLocalHeaders.get();
-    final AtomicReference<InetAddress> inet4Address = new AtomicReference<InetAddress>();
-    final AtomicReference<String> charBuffer = new AtomicReference<String>();
-    final AtomicReference<String> id = new AtomicReference<String>();
-    try {
-      id.set(rfc822HeaderPrefix.getCookieStrings().get(VISITORSTRING));
 
-    } catch (Throwable e) {
-      System.err.println("cookie failure on " + id);
-    }
+    final AtomicReference<String> id = new AtomicReference<String>();
+
+
+    final String newValue = rfc822HeaderPrefix.getCookieStrings().get(VISITORSTRING);
+    id.set(newValue);
+
     if (null == id.get()) {
+      final AtomicReference<InetAddress> inet4Address = new AtomicReference<InetAddress>();
+      final AtomicReference<String> charBuffer = new AtomicReference<String>();
+
       EXECUTOR_SERVICE.submit(new Runnable() {
         public void run() {
+          rfc822HeaderPrefix.setDirty(true);
+          final SynchronousQueue inner = new SynchronousQueue();
           try {
-            final Exchanger exchanger = new Exchanger();
-            enqueue(createCouchConnection(), OP_WRITE, new AsioVisitor.Impl() {
+            getSelector().wakeup();
+            createCouchConnection().register(getSelector(), OP_WRITE | OP_CONNECT, new AsioVisitor.Impl() {
+              {
+                System.err.println("created");
+              }
+
               @Override
-              public void onWrite(SelectionKey key) throws Exception {
+              public void onWrite(SelectionKey key) throws IOException {
                 final SocketChannel channel = (SocketChannel) key.channel();
                 final String rxf_visitor = getPathIdVer("rxf_visitor");
-                final LinkedHashMap linkedHashMap = new LinkedHashMap();
+                final LinkedHashMap<String, String> linkedHashMap = new LinkedHashMap<String, String>();
                 final InetAddress sourceRoute = rfc822HeaderPrefix.getSourceRoute();
                 if (sourceRoute != null) {
                   inet4Address.set(rfc822HeaderPrefix.getSourceRoute());
@@ -247,22 +254,35 @@ public class BlobAntiPatternObject {
                 }
                 final String s1 = GSON.toJson(linkedHashMap);
                 final byte[] bytes = s1.getBytes(UTF8);
-                final String s = "POST " + rxf_visitor + " HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: " + bytes.length + "\r\n\r\n" + s1;
+
+
+                final String s = "POST " + rxf_visitor + " HTTP/1.1\r\nContent-Type: application/json\r\nAccept: */*\r\nContent-Length: " + bytes.length + "\r\n\r\n" + s1;
 
                 final ByteBuffer wrap = ByteBuffer.wrap(s.getBytes());
                 final int write = channel.write(wrap);
-                key.interestOps(OP_READ).attach(new Impl() {
+                HttpMethod.enqueue(key.channel(), OP_READ, new Impl() {
 
                   @Override
-                  public void onRead(SelectionKey key) throws Exception {
+                  public void onRead(SelectionKey key) throws IOException, InterruptedException {
                     final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
                     final int read = channel.read(dst);
                     final Rfc822HeaderState ETag = new Rfc822HeaderState("ETag").apply((ByteBuffer) dst.flip());
                     final String pathRescode = ETag.getPathRescode();
+                    EXECUTOR_SERVICE.submit(new Runnable() {
+                      public void run() {
 
-                    final Map map = GSON.fromJson(UTF8.decode(dst).toString(), Map.class);
-                    id.set((String) map.get("id"));
-                    exchanger.exchange(null);
+
+                        final Map map = GSON.fromJson(UTF8.decode(dst).toString(), Map.class);
+                        id.set((String) map.get("id"));
+                        try {
+                          inner.put("");
+                          recycleChannel(channel);
+                        } catch (InterruptedException e) {
+                          e.printStackTrace();  //todo: verify for a purpose
+                        }//
+                      } //V
+                    } //  V
+                    ); // V
                     //    V
                   } //    V
                   //      V
@@ -274,33 +294,29 @@ public class BlobAntiPatternObject {
               } //        V
             } //          V
             ); //         V
-            exchanger.exchange(null);
+
+            inner.take();
+            final Map<String, String> cookieStrings = rfc822HeaderPrefix.getCookieStrings();
+            cookieStrings.clear();
+            Date expire = new Date(TimeUnit.DAYS.toMillis(14) + System.currentTimeMillis());
+            String cookietext = MessageFormat.format("{0} ; path=/ ; expires={1} ; HttpOnly", id.get(), expire.toGMTString());
+            cookieStrings.put(VISITORSTRING, cookietext);
+            if (null != inet4Address.get()) {
+              final String geoip = MessageFormat.format("{0} ; path=/ ; expires={1}", charBuffer.get(), expire.toGMTString());
+              cookieStrings.put(MYGEOIPSTRING, geoip);
+
+            }
           } catch (ClosedChannelException e) {
-            e.printStackTrace();
+            e.printStackTrace();  //todo: verify for a purpose
           } catch (InterruptedException e) {
-            e.printStackTrace();
+            e.printStackTrace();  //todo: verify for a purpose
           }
-          rfc822HeaderPrefix.setDirty(true);
-          final Map<String, String> cookieStrings = rfc822HeaderPrefix.getCookieStrings();
-          cookieStrings.clear();
-//          Map<String, String> stringMap = ThreadLocalSetCookies.get();
-//          if (null == stringMap) {
-//            Map<String, String> value = new TreeMap<String, String>();
-//            value.put(VISITORSTRING, id.get());
-//            ThreadLocalSetCookies.set(value);
-//          }
-          Date expire = new Date(TimeUnit.DAYS.toMillis(14) + System.currentTimeMillis());
-          String cookietext = MessageFormat.format("{0} ; path=/ ; expires={1} ; HttpOnly", id.get(), expire.toGMTString());
-          cookieStrings.put(VISITORSTRING, cookietext);
-          if (null != inet4Address.get()) {
-            final String geoip = MessageFormat.format("{0} ; path=/ ; expires={1}", charBuffer.get(), expire.toGMTString());
-          cookieStrings.put(MYGEOIPSTRING, geoip);
-
-          }
-
         }
-      });
+
+
+      }).get();
     }
+
     final String s = id.get();
     return s;
   }

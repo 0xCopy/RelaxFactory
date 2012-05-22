@@ -57,7 +57,7 @@ public class Rfc822HeaderState {
     this.headers = headers;
   }
 
-  public Rfc822HeaderState  sourceKey(SelectionKey key
+  public Rfc822HeaderState sourceKey(SelectionKey key
   ) throws IOException {
     final SocketChannel channel = (SocketChannel) key.channel();
     final InetAddress inetAddress1 = channel.socket().getInetAddress();
@@ -99,6 +99,7 @@ public class Rfc822HeaderState {
 
 
   public Rfc822HeaderState cookies(String... cookies) {
+    this.cookies = cookies;
     final List<? extends String> headersNamed = getHeadersNamed(COOKIE);
     cookieStrings = new LinkedHashMap<String, String>();
     Arrays.sort(cookies);
@@ -106,8 +107,10 @@ public class Rfc822HeaderState {
 
       final String[] split = cookie.split("^[^=]*=", 2);
       final String tag = split[0];
-      if (Arrays.binarySearch(cookies, tag.trim()) > 0)
-        cookieStrings.put(tag, split[1]);
+      if (Arrays.binarySearch(cookies, tag.trim()) > 0) {
+        final String value = split[1];
+        cookieStrings.put(tag, value);
+      }
     }
     return this;
   }
