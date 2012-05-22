@@ -95,11 +95,17 @@ public abstract class CouchPropertiesAccess<T> {
           public void onRead(final SelectionKey key) throws Exception {
             final ByteBuffer cursor = ByteBuffer.allocateDirect(getReceiveBufferSize());
             final int read = ((SocketChannel) channel).read(cursor);
+            if (-1 == read) {
+
+              outer.exchange(null, 3, TimeUnit.SECONDS);
+              return;
+            }
             cursor.flip();
             final Rfc822HeaderState rfc822HeaderPrefix = new Rfc822HeaderState(RfPostWrapper.CONTENT_LENGTH);
             final String rescode = rfc822HeaderPrefix.apply(cursor).cookies(BlobAntiPatternObject.MYGEOIPSTRING).getPathRescode();
-            if (!rescode.startsWith("200")) {
+            if (!rescode.equals("200")) {
               outer.exchange(null, 3, TimeUnit.SECONDS);
+              return;
             }
             Callable<Void> callable = new Callable<Void>() {
               public Exchanger<ByteBuffer> inner = new Exchanger<ByteBuffer>();
