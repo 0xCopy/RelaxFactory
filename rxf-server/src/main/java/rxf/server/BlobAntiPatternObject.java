@@ -729,15 +729,13 @@ public class BlobAntiPatternObject {
     HttpMethod.init(args, topLevel, 1000);
   }
 
-  String fetchJsonByPath(String path, final Rfc822HeaderState... youCanHaz) throws ClosedChannelException, InterruptedException {
+  public static String fetchJsonByPathV1(final String path, final Rfc822HeaderState... youCanHaz) throws ClosedChannelException, InterruptedException {
     final SynchronousQueue<String> sq = new SynchronousQueue<String>();
     enqueue(createCouchConnection(), OP_CONNECT | OP_WRITE, new AsioVisitor.Impl() {
-
-
       @Override
       public void onWrite(SelectionKey key) throws Exception {
         final SocketChannel channel = (SocketChannel) key.channel();
-        final byte[] bytes = ("GET " + key + " HTTP/1.1\r\nAccept: application/json\r\n\r\n").getBytes(UTF8);
+        final byte[] bytes = ("GET " + path + " HTTP/1.1\r\nAccept: application/json\r\n\r\n").getBytes(UTF8);
 
         //todo: youCanHaz headers here
 
@@ -750,9 +748,10 @@ public class BlobAntiPatternObject {
             Rfc822HeaderState state = null;
             for (Rfc822HeaderState rfc822HeaderState : youCanHaz) {
               state = rfc822HeaderState;
+              break;
             }
             final boolean sendItBack = null != state;
-            if (sendItBack)
+            if (!sendItBack)
               state = new Rfc822HeaderState("Content-Length", "Encoding-Type"); //minimum for GET if sent in
             //todo: youCanHaz headers here
 
@@ -762,8 +761,8 @@ public class BlobAntiPatternObject {
             assert state != null;
             state.apply((ByteBuffer) dst.flip());
             if (state.getPathRescode().startsWith("20")) {
-              final String o = state.getHeaderStrings().get(TRANSFER_ENCODING);
-              if (o != null) {
+//              final String o = state.getHeaderStrings().;
+              if (state.getHeaderStrings().containsKey(TRANSFER_ENCODING)) {
                 key.attach(new ChunkedEncodingVisitor(dst, 0, channel, sq));
 
               } else {
