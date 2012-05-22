@@ -10,6 +10,7 @@ import java.nio.channels.SocketChannel;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Exchanger;
+import java.util.concurrent.TimeUnit;
 
 import com.google.gson.reflect.TypeToken;
 import one.xio.AsioVisitor;
@@ -97,7 +98,7 @@ public abstract class CouchPropertiesAccess<T> {
             final Rfc822HeaderState rfc822HeaderPrefix = new Rfc822HeaderState(RfPostWrapper.CONTENT_LENGTH);
             final String rescode = rfc822HeaderPrefix.apply(cursor).cookies(BlobAntiPatternObject.MYGEOIPSTRING).getPathRescode();
             if (!rescode.startsWith("200")) {
-              outer.exchange(null);
+              outer.exchange(null, 3, TimeUnit.SECONDS);
             }
             Callable<Void> callable = new Callable<Void>() {
               public Exchanger<ByteBuffer> inner = new Exchanger<ByteBuffer>();
@@ -130,7 +131,7 @@ public abstract class CouchPropertiesAccess<T> {
                     }       //  V
                   }         //  V
                 });         //  V
-                final ByteBuffer exchange = inner.exchange(null);
+                final ByteBuffer exchange = inner.exchange(null, 3, TimeUnit.SECONDS);
                 final String json = UTF8.decode(exchange).toString();
 
 
@@ -181,7 +182,7 @@ public abstract class CouchPropertiesAccess<T> {
         });
       }
     });
-    outer.exchange(null);
+    outer.exchange(null, 3, TimeUnit.SECONDS);
     return key;
   }
 

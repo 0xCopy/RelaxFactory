@@ -38,6 +38,8 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import one.xio.AsioVisitor;
 import one.xio.HttpHeaders;
@@ -92,7 +94,7 @@ public class GeoIpService {
   public static final int MEG = (1024 * 1024);
 
 
-  public static void createGeoIpIndex() throws IOException, XPathExpressionException, ExecutionException, InterruptedException {
+  public static void createGeoIpIndex() throws IOException, XPathExpressionException, ExecutionException, InterruptedException, TimeoutException {
     String href = scrapeMaxMindUrl();
     System.err.println("grabbing " + href + wheresWaldo());
     final long l = System.currentTimeMillis();
@@ -113,13 +115,13 @@ public class GeoIpService {
           Exchanger retVal = new Exchanger();
           fetchJsonByPath(couchConnection, retVal);
 
-          m = GSON.fromJson((String) retVal.exchange(null), Map.class);
+          m = GSON.fromJson((String) retVal.exchange(null, 3, TimeUnit.SECONDS), Map.class);
           if (2 == m.size() && m.containsKey("responseCode")) {
             Map<String, Date> map = new HashMap<String, Date>();
             //noinspection unchecked
             map.put("created", new Date());
             HttpMethod.enqueue(couchConnection, OP_WRITE, new SendJsonVisitor(GSON.toJson(map).trim(), retVal, GEOIP_ROOTNODE));
-            String json = (String) retVal.exchange(null);
+            String json = (String) retVal.exchange(null, 3, TimeUnit.SECONDS);
 
 
             m = GSON.fromJson(json, Map.class);
@@ -159,7 +161,7 @@ public class GeoIpService {
             }
           });
     }
-    String take = (String) retVal.exchange(null);
+    String take = (String) retVal.exchange(null, 3, TimeUnit.SECONDS);
     final CouchTx couchTx = GSON.fromJson(take, CouchTx.class);
     {
       couchConnection = createCouchConnection();
@@ -181,7 +183,7 @@ public class GeoIpService {
             }
           });
     }
-    take = (String) retVal.exchange(null);
+    take = (String) retVal.exchange(null, 3, TimeUnit.SECONDS);
   }
 
   static void putFile(SelectionKey key, final ByteBuffer d2, String push, final Exchanger synchronousQueue) throws IOException {
@@ -469,7 +471,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
           Callable<Object> callable = new Callable<Object>() {
             public Object call() throws Exception {
 
-              String take = (String) retVal.exchange(null);
+              String take = (String) retVal.exchange(null, 3, TimeUnit.SECONDS);
               key.attach(this);
               System.err.println("rootnode: " + take);
               Map map = GSON.fromJson(take, Map.class);

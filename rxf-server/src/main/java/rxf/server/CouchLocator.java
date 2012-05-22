@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.TimeUnit;
 
 import com.google.web.bindery.requestfactory.shared.Locator;
 import one.xio.AsioVisitor;
@@ -77,7 +78,7 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
       try {
         Exchanger retVal = new Exchanger();
         HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, BlobAntiPatternObject.fetchJsonByPath(channel, retVal, getPathPrefix(), id));
-        take = (String) retVal.exchange(null);
+        take = (String) retVal.exchange(null, 3, TimeUnit.SECONDS);
       } finally {
         recycleChannel(channel);
       }
@@ -220,14 +221,14 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
                         });
                       }
                     } else {
-                      exchanger.exchange(null);
+                      exchanger.exchange(null, 3, TimeUnit.SECONDS);
                     }
                   }
                 });
               }
             }
           });
-          final ByteBuffer exchange = (ByteBuffer) exchanger.exchange(null).flip();
+          final ByteBuffer exchange = (ByteBuffer) exchanger.exchange(null, 3, TimeUnit.SECONDS).flip();
           final String json = UTF8.decode(exchange).toString();
 
           return GSON.fromJson(json, CouchTx.class);

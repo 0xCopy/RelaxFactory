@@ -31,6 +31,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -481,7 +482,7 @@ public class BlobAntiPatternObject {
       channel = createCouchConnection();
       Exchanger<? extends String> retVal = new Exchanger<String>();
       HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, new SendJsonVisitor(json, retVal, pathIdVer));
-      take = (String) retVal.exchange(null);/*retVal.poll(250, MILLISECONDS);*/
+      take = (String) retVal.exchange(null, 3, TimeUnit.SECONDS);/*retVal.poll(250, MILLISECONDS);*/
     } finally {
       recycleChannel(channel);
     }
@@ -490,11 +491,13 @@ public class BlobAntiPatternObject {
 
   public static Map fetchMapById(CouchLocator locator, String key) throws IOException, InterruptedException {
     SocketChannel channel = createCouchConnection();
-    String take1;
+    String take1 = null;
     try {
       Exchanger retVal = new Exchanger();
       HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, fetchJsonByPath(channel, retVal));
-      take1 = (String) retVal.exchange(null);
+      take1 = (String) retVal.exchange(null, 3, TimeUnit.SECONDS);
+    } catch (TimeoutException e) {
+      e.printStackTrace();  //todo: verify for a purpose
     } finally {
       recycleChannel(channel);
     }
@@ -620,7 +623,7 @@ public class BlobAntiPatternObject {
       channel = createCouchConnection();
       Exchanger retVal = new Exchanger();
       HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, fetchJsonByPath(channel, retVal, pathIdVer));
-      ret = (String) retVal.exchange(null);
+      ret = (String) retVal.exchange(null, 3, TimeUnit.SECONDS);
     } finally {
       recycleChannel(channel);
     }
@@ -644,7 +647,7 @@ public class BlobAntiPatternObject {
       final Exchanger returnTo = new Exchanger();
       couchConnection = createCouchConnection();
       fetchJsonByPath(couchConnection, returnTo);
-      final String take = (String) returnTo.exchange(null);
+      final String take = (String) returnTo.exchange(null, 3, TimeUnit.SECONDS);
       final Map map = GSON.fromJson(take, Map.class);
       return String.valueOf(map.get(key));
     } catch (Exception e) {
@@ -729,7 +732,7 @@ public class BlobAntiPatternObject {
     HttpMethod.init(args, topLevel, 1000);
   }
 
-  public static String fetchJsonByPathV1(final String path, final Rfc822HeaderState... youCanHaz) throws ClosedChannelException, InterruptedException {
+  public static String fetchJsonByPathV1(final String path, final Rfc822HeaderState... youCanHaz) throws ClosedChannelException, InterruptedException, TimeoutException {
     final Exchanger exchanger = new Exchanger();
 
 
@@ -791,7 +794,7 @@ public class BlobAntiPatternObject {
         });
       }
     });
-    return (String) exchanger.exchange(null);
+    return (String) exchanger.exchange(null, 3, TimeUnit.SECONDS);
   }
 
 

@@ -17,6 +17,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.Exchanger;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 
 import com.google.web.bindery.requestfactory.server.ExceptionHandler;
@@ -125,7 +127,7 @@ public class RfPostWrapper extends Impl {
                   });
                   try {
 
-                    ByteBuffer dst = exchanger.exchange(null);
+                    ByteBuffer dst = exchanger.exchange(null, 3, TimeUnit.SECONDS);
 
                     String trim = UTF8.decode((ByteBuffer) dst.flip()).toString().trim();
                     System.err.println("exchanger says: " + UTF8.decode((ByteBuffer) dst.duplicate().rewind()));
@@ -184,6 +186,8 @@ public class RfPostWrapper extends Impl {
                     }
                   } catch (InterruptedException e) {
                     e.printStackTrace();  //
+                  } catch (TimeoutException e) {
+                    e.printStackTrace();  //todo: verify for a purpose
                   }
                 }
               });
