@@ -48,8 +48,10 @@ import static java.nio.channels.SelectionKey.OP_ACCEPT;
 import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
+import static one.xio.HttpMethod.$DBG;
 import static one.xio.HttpMethod.GET;
 import static one.xio.HttpMethod.UTF8;
+import static one.xio.HttpMethod.getSelector;
 import static one.xio.HttpMethod.wheresWaldo;
 
 /**
@@ -198,6 +200,7 @@ public class BlobAntiPatternObject {
   };
   public static final Charset UTF8CHARSET = Charset.forName(UTF8.name());
   public static final VisitorPropertiesAccess VISITOR_PROPERTIES_ACCESS = new VisitorPropertiesAccess();
+  public static final boolean DEBUG_COUCH_POOL = System.getenv().containsKey("DEBUG_COUCH_POOL");
 
   static {
     try {
@@ -354,9 +357,21 @@ public class BlobAntiPatternObject {
   }
 
   public static void recycleChannel(SocketChannel channel) {
+    if ($DBG) {
+      final Rfc822HeaderState rfc822HeaderState = RfPostWrapper.ORIGINS.get(channel.keyFor(getSelector()));
+      if (null != rfc822HeaderState) {
+        throw new Error("accidental recycle !!!!!!!! " + rfc822HeaderState.getPathRescode()+" !!! "+ wheresWaldo(5));
+      }
+    }
     try {
-      lazyQueue.add(channel);
-      System.err.println("--- recycling" + wheresWaldo());
+      if (DEBUG_COUCH_POOL) {
+        channel.socket().close();
+      } else {
+
+        System.err.println("--- recycling" + wheresWaldo());
+
+        lazyQueue.add(channel);
+      }
     } catch (Exception ignored) {
     }
 

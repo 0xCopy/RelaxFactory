@@ -32,19 +32,6 @@ public class Rfc822HeaderState {
   private String[] cookies = {};
   private InetAddress sourceRoute;
 
-  @Override
-  public String toString() {
-    return "Rfc822HeaderState{" +
-        "headers=" + (headers == null ? null : Arrays.asList(headers)) +
-        ", cookies=" + (cookies == null ? null : Arrays.asList(cookies)) +
-        ", sourceRoute=" + sourceRoute +
-        ", headerBuf=" + headerBuf +
-        ", headerStrings=" + headerStrings +
-        ", cookieStrings=" + cookieStrings +
-        ", methodProtocol='" + methodProtocol + '\'' +
-        ", pathRescode='" + pathRescode + '\'' +
-        '}';
-  }
 
   private ByteBuffer headerBuf;
   private Map<String, String> headerStrings;
@@ -105,12 +92,20 @@ public class Rfc822HeaderState {
     Arrays.sort(cookies);
     for (String cookie : headersNamed) {
 
-      final String[] split = cookie.split("^[^=]*=", 2);
-      final String tag = split[0];
-      if (Arrays.binarySearch(cookies, tag.trim()) > 0) {
-        final String value = split[1];
-        cookieStrings.put(tag, value);
+      for (String s : cookie.split(";")) {
+        final String[] split = s.split("^[^=]*=", 2);
+        for (String s1 : split) {
+                                                  cookieStrings.put(split[0].trim(),split[1].trim());
+        }
       }
+//         final String[] split = cookie.split("^[^=]*=", 2);
+//
+//      final String[] split = cookie.split("^[^=]*=", 2);
+//      final String tag = split[0];
+//      if (Arrays.binarySearch(cookies, tag.trim()) > 0) {
+//        final String value = split[1];
+//        cookieStrings.put(tag, value);
+//      }
     }
     return this;
   }

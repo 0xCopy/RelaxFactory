@@ -29,10 +29,10 @@ class SendJsonVisitor extends AsioVisitor.Impl {
     this.returnTo = returnTo;
     this.pathIdVer = pathIdVer;
 //    assert this.pathIdVer.length > 1;
-    /*  if (SendJsonVisitor.DEBUG_SENDJSON) {
+      if (SendJsonVisitor.DEBUG_SENDJSON) {
       System.err.println("sendJson audit: " + BlobAntiPatternObject.arrToString(pathIdVer) + wheresWaldo());
-      if (pathIdVer.length < 1) throw new Error("new path code required here");
-    }*/
+      if (pathIdVer.length < 2) throw new Error("new path code required here");
+    }
   }
 
   @Override

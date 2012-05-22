@@ -71,7 +71,7 @@ public class RfPostWrapper extends Impl {
     int read = channel.read(dst);
     if (read < 0) {
       if ($DBG && ORIGINS.containsKey(key)) {
-        System.err.println($DBG + ": closing " + ORIGINS.get(key).getPathRescode());
+        System.err.println("read (" + read + ")" + ": closing " + ORIGINS.get(key).getPathRescode());
       }
       channel.close();
     } else {
@@ -99,19 +99,25 @@ public class RfPostWrapper extends Impl {
                     public void run() {
                       ThreadLocalHeaders.set(rfc822HeaderState);
                       try {
-                        if (cursor.hasRemaining()) key.interestOps(OP_READ).attach(new Impl() {
-                          @Override
-                          public void onRead(final SelectionKey key) throws Exception {
-                            channel.read(cursor);
-                            if (!cursor.hasRemaining()) {
-                              /////////////////////////////////////////////////////////////////////////////////////////////////////
+                        if (!cursor.hasRemaining()) {
+                          exchanger.exchange(cursor);
+                          key.interestOps(0);
+//                          key.channel().close();
+                        } else {
+                          key.interestOps(OP_READ).attach(new Impl() {
+                            @Override
+                            public void onRead(final SelectionKey key) throws Exception {
+                              channel.read(cursor);
+                              if (!cursor.hasRemaining()) {
+                                /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-                              exchanger.exchange(cursor);
-                              key.interestOps(0);
+                                exchanger.exchange(cursor);
+                                key.interestOps(0);
+                              }
                             }
-                          }
-                        });        //////
-                        exchanger.exchange(cursor);
+                          });         //////
+                        }
+
                       } catch (Throwable e) {
                         e.printStackTrace();  //
                       }
@@ -155,18 +161,20 @@ public class RfPostWrapper extends Impl {
                               "Content-Type: application/json\r\n" +
                               "Content-Length: " + length + "\r\n\r\n";
                           final String finalProcess = process;
-                          key.interestOps(OP_WRITE).attach(new Impl() {
 
-                            private ByteBuffer payload = UTF8.encode(s1 + finalProcess);
+                          final ByteBuffer payload = UTF8.encode(s1 + finalProcess);
+                          channel.write(payload);
+                          if (payload.hasRemaining())
+                            key.interestOps(OP_WRITE).attach(new Impl() {
 
-                            @Override
-                            public void onWrite(SelectionKey selectionKey) throws IOException {
-                              channel.write(payload);
-                              if (!payload.hasRemaining()) {
-                                key.interestOps(OP_READ).attach(null);
+
+                              @Override
+                              public void onWrite(SelectionKey selectionKey) throws IOException {
+                                if (!payload.hasRemaining()) {
+                                  key.interestOps(OP_READ).attach(null);
+                                }
                               }
-                            }
-                          });
+                            });
                         } finally {
 
                         }
