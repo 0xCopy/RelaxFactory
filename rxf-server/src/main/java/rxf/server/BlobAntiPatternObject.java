@@ -468,7 +468,7 @@ public class BlobAntiPatternObject {
     final AsioVisitor.Impl impl = new AsioVisitor.Impl() {
       @Override
       public void onWrite(final SelectionKey key) throws IOException {
-        System.err.println("attempting connect: " + requestHeaders.trim());
+        System.err.println("recv: " + requestHeaders.trim());
         channel.write(UTF8.encode(requestHeaders));
         key.selector().wakeup();
         key.interestOps(OP_READ).attach(createJsonResponseReader(returnTo));
