@@ -448,7 +448,7 @@ public class BlobAntiPatternObject {
     return r.toString().trim().replace("//", "/");
   }
 
-  public static AsioVisitor fetchHeadByPath(final SocketChannel channel, final Exchanger returnTo, final String... pathIdVer) throws ClosedChannelException {
+  public static AsioVisitor fetchHeadByPath(final SocketChannel channel, final Exchanger<String> returnTo, final String... pathIdVer) throws ClosedChannelException {
     final String format = ((new StringBuilder().append("HEAD ").append(getPathIdVer(pathIdVer)).append(" HTTP/1.1\r\n\r\n").toString()));
     return executeCouchRequest(channel, returnTo, format);
   }
@@ -464,7 +464,7 @@ public class BlobAntiPatternObject {
     return executeCouchRequest(channel, returnTo, format);
   }
 
-  public static AsioVisitor executeCouchRequest(final SocketChannel channel, final Exchanger returnTo, final String requestHeaders) throws ClosedChannelException {
+  public static AsioVisitor executeCouchRequest(final SocketChannel channel, final Exchanger<String> returnTo, final String requestHeaders) throws ClosedChannelException {
     final AsioVisitor.Impl impl = new AsioVisitor.Impl() {
       @Override
       public void onWrite(final SelectionKey key) throws IOException {
@@ -482,41 +482,56 @@ public class BlobAntiPatternObject {
    * @param json
    * @return new _rev
    */
-  public static CouchTx sendJson(String json, String... pathIdVer) throws Exception {
-    String take;
-    SocketChannel channel = null;
-    try {
-      channel = createCouchConnection();
-      Exchanger<? extends String> retVal = new Exchanger<String>();
-      HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, new SendJsonVisitor(json, retVal, pathIdVer));
-      take = (String) retVal.exchange(null, 3, TimeUnit.SECONDS);/*retVal.poll(250, MILLISECONDS);*/
-    } finally {
-      recycleChannel(channel);
-    }
-    return GSON.fromJson(take, CouchTx.class);
+  public static CouchTx sendJson(final String json, final String... pathIdVer) throws Exception {
+    Callable<?> callable = new Callable<Object>() {
+      public CouchTx call() throws Exception {
+        String take;
+        SocketChannel channel = null;
+        try {
+          channel = createCouchConnection();
+          Exchanger<? extends String> retVal = new Exchanger<String>();
+          HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, new SendJsonVisitor(json, retVal, pathIdVer));
+          take = (String) retVal.exchange(null, 3, TimeUnit.SECONDS);/*retVal.poll(250, MILLISECONDS);*/
+        } finally {
+          recycleChannel(channel);
+        }
+        return GSON.fromJson(take, CouchTx.class);
+
+      }
+    };
+    return (CouchTx) EXECUTOR_SERVICE.submit(callable).get();
   }
 
-  public static Map fetchMapById(CouchLocator locator, String key) throws IOException, InterruptedException {
-    SocketChannel channel = createCouchConnection();
-    String take1 = null;
-    try {
-      Exchanger retVal = new Exchanger();
-      HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, fetchJsonByPath(channel, retVal));
-      take1 = (String) retVal.exchange(null, 3, TimeUnit.SECONDS);
-    } catch (TimeoutException e) {
-      e.printStackTrace();  //todo: verify for a purpose
-    } finally {
-      recycleChannel(channel);
-    }
-    String take = take1;
-    Map<? extends Object, ? extends Object> linkedHashMap = GSON.fromJson(take, LinkedHashMap.class);
-    if (2 == linkedHashMap.size() && linkedHashMap.containsKey("responseCode")) {
-      throw new IOException(deepToString(linkedHashMap));
-    }
-    return linkedHashMap;
+  public static Map fetchMapById(CouchLocator locator, String key) throws ExecutionException, InterruptedException {
+    return EXECUTOR_SERVICE.submit(new Callable<Map>() {
+      public Map call() throws IOException {
+        SocketChannel channel = createCouchConnection();
+        String take1 = null;
+        try {
+          Exchanger retVal = new Exchanger();
+          HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, fetchJsonByPath(channel, retVal));
+          take1 = (String) retVal.exchange(null, 3, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+          e.printStackTrace();  //todo: verify for a purpose
+        } catch (InterruptedException e) {
+          e.printStackTrace();  //todo: verify for a purpose
+        } catch (ClosedChannelException e) {
+          e.printStackTrace();  //todo: verify for a purpose
+        } finally {
+          recycleChannel(channel);
+        }
+        String take = take1;
+        Map<? extends Object, ? extends Object> linkedHashMap = GSON.fromJson(take, LinkedHashMap.class);
+        if (2 == linkedHashMap.size() && linkedHashMap.containsKey("responseCode")) {
+          throw new IOException(deepToString(linkedHashMap));
+        }
+        return linkedHashMap;
+
+      }
+    }).get();
   }
 
-  public static AsioVisitor createJsonResponseReader(final Exchanger returnTo) {
+  public static AsioVisitor createJsonResponseReader(final Exchanger<String> returnTo) {
     return new AsioVisitor.Impl() {
       public long total;
       public long remaining;
@@ -603,7 +618,7 @@ public class BlobAntiPatternObject {
     };
   }
 
-  static String returnJsonString(Exchanger returnTo, SelectionKey key, String rescode, ByteBuffer payload) throws InterruptedException {
+  static String returnJsonString(Exchanger<String> returnTo, SelectionKey key, String rescode, ByteBuffer payload) throws InterruptedException {
     key.attach(null);
     final String decode = UTF8.decode((ByteBuffer) payload.duplicate().rewind()).toString().trim();
     System.err.println("payload: " + decode);
@@ -627,46 +642,58 @@ public class BlobAntiPatternObject {
     return null;
   }
 
-  static CouchTx setGenericDocumentProperty(String key, String value, String... pathIdVer) throws Exception {
-    String ret;
-    SocketChannel channel = null;
-    try {
-      channel = createCouchConnection();
-      Exchanger retVal = new Exchanger();
-      HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, fetchJsonByPath(channel, retVal, pathIdVer));
-      ret = (String) retVal.exchange(null, 3, TimeUnit.SECONDS);
-    } finally {
-      recycleChannel(channel);
-    }
-    String take = ret;
-    LinkedHashMap linkedHashMap1 = GSON.fromJson(take, LinkedHashMap.class);
-    if (2 != linkedHashMap1.size() || !linkedHashMap1.containsKey("responseCode")) {//success
-      linkedHashMap1.put(key, value);
-      final List<String> strings = Arrays.asList(pathIdVer);
-      strings.add(inferRevision(linkedHashMap1));
-      return sendJson(GSON.toJson(linkedHashMap1), strings.toArray(new String[strings.size()]));
-    } else {//failure
-      linkedHashMap1.clear();
-      linkedHashMap1.put(key, value);
-      return sendJson(GSON.toJson(linkedHashMap1), pathIdVer);
-    }
+  static CouchTx setGenericDocumentProperty(final String key, final String value, final String... pathIdVer) throws Exception {
+    Callable<Object> callable = new Callable<Object>() {
+      public Object call() throws Exception {
+        String ret;
+        SocketChannel channel = null;
+        try {
+          channel = createCouchConnection();
+          Exchanger retVal = new Exchanger();
+          HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, fetchJsonByPath(channel, retVal, pathIdVer));
+          ret = (String) retVal.exchange(null, 3, TimeUnit.SECONDS);
+        } finally {
+          recycleChannel(channel);
+        }
+        String take = ret;
+        LinkedHashMap linkedHashMap1 = GSON.fromJson(take, LinkedHashMap.class);
+        if (2 != linkedHashMap1.size() || !linkedHashMap1.containsKey("responseCode")) {//success
+          linkedHashMap1.put(key, value);
+          final List<String> strings = Arrays.asList(pathIdVer);
+          strings.add(inferRevision(linkedHashMap1));
+          return sendJson(GSON.toJson(linkedHashMap1), strings.toArray(new String[strings.size()]));
+        } else {//failure
+          linkedHashMap1.clear();
+          linkedHashMap1.put(key, value);
+          return sendJson(GSON.toJson(linkedHashMap1), pathIdVer);
+        }
+
+      }
+    };
+    return (CouchTx) EXECUTOR_SERVICE.submit(callable).get();
   }
 
-  public static String getGenericDocumentProperty(String path, String key) throws IOException {
-    SocketChannel couchConnection = null;
-    try {
-      final Exchanger returnTo = new Exchanger();
-      couchConnection = createCouchConnection();
-      fetchJsonByPath(couchConnection, returnTo);
-      final String take = (String) returnTo.exchange(null, 3, TimeUnit.SECONDS);
-      final Map map = GSON.fromJson(take, Map.class);
-      return String.valueOf(map.get(key));
-    } catch (Exception e) {
-      e.printStackTrace();
-    } finally {
-      recycleChannel(couchConnection);
-    }
-    return path;
+  public static String getGenericDocumentProperty(final String path, final String key) throws IOException, ExecutionException, InterruptedException {
+    Callable<String> callable = new Callable<String>() {
+      public String call() throws Exception {
+        SocketChannel couchConnection = null;
+        try {
+          final Exchanger returnTo = new Exchanger();
+          couchConnection = createCouchConnection();
+          fetchJsonByPath(couchConnection, returnTo);
+          final String take = (String) returnTo.exchange(null, 3, TimeUnit.SECONDS);
+          final Map map = GSON.fromJson(take, Map.class);
+          return String.valueOf(map.get(key));
+        } catch (Exception e) {
+          e.printStackTrace();
+        } finally {
+          recycleChannel(couchConnection);
+        }
+        return path;
+
+      }
+    };
+    return (String) EXECUTOR_SERVICE.submit(callable).get();
   }
 
   public static EnumMap<HttpMethod, LinkedHashMap<Pattern, AsioVisitor>> getNamespace() {
@@ -715,7 +742,7 @@ public class BlobAntiPatternObject {
         }
 
         {
-          final Exchanger returnTo = new Exchanger();
+          final Exchanger<String> returnTo = new Exchanger<String>();
           final SocketChannel couchConnection = createCouchConnection();
           final AsioVisitor asioVisitor = fetchHeadByPath(couchConnection, returnTo, "/geoip/current");
           //System.err.println("head: " + returnTo.take());
@@ -744,88 +771,89 @@ public class BlobAntiPatternObject {
   }
 
   public static String fetchJsonByPathV1(final String path, final Rfc822HeaderState... youCanHaz) throws IOException, InterruptedException, TimeoutException {
-    final Exchanger<String> exchanger = new Exchanger<String>();
-    SocketChannel channel = null;
-    if ($DBG) {
-      System.err.println(deepToString(path, youCanHaz));
-    }
-    enqueue(createCouchConnection(), OP_CONNECT | OP_WRITE, new AsioVisitor.Impl() {
-      @Override
-      public void onWrite(SelectionKey key) throws Exception {
-        final SocketChannel channel = (SocketChannel) key.channel();
 
-        //todo: youCanHaz headers here
-
-        final ByteBuffer wrap = ByteBuffer.wrap(("GET " + path + " HTTP/1.1\r\nAccept: */*\r\n\r\n").getBytes(UTF8));
-        final int write = channel.write(wrap);
-        key.interestOps(OP_READ).attach(new Impl() {
-          @Override
-          public void onRead(SelectionKey key) throws Exception {
-
-            Rfc822HeaderState state = null;
-            for (Rfc822HeaderState rfc822HeaderState : youCanHaz) {
-              state = rfc822HeaderState;
-              break;
-            }
-            final boolean sendItBack = null != state;
-            if (!sendItBack)
-              state = new Rfc822HeaderState("Content-Length", "Encoding-Type"); //minimum for GET if sent in
-            //todo: youCanHaz headers here
-
-            final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
-
-
-            final int read = channel.read(dst);
-            if (read > 0) {
-              channel.close();
-
-              exchanger.exchange(null);
-              return;
-            }
-            assert state != null;
-            state.apply((ByteBuffer) dst.flip());
-            if (state.getPathRescode().startsWith("20")) {
-//              final String o = state.getHeaderStrings().;
-              if (state.getHeaderStrings().containsKey(TRANSFER_ENCODING)) {
-                key.attach(new ChunkedEncodingVisitor(dst, 0, channel, exchanger));
-
-              } else {
-                String cl = state.getHeaderStrings().get(RfPostWrapper.CONTENT_LENGTH);
-                final long l = Long.parseLong(cl);
-                final ByteBuffer cursor = ByteBuffer.allocateDirect((int) l).put(dst);
-
-                if (cursor.hasRemaining()) {
-                  key.interestOps(OP_READ).attach(new Impl() {
-                    @Override
-                    public void onRead(SelectionKey key) throws Exception {
-                      channel.read(cursor);
-                      if (!cursor.hasRemaining()) {
-                        exchanger.exchange(UTF8.decode((ByteBuffer) cursor.flip()).toString().trim());
-                      }
-                    }
-                  });
-                } else {
-                  final String trim = UTF8.decode((ByteBuffer) cursor.flip()).toString().trim();
-                  exchanger.exchange(trim);
-                }
-              }
-            }
-          }
-        });
-      }
-    });
     String ret = null;
     try {
-      ret = (String) exchanger.exchange(null, 3, TimeUnit.SECONDS);
-    } catch (Exception e) {
+      final Exchanger<String> exchanger = new Exchanger<String>();
+      Callable<Object> callable = new Callable<Object>() {
+        public Object call() throws Exception {
+          SocketChannel channel = null;
+          if ($DBG) {
+            System.err.println(deepToString(path, youCanHaz));
+          }
+          enqueue(createCouchConnection(), OP_CONNECT | OP_WRITE, new AsioVisitor.Impl() {
+            @Override
+            public void onWrite(SelectionKey key) throws Exception {
+              final SocketChannel channel = (SocketChannel) key.channel();
 
-      if (null != channel) {
-        if ($DBG) {
-          RfPostWrapper.ORIGINS.containsKey(channel.keyFor(getSelector()));
+              //todo: youCanHaz headers here
+
+              final ByteBuffer wrap = ByteBuffer.wrap(("GET " + path + " HTTP/1.1\r\nAccept: */*\r\n\r\n").getBytes(UTF8));
+              final int write = channel.write(wrap);
+              key.interestOps(OP_READ).attach(new Impl() {
+                @Override
+                public void onRead(SelectionKey key) throws Exception {
+
+                  Rfc822HeaderState state = null;
+                  for (Rfc822HeaderState rfc822HeaderState : youCanHaz) {
+                    state = rfc822HeaderState;
+                    break;
+                  }
+                  final boolean sendItBack = null != state;
+                  if (!sendItBack)
+                    state = new Rfc822HeaderState("Content-Length", "Encoding-Type"); //minimum for GET if sent in
+                  //todo: youCanHaz headers here
+
+                  final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
+
+
+                  final int read = channel.read(dst);
+                  if (read > 0) {
+                    channel.close();
+
+                    exchanger.exchange(null);
+                    return;
+                  }
+                  assert state != null;
+                  state.apply((ByteBuffer) dst.flip());
+                  if (state.getPathRescode().startsWith("20")) {
+//              final String o = state.getHeaderStrings().;
+                    if (state.getHeaderStrings().containsKey(TRANSFER_ENCODING)) {
+                      key.attach(new ChunkedEncodingVisitor(dst, 0, channel, exchanger));
+
+                    } else {
+                      String cl = state.getHeaderStrings().get(RfPostWrapper.CONTENT_LENGTH);
+                      final long l = Long.parseLong(cl);
+                      final ByteBuffer cursor = ByteBuffer.allocateDirect((int) l).put(dst);
+
+                      if (cursor.hasRemaining()) {
+                        key.interestOps(OP_READ).attach(new Impl() {
+                          @Override
+                          public void onRead(SelectionKey key) throws Exception {
+                            channel.read(cursor);
+                            if (!cursor.hasRemaining()) {
+                              exchanger.exchange(UTF8.decode((ByteBuffer) cursor.flip()).toString().trim());
+                            }
+                          }
+                        });
+                      } else {
+                        final String trim = UTF8.decode((ByteBuffer) cursor.flip()).toString().trim();
+                        exchanger.exchange(trim);
+                      }
+                    }
+                  }
+                }
+              });
+            }
+          });
+          String ret = null;
+
+          return null;
         }
-        channel.socket().close();
-      }
-
+      };
+      EXECUTOR_SERVICE.submit(callable);
+      ret = (String) exchanger.exchange(null, 3, TimeUnit.SECONDS);
+    } catch (Exception ignored) {
     }
     return ret;
   }
@@ -841,7 +869,7 @@ public class BlobAntiPatternObject {
     private final SocketChannel channel;
     private final Exchanger<String> returnTo;
 
-    public ChunkedEncodingVisitor(ByteBuffer dst, int receiveBufferSize, SocketChannel channel, Exchanger returnTo) {
+    public ChunkedEncodingVisitor(ByteBuffer dst, int receiveBufferSize, SocketChannel channel, Exchanger<String> returnTo) {
       this.dst = dst;
       this.receiveBufferSize = receiveBufferSize;
       this.channel = channel;

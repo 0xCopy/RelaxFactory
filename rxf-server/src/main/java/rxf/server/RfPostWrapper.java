@@ -136,8 +136,6 @@ public class RfPostWrapper extends Impl {
                     try {
 
                       ThreadLocalHeaders.set(rfc822HeaderState);
-                      //                        ThreadLocalInetAddress.set(remoteSocketAddress);
-                      //              SERVICE_LAYER.
                       process = SIMPLE_REQUEST_PROCESSOR.process(trim);
                       System.err.println("+++ headers " + UTF8.decode((ByteBuffer) rfc822HeaderState.getHeaderBuf().rewind()).toString());
 

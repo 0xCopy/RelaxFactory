@@ -112,16 +112,16 @@ public class GeoIpService {
         Map m = null;
         SocketChannel couchConnection = BlobAntiPatternObject.createCouchConnection();
         try {
-          Exchanger retVal = new Exchanger();
+          Exchanger<String> retVal = new Exchanger<String>();
           fetchJsonByPath(couchConnection, retVal);
 
-          m = GSON.fromJson((String) retVal.exchange(null, 3, TimeUnit.SECONDS), Map.class);
+          m = GSON.fromJson(retVal.exchange(null, 3, TimeUnit.SECONDS), Map.class);
           if (2 == m.size() && m.containsKey("responseCode")) {
             Map<String, Date> map = new HashMap<String, Date>();
             //noinspection unchecked
             map.put("created", new Date());
             HttpMethod.enqueue(couchConnection, OP_WRITE, new SendJsonVisitor(GSON.toJson(map).trim(), retVal, GEOIP_ROOTNODE));
-            String json = (String) retVal.exchange(null, 3, TimeUnit.SECONDS);
+            String json = retVal.exchange(null, 3, TimeUnit.SECONDS);
 
 
             m = GSON.fromJson(json, Map.class);
@@ -137,7 +137,7 @@ public class GeoIpService {
     final Map map = EXECUTOR_SERVICE.submit(callable).get();
 
 
-    final Exchanger retVal = new Exchanger();
+    final Exchanger<String> retVal = new Exchanger<String>();
     SocketChannel couchConnection;
     {
       couchConnection = createCouchConnection();
@@ -161,7 +161,7 @@ public class GeoIpService {
             }
           });
     }
-    String take = (String) retVal.exchange(null, 3, TimeUnit.SECONDS);
+    String take = retVal.exchange(null, 3, TimeUnit.SECONDS);
     final CouchTx couchTx = GSON.fromJson(take, CouchTx.class);
     {
       couchConnection = createCouchConnection();
@@ -183,10 +183,10 @@ public class GeoIpService {
             }
           });
     }
-    take = (String) retVal.exchange(null, 3, TimeUnit.SECONDS);
+    take = retVal.exchange(null, 3, TimeUnit.SECONDS);
   }
 
-  static void putFile(SelectionKey key, final ByteBuffer d2, String push, final Exchanger synchronousQueue) throws IOException {
+  static void putFile(SelectionKey key, final ByteBuffer d2, String push, final Exchanger<String> synchronousQueue) throws IOException {
     final SocketChannel channel = (SocketChannel) key.channel();
 
     int write = (channel).write(UTF8.encode(push));
@@ -434,218 +434,225 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
    *
    */
   static void startGeoIpService(final String dbinstance) throws IOException, XPathExpressionException, InterruptedException {
-    final Exchanger retVal = new Exchanger();
-    SocketChannel connection = BlobAntiPatternObject.createCouchConnection();
 
-    HttpMethod.enqueue(connection, OP_CONNECT | OP_WRITE, new AsioVisitor.Impl() {
-      public void onRead(final SelectionKey key) throws IOException, InterruptedException {
-        final AsioVisitor parent = this;
-        final SocketChannel channel = (SocketChannel) key.channel();
-        ByteBuffer cursor = ByteBuffer.allocateDirect(BlobAntiPatternObject.getReceiveBufferSize());
-        int read = channel.read(cursor);
-        final Rfc822HeaderState apply = new Rfc822HeaderState(new String[]{"ETag"}).apply((ByteBuffer) cursor.flip());
-        if (apply.getPathRescode().startsWith("20")) {
+    EXECUTOR_SERVICE.submit(new Callable<Object>() {
+      public Object call() throws Exception {
+        final Exchanger<String> retVal = new Exchanger<String>();
+        SocketChannel connection = BlobAntiPatternObject.createCouchConnection();
 
-          final String keyDocument = GEOIP_ROOTNODE;
+        HttpMethod.enqueue(connection, OP_CONNECT | OP_WRITE, new AsioVisitor.Impl() {
+          public void onRead(final SelectionKey key) throws IOException, InterruptedException {
+            final AsioVisitor parent = this;
+            final SocketChannel channel = (SocketChannel) key.channel();
+            ByteBuffer cursor = ByteBuffer.allocateDirect(BlobAntiPatternObject.getReceiveBufferSize());
+            int read = channel.read(cursor);
+            final Rfc822HeaderState apply = new Rfc822HeaderState(new String[]{"ETag"}).apply((ByteBuffer) cursor.flip());
+            if (apply.getPathRescode().startsWith("20")) {
 
-          key.selector().wakeup();
-          key.interestOps(OP_WRITE).attach(new Impl() {
+              final String keyDocument = GEOIP_ROOTNODE;
 
-
-            @Override
-            public void onWrite(final SelectionKey key) {
-
-              try {
-                String format = (MessageFormat.format("GET /{0} HTTP/1.1\r\n\r\n", keyDocument));
-                System.err.println("attempting connect: " + format.trim());
-                channel.write(UTF8.encode(format));
-              } catch (IOException e) {
-                e.printStackTrace();  //
-              }
-              key.attach(BlobAntiPatternObject.createJsonResponseReader(retVal));
               key.selector().wakeup();
-              key.interestOps(OP_READ);
-            }
-          });
-
-          Callable<Object> callable = new Callable<Object>() {
-            public Object call() throws Exception {
-
-              String take = (String) retVal.exchange(null, 3, TimeUnit.SECONDS);
-              key.attach(this);
-              System.err.println("rootnode: " + take);
-              Map map = GSON.fromJson(take, Map.class);
-
-              //happens if we need to create the 'current' geoip database.
-              if (map.containsKey("error") || null != System.getenv(DEBUG_CREATEGEOIPINDEX)) {
-                createGeoIpIndex();
-              }
-//                happens every time we start
-              {
-//                  ArrayList<Callable<MappedByteBuffer>> cc = new ArrayList<Callable<MappedByteBuffer>>();
-                /*cc.add*/
-                indexMMBuf =
-                    EXECUTOR_SERVICE.submit(
-                        getMappedIndexFile(GEOIP_CURRENT_INDEX)).get();
-                locationMMBuf = EXECUTOR_SERVICE.submit(
-                    getMappedIndexFile(GEOIP_CURRENT_LOCATIONS_CSV)).get();
-//                  List<Future<MappedByteBuffer>> futures = EXECUTOR_SERVICE.invokeAll(cc);
-
-                ByteBuffer ix = (ByteBuffer) indexMMBuf.duplicate().clear();
-                ByteBuffer loc = (ByteBuffer) locationMMBuf.duplicate().clear();
-
-                indexMMBuf.clear();
-                IntBuffer intBuffer = indexMMBuf.asIntBuffer();
-                while (intBuffer.hasRemaining())
-                  geoipMap.put(intBuffer.get() & IPMASK, intBuffer.get());
-
-                //this should report 'Martinez'
-                testWalnutCreek(ix, loc, null, null);
+              key.interestOps(OP_WRITE).attach(new Impl() {
 
 
-                if (null != System.getenv(GEOIP_BENCHMARK_ON_STARTUP)) {
-                  for (int i = 0; i < 1000; i++) {
-                    long l = System.currentTimeMillis();
-
-                    Runtime.getRuntime().gc();
-                    long l1 = Runtime.getRuntime().freeMemory();
-                    runGeoIpLookupBenchMark((ByteBuffer) loc.clear(), null, null, (ByteBuffer) ix.clear());
-                    long l2 = Runtime.getRuntime().freeMemory();
-                    System.err.println(MessageFormat.format("{0}: {1} (ms) -----------------------------", i, System.currentTimeMillis() - l));
-                    System.err.println(MessageFormat.format("freemem delta current:{0} before{1} delta(Mb):{2}", l2, l1, (l2 - l1) / (1024 * 1024)));
-                  }
-
-
-                }
-                return new Pair<ByteBuffer, ByteBuffer>(ix, loc);
-              }
-            }
-
-            Callable<MappedByteBuffer> getMappedIndexFile(final String path) throws IOException {
-              SocketChannel couchConnection = createCouchConnection();
-              final SynchronousQueue<MappedByteBuffer> retVal = new SynchronousQueue<MappedByteBuffer>();
-
-              Callable<MappedByteBuffer> callable = new Callable<MappedByteBuffer>() {
                 @Override
-                public MappedByteBuffer call() throws Exception {
-                  return retVal.take();  //
+                public void onWrite(final SelectionKey key) {
+
+                  try {
+                    String format = (MessageFormat.format("GET /{0} HTTP/1.1\r\n\r\n", keyDocument));
+                    System.err.println("attempting connect: " + format.trim());
+                    channel.write(UTF8.encode(format));
+                  } catch (IOException e) {
+                    e.printStackTrace();  //
+                  }
+                  key.attach(BlobAntiPatternObject.createJsonResponseReader(retVal));
+                  key.selector().wakeup();
+                  key.interestOps(OP_READ);
+                }
+              });
+
+              Callable<Object> callable = new Callable<Object>() {
+                public Object call() throws Exception {
+
+                  String take = retVal.exchange(null, 3, TimeUnit.SECONDS);
+                  key.attach(this);
+                  System.err.println("rootnode: " + take);
+                  Map map = GSON.fromJson(take, Map.class);
+
+                  //happens if we need to create the 'current' geoip database.
+                  if (map.containsKey("error") || null != System.getenv(DEBUG_CREATEGEOIPINDEX)) {
+                    createGeoIpIndex();
+                  }
+                  //                happens every time we start
+                  {
+                    //                  ArrayList<Callable<MappedByteBuffer>> cc = new ArrayList<Callable<MappedByteBuffer>>();
+                    /*cc.add*/
+                    indexMMBuf =
+                        EXECUTOR_SERVICE.submit(
+                            getMappedIndexFile(GEOIP_CURRENT_INDEX)).get();
+                    locationMMBuf = EXECUTOR_SERVICE.submit(
+                        getMappedIndexFile(GEOIP_CURRENT_LOCATIONS_CSV)).get();
+                    //                  List<Future<MappedByteBuffer>> futures = EXECUTOR_SERVICE.invokeAll(cc);
+
+                    ByteBuffer ix = (ByteBuffer) indexMMBuf.duplicate().clear();
+                    ByteBuffer loc = (ByteBuffer) locationMMBuf.duplicate().clear();
+
+                    indexMMBuf.clear();
+                    IntBuffer intBuffer = indexMMBuf.asIntBuffer();
+                    while (intBuffer.hasRemaining())
+                      geoipMap.put(intBuffer.get() & IPMASK, intBuffer.get());
+
+                    //this should report 'Martinez'
+                    testWalnutCreek(ix, loc, null, null);
+
+
+                    if (null != System.getenv(GEOIP_BENCHMARK_ON_STARTUP)) {
+                      for (int i = 0; i < 1000; i++) {
+                        long l = System.currentTimeMillis();
+
+                        Runtime.getRuntime().gc();
+                        long l1 = Runtime.getRuntime().freeMemory();
+                        runGeoIpLookupBenchMark((ByteBuffer) loc.clear(), null, null, (ByteBuffer) ix.clear());
+                        long l2 = Runtime.getRuntime().freeMemory();
+                        System.err.println(MessageFormat.format("{0}: {1} (ms) -----------------------------", i, System.currentTimeMillis() - l));
+                        System.err.println(MessageFormat.format("freemem delta current:{0} before{1} delta(Mb):{2}", l2, l1, (l2 - l1) / (1024 * 1024)));
+                      }
+
+
+                    }
+                    return new Pair<ByteBuffer, ByteBuffer>(ix, loc);
+                  }
+                }
+
+                Callable<MappedByteBuffer> getMappedIndexFile(final String path) throws IOException {
+                  SocketChannel couchConnection = createCouchConnection();
+                  final SynchronousQueue<MappedByteBuffer> retVal = new SynchronousQueue<MappedByteBuffer>();
+
+                  Callable<MappedByteBuffer> callable = new Callable<MappedByteBuffer>() {
+                    @Override
+                    public MappedByteBuffer call() throws Exception {
+                      return retVal.take();  //
+                    }
+                  };
+
+
+                  HttpMethod.enqueue(couchConnection, OP_CONNECT | OP_WRITE, new Impl() {
+
+                    @Override
+                    public void onWrite(SelectionKey selectionKey) throws Exception {
+                      mapTmpFile(selectionKey, path);
+
+                    }
+
+                    void mapTmpFile(SelectionKey key, final String path) throws IOException {
+                      String req = "GET " + path + " HTTP/1.1\r\n\r\n";
+                      int write = ((SocketChannel) key.channel()).write(UTF8.encode(req));
+                      key.selector().wakeup();
+                      key.interestOps(OP_READ);
+                      key.attach(new Impl() {
+                        @Override
+                        public void onRead(SelectionKey key) throws Exception {
+                          SocketChannel channel = (SocketChannel) key.channel();
+                          ByteBuffer dst1 = ByteBuffer.allocateDirect(BlobAntiPatternObject.getReceiveBufferSize());
+                          int read1 = channel.read(dst1);
+                          final long l2 = System.currentTimeMillis();
+                          //                          System.err.println("response for "+path+": "+UTF8.decode((ByteBuffer) dst1.flip()))
+
+
+                          ByteBuffer headers = (ByteBuffer) moveCaretToDoubleEol((ByteBuffer) dst1.flip()).duplicate().flip();
+                          while (!Character.isWhitespace(headers.get())) ;
+                          ByteBuffer h2 = (ByteBuffer) headers.duplicate().position(headers.position());
+                          while (!Character.isWhitespace(headers.get())) ;
+                          h2.limit(headers.position() - 1);
+                          int rc = Integer.parseInt(UTF8.decode(h2).toString().trim());
+                          if (200 == rc) {
+                            Map<String, int[]> hm = HttpHeaders.getHeaders((ByteBuffer) headers.rewind());
+                            int[] ints = hm.get(RfPostWrapper.CONTENT_LENGTH);
+                            String cl = UTF8.decode((ByteBuffer) h2.clear().position(ints[0]).limit(ints[1])).toString().trim();
+                            final long total = Long.parseLong(cl);
+
+                            final File geoip = File.createTempFile("geoip", path.substring(path.length() - 5));
+                            try {
+                              geoip.createNewFile();
+                            } catch (IOException e) {
+                              e.printStackTrace();  //
+                            }
+                            final RandomAccessFile randomAccessFile = new RandomAccessFile(geoip, "rw");
+                            final FileChannel fileChannel = randomAccessFile.getChannel();
+                            final float pos1 = fileChannel.write(dst1);
+
+                            key.attach(new Impl() {
+                              long pos = (long) pos1;
+
+                              private final SynchronousQueue<MappedByteBuffer> returnTo = retVal;
+
+                              @Override
+                              public void onRead(SelectionKey key) throws IOException, InterruptedException {
+                                long l = fileChannel.transferFrom((ReadableByteChannel) key.channel(), pos, 16 * 1024 * 1024);
+                                pos += l;
+                                if (pos >= total) {
+                                  MappedByteBuffer map1 = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, total);
+                                  returnTo.put(map1);
+                                  key.attach(null);
+                                  long l1 = System.currentTimeMillis() - l2;
+                                  System.err.println(MessageFormat.format("file write ended: {0} {1}/{2} in {3} (ms) @ {4}M/s", geoip, total, randomAccessFile.length(), l1, (total / 1024. * 1024.) / l1 / 1000.));
+                                  geoip.deleteOnExit();
+                                }
+                              }
+                            });
+                          }
+
+                        }
+                      });
+                    }
+                  });
+                  return callable;
                 }
               };
 
-
-              HttpMethod.enqueue(couchConnection, OP_CONNECT | OP_WRITE, new Impl() {
-
+              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(callable);
+            } else {
+              key.selector().wakeup();
+              key.interestOps(OP_WRITE);
+              key.attach(new Impl() {
                 @Override
-                public void onWrite(SelectionKey selectionKey) throws Exception {
-                  mapTmpFile(selectionKey, path);
+                public void onWrite(SelectionKey key) throws IOException {
 
-                }
-
-                void mapTmpFile(SelectionKey key, final String path) throws IOException {
-                  String req = "GET " + path + " HTTP/1.1\r\n\r\n";
-                  int write = ((SocketChannel) key.channel()).write(UTF8.encode(req));
+                  String format = MessageFormat.format("PUT /{0} HTTP/1.1\r\nContent-Length: 0\r\nContent-type: application/json\r\n\r\n", dbinstance);
+                  int write = ((SocketChannel) key.channel()).write(UTF8.encode(format));
                   key.selector().wakeup();
                   key.interestOps(OP_READ);
-                  key.attach(new Impl() {
-                    @Override
-                    public void onRead(SelectionKey key) throws Exception {
-                      SocketChannel channel = (SocketChannel) key.channel();
-                      ByteBuffer dst1 = ByteBuffer.allocateDirect(BlobAntiPatternObject.getReceiveBufferSize());
-                      int read1 = channel.read(dst1);
-                      final long l2 = System.currentTimeMillis();
-//                          System.err.println("response for "+path+": "+UTF8.decode((ByteBuffer) dst1.flip()))
-
-
-                      ByteBuffer headers = (ByteBuffer) moveCaretToDoubleEol((ByteBuffer) dst1.flip()).duplicate().flip();
-                      while (!Character.isWhitespace(headers.get())) ;
-                      ByteBuffer h2 = (ByteBuffer) headers.duplicate().position(headers.position());
-                      while (!Character.isWhitespace(headers.get())) ;
-                      h2.limit(headers.position() - 1);
-                      int rc = Integer.parseInt(UTF8.decode(h2).toString().trim());
-                      if (200 == rc) {
-                        Map<String, int[]> hm = HttpHeaders.getHeaders((ByteBuffer) headers.rewind());
-                        int[] ints = hm.get(RfPostWrapper.CONTENT_LENGTH);
-                        String cl = UTF8.decode((ByteBuffer) h2.clear().position(ints[0]).limit(ints[1])).toString().trim();
-                        final long total = Long.parseLong(cl);
-
-                        final File geoip = File.createTempFile("geoip", path.substring(path.length() - 5));
-                        try {
-                          geoip.createNewFile();
-                        } catch (IOException e) {
-                          e.printStackTrace();  //
-                        }
-                        final RandomAccessFile randomAccessFile = new RandomAccessFile(geoip, "rw");
-                        final FileChannel fileChannel = randomAccessFile.getChannel();
-                        final float pos1 = fileChannel.write(dst1);
-
-                        key.attach(new Impl() {
-                          long pos = (long) pos1;
-
-                          private final SynchronousQueue<MappedByteBuffer> returnTo = retVal;
-
-                          @Override
-                          public void onRead(SelectionKey key) throws IOException, InterruptedException {
-                            long l = fileChannel.transferFrom((ReadableByteChannel) key.channel(), pos, 16 * 1024 * 1024);
-                            pos += l;
-                            if (pos >= total) {
-                              MappedByteBuffer map1 = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, total);
-                              returnTo.put(map1);
-                              key.attach(null);
-                              long l1 = System.currentTimeMillis() - l2;
-                              System.err.println(MessageFormat.format("file write ended: {0} {1}/{2} in {3} (ms) @ {4}M/s", geoip, total, randomAccessFile.length(), l1, (total / 1024. * 1024.) / l1 / 1000.));
-                              geoip.deleteOnExit();
-                            }
-                          }
-                        });
-                      }
-
-                    }
-                  });
+                  key.attach(parent);
                 }
               });
-              return callable;
             }
-          };
 
-          BlobAntiPatternObject.EXECUTOR_SERVICE.submit(callable);
-        } else {
-          key.selector().wakeup();
-          key.interestOps(OP_WRITE);
-          key.attach(new Impl() {
-            @Override
-            public void onWrite(SelectionKey key) throws IOException {
 
-              String format = MessageFormat.format("PUT /{0} HTTP/1.1\r\nContent-Length: 0\r\nContent-type: application/json\r\n\r\n", dbinstance);
-              int write = ((SocketChannel) key.channel()).write(UTF8.encode(format));
+          }
+
+          @Override
+          public void onWrite(SelectionKey selectionKey) throws IOException {
+            String s = "GET /" + dbinstance + " HTTP/1.1\r\nConnection:keep-alive\r\n\r\n";
+            ByteBuffer encode = UTF8.encode(s);
+            int write = ((SocketChannel) selectionKey.channel()).write(encode);
+
+            System.err.println("wrote " + write + " bytes for " + s);
+            selectionKey.selector().wakeup();
+            selectionKey.interestOps(OP_READ);
+
+          }
+
+          @Override
+          public void onConnect(SelectionKey key) throws IOException {
+            SocketChannel channel = (SocketChannel) key.channel();
+            if (channel.finishConnect()) {
               key.selector().wakeup();
-              key.interestOps(OP_READ);
-              key.attach(parent);
+              key.interestOps(OP_WRITE);
             }
-          });
-        }
+          }
+        });
 
-
-      }
-
-      @Override
-      public void onWrite(SelectionKey selectionKey) throws IOException {
-        String s = "GET /" + dbinstance + " HTTP/1.1\r\nConnection:keep-alive\r\n\r\n";
-        ByteBuffer encode = UTF8.encode(s);
-        int write = ((SocketChannel) selectionKey.channel()).write(encode);
-
-        System.err.println("wrote " + write + " bytes for " + s);
-        selectionKey.selector().wakeup();
-        selectionKey.interestOps(OP_READ);
-
-      }
-
-      @Override
-      public void onConnect(SelectionKey key) throws IOException {
-        SocketChannel channel = (SocketChannel) key.channel();
-        if (channel.finishConnect()) {
-          key.selector().wakeup();
-          key.interestOps(OP_WRITE);
-        }
+        return null;
       }
     });
   }

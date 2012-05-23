@@ -167,11 +167,16 @@ public abstract class CouchPropertiesAccess<T> {
                           channel.read(dst);
 
                           final Rfc822HeaderState ETag = new Rfc822HeaderState("ETag").apply((ByteBuffer) dst.flip());
-                          if (rfc822HeaderPrefix.getPathRescode().startsWith("20")) {
-                            outer.exchange(rfc822HeaderPrefix.getCookieStrings().get("ETag"));
-                          } else {
-                            outer.exchange("error: " + UTF8.decode((ByteBuffer) dst.rewind()).toString().trim());
-                          }
+                          EXECUTOR_SERVICE.submit(new Callable<Object>() {
+                            public Void call() throws InterruptedException {
+                              if (rfc822HeaderPrefix.getPathRescode().startsWith("20")) {
+                                outer.exchange(rfc822HeaderPrefix.getCookieStrings().get("ETag"));
+                              } else {
+                                outer.exchange("error: " + UTF8.decode((ByteBuffer) dst.rewind()).toString().trim());
+                              }
+                              return null;
+                            }
+                          });
                         }
                       });
 
@@ -188,6 +193,8 @@ public abstract class CouchPropertiesAccess<T> {
         });
       }
     });
+
+
     outer.exchange(null, 1, TimeUnit.SECONDS);
     return key;
   }

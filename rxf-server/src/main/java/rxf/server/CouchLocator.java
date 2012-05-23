@@ -5,8 +5,8 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Exchanger;
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 
 import com.google.web.bindery.requestfactory.shared.Locator;
@@ -19,6 +19,7 @@ import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpMethod.UTF8;
+import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 import static rxf.server.BlobAntiPatternObject.GSON;
 import static rxf.server.BlobAntiPatternObject.arrToString;
 import static rxf.server.BlobAntiPatternObject.createCouchConnection;
@@ -76,9 +77,9 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
       SocketChannel channel = createCouchConnection();
       String take;
       try {
-        Exchanger retVal = new Exchanger();
+        Exchanger<String> retVal = new Exchanger<String>();
         HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, BlobAntiPatternObject.fetchJsonByPath(channel, retVal, getPathPrefix(), id));
-        take = (String) retVal.exchange(null, 3, TimeUnit.SECONDS);
+        take = retVal.exchange(null, 3, TimeUnit.SECONDS);
       } finally {
         recycleChannel(channel);
       }
@@ -114,134 +115,138 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
   }
 
   public CouchTx persist(final T domainObject) throws Exception {
-    HttpMethod method = HttpMethod.POST;
-    String[] pathIdPrefix = {getPathPrefix()};
-    String deliver, payload = deliver = GSON.toJson(domainObject);
-    final ByteBuffer encode1 = UTF8.encode(deliver);
+    return (CouchTx) EXECUTOR_SERVICE.submit(new Callable<Object>() {
+      public Object call() throws Exception {
+        HttpMethod method = HttpMethod.POST;
+        String[] pathIdPrefix = {getPathPrefix()};
+        String deliver, payload = deliver = GSON.toJson(domainObject);
+        final ByteBuffer encode1 = UTF8.encode(deliver);
 
 
-    Map cheat = null;
-    cheat = GSON.fromJson(payload, Map.class);
-    boolean hasRev = cheat.containsKey("_rev");
-    boolean hasId = cheat.containsKey("_id");
-    Object id = cheat.get("_id");
-    if (hasId)
-      if (!hasRev) {
-        pathIdPrefix = new String[]{getPathPrefix(), (String) id};
-        method = HttpMethod.HEAD;
-      } else {
-        Object rev = cheat.get("_rev");
-        pathIdPrefix = new String[]{getPathPrefix(), (String) id, (String) rev,};
-        method = HttpMethod.PUT;
-      }
+        Map cheat = null;
+        cheat = GSON.fromJson(payload, Map.class);
+        boolean hasRev = cheat.containsKey("_rev");
+        boolean hasId = cheat.containsKey("_id");
+        Object id = cheat.get("_id");
+        if (hasId)
+          if (!hasRev) {
+            pathIdPrefix = new String[]{getPathPrefix(), (String) id};
+            method = HttpMethod.HEAD;
+          } else {
+            Object rev = cheat.get("_rev");
+            pathIdPrefix = new String[]{getPathPrefix(), (String) id, (String) rev,};
+            method = HttpMethod.PUT;
+          }
 
-    final SynchronousQueue<ByteBuffer> sq = new SynchronousQueue<ByteBuffer>();
+        switch (method) {
+          case HEAD: {
+            final Exchanger<ByteBuffer> inner = new Exchanger<ByteBuffer>();
+            String m = new StringBuilder().append(method.name()).append(" ").append(getPathIdVer(pathIdPrefix)).append(" HTTP/1.1\r\n\r\n").toString();
+            final String finalM1 = m;
 
-    switch (method) {
-      case HEAD: {
-        String m = new StringBuilder().append(method.name()).append(" ").append(getPathIdVer(pathIdPrefix)).append(" HTTP/1.1\r\n\r\n").toString();
-        final String finalM1 = m;
-        HttpMethod.enqueue(createCouchConnection(), OP_CONNECT | OP_WRITE, new AsioVisitor.Impl() {
+            HttpMethod.enqueue(createCouchConnection(), OP_CONNECT | OP_WRITE, new AsioVisitor.Impl() {
 
 
-          @Override
-          public void onRead(SelectionKey key) throws Exception {
+              @Override
+              public void onRead(SelectionKey key) throws Exception {
 //                        fetch from  ETag: "3-9a5fe45b4e065e3604f1f746816c1926"
-            ByteBuffer headerBuf = ByteBuffer.allocateDirect(getReceiveBufferSize());
-            final SocketChannel channel = (SocketChannel) key.channel();
-            int read = channel.read(headerBuf);
+                ByteBuffer headerBuf = ByteBuffer.allocateDirect(getReceiveBufferSize());
+                final SocketChannel channel = (SocketChannel) key.channel();
+                int read = channel.read(headerBuf);
 
-            headerBuf.flip();
-            while (headerBuf.hasRemaining() && '\n' == (headerBuf.get())) ;//pv
+                headerBuf.flip();
+                while (headerBuf.hasRemaining() && '\n' == (headerBuf.get())) ;//pv
 
-            int mark = headerBuf.position();
-            ByteBuffer methodBuf = (ByteBuffer) headerBuf.duplicate().flip().position(mark);
-            String[] resCode = UTF8.decode(methodBuf).toString().trim().split(" ");
-            if ((resCode[1]).startsWith("20")) {
-              int[] headers = HttpHeaders.getHeaders((ByteBuffer) headerBuf.clear()).get("ETag");
+                int mark = headerBuf.position();
+                ByteBuffer methodBuf = (ByteBuffer) headerBuf.duplicate().flip().position(mark);
+                String[] resCode = UTF8.decode(methodBuf).toString().trim().split(" ");
+                if ((resCode[1]).startsWith("20")) {
+                  int[] headers = HttpHeaders.getHeaders((ByteBuffer) headerBuf.clear()).get("ETag");
 
-              sq.put((ByteBuffer) headerBuf.position(headers[0]).limit(headers[1]));
-            }
-          }
-
-          @Override
-          public void onWrite(SelectionKey key) throws Exception {
-            final SocketChannel channel = (SocketChannel) key.channel();
-            channel.write(UTF8.encode(finalM1));
-            key.interestOps(OP_READ);
-          }
-        });
-
-        ByteBuffer take = sq.take();
-        String newVer = UTF8.decode(take).toString();
-        System.err.println("HEAD appends " + arrToString(pathIdPrefix) + " with " + newVer);
-        pathIdPrefix = new String[]{getPathPrefix(), (String) id, newVer};
-      }
-      case PUT:
-      case POST: {
-        try {
-          StringBuilder m = new StringBuilder().append(method.name()).append(" ").append(getPathIdVer(pathIdPrefix)).append(" HTTP/1.1\r\n").append("Content-Length: ").append(encode1.limit()).append("\r\nAccept: */*\r\nContent-Type: application/json\r\n\r\n");
-          final String str = m.toString();
-          final ByteBuffer encode = UTF8.encode(str);
-
-
-          final ByteBuffer cursor = (ByteBuffer) ByteBuffer.allocateDirect(max(getSendBufferSize(), encode.limit() + encode1.limit())).put(encode).put(encode1).flip();
-          final Exchanger<ByteBuffer> exchanger = new Exchanger<ByteBuffer>();
-
-          HttpMethod.enqueue(createCouchConnection(), OP_WRITE | OP_CONNECT, new AsioVisitor.Impl() {
-            @Override
-            public void onWrite(SelectionKey key) throws Exception {
-              final SocketChannel channel = (SocketChannel) key.channel();
-              channel.write(cursor);
-              if (!cursor.hasRemaining()) {
-                key.interestOps(OP_READ).attach(new Impl() {
-                  @Override
-                  public void onRead(SelectionKey key) throws Exception {
-
-                    final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
-                    channel.read(dst);
-                    final Rfc822HeaderState rfc822HeaderState = new Rfc822HeaderState(CONTENT_LENGTH).apply((ByteBuffer) dst.flip());
-                    final String pathRescode = rfc822HeaderState.getPathRescode();
-                    if (pathRescode.startsWith("20")) {
-                      final int len = Integer.parseInt((String) rfc822HeaderState.getHeaderStrings().get(CONTENT_LENGTH));
-                      final ByteBuffer cursor = ByteBuffer.allocate(len).put(dst);
-                      if (!cursor.hasRemaining()) {
-                        exchanger.exchange(cursor);
-                        recycleChannel(channel);
-                      } else {
-                        key.attach(new Impl() {
-                          @Override
-                          public void onRead(SelectionKey key) throws Exception {
-                            channel.read(cursor);
-                            if (!cursor.hasRemaining()) {
-                              exchanger.exchange(cursor);
-                              recycleChannel(channel);
-                            }
-                          }
-                        });
-                      }
-                    } else {
-                      exchanger.exchange(null, 3, TimeUnit.SECONDS);
-                    }
-                  }
-                });
+                  inner.exchange((ByteBuffer) headerBuf.position(headers[0]).limit(headers[1]));
+                }
               }
+
+              @Override
+              public void onWrite(SelectionKey key) throws Exception {
+                final SocketChannel channel = (SocketChannel) key.channel();
+                channel.write(UTF8.encode(finalM1));
+                key.interestOps(OP_READ);
+              }
+            });
+
+            ByteBuffer take = inner.exchange(null, 250, TimeUnit.MILLISECONDS);
+            String newVer = UTF8.decode(take).toString();
+            System.err.println("HEAD appends " + arrToString(pathIdPrefix) + " with " + newVer);
+            pathIdPrefix = new String[]{getPathPrefix(), (String) id, newVer};
+          }
+          case PUT:
+          case POST: {
+            try {
+              StringBuilder m = new StringBuilder().append(method.name()).append(" ").append(getPathIdVer(pathIdPrefix)).append(" HTTP/1.1\r\n").append("Content-Length: ").append(encode1.limit()).append("\r\nAccept: */*\r\nContent-Type: application/json\r\n\r\n");
+              final String str = m.toString();
+              final ByteBuffer encode = UTF8.encode(str);
+
+
+              final ByteBuffer cursor = (ByteBuffer) ByteBuffer.allocateDirect(max(getSendBufferSize(), encode.limit() + encode1.limit())).put(encode).put(encode1).flip();
+              final Exchanger<ByteBuffer> exchanger = new Exchanger<ByteBuffer>();
+
+              HttpMethod.enqueue(createCouchConnection(), OP_WRITE | OP_CONNECT, new AsioVisitor.Impl() {
+                @Override
+                public void onWrite(SelectionKey key) throws Exception {
+                  final SocketChannel channel = (SocketChannel) key.channel();
+                  channel.write(cursor);
+                  if (!cursor.hasRemaining()) {
+                    key.interestOps(OP_READ).attach(new Impl() {
+                      @Override
+                      public void onRead(SelectionKey key) throws Exception {
+
+                        final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
+                        channel.read(dst);
+                        final Rfc822HeaderState rfc822HeaderState = new Rfc822HeaderState(CONTENT_LENGTH).apply((ByteBuffer) dst.flip());
+                        final String pathRescode = rfc822HeaderState.getPathRescode();
+                        if (pathRescode.startsWith("20")) {
+                          final int len = Integer.parseInt((String) rfc822HeaderState.getHeaderStrings().get(CONTENT_LENGTH));
+                          final ByteBuffer cursor = ByteBuffer.allocate(len).put(dst);
+                          if (!cursor.hasRemaining()) {
+                            exchanger.exchange(cursor);
+                            recycleChannel(channel);
+                          } else {
+                            key.attach(new Impl() {
+                              @Override
+                              public void onRead(SelectionKey key) throws Exception {
+                                channel.read(cursor);
+                                if (!cursor.hasRemaining()) {
+                                  exchanger.exchange(cursor);
+                                  recycleChannel(channel);
+                                }
+                              }
+                            });
+                          }
+                        } else {
+                          exchanger.exchange(null, 3, TimeUnit.SECONDS);
+                        }
+                      }
+                    });
+                  }
+                }
+              });
+              final ByteBuffer exchange = (ByteBuffer) exchanger.exchange(null, 3, TimeUnit.SECONDS).flip();
+              final String json = UTF8.decode(exchange).toString();
+
+              return GSON.fromJson(json, CouchTx.class);
+
+            } catch (Throwable e) {
+              e.printStackTrace();
             }
-          });
-          final ByteBuffer exchange = (ByteBuffer) exchanger.exchange(null, 3, TimeUnit.SECONDS).flip();
-          final String json = UTF8.decode(exchange).toString();
-
-          return GSON.fromJson(json, CouchTx.class);
-
-        } catch (Throwable e) {
-          e.printStackTrace();
+          }
+          default:
+            return null;
         }
-        return null;
-      }
-      default:
-        return null;
-    }
 
+
+      }
+    }).get();
   }
 
   List<T> findAll() {
