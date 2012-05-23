@@ -110,7 +110,7 @@ public class GeoIpService {
         SocketChannel couchConnection = BlobAntiPatternObject.createCouchConnection();
         try {
           SynchronousQueue<String> retVal = new SynchronousQueue<String>();
-          fetchJsonByPath(GEOIP_ROOTNODE, couchConnection, retVal);
+          fetchJsonByPath(couchConnection, retVal, GEOIP_ROOTNODE);
 
           m = GSON.fromJson(retVal.take(), Map.class);
           if (2 == m.size() && m.containsKey("responseCode")) {
