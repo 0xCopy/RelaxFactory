@@ -526,75 +526,73 @@ public class BlobAntiPatternObject {
         EXECUTOR_SERVICE.submit(new Callable<Object>() {
           public Object call() throws Exception {
             final SocketChannel channel = (SocketChannel) key.channel();
-            {
-              final int receiveBufferSize = BlobAntiPatternObject.getReceiveBufferSize();
-              final ByteBuffer dst = ByteBuffer.allocateDirect(receiveBufferSize);
-              int read = channel.read(dst);
-              if (-1 == read) {
-                key.cancel();
-                returnTo.exchange("{\"error\":\"connection closed\" ,\"reason\":\"buggered\"}");
-                return null;
-              }
+            final int receiveBufferSize = BlobAntiPatternObject.getReceiveBufferSize();
+            final ByteBuffer dst = ByteBuffer.allocateDirect(receiveBufferSize);
+            int read = channel.read(dst);
+            if (-1 == read) {
+              key.cancel();
+              returnTo.exchange("{\"error\":\"connection closed\" ,\"reason\":\"buggered\"}");
+              return null;
+            }
 
-              dst.flip();
+            dst.flip();
 
-              final String rescode = BlobAntiPatternObject.parseResponseCode(dst);
+            final String rescode = BlobAntiPatternObject.parseResponseCode(dst);
 
-              BlobAntiPatternObject.moveCaretToDoubleEol(dst);
-              final ByteBuffer[] headerBuf = {(ByteBuffer) dst.duplicate().flip()};
-              if (SendJsonVisitor.DEBUG_SENDJSON) {
-                System.err.println("result: " + UTF8.decode((ByteBuffer) headerBuf[0].rewind()));
-              }
+            BlobAntiPatternObject.moveCaretToDoubleEol(dst);
+            final ByteBuffer[] headerBuf = {(ByteBuffer) dst.duplicate().flip()};
+            if (SendJsonVisitor.DEBUG_SENDJSON) {
+              System.err.println("result: " + UTF8.decode((ByteBuffer) headerBuf[0].rewind()));
+            }
 
-              int[] bounds = HttpHeaders.getHeaders((ByteBuffer) headerBuf[0].rewind()).get(RfPostWrapper.CONTENT_LENGTH);
-              if (null == bounds) {
+            int[] bounds = HttpHeaders.getHeaders((ByteBuffer) headerBuf[0].rewind()).get(RfPostWrapper.CONTENT_LENGTH);
+            if (null == bounds) {
 
-                bounds = HttpHeaders.getHeaders((ByteBuffer) headerBuf[0].rewind()).get(TRANSFER_ENCODING);
+              bounds = HttpHeaders.getHeaders((ByteBuffer) headerBuf[0].rewind()).get(TRANSFER_ENCODING);
 
-                if (null != bounds) {
+              if (null != bounds) {
 
-                  key.attach(new ChunkedEncodingVisitor(dst, receiveBufferSize, channel, returnTo));
+                key.attach(new ChunkedEncodingVisitor(dst, receiveBufferSize, channel, returnTo));
 
-                }//doChunked
+              }//doChunked
+            } else {
+              total = Long.parseLong(UTF8.decode((ByteBuffer) dst.duplicate().limit(bounds[1]).position(bounds[0])).toString().trim());
+              remaining = total - dst.remaining();
+
+              ByteBuffer payload;
+              if (remaining <= 0) {
+                payload = dst.slice();
+                BlobAntiPatternObject.returnJsonString(returnTo, key, rescode, payload);
               } else {
-                total = Long.parseLong(UTF8.decode((ByteBuffer) dst.duplicate().limit(bounds[1]).position(bounds[0])).toString().trim());
-                remaining = total - dst.remaining();
-
-                ByteBuffer payload;
-                if (remaining <= 0) {
-                  payload = dst.slice();
-                  BlobAntiPatternObject.returnJsonString(returnTo, key, rescode, payload);
-                } else {
-                  final LinkedList<ByteBuffer> ll = new LinkedList<ByteBuffer>();
-                  ll.add(dst.slice());
-                  key.selector().wakeup();
-                  key.interestOps(SelectionKey.OP_READ).attach(new Impl() {
-                    @Override
-                    public void onRead(SelectionKey key) throws InterruptedException, IOException {
-                      ByteBuffer payload = ByteBuffer.allocateDirect(receiveBufferSize);
-                      int read = channel.read(payload);
-                      if (-1 == read) {
-                        key.channel().close();
-                        return;
-                      }
-                      ll.add(payload);
-                      remaining -= read;
-                      if (0 == remaining) {
-                        payload = ByteBuffer.allocateDirect((int) total);
-                        ListIterator<ByteBuffer> iter = ll.listIterator();
-                        while (iter.hasNext()) {
-                          ByteBuffer buffer = iter.next();
-                          iter.remove();
-                          if (buffer.position() == total)
-                            payload = (ByteBuffer) buffer.flip();
-                          else
-                            payload.put(buffer);
-                        }
-                        BlobAntiPatternObject.returnJsonString(returnTo, key, rescode, payload);
-                      }
+                final LinkedList<ByteBuffer> ll = new LinkedList<ByteBuffer>();
+                ll.add(dst.slice());
+                key.selector().wakeup();
+                key.interestOps(SelectionKey.OP_READ).attach(new Impl() {
+                  @Override
+                  public void onRead(SelectionKey key) throws InterruptedException, IOException {
+                    ByteBuffer payload = ByteBuffer.allocateDirect(receiveBufferSize);
+                    int read = channel.read(payload);
+                    if (-1 == read) {
+                      key.channel().close();
+                      return;
                     }
-                  });
-                }
+                    ll.add(payload);
+                    remaining -= read;
+                    if (0 == remaining) {
+                      payload = ByteBuffer.allocateDirect((int) total);
+                      ListIterator<ByteBuffer> iter = ll.listIterator();
+                      while (iter.hasNext()) {
+                        ByteBuffer buffer = iter.next();
+                        iter.remove();
+                        if (buffer.position() == total)
+                          payload = (ByteBuffer) buffer.flip();
+                        else
+                          payload.put(buffer);
+                      }
+                      BlobAntiPatternObject.returnJsonString(returnTo, key, rescode, payload);
+                    }
+                  }
+                });
               }
             }
             return null;
