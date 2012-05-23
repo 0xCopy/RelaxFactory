@@ -420,16 +420,23 @@ public class BlobAntiPatternObject {
   }
 
   public static String getPathIdVer(String... pathIdVer) {
+    if ($DBG) {
+
+
+      System.err.println("oathIdVer building for " + arrToString(pathIdVer) + wheresWaldo(4));
+    }
+    ;
     int c = 0;
     StringBuilder r = new StringBuilder();
     for (String s : pathIdVer) {
       switch (c) {
         case 2:
-          if (null != s && !"null".equals(s))
+          if ((null != s) && !"null".equals(s)) {
             r.append("?rev=").append(s);
+          }
           break;
         case 0:
-          r.append('/').append(s).append('/');
+          r.append('/').append(s).append(s.matches(".*[\\?|#]") ? "" : "/");
           break;
         default:
           r.append('/').append(s);
@@ -447,12 +454,12 @@ public class BlobAntiPatternObject {
   }
 
   public static AsioVisitor fetchJsonByPath(final SocketChannel channel, final Exchanger returnTo, final String... pathIdVer) throws ClosedChannelException {
-    if ($DBG) for (String s : pathIdVer) {
-      if (s.isEmpty()) {
-        throw new Error("call with blank prefix");
-      }
-      break;
-    }
+//    if ($DBG) for (String s : pathIdVer) {
+//      if (s.isEmpty()) {
+//        throw new Error("call with blank prefix");
+//      }
+//      break;
+//    }
     final String format = ((new StringBuilder().append("GET ").append(getPathIdVer(pathIdVer)).append(" HTTP/1.1\r\nAccept: */*\r\n\r\n").toString())).replace("//", "/");
     return executeCouchRequest(channel, returnTo, format);
   }
@@ -516,7 +523,7 @@ public class BlobAntiPatternObject {
 
       @Override
       public void onRead(final SelectionKey key) throws IOException, InterruptedException {
-        Callable<Object> callable = new Callable<Object>() {
+        EXECUTOR_SERVICE.submit(new Callable<Object>() {
           public Object call() throws Exception {
             final SocketChannel channel = (SocketChannel) key.channel();
             {
@@ -592,7 +599,7 @@ public class BlobAntiPatternObject {
             }
             return null;
           }
-        };
+        });
 
       }
     };
@@ -740,20 +747,19 @@ public class BlobAntiPatternObject {
 
   public static String fetchJsonByPathV1(final String path, final Rfc822HeaderState... youCanHaz) throws IOException, InterruptedException, TimeoutException {
     final Exchanger<String> exchanger = new Exchanger<String>();
-
-    final AtomicReference<SocketChannel> channel = new AtomicReference<SocketChannel>();
+    SocketChannel channel = null;
     if ($DBG) {
       System.err.println(deepToString(path, youCanHaz));
     }
     enqueue(createCouchConnection(), OP_CONNECT | OP_WRITE, new AsioVisitor.Impl() {
       @Override
       public void onWrite(SelectionKey key) throws Exception {
-        channel.set((SocketChannel) key.channel());
+        final SocketChannel channel = (SocketChannel) key.channel();
 
         //todo: youCanHaz headers here
 
         final ByteBuffer wrap = ByteBuffer.wrap(("GET " + path + " HTTP/1.1\r\nAccept: */*\r\n\r\n").getBytes(UTF8));
-        final int write = channel.get().write(wrap);
+        final int write = channel.write(wrap);
         key.interestOps(OP_READ).attach(new Impl() {
           @Override
           public void onRead(SelectionKey key) throws Exception {
@@ -771,9 +777,9 @@ public class BlobAntiPatternObject {
             final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
 
 
-            final int read = channel.get().read(dst);
+            final int read = channel.read(dst);
             if (read > 0) {
-              key.channel().close();
+              channel.close();
 
               exchanger.exchange(null);
               return;
@@ -783,7 +789,7 @@ public class BlobAntiPatternObject {
             if (state.getPathRescode().startsWith("20")) {
 //              final String o = state.getHeaderStrings().;
               if (state.getHeaderStrings().containsKey(TRANSFER_ENCODING)) {
-                key.attach(new ChunkedEncodingVisitor(dst, 0, channel.get(), exchanger));
+                key.attach(new ChunkedEncodingVisitor(dst, 0, channel, exchanger));
 
               } else {
                 String cl = state.getHeaderStrings().get(RfPostWrapper.CONTENT_LENGTH);
@@ -794,7 +800,7 @@ public class BlobAntiPatternObject {
                   key.interestOps(OP_READ).attach(new Impl() {
                     @Override
                     public void onRead(SelectionKey key) throws Exception {
-                      channel.get().read(cursor);
+                      channel.read(cursor);
                       if (!cursor.hasRemaining()) {
                         exchanger.exchange(UTF8.decode((ByteBuffer) cursor.flip()).toString().trim());
                       }
@@ -814,11 +820,12 @@ public class BlobAntiPatternObject {
     try {
       ret = (String) exchanger.exchange(null, 3, TimeUnit.SECONDS);
     } catch (Exception e) {
-      if (null != channel.get()) {
+
+      if (null != channel) {
         if ($DBG) {
-          RfPostWrapper.ORIGINS.containsKey(channel.get().keyFor(getSelector()));
+          RfPostWrapper.ORIGINS.containsKey(channel.keyFor(getSelector()));
         }
-        channel.get().socket().close();
+        channel.socket().close();
       }
 
     }
