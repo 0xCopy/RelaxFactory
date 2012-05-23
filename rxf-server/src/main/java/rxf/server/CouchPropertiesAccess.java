@@ -100,19 +100,19 @@ public abstract class CouchPropertiesAccess<T> {
               return;
             }
             cursor.flip();
-            final Rfc822HeaderState rfc822HeaderPrefix = new Rfc822HeaderState(RfPostWrapper.CONTENT_LENGTH);
+            final Rfc822HeaderState rfc822HeaderPrefix = new Rfc822HeaderState(BlobAntiPatternObject.CONTENT_LENGTH);
             final String rescode = rfc822HeaderPrefix.apply(cursor).cookies(BlobAntiPatternObject.MYGEOIPSTRING).getPathRescode();
             if (!rescode.equals("200")) {
               key.channel().close();
               return;
             }
-            Callable<Void> callable = new Callable<Void>() {
+            Callable callable = new Callable() {
               public Exchanger<ByteBuffer> inner = new Exchanger<ByteBuffer>();
 
-              public Void call() throws Exception {
+              public Object call() throws Exception {
                 EXECUTOR_SERVICE.submit(new Runnable() {
                   public void run() {
-                    final int remaining = Integer.parseInt((String) rfc822HeaderPrefix.getHeaderStrings().get(RfPostWrapper.CONTENT_LENGTH));
+                    final int remaining = Integer.parseInt((String) rfc822HeaderPrefix.getHeaderStrings().get(BlobAntiPatternObject.CONTENT_LENGTH));
                     final ByteBuffer payload;
 //                  final Exchanger<ByteBuffer> inner;
                     if (remaining == cursor.remaining()) {
@@ -168,7 +168,7 @@ public abstract class CouchPropertiesAccess<T> {
 
                           final Rfc822HeaderState ETag = new Rfc822HeaderState("ETag").apply((ByteBuffer) dst.flip());
                           EXECUTOR_SERVICE.submit(new Callable<Object>() {
-                            public Void call() throws InterruptedException {
+                            public Object call() throws InterruptedException {
                               if (rfc822HeaderPrefix.getPathRescode().startsWith("20")) {
                                 outer.exchange(rfc822HeaderPrefix.getCookieStrings().get("ETag"));
                               } else {

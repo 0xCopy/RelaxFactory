@@ -51,14 +51,13 @@ public class RfPostWrapper extends Impl {
 
   public static final ServiceLayerDecorator SERVICE_LAYER_DECORATOR = new ServiceLayerDecorator();
   public static final SimpleRequestProcessor SIMPLE_REQUEST_PROCESSOR = new SimpleRequestProcessor(ServiceLayer.create(SERVICE_LAYER_DECORATOR));
-  public static final String CONTENT_LENGTH = "Content-Length";
   public static final Map<SelectionKey, Rfc822HeaderState> ORIGINS = $DBG ? new WeakHashMap<SelectionKey, Rfc822HeaderState>() : null;
 
   static {
     SIMPLE_REQUEST_PROCESSOR.setExceptionHandler(new ExceptionHandler() {
       @Override
       public ServerFailure createServerFailure(Throwable throwable) {
-        throwable.fillInStackTrace();
+//        throwable.fillInStackTrace();
         System.err.println("BOOM! in rfpw");
         throwable.printStackTrace();
         return new ServerFailure(wheresWaldo());
@@ -78,7 +77,7 @@ public class RfPostWrapper extends Impl {
       channel.close();
     } else {
       if (read > 0) {
-        final Rfc822HeaderState rfc822HeaderState = new Rfc822HeaderState(CONTENT_LENGTH).apply((ByteBuffer) dst.flip()).cookies(BlobAntiPatternObject.MYGEOIPSTRING, BlobAntiPatternObject.class.getCanonicalName()).sourceKey(key);
+        final Rfc822HeaderState rfc822HeaderState = new Rfc822HeaderState(BlobAntiPatternObject.CONTENT_LENGTH).apply((ByteBuffer) dst.flip()).cookies(BlobAntiPatternObject.MYGEOIPSTRING, BlobAntiPatternObject.class.getCanonicalName()).sourceKey(key);
         ThreadLocalHeaders.set(rfc822HeaderState);
         HttpMethod method = HttpMethod.valueOf(rfc822HeaderState.getMethodProtocol());
         if ($DBG) {
@@ -93,7 +92,7 @@ public class RfPostWrapper extends Impl {
                   ThreadLocalHeaders.set(rfc822HeaderState);
 
                   final Exchanger<ByteBuffer> exchanger = new Exchanger<ByteBuffer>();
-                  final Object o = rfc822HeaderState.getHeaderStrings().get(RfPostWrapper.CONTENT_LENGTH);
+                  final Object o = rfc822HeaderState.getHeaderStrings().get(BlobAntiPatternObject.CONTENT_LENGTH);
                   int remaining = Integer.parseInt((String) o);
 
                   final ByteBuffer cursor = ByteBuffer.allocateDirect(remaining).put(dst);
@@ -225,8 +224,7 @@ public class RfPostWrapper extends Impl {
 
               final String finalFname = fname;
               key.selector().wakeup();
-              key.interestOps(OP_WRITE);
-              key.attach(new Impl() {
+              key.interestOps(OP_CONNECT | OP_WRITE).attach(new Impl() {
 
                 @Override
                 public void onWrite(SelectionKey key) throws Exception {

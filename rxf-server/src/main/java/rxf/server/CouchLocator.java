@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.web.bindery.requestfactory.shared.Locator;
 import one.xio.AsioVisitor;
@@ -70,22 +71,26 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
   }
 
   @Override
-  public T find(Class<? extends T> clazz, String id) {
+  public T find(Class<? extends T> clazz, final String id) {
 
     String s = null;
     try {
-      SocketChannel channel = createCouchConnection();
-      String take;
-      try {
-        Exchanger<String> retVal = new Exchanger<String>();
-        HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, BlobAntiPatternObject.fetchJsonByPath(channel, retVal, getPathPrefix(), id));
-        take = retVal.exchange(null, 3, TimeUnit.SECONDS);
-      } finally {
-        recycleChannel(channel);
-      }
-      s = take;
-    } catch (Exception ignored) {
+      final SocketChannel channel = createCouchConnection();
+      final AtomicReference<String> take = new AtomicReference<String>();
 
+      Callable callable = new Callable() {
+        public Object call() throws Exception {
+          Exchanger<String> retVal = new Exchanger<String>();
+          HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, BlobAntiPatternObject.fetchJsonByPath(channel, retVal, getPathPrefix(), id));
+          take.set(retVal.exchange(null, 3, TimeUnit.SECONDS));
+
+          return null;
+        }
+      };
+      take.set((String) EXECUTOR_SERVICE.submit(callable).get());
+      s = take.get();
+    } catch (Exception e) {
+      e.printStackTrace();
     }
 
     return GSON.fromJson(s, getDomainType());
@@ -155,12 +160,12 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
                 int read = channel.read(headerBuf);
 
                 headerBuf.flip();
-                while (headerBuf.hasRemaining() && '\n' == (headerBuf.get())) ;//pv
+                while (headerBuf.hasRemaining() && '\n' == headerBuf.get()) ;//pv
 
                 int mark = headerBuf.position();
                 ByteBuffer methodBuf = (ByteBuffer) headerBuf.duplicate().flip().position(mark);
                 String[] resCode = UTF8.decode(methodBuf).toString().trim().split(" ");
-                if ((resCode[1]).startsWith("20")) {
+                if (resCode[1].startsWith("20")) {
                   int[] headers = HttpHeaders.getHeaders((ByteBuffer) headerBuf.clear()).get("ETag");
 
                   inner.exchange((ByteBuffer) headerBuf.position(headers[0]).limit(headers[1]));

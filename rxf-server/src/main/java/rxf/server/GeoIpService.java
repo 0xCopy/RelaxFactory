@@ -416,13 +416,20 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
   }
 
   private static CharBuffer lookupMappedAddress(InetAddress inetAddress, NavigableMap<Long, Integer> map) {
-    long l4 = sortableInetAddress(inetAddress);
+    try {
+      if (!map.isEmpty()) {
+        long l4 = sortableInetAddress(inetAddress);
+        Map.Entry<Long, Integer> longIntegerEntry = map.floorEntry(IPMASK & l4);
 
-    Map.Entry<Long, Integer> longIntegerEntry = map.floorEntry(IPMASK & l4);
-    Integer integer = null == longIntegerEntry ? map.firstEntry().getValue() : longIntegerEntry.getValue();
-    ByteBuffer slice = ((ByteBuffer) (locationMMBuf.position(integer))).slice();
-    while (slice.hasRemaining() && '\n' != slice.get()) ;
-    return ISO88591.decode((ByteBuffer) slice.flip());
+        Integer integer = null == longIntegerEntry ? map.firstEntry().getValue() : longIntegerEntry.getValue();
+        ByteBuffer slice = ((ByteBuffer) (locationMMBuf.position(integer))).slice();
+        while (slice.hasRemaining() && '\n' != slice.get()) ;
+        return ISO88591.decode((ByteBuffer) slice.flip());
+      }
+    } catch (Exception e) {
+      e.printStackTrace();  //todo: verify for a purpose
+    }
+    return null;
   }
 
   /**
@@ -567,7 +574,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
                           int rc = Integer.parseInt(UTF8.decode(h2).toString().trim());
                           if (200 == rc) {
                             Map<String, int[]> hm = HttpHeaders.getHeaders((ByteBuffer) headers.rewind());
-                            int[] ints = hm.get(RfPostWrapper.CONTENT_LENGTH);
+                            int[] ints = hm.get(BlobAntiPatternObject.CONTENT_LENGTH);
                             String cl = UTF8.decode((ByteBuffer) h2.clear().position(ints[0]).limit(ints[1])).toString().trim();
                             final long total = Long.parseLong(cl);
 
