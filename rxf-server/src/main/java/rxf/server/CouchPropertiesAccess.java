@@ -96,15 +96,14 @@ public abstract class CouchPropertiesAccess<T> {
             final ByteBuffer cursor = ByteBuffer.allocateDirect(getReceiveBufferSize());
             final int read = ((SocketChannel) channel).read(cursor);
             if (-1 == read) {
-
-              outer.exchange(null, 3, TimeUnit.SECONDS);
+              key.channel().close();
               return;
             }
             cursor.flip();
             final Rfc822HeaderState rfc822HeaderPrefix = new Rfc822HeaderState(RfPostWrapper.CONTENT_LENGTH);
             final String rescode = rfc822HeaderPrefix.apply(cursor).cookies(BlobAntiPatternObject.MYGEOIPSTRING).getPathRescode();
             if (!rescode.equals("200")) {
-              outer.exchange(null, 3, TimeUnit.SECONDS);
+              key.channel().close();
               return;
             }
             Callable<Void> callable = new Callable<Void>() {
@@ -189,7 +188,7 @@ public abstract class CouchPropertiesAccess<T> {
         });
       }
     });
-    outer.exchange(null, 3, TimeUnit.SECONDS);
+    outer.exchange(null, 1, TimeUnit.SECONDS);
     return key;
   }
 
