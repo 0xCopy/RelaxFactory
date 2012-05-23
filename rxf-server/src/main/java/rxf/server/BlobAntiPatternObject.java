@@ -453,7 +453,7 @@ public class BlobAntiPatternObject {
       }
       break;
     }
-    final String format = ((new StringBuilder().append("GET ").append(getPathIdVer(pathIdVer)).append(" HTTP/1.1\r\n\r\n").toString())).replace("//", "/");
+    final String format = ((new StringBuilder().append("GET ").append(getPathIdVer(pathIdVer)).append(" HTTP/1.1\r\nAccept: */*\r\n\r\n").toString())).replace("//", "/");
     return executeCouchRequest(channel, returnTo, format);
   }
 
@@ -503,8 +503,9 @@ public class BlobAntiPatternObject {
     }
     String take = take1;
     Map<? extends Object, ? extends Object> linkedHashMap = GSON.fromJson(take, LinkedHashMap.class);
-    if (2 == linkedHashMap.size() && linkedHashMap.containsKey("responseCode"))
+    if (2 == linkedHashMap.size() && linkedHashMap.containsKey("responseCode")) {
       throw new IOException(deepToString(linkedHashMap));
+    }
     return linkedHashMap;
   }
 
@@ -741,16 +742,17 @@ public class BlobAntiPatternObject {
     final Exchanger<String> exchanger = new Exchanger<String>();
 
     final AtomicReference<SocketChannel> channel = new AtomicReference<SocketChannel>();
-    if ($DBG) System.err.println(deepToString(path, arrToString(youCanHaz)));
+    if ($DBG) {
+      System.err.println(deepToString(path, youCanHaz));
+    }
     enqueue(createCouchConnection(), OP_CONNECT | OP_WRITE, new AsioVisitor.Impl() {
       @Override
       public void onWrite(SelectionKey key) throws Exception {
         channel.set((SocketChannel) key.channel());
-        final byte[] bytes = ("GET " + path + " HTTP/1.1\r\nAccept: */*\r\n\r\n").getBytes(UTF8);
 
         //todo: youCanHaz headers here
 
-        final ByteBuffer wrap = ByteBuffer.wrap(bytes);
+        final ByteBuffer wrap = ByteBuffer.wrap(("GET " + path + " HTTP/1.1\r\nAccept: */*\r\n\r\n").getBytes(UTF8));
         final int write = channel.get().write(wrap);
         key.interestOps(OP_READ).attach(new Impl() {
           @Override
@@ -767,8 +769,15 @@ public class BlobAntiPatternObject {
             //todo: youCanHaz headers here
 
             final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
-            final int read = channel.get().read(dst);
 
+
+            final int read = channel.get().read(dst);
+            if (read > 0) {
+              key.channel().close();
+
+              exchanger.exchange(null);
+              return;
+            }
             assert state != null;
             state.apply((ByteBuffer) dst.flip());
             if (state.getPathRescode().startsWith("20")) {
