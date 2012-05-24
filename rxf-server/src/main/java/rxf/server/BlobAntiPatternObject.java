@@ -215,7 +215,6 @@ public class BlobAntiPatternObject {
 
   static public String getSessionCookieId() throws Exception {
     String id = null;
-    Visitor roSession = null;
     try {
       ThreadLocalSessionHeaders invoke = new ThreadLocalSessionHeaders().invoke();
       ByteBuffer headerBuffer = invoke.getHb();
@@ -229,9 +228,11 @@ public class BlobAntiPatternObject {
       System.err.println("cookie failure on " + id);
     }
     if (null == id) {
+      Visitor roSession;
       roSession = VISITOR_LOCATOR.create(Visitor.class);
       id = roSession.getId();
-
+      final CouchTx persist = VISITOR_LOCATOR.persist(roSession);
+      id = persist.getId();
       Map<String, String> stringMap = ThreadLocalSetCookies.get();
       if (null == stringMap) {
         Map<String, String> value = new TreeMap<String, String>();

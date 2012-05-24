@@ -117,7 +117,7 @@ public class GeoIpService {
             Map<String, Date> map = new HashMap<String, Date>();
             //noinspection unchecked
             map.put("created", new Date());
-            HttpMethod.enqueue(couchConnection, OP_WRITE, new SendJsonVisitor(GSON.toJson(map).trim(), retVal, GEOIP_ROOTNODE));
+            HttpMethod.enqueue(couchConnection, OP_WRITE, new SendJsonPOST(GSON.toJson(map).trim(), retVal, GEOIP_ROOTNODE));
             String json = retVal.take();
 
 

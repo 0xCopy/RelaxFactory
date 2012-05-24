@@ -100,8 +100,19 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
 
   public CouchTx persist(T domainObject) throws Exception {
     final String id = getId(domainObject);
-    String[] idver = (null == id || "null".equals(id)) ? new String[]{getPathPrefix()} : new String[]{getPathPrefix() + '/' + id, getVersion(domainObject).toString()};
-    return BlobAntiPatternObject.sendJson(GSON.toJson(domainObject), idver);
+    final boolean b = null == id;
+    String take;
+    SocketChannel channel = null;
+    try {
+      channel = createCouchConnection();
+      SynchronousQueue<String> retVal = new SynchronousQueue<String>();
+      final String s = GSON.toJson(domainObject);
+      HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, b ? new SendJsonPOST(s, retVal, getPathPrefix()) : new SendJsonPUT(s, retVal, getPathPrefix() + '/' + id));
+      take = retVal.take();
+    } finally {
+      recycleChannel(channel);
+    }
+    return GSON.fromJson(take, CouchTx.class);
   }
 
   List<T> findAll() {
