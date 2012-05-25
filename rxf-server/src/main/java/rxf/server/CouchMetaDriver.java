@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 import one.xio.AsioVisitor;
+import org.intellij.lang.annotations.Language;
 import rxf.server.DbKeys.DbInputUnit;
 import rxf.server.DbKeys.DbResultUnit;
 import rxf.server.DbKeys.etype;
@@ -35,6 +36,8 @@ public enum CouchMetaDriver implements AsioVisitor {
 
   @DbResultUnit(String.class) @DbKeys({db, docId})
   getDoc,
+
+
   @DbResultUnit(String.class) @DbKeys({db, docId})
 
   getRevision,
@@ -54,15 +57,47 @@ public enum CouchMetaDriver implements AsioVisitor {
 
   @DbResultUnit(Rfc822HeaderState.class)
   @DbKeys({opaque, mimetype, blob})
-  sendBlob;
+  sendBlob {
+    @Override
+    public void onWrite(SelectionKey key) throws Exception {
+      super.onWrite(key);    //To change body of overridden methods use File | Settings | File Templates.
+    }
+  };
+  public static final String XXXXXXXXXXXXXXMETHODS = "/*XXXXXXXXXXXXXXMETHODS*/";
 
+  //  public static final String XDEADBEEF_2 = "-0xdeadbeef.2";
+  public <T> String builder() throws NoSuchFieldException {
+    final Field field = CouchMetaDriver.class.getField(name());
+    @Language("JAVA")
+    String s = "\n\npublic class _ename_Builder extends Rfc822HeaderState {\n  Rfc822HeaderState rfc822HeaderState;\n  java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);\n\n  public _ename_Builder(java.nio.channels.SelectionKey key, Rfc822HeaderState... opt) {\n    for (Rfc822HeaderState rfc822HeaderState : opt) {\n      this.rfc822HeaderState = rfc822HeaderState;\n      break;\n    }                    }\n    " + XXXXXXXXXXXXXXMETHODS + " \n}\n";
+    String s1 = "";
+    if (field.getType().isAssignableFrom(CouchMetaDriver.class)) {
+      CouchMetaDriver couchDriver = CouchMetaDriver.valueOf(field.getName());
+      DbKeys annotation = field.getAnnotation(DbKeys.class);
+      etype[] value = annotation.value();
+
+
+      final int vl = value.length;
+      for (int i = 0; i < vl; i++) {
+        etype etype = value[i];
+        final String name = etype.name();
+        final Class clazz = etype.clazz;
+        @Language("JAVA")
+        String y = "public _ename_Builder _name_(_clazz_ _sclazz_){ parms.put(DbKeys.etype." + etype.name() + ",_sclazz_); return this;}\n";
+        s1 += y.replace("_name_", etype.name()).replace("_clazz_", clazz.getCanonicalName()).replace("_sclazz_", clazz.getSimpleName().toLowerCase()).replace("_ename_", name());
+      }
+
+      s = s./*replace(XDEADBEEF_2, String.valueOf(vl)).*/replace(XXXXXXXXXXXXXXMETHODS, s1).replace("_ename_", name());
+    }
+    return s;
+  }
 
   public
-  static void main(String... args) {
+  static void main(String... args) throws NoSuchFieldException {
 
 
     Field[] fields = CouchMetaDriver.class.getFields();
-    String s = "" + "package rxf.server;public interface CouchDriver{";
+    String s = "package rxf.server;import static rxf.server.DbKeys.*;import static rxf.server.DbKeys.etype.*;import java.util.*;import java.util.*;public interface CouchDriver{";
     for (Field field : fields) {
       if (field.getType().isAssignableFrom(CouchMetaDriver.class)) {
         CouchMetaDriver couchDriver = CouchMetaDriver.valueOf(field.getName());
@@ -70,7 +105,7 @@ public enum CouchMetaDriver implements AsioVisitor {
         etype[] value = dbKeys.value();
         {
 
-          final DbResultUnit annotation = field.getAnnotation(DbResultUnit.class);
+          DbResultUnit annotation = field.getAnnotation(DbResultUnit.class);
           s += null != annotation ? annotation.value().getCanonicalName() : CouchTx.class.getCanonicalName();
           s += ' ' + couchDriver.name() + '(';
           Iterator<etype> iterator = Arrays.asList(value).iterator();
@@ -82,6 +117,8 @@ public enum CouchMetaDriver implements AsioVisitor {
               s += ',';
           }
           s += " );\n";
+          final String builder = couchDriver.builder();
+          s += "\n" + builder;
         }
       }
     }

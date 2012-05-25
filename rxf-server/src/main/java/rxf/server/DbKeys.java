@@ -17,7 +17,7 @@ import static java.lang.annotation.ElementType.TYPE;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target({FIELD, LOCAL_VARIABLE, TYPE, ANNOTATION_TYPE, CONSTRUCTOR, PACKAGE, PARAMETER})
-@interface DbKeys {
+public @interface DbKeys {
   enum etype {
 
     opaque, db, docId, rev, designDocId, view, validjson, mimetype {{
