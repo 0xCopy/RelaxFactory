@@ -1,20 +1,14 @@
 package rxf.server;
 
+import one.xio.MimeType;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 
-import one.xio.MimeType;
-
-import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
-import static java.lang.annotation.ElementType.CONSTRUCTOR;
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.LOCAL_VARIABLE;
-import static java.lang.annotation.ElementType.PACKAGE;
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.ElementType.*;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target({FIELD, LOCAL_VARIABLE, TYPE, ANNOTATION_TYPE, CONSTRUCTOR, PACKAGE, PARAMETER})
@@ -52,7 +46,7 @@ public @interface DbKeys {
 
   public static abstract class ReturnAction<T> {
 
-    static ThreadLocal<ReturnAction> currentKeys = new ThreadLocal<ReturnAction>();
+    static ThreadLocal<ReturnAction> currentResults = new ThreadLocal<ReturnAction>();
 
   }
 
@@ -72,7 +66,7 @@ public @interface DbKeys {
 
     public ActionBuilder<T> state(Rfc822HeaderState state) {
       this.state = state;
-      return (ActionBuilder<T>) this;
+      return this;
     }
 
     public SelectionKey key() {
@@ -82,10 +76,10 @@ public @interface DbKeys {
     public ActionBuilder<T> key(SelectionKey key) {
       this.key = key;
 
-      return (ActionBuilder<T>) this;
+      return this;
     }
 
-    public abstract ResultAction<T> fire();
+    public abstract TerminalBuilder<T> fire();
   }
 
   abstract class DbKeysBuilder<T> {
@@ -113,6 +107,7 @@ public @interface DbKeys {
       return this;
     }
   }
+
 
 //  class test {
 //    public static void main(String... a) {
