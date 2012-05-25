@@ -65,29 +65,44 @@ public enum CouchMetaDriver implements AsioVisitor {
   };
   public static final String XXXXXXXXXXXXXXMETHODS = "/*XXXXXXXXXXXXXXMETHODS*/";
 
-  //  public static final String XDEADBEEF_2 = "-0xdeadbeef.2";
+  public static final String XDEADBEEF_2 = "-0xdeadbeef.2";
+
   public <T> String builder() throws NoSuchFieldException {
-    final Field field = CouchMetaDriver.class.getField(name());
+    Field field = CouchMetaDriver.class.getField(name());
+
+
     @Language("JAVA")
-    String s = "\n\npublic class _ename_Builder extends Rfc822HeaderState {\n  Rfc822HeaderState rfc822HeaderState;\n  java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);\n\n  public _ename_Builder(java.nio.channels.SelectionKey key, Rfc822HeaderState... opt) {\n    for (Rfc822HeaderState rfc822HeaderState : opt) {\n      this.rfc822HeaderState = rfc822HeaderState;\n      break;\n    }                    }\n    " + XXXXXXXXXXXXXXMETHODS + " \n}\n";
-    String s1 = "";
+    String s = null;
     if (field.getType().isAssignableFrom(CouchMetaDriver.class)) {
       CouchMetaDriver couchDriver = CouchMetaDriver.valueOf(field.getName());
       DbKeys annotation = field.getAnnotation(DbKeys.class);
       etype[] value = annotation.value();
+      Class rtype = CouchTx.class;
+      try {
+        rtype = field.getAnnotation(DbResultUnit.class).value();
+      } catch (Exception e) {
+      }
+      final String cn = rtype.getCanonicalName();
+      s = "\n\npublic class _ename_Builder extends DbKeysBuilder<" +
+          cn + ">{\n  Rfc822HeaderState rfc822HeaderState;\n  java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);\n\n  public _ename_Builder(java.nio.channels.SelectionKey key, Rfc822HeaderState... opt) {\n    for (Rfc822HeaderState rfc822HeaderState : opt) {\n      this.rfc822HeaderState = rfc822HeaderState;\n      break;\n    }\n  }\n  @Override\n    public ActionBuilder<" +
+          cn + "> to() {\n      return new ActionBuilder<" +
+          cn + ">() {\n        @Override\n        public ResultAction<" +
+          cn + "> fire() {\n          return new ResultAction<" +
+          cn + ">();\n        }\n      };\n    }\n    " + XXXXXXXXXXXXXXMETHODS + " \n}\n";
 
-
-      final int vl = value.length;
+      int vl = value.length;
+      String s1 = "\nstatic private final int parmsCount=" + XDEADBEEF_2 + ";\n";
       for (int i = 0; i < vl; i++) {
         etype etype = value[i];
-        final String name = etype.name();
-        final Class clazz = etype.clazz;
+        String name = etype.name();
+        Class clazz = etype.clazz;
         @Language("JAVA")
-        String y = "public _ename_Builder _name_(_clazz_ _sclazz_){ parms.put(DbKeys.etype." + etype.name() + ",_sclazz_); return this;}\n";
+        String y = "public _ename_Builder _name_(_clazz_ _sclazz_){" +
+            "parms.put(DbKeys.etype." + etype.name() + ",_sclazz_);return this;}\n";
         s1 += y.replace("_name_", etype.name()).replace("_clazz_", clazz.getCanonicalName()).replace("_sclazz_", clazz.getSimpleName().toLowerCase()).replace("_ename_", name());
       }
 
-      s = s./*replace(XDEADBEEF_2, String.valueOf(vl)).*/replace(XXXXXXXXXXXXXXMETHODS, s1).replace("_ename_", name());
+      s = s.replace(XXXXXXXXXXXXXXMETHODS, s1).replace("_ename_", name()).replace(XDEADBEEF_2, String.valueOf(vl));
     }
     return s;
   }
@@ -117,7 +132,7 @@ public enum CouchMetaDriver implements AsioVisitor {
               s += ',';
           }
           s += " );\n";
-          final String builder = couchDriver.builder();
+          String builder = couchDriver.builder();
           s += "\n" + builder;
         }
       }
