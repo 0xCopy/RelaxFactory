@@ -40,7 +40,7 @@ import static java.lang.annotation.ElementType.TYPE;
   @Retention(RetentionPolicy.RUNTIME)
   @Target({FIELD, LOCAL_VARIABLE, TYPE, ANNOTATION_TYPE, CONSTRUCTOR, PACKAGE, PARAMETER})
   @interface DbResultUnit {
-    Class<?> value();
+    Class value();
   }
 
   @Retention(RetentionPolicy.RUNTIME)

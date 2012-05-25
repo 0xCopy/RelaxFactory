@@ -4,7 +4,6 @@ import java.lang.reflect.Field;
 import java.nio.channels.SelectionKey;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 
 import one.xio.AsioVisitor;
 import rxf.server.DbKeys.DbInputUnit;
@@ -18,6 +17,7 @@ import static rxf.server.DbKeys.etype.docId;
 import static rxf.server.DbKeys.etype.mimetype;
 import static rxf.server.DbKeys.etype.opaque;
 import static rxf.server.DbKeys.etype.rev;
+import static rxf.server.DbKeys.etype.view;
 
 /**
  * confers traits on an oo platform...
@@ -32,8 +32,12 @@ public enum CouchMetaDriver implements AsioVisitor {
   createDb,
   @DbKeys({db, docId}) @DbInputUnit(String.class)
   createDoc,
-  @DbKeys({db, docId})
+
+  @DbResultUnit(String.class) @DbKeys({db, docId})
   getDoc,
+  @DbResultUnit(String.class) @DbKeys({db, docId})
+
+  getRevision,
   @DbKeys({db, docId, rev})
   updateDoc,
   @DbKeys({db, designDocId})
@@ -42,10 +46,9 @@ public enum CouchMetaDriver implements AsioVisitor {
   getDesignDoc,
   @DbKeys({db, designDocId})
   updateDesignDoc,
-  @DbKeys({db, designDocId})
-  defineQuery,
-  @DbResultUnit(List.class) @DbKeys({db, designDocId})
+  @DbResultUnit(CouchResultSet.class) @DbKeys({db, view})
   getView,
+  @DbKeys({opaque})sendJson,
   @DbKeys({opaque}) @DbResultUnit(Iterator.class)
   getAsyncIterator,
 
@@ -59,7 +62,7 @@ public enum CouchMetaDriver implements AsioVisitor {
 
 
     Field[] fields = CouchMetaDriver.class.getFields();
-    String s = "" + "public interface CouchDriver{";
+    String s = "" + "package rxf.server;public interface CouchDriver{";
     for (Field field : fields) {
       if (field.getType().isAssignableFrom(CouchMetaDriver.class)) {
         CouchMetaDriver couchDriver = CouchMetaDriver.valueOf(field.getName());
@@ -68,11 +71,8 @@ public enum CouchMetaDriver implements AsioVisitor {
         {
 
           final DbResultUnit annotation = field.getAnnotation(DbResultUnit.class);
-          if (null == annotation)
-
-            s += "CouchTx ";
-          else s += annotation.value().getCanonicalName() + ' ';
-          s += couchDriver.name() + '(';
+          s += null != annotation ? annotation.value().getCanonicalName() : CouchTx.class.getCanonicalName();
+          s += ' ' + couchDriver.name() + '(';
           Iterator<etype> iterator = Arrays.asList(value).iterator();
           while (iterator.hasNext()) {
             etype etype = iterator.next();
@@ -81,8 +81,6 @@ public enum CouchMetaDriver implements AsioVisitor {
             if (iterator.hasNext())
               s += ',';
           }
-
-
           s += " );\n";
         }
       }
@@ -90,37 +88,26 @@ public enum CouchMetaDriver implements AsioVisitor {
     s += "}";
     System.out.println(s);
   }
-//  verb	format	use case
-//PUT	/{db}/	create db, useful to avoid manual setup for new objects, tenants	db' is database	first use of each entity
-//
-//POST	/{db}/	create doc, generates new id		entity first persist
-//GET	/{db}/{id}?rev={rev}	retreive doc, rev might be optional? do we need another way to ask 'is this the latest'?	id' is key, 'rev' is revision	locator.find
-//PUT	/{db}/{id}?rev={rev}	update doc based on last known rev - this will give us an error if we want to make sure we aren't clobbering other changes. Do we want a way to allow clobbering?		entity persist
-//
-//PUT	/{db}/{dd}	Create a new design doc	dd (design doc) is like id, except not generated	first use of each finder class
-//GET	/{db}/{dd}	Retrieve current design doc (to check rev, or check that is up to date)		first use of each finder class
-//GET	/{db}/{dd}/{view}/...	Run a view within the design doc, read results	 '...' could be any number of things	running a finder method
-//PUT	/{db}/{dd}?rev={rev}	update an existing design doc (as above)		first use of each finder class
 
+  AsioVisitor delegate = new Impl();
 
   @Override
   public void onRead(SelectionKey key) throws Exception {
-    //todo: verify for a purpose
+    delegate.onRead(key);
   }
 
   @Override
   public void onConnect(SelectionKey key) throws Exception {
-    //todo: verify for a purpose
+    delegate.onConnect(key);
   }
 
   @Override
   public void onWrite(SelectionKey key) throws Exception {
-    //todo: verify for a purpose
+    delegate.onWrite(key);
   }
 
   @Override
   public void onAccept(SelectionKey key) throws Exception {
-    //todo: verify for a purpose
+    delegate.onAccept(key);
   }
-
 }
