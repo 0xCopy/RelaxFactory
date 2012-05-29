@@ -1,28 +1,14 @@
 package rxf.server;
 
+import java.util.concurrent.Future;
+
 public abstract class TerminalBuilder<T> {
 
-    abstract void toVoid();
+  abstract void toVoid() throws Exception;
 
-    abstract CouchResultSet<T> rs();
+  abstract CouchResultSet<T> rs() throws Exception;
 
-    abstract CouchTx tx();
-}
+  abstract CouchTx tx() throws Exception;
 
-class DefaultTerminalBuilder<T> extends TerminalBuilder<T> {
-
-    @Override
-    void toVoid() {
-
-    }
-
-    @Override
-    CouchResultSet<T> rs() {
-        throw new AbstractMethodError();
-    }
-
-    @Override
-    CouchTx tx() {
-        throw new AbstractMethodError();
-    }
+  abstract public Future<T> future() throws Exception;
 }
