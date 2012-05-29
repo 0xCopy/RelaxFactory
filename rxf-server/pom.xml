@@ -13,7 +13,17 @@
 
 
     <dependencies>
-        <dependency><artifactId>rxf-shared</artifactId><groupId>${project.groupId}</groupId><version>${project.version}</version></dependency>
+        <dependency>
+            <artifactId>rxf-shared</artifactId>
+            <groupId>${project.groupId}</groupId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>intellij</groupId>
+            <artifactId>annotations</artifactId>
+            <version>10.5.4</version>
+            <scope>compile</scope>
+        </dependency>
         <dependency>
             <groupId>1xio</groupId>
             <artifactId>1xio</artifactId>
@@ -87,44 +97,44 @@
             </plugin>
 
             <plugin>
-                   <groupId>org.codehaus.mojo</groupId>
-                   <artifactId>exec-maven-plugin</artifactId>
-                   <version>1.2</version>
-                   <executions>
-                       <execution>
-                           <phase>process-classes</phase>
-                           <goals>
-                               <goal>exec</goal>
-                           </goals>
-                           <id>VerifyRequestFactoryInterfaces</id>
-                           <configuration>
-                               <executable>java</executable>
-                               <arguments>
-                                   <argument>-cp</argument>
-                                   <classpath/>
-                                   <argument>com.google.web.bindery.requestfactory.apt.ValidationTool</argument>
-                                   <argument>${project.build.outputDirectory}</argument>
-                                   <argument>rxf.shared.KernelFactory</argument>
-                               </arguments>
-                               <classpathScope>compile</classpathScope>
-                           </configuration>
-                       </execution>
-                   </executions>
-                   <dependencies>
-                       <dependency>
-                           <groupId>com.google.web.bindery</groupId>
-                           <artifactId>requestfactory-apt</artifactId>
-                           <version>${gwt.version}</version>
-                       </dependency>
-                       <dependency>
-                           <groupId>com.google.gwt</groupId>
-                           <artifactId>gwt-user</artifactId>
-                           <version>${gwt.version}</version>
-                       </dependency>
-                   </dependencies>
-               </plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2</version>
+                <executions>
+                    <execution>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <id>VerifyRequestFactoryInterfaces</id>
+                        <configuration>
+                            <executable>java</executable>
+                            <arguments>
+                                <argument>-cp</argument>
+                                <classpath/>
+                                <argument>com.google.web.bindery.requestfactory.apt.ValidationTool</argument>
+                                <argument>${project.build.outputDirectory}</argument>
+                                <argument>rxf.shared.KernelFactory</argument>
+                            </arguments>
+                            <classpathScope>compile</classpathScope>
+                        </configuration>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.google.web.bindery</groupId>
+                        <artifactId>requestfactory-apt</artifactId>
+                        <version>${gwt.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>com.google.gwt</groupId>
+                        <artifactId>gwt-user</artifactId>
+                        <version>${gwt.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
 
- 
+
         </plugins>
         <outputDirectory>${project.build.directory}/${project.build.finalName}/WEB-INF/classes</outputDirectory>
     </build>
