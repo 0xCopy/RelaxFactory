@@ -1,0 +1,20 @@
+package rxf.server;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+import static java.lang.annotation.ElementType.*;
+
+/**
+ * Created by IntelliJ IDEA.
+ * User: jim
+ * Date: 5/29/12
+ * Time: 2:27 AM
+ * To change this template use File | Settings | File Templates.
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target({FIELD, LOCAL_VARIABLE, TYPE, ANNOTATION_TYPE, CONSTRUCTOR, PACKAGE, PARAMETER})
+@interface DbTask {
+    DbTerminal[] value();
+}
