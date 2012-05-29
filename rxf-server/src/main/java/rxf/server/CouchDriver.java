@@ -1,25 +1,37 @@
-package rxf.server;import static rxf.server.DbKeys.*;import static rxf.server.DbKeys.etype.*;import java.util.*; public interface CouchDriver{rxf.server.CouchTx createDb( java.lang.String db, java.lang.String docId );
+
+package rxf.server;import static rxf.server.DbKeys.*;import static rxf.server.DbKeys.etype.*;import java.util.*;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.SynchronousQueue;
+
+public interface CouchDriver{rxf.server.CouchTx createDb( java.lang.String db, java.lang.String docId );
 
 public class createDbBuilder extends DbKeysBuilder<rxf.server.CouchTx> {
     Rfc822HeaderState rfc822HeaderState;
     java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
 
-    @Override
-    public ActionBuilder<rxf.server.CouchTx> to() {
-        if (parms.size() == parmsCount)
-            return new ActionBuilder<rxf.server.CouchTx>() {
-                @Override
-                public TerminalBuilder<rxf.server.CouchTx> fire() {
-                    return new TerminalBuilder<rxf.server.CouchTx>();
-                }
-            };
+    public ActionBuilder<rxf.server.CouchTx> sync(SynchronousQueue ...a) {
+      if (parms.size() != parmsCount) {
         throw new IllegalArgumentException("required paramters are: [db, docId]");
+      } else {
+        return new ActionBuilder<CouchTx>() {
+          @Override
+          public TerminalBuilder<CouchTx> fire(CyclicBarrier... cyclicBarriers) {
+            return new TerminalBuilder<CouchTx>();
+
+
+          }
+        };
+      }
     }
     
 static private final int parmsCount=2;
 public createDbBuilder db(java.lang.String string){parms.put(DbKeys.etype.db,string);return this;}
 public createDbBuilder docId(java.lang.String string){parms.put(DbKeys.etype.docId,string);return this;}
 
+  @Override
+  public ActionBuilder<CouchTx> to(SynchronousQueue<CouchTx>... clients) {
+    return null;  //todo: verify for a purpose
+  }
 }
 rxf.server.CouchTx createDoc( java.lang.String db, java.lang.String docId, java.lang.String validjson );
 
@@ -35,6 +47,18 @@ public class createDocBuilder extends DbKeysBuilder<rxf.server.CouchTx> {
                 public TerminalBuilder<rxf.server.CouchTx> fire() {
                     return new TerminalBuilder<rxf.server.CouchTx>();
                 }
+
+              /**
+               * allows null in either direction to be exchanged.
+               *
+               * @return
+               */
+              @Override
+              public TerminalBuilder<T> fire(CyclicBarrier... cyclicBarriers) {
+                return new TerminalBuilder<CouchTx>();
+
+
+              }
             };
         throw new IllegalArgumentException("required paramters are: [db, docId, validjson]");
     }
@@ -59,6 +83,18 @@ public class getDocBuilder extends DbKeysBuilder<java.lang.String> {
                 public TerminalBuilder<java.lang.String> fire() {
                     return new TerminalBuilder<java.lang.String>();
                 }
+
+              /**
+               * allows null in either direction to be exchanged.
+               *
+               * @return
+               */
+              @Override
+              public TerminalBuilder<T> fire(CyclicBarrier... cyclicBarriers) {
+                return new TerminalBuilder<CouchTx>();
+
+
+              }
             };
         throw new IllegalArgumentException("required paramters are: [db, docId]");
     }
@@ -82,6 +118,18 @@ public class getRevisionBuilder extends DbKeysBuilder<java.lang.String> {
                 public TerminalBuilder<java.lang.String> fire() {
                     return new TerminalBuilder<java.lang.String>();
                 }
+
+              /**
+               * allows null in either direction to be exchanged.
+               *
+               * @return
+               */
+              @Override
+              public TerminalBuilder<T> fire(CyclicBarrier... cyclicBarriers) {
+                return new TerminalBuilder<CouchTx>();
+
+
+              }
             };
         throw new IllegalArgumentException("required paramters are: [db, docId]");
     }
@@ -105,6 +153,18 @@ public class updateDocBuilder extends DbKeysBuilder<rxf.server.CouchTx> {
                 public TerminalBuilder<rxf.server.CouchTx> fire() {
                     return new TerminalBuilder<rxf.server.CouchTx>();
                 }
+
+              /**
+               * allows null in either direction to be exchanged.
+               *
+               * @return
+               */
+              @Override
+              public TerminalBuilder<T> fire(CyclicBarrier... cyclicBarriers) {
+                return new TerminalBuilder<CouchTx>();
+
+
+              }
             };
         throw new IllegalArgumentException("required paramters are: [db, docId, rev, validjson]");
     }
@@ -130,6 +190,18 @@ public class createNewDesignDocBuilder extends DbKeysBuilder<rxf.server.CouchTx>
                 public TerminalBuilder<rxf.server.CouchTx> fire() {
                     return new TerminalBuilder<rxf.server.CouchTx>();
                 }
+
+              /**
+               * allows null in either direction to be exchanged.
+               *
+               * @return
+               */
+              @Override
+              public TerminalBuilder<T> fire(CyclicBarrier... cyclicBarriers) {
+                return new TerminalBuilder<CouchTx>();
+
+
+              }
             };
         throw new IllegalArgumentException("required paramters are: [db, designDocId, validjson]");
     }
@@ -154,6 +226,18 @@ public class getDesignDocBuilder extends DbKeysBuilder<java.lang.String> {
                 public TerminalBuilder<java.lang.String> fire() {
                     return new TerminalBuilder<java.lang.String>();
                 }
+
+              /**
+               * allows null in either direction to be exchanged.
+               *
+               * @return
+               */
+              @Override
+              public TerminalBuilder<T> fire(CyclicBarrier... cyclicBarriers) {
+                return new TerminalBuilder<CouchTx>();
+
+
+              }
             };
         throw new IllegalArgumentException("required paramters are: [db, designDocId]");
     }
@@ -177,6 +261,18 @@ public class updateDesignDocBuilder extends DbKeysBuilder<rxf.server.CouchTx> {
                 public TerminalBuilder<rxf.server.CouchTx> fire() {
                     return new TerminalBuilder<rxf.server.CouchTx>();
                 }
+
+              /**
+               * allows null in either direction to be exchanged.
+               *
+               * @return
+               */
+              @Override
+              public TerminalBuilder<T> fire(CyclicBarrier... cyclicBarriers) {
+                return new TerminalBuilder<CouchTx>();
+
+
+              }
             };
         throw new IllegalArgumentException("required paramters are: [db, designDocId, validjson]");
     }
@@ -201,6 +297,18 @@ public class getViewBuilder extends DbKeysBuilder<rxf.server.CouchResultSet> {
                 public TerminalBuilder<rxf.server.CouchResultSet> fire() {
                     return new TerminalBuilder<rxf.server.CouchResultSet>();
                 }
+
+              /**
+               * allows null in either direction to be exchanged.
+               *
+               * @return
+               */
+              @Override
+              public TerminalBuilder<T> fire(CyclicBarrier... cyclicBarriers) {
+                return new TerminalBuilder<CouchTx>();
+
+
+              }
             };
         throw new IllegalArgumentException("required paramters are: [db, view]");
     }
@@ -224,6 +332,18 @@ public class sendJsonBuilder extends DbKeysBuilder<rxf.server.CouchTx> {
                 public TerminalBuilder<rxf.server.CouchTx> fire() {
                     return new TerminalBuilder<rxf.server.CouchTx>();
                 }
+
+              /**
+               * allows null in either direction to be exchanged.
+               *
+               * @return
+               */
+              @Override
+              public TerminalBuilder<T> fire(CyclicBarrier... cyclicBarriers) {
+                return new TerminalBuilder<CouchTx>();
+
+
+              }
             };
         throw new IllegalArgumentException("required paramters are: [opaque, validjson]");
     }
@@ -247,6 +367,18 @@ public class getAsyncIteratorBuilder extends DbKeysBuilder<java.util.Iterator> {
                 public TerminalBuilder<java.util.Iterator> fire() {
                     return new TerminalBuilder<java.util.Iterator>();
                 }
+
+              /**
+               * allows null in either direction to be exchanged.
+               *
+               * @return
+               */
+              @Override
+              public TerminalBuilder<T> fire(CyclicBarrier... cyclicBarriers) {
+                return new TerminalBuilder<CouchTx>();
+
+
+              }
             };
         throw new IllegalArgumentException("required paramters are: [opaque]");
     }
@@ -264,11 +396,13 @@ public class sendBlobBuilder extends DbKeysBuilder<rxf.server.Rfc822HeaderState>
     @Override
     public ActionBuilder<rxf.server.Rfc822HeaderState> to() {
         if (parms.size() == parmsCount)
+
             return new ActionBuilder<rxf.server.Rfc822HeaderState>() {
-                @Override
-                public TerminalBuilder<rxf.server.Rfc822HeaderState> fire() {
-                    return new TerminalBuilder<rxf.server.Rfc822HeaderState>();
-                }
+
+              @Override
+              public TerminalBuilder<Rfc822HeaderState> fire(CyclicBarrier... cyclicBarriers) {return
+                  new TerminalBuilder<Rfc822HeaderState>();
+              }
             };
         throw new IllegalArgumentException("required paramters are: [opaque, mimetype, blob]");
     }
