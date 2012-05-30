@@ -1,11 +1,3 @@
-///opt/jdk1.7.0_03/bin/java -Didea.launcher.port=7537 -Didea.launcher.bin.path=/vol/big240/opt/idea-IU-107.777/bin -Dfile.encoding=UTF-8 -classpath /opt/jdk1.7.0_03/jre/lib/plugin.jar:/opt/jdk1.7.0_03/jre/lib/charsets.jar:/opt/jdk1.7.0_03/jre/lib/jsse.jar:/opt/jdk1.7.0_03/jre/lib/deploy.jar:/opt/jdk1.7.0_03/jre/lib/resources.jar:/opt/jdk1.7.0_03/jre/lib/management-agent.jar:/opt/jdk1.7.0_03/jre/lib/javaws.jar:/opt/jdk1.7.0_03/jre/lib/rt.jar:/opt/jdk1.7.0_03/jre/lib/alt-rt.jar:/opt/jdk1.7.0_03/jre/lib/jce.jar:/opt/jdk1.7.0_03/jre/lib/ext/sunjce_provider.jar:/opt/jdk1.7.0_03/jre/lib/ext/zipfs.jar:/opt/jdk1.7.0_03/jre/lib/ext/sunpkcs11.jar:/opt/jdk1.7.0_03/jre/lib/ext/dnsns.jar:/opt/jdk1.7.0_03/jre/lib/ext/localedata.jar:/opt/jdk1.7.0_03/jre/lib/ext/sunec.jar:/home/jim/work/RelaxFactory/rxf-server/target/rxf-server-0.8.0/WEB-INF/classes:/vol/big240/opt/idea-IU-107.777/lib/annotations.jar:/home/jim/work/RelaxFactory/rxf-shared/target/classes:/vol/big240/snap/jim/.m2/repository/org/json/json/20090211/json-20090211.jar:/vol/big240/snap/jim/.m2/repository/javax/validation/validation-api/1.0.0.GA/validation-api-1.0.0.GA.jar:/vol/big240/snap/jim/.m2/repository/org/hibernate/hibernate-validator/4.2.0.Final/hibernate-validator-4.2.0.Final.jar:/vol/big240/snap/jim/.m2/repository/org/slf4j/slf4j-api/1.6.1/slf4j-api-1.6.1.jar:/home/jim/work/RelaxFactory/1xio/target/classes:/vol/big240/snap/jim/.m2/repository/com/google/code/gson/gson/2.1/gson-2.1.jar:/vol/big240/snap/jim/.m2/repository/com/google/web/bindery/requestfactory-server/2.5.0-rfmap-SNAPSHOT/requestfactory-server-2.5.0-rfmap-SNAPSHOT.jar:/vol/big240/snap/jim/.m2/repository/net/sf/jtidy/jtidy/r938/jtidy-r938.jar:/vol/big240/snap/jim/.m2/repository/org/apache/commons/commons-compress/1.4/commons-compress-1.4.jar:/vol/big240/snap/jim/.m2/repository/org/tukaani/xz/1.0/xz-1.0.jar:/vol/big240/opt/idea-IU-107.777/lib/idea_rt.jar com.intellij.rt.execution.application.AppMain rxf.server.CouchMetaDriver
-//java 6 LOOPBACK detected
-//opening /127.0.0.1:5984
-//opening /127.0.0.1:5984
-//opening /127.0.0.1:5984
-//opening /127.0.0.1:5984
-//opening /127.0.0.1:5984
-//opening /127.0.0.1:5984
 package rxf.server;
 //generated
 
@@ -39,13 +31,10 @@ public interface CouchDriver {
                 try {
                   return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.createDb.visit();
                 } catch (Exception e) {
-                  e.printStackTrace();  //todo: verify for a purpose
+                  e.printStackTrace();
                 }
-                ;
                 return null;
               }
-
-              ;
 
               void oneWay() {
                 BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
@@ -99,13 +88,10 @@ public interface CouchDriver {
                 try {
                   return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.createDoc.visit();
                 } catch (Exception e) {
-                  e.printStackTrace();  //todo: verify for a purpose
+                  e.printStackTrace();
                 }
-                ;
                 return null;
               }
-
-              ;
 
               void oneWay() {
                 BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
@@ -164,13 +150,10 @@ public interface CouchDriver {
                 try {
                   return (java.lang.String) rxf.server.CouchMetaDriver.getDoc.visit();
                 } catch (Exception e) {
-                  e.printStackTrace();  //todo: verify for a purpose
+                  e.printStackTrace();
                 }
-                ;
                 return null;
               }
-
-              ;
 
               public Future<java.lang.String> future() {
                 try {
@@ -180,16 +163,12 @@ public interface CouchDriver {
                     public java.lang.String call() throws Exception {
                       return (java.lang.String) rxf.server.CouchMetaDriver.getDoc.visit();
                     }
-                  }
-                  );
+                  });
                 } catch (Exception e) {
                   e.printStackTrace();
                 }
-                ;
                 return null;
               }
-
-              ;
             };
           }
         };
@@ -230,13 +209,10 @@ public interface CouchDriver {
                 try {
                   return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.getRevision.visit();
                 } catch (Exception e) {
-                  e.printStackTrace();  //todo: verify for a purpose
+                  e.printStackTrace();
                 }
-                ;
                 return null;
               }
-
-              ;
 
               public Future<java.lang.String> future() {
                 try {
@@ -246,16 +222,12 @@ public interface CouchDriver {
                     public java.lang.String call() throws Exception {
                       return (java.lang.String) rxf.server.CouchMetaDriver.getRevision.visit();
                     }
-                  }
-                  );
+                  });
                 } catch (Exception e) {
                   e.printStackTrace();
                 }
-                ;
                 return null;
               }
-
-              ;
             };
           }
         };
@@ -296,13 +268,10 @@ public interface CouchDriver {
                 try {
                   return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.updateDoc.visit();
                 } catch (Exception e) {
-                  e.printStackTrace();  //todo: verify for a purpose
+                  e.printStackTrace();
                 }
-                ;
                 return null;
               }
-
-              ;
 
               void oneWay() {
                 BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
@@ -325,16 +294,12 @@ public interface CouchDriver {
                     public rxf.server.CouchTx call() throws Exception {
                       return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.updateDoc.visit();
                     }
-                  }
-                  );
+                  });
                 } catch (Exception e) {
                   e.printStackTrace();
                 }
-                ;
                 return null;
               }
-
-              ;
             };
           }
         };
@@ -385,13 +350,10 @@ public interface CouchDriver {
                 try {
                   return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.createNewDesignDoc.visit();
                 } catch (Exception e) {
-                  e.printStackTrace();  //todo: verify for a purpose
+                  e.printStackTrace();
                 }
-                ;
                 return null;
               }
-
-              ;
 
               void oneWay() {
                 BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
@@ -450,13 +412,10 @@ public interface CouchDriver {
                 try {
                   return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.getDesignDoc.visit();
                 } catch (Exception e) {
-                  e.printStackTrace();  //todo: verify for a purpose
+                  e.printStackTrace();
                 }
-                ;
                 return null;
               }
-
-              ;
             };
           }
         };
@@ -497,13 +456,10 @@ public interface CouchDriver {
                 try {
                   return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.updateDesignDoc.visit();
                 } catch (Exception e) {
-                  e.printStackTrace();  //todo: verify for a purpose
+                  e.printStackTrace();
                 }
-                ;
                 return null;
               }
-
-              ;
 
               void oneWay() {
                 BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
@@ -562,13 +518,10 @@ public interface CouchDriver {
                 try {
                   return (CouchResultSet<rxf.server.CouchResultSet>) rxf.server.CouchMetaDriver.getView.visit();
                 } catch (Exception e) {
-                  e.printStackTrace();  //todo: verify for a purpose
+                  e.printStackTrace();
                 }
-                ;
                 return null;
               }
-
-              ;
 
               public Future<rxf.server.CouchResultSet> future() {
                 try {
@@ -578,16 +531,12 @@ public interface CouchDriver {
                     public rxf.server.CouchResultSet call() throws Exception {
                       return (rxf.server.CouchResultSet) rxf.server.CouchMetaDriver.getView.visit();
                     }
-                  }
-                  );
+                  });
                 } catch (Exception e) {
                   e.printStackTrace();
                 }
-                ;
                 return null;
               }
-
-              ;
 
               public void continuousFeed() {
                 throw new AbstractMethodError();
@@ -634,13 +583,10 @@ public interface CouchDriver {
                 try {
                   return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.sendJson.visit();
                 } catch (Exception e) {
-                  e.printStackTrace();  //todo: verify for a purpose
+                  e.printStackTrace();
                 }
-                ;
                 return null;
               }
-
-              ;
 
               void oneWay() {
                 BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
@@ -659,13 +605,10 @@ public interface CouchDriver {
                 try {
                   return (CouchResultSet<rxf.server.CouchTx>) rxf.server.CouchMetaDriver.sendJson.visit();
                 } catch (Exception e) {
-                  e.printStackTrace();  //todo: verify for a purpose
+                  e.printStackTrace();
                 }
-                ;
                 return null;
               }
-
-              ;
 
               public Future<rxf.server.CouchTx> future() {
                 try {
@@ -675,16 +618,12 @@ public interface CouchDriver {
                     public rxf.server.CouchTx call() throws Exception {
                       return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.sendJson.visit();
                     }
-                  }
-                  );
+                  });
                 } catch (Exception e) {
                   e.printStackTrace();
                 }
-                ;
                 return null;
               }
-
-              ;
 
               public void continuousFeed() {
                 throw new AbstractMethodError();
@@ -731,13 +670,10 @@ public interface CouchDriver {
                 try {
                   return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.sendBlob.visit();
                 } catch (Exception e) {
-                  e.printStackTrace();  //todo: verify for a purpose
+                  e.printStackTrace();
                 }
-                ;
                 return null;
               }
-
-              ;
 
               public Future<rxf.server.Rfc822HeaderState> future() {
                 try {
@@ -747,16 +683,12 @@ public interface CouchDriver {
                     public rxf.server.Rfc822HeaderState call() throws Exception {
                       return (rxf.server.Rfc822HeaderState) rxf.server.CouchMetaDriver.sendBlob.visit();
                     }
-                  }
-                  );
+                  });
                 } catch (Exception e) {
                   e.printStackTrace();
                 }
-                ;
                 return null;
               }
-
-              ;
 
               void oneWay() {
                 BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {

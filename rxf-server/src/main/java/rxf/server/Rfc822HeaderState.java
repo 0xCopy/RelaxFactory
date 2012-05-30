@@ -158,4 +158,9 @@ public class Rfc822HeaderState {
   public void setDirty(boolean dirty) {
     this.dirty = dirty;
   }
+
+  public Rfc822HeaderState headers(String... headers) {
+    this.headers = headers;
+    return this;
+  }
 }

@@ -35,17 +35,17 @@ public @interface DbKeys {
 
 
   etype[] value();
-
-
-  public static abstract class ReturnAction<T> {
-
-    static ThreadLocal<ReturnAction> currentResults = new ThreadLocal<ReturnAction>();
-
-    public ReturnAction() {
-      currentResults.set(this);
-    }
-  }
-
+//
+//
+//  public static abstract class ReturnAction<T> {
+//
+//    static ThreadLocal<ReturnAction> currentResults = new ThreadLocal<ReturnAction>();
+//
+//    public ReturnAction() {
+//      currentResults.set(this);
+//    }
+//  }
+//
 
 }
 

@@ -1,14 +1,29 @@
 package rxf.server;
 
 import java.lang.reflect.Field;
+import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.SocketChannel;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.TimeUnit;
 
+import one.xio.AsioVisitor;
+import one.xio.HttpMethod;
 import org.intellij.lang.annotations.Language;
-import rxf.server.DbKeys.ReturnAction;
 import rxf.server.DbKeys.etype;
 
+import static java.nio.channels.SelectionKey.OP_CONNECT;
+import static java.nio.channels.SelectionKey.OP_READ;
+import static java.nio.channels.SelectionKey.OP_WRITE;
+import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
+import static rxf.server.BlobAntiPatternObject.arrToString;
+import static rxf.server.BlobAntiPatternObject.createCouchConnection;
+import static rxf.server.BlobAntiPatternObject.fetchJsonByPath;
+import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
+import static rxf.server.BlobAntiPatternObject.recycleChannel;
+import static rxf.server.BlobAntiPatternObject.sendJson;
 import static rxf.server.DbKeys.etype.blob;
 import static rxf.server.DbKeys.etype.db;
 import static rxf.server.DbKeys.etype.designDocId;
@@ -35,10 +50,78 @@ import static rxf.server.DbTerminal.tx;
  */
 public enum CouchMetaDriver {
 
-  @DbTask({tx, oneWay}) @DbKeys({db, docId})createDb,
-  @DbTask({tx, oneWay}) @DbKeys({db, docId, validjson})createDoc,
-  @DbTask({pojo, future}) @DbResultUnit(String.class) @DbKeys({db, docId})getDoc,
-  @DbTask({tx, future}) @DbResultUnit(String.class) @DbKeys({db, docId})getRevision,
+  @DbTask({tx, oneWay}) @DbKeys({db, validjson})createDb {
+    @Override
+    <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+      return sendJson((String) dbKeysBuilder.getParms().get(etype.validjson), (String) dbKeysBuilder.getParms().get(etype.db));
+    }
+  },
+  @DbTask({tx, oneWay}) @DbKeys({db, docId, validjson})createDoc {
+    @Override
+    <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+      return sendJson(
+          (String) dbKeysBuilder.getParms().get(etype.validjson),
+          (String) dbKeysBuilder.getParms().get(etype.db),
+          (String) dbKeysBuilder.getParms().get(etype.docId)
+      );
+
+    }
+
+
+  },
+  @DbTask({pojo, future}) @DbResultUnit(String.class) @DbKeys({db, docId})getDoc {
+    @Override
+    <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+      String path = idpath(dbKeysBuilder);
+      SocketChannel couchConnection = createCouchConnection();
+      SynchronousQueue returnTo = getQ();
+      AsioVisitor asioVisitor = fetchJsonByPath(couchConnection, returnTo, path);
+      T take = (T) returnTo.poll(3, TimeUnit.SECONDS);
+      recycleChannel(couchConnection);
+      return take;
+    }
+  },
+  @DbTask({tx, future}) @DbResultUnit(String.class) @DbKeys({db, docId})getRevision {
+    @Override
+    <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+
+      final SocketChannel couchConnection = createCouchConnection();
+      String db = (String) dbKeysBuilder.getParms().get(etype.db);
+      final String id = (String) dbKeysBuilder.getParms().get(etype.docId);
+      final SynchronousQueue q = getQ();
+      HttpMethod.enqueue(couchConnection, OP_WRITE | OP_CONNECT, new AsioVisitor.Impl() {
+        @Override
+        public void onWrite(SelectionKey key) throws Exception {
+          String r = "HEAD " + idpath(dbKeysBuilder) + " HTTP/1.1\r\n\r\n";
+          int write = couchConnection.write(ByteBuffer.wrap(r.getBytes()));
+          key.selector().wakeup();
+          key.interestOps(OP_READ).attach(new Impl() {
+            @Override
+            public void onRead(SelectionKey key) throws Exception {
+              final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
+              int read = couchConnection.read(dst);
+              if (-1 == read) {
+                return;
+              }
+
+              final String ver = actionBuilder.getState().headers("ETag").apply((ByteBuffer) dst.flip()).getHeaderStrings().get("ETag");
+              q.put(ver);
+              recycleChannel(couchConnection);
+            }
+          });
+
+        }
+
+      });
+      final String poll = (String) q.poll(3, TimeUnit.SECONDS);
+
+      return new CouchTx() {{
+        setRev(poll);
+        setId(id);
+        setOk(Boolean.TRUE);
+      }};
+    }
+  },
   @DbTask({tx, oneWay, future}) @DbKeys({db, docId, rev, validjson})updateDoc,
   @DbTask({tx, oneWay}) @DbKeys({db, designDocId, validjson})createNewDesignDoc,
   @DbTask({tx}) @DbResultUnit(String.class) @DbKeys({db, designDocId})getDesignDoc,
@@ -46,33 +129,45 @@ public enum CouchMetaDriver {
   @DbTask({rows, future, continuousFeed}) @DbResultUnit(CouchResultSet.class) @DbKeys({db, view})getView,
   @DbTask({tx, oneWay, rows, future, continuousFeed}) @DbKeys({opaque, validjson})sendJson {
     @Override
-    <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder, ReturnAction<T> terminalBuilder) throws Exception {
+    <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
       String opaque = (String) dbKeysBuilder.getParms().get(etype.opaque);
       String validjson = (String) dbKeysBuilder.getParms().get(etype.validjson);
-      return BlobAntiPatternObject.sendJson(opaque, validjson);
+      return sendJson(opaque, validjson);
     }
   },
   @DbTask({tx, future, oneWay}) @DbResultUnit(Rfc822HeaderState.class) @DbKeys({opaque, mimetype, blob})sendBlob {};
 
-  public static final String XXXXXXXXXXXXXXMETHODS = "/*XXXXXXXXXXXXXXMETHODS*/";
-  public static final String BAKED_IN_FIRE = "BAKED_IN_FIRE";
+  static <T> SynchronousQueue getQ() {
+    SynchronousQueue[] sync = ActionBuilder.currentAction.get().sync();
+    SynchronousQueue returnTo = null;
+    for (SynchronousQueue synchronousQueue : sync) {
+      returnTo = synchronousQueue;
+    }
+    if (null == returnTo) returnTo = new SynchronousQueue<T>();
+    return returnTo;
+  }
+
+  static <T> String idpath(DbKeysBuilder<T> dbKeysBuilder) {
+    String db = (String) dbKeysBuilder.getParms().get(etype.db);
+    String id = (String) dbKeysBuilder.getParms().get(etype.docId);
+    return '/' + db + '/' + id;
+  }
+
 
   <T> Object visit() throws Exception {
     DbKeysBuilder<T> dbKeysBuilder = (DbKeysBuilder<T>) DbKeysBuilder.currentKeys.get();
     ActionBuilder<T> actionBuilder = (ActionBuilder<T>) ActionBuilder.currentAction.get();
-    ReturnAction<T> returnAction = (ReturnAction<T>) ReturnAction.currentResults.get();
-    return visit(dbKeysBuilder, actionBuilder, returnAction);
+    return visit(dbKeysBuilder, actionBuilder);
   }
 
   /*abstract */<T> Object visit(DbKeysBuilder<T> dbKeysBuilder,
-                                ActionBuilder<T> actionBuilder,
-                                ReturnAction<T> terminalBuilder) throws Exception {
+                                ActionBuilder<T> actionBuilder) throws Exception {
     throw new AbstractMethodError();
   }
 
-  ;
-
   public static final String XDEADBEEF_2 = "-0xdeadbeef.2";
+  public static final String XXXXXXXXXXXXXXMETHODS = "/*XXXXXXXXXXXXXXMETHODS*/";
+  public static final String BAKED_IN_FIRE = "/*BAKED_IN_FIRE*/";
 
 
   public <T> String builder() throws NoSuchFieldException {
@@ -89,9 +184,8 @@ public enum CouchMetaDriver {
         rtype = field.getAnnotation(DbResultUnit.class).value();
       } catch (Exception e) {
       }
-      final String cn = rtype.getCanonicalName();
-      @Language("JAVA")
-      final String s2 = "\n\npublic class _ename_Builder <T>extends DbKeysBuilder<" + cn + "> {\n" +
+      String cn = rtype.getCanonicalName();
+      @Language("JAVA") String s2 = "\n\npublic class _ename_Builder <T>extends DbKeysBuilder<" + cn + "> {\n" +
           "    Rfc822HeaderState rfc822HeaderState;\n" +
           "    java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);\n" +
           "  private SynchronousQueue<T>[] dest;\n\n" +
@@ -103,7 +197,7 @@ public enum CouchMetaDriver {
           BAKED_IN_FIRE + "};\n" +
           "                }\n" +
           "            };\n" +
-          "        throw new IllegalArgumentException(\"required parameters are: " + BlobAntiPatternObject.arrToString(parms) + "\");\n" +
+          "        throw new IllegalArgumentException(\"required parameters are: " + arrToString(parms) + "\");\n" +
           "    }\n" +
           "    " + XXXXXXXXXXXXXXMETHODS + "\n" +
           "}\n";
@@ -119,9 +213,9 @@ public enum CouchMetaDriver {
       }
       {
 
-        final DbTask annotation = field.getAnnotation(DbTask.class);
+        DbTask annotation = field.getAnnotation(DbTask.class);
         if (null != annotation) {
-          final DbTerminal[] terminals = annotation.value();
+          DbTerminal[] terminals = annotation.value();
           String t = "";
           for (DbTerminal terminal : terminals) {
             t += terminal.builder(couchDriver, parms, rtype
@@ -184,13 +278,13 @@ public enum CouchMetaDriver {
             return new AbstractTerminalBuilder<CouchTx>() {
               @Override
               void toVoid() {
-                BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
+                EXECUTOR_SERVICE.submit(new Runnable() {
 
 
                   @Override
                   public void run() {
                     try {
-                      BlobAntiPatternObject.sendJson("foo", "");
+                      sendJson("foo", "");
                     } catch (Exception e) {
                       e.printStackTrace();
                     }
@@ -201,15 +295,13 @@ public enum CouchMetaDriver {
 
               @Override
               CouchTx tx() throws Exception {
-                return BlobAntiPatternObject.sendJson("foo", "");
+                return sendJson("foo", "");
               }
             };
           }
         };
       }
     };
-
-
   }
 }
 
