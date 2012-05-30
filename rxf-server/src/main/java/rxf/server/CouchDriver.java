@@ -13,7 +13,6 @@ import static rxf.server.DbKeys.etype;
 public interface CouchDriver {
     rxf.server.CouchTx createDb(java.lang.String db, java.lang.String validjson);
 
-
     public class createDbBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
         Rfc822HeaderState rfc822HeaderState;
         java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
@@ -25,41 +24,45 @@ public interface CouchDriver {
             void oneWay();
         }
 
-        ;
+        public class createDbActionBuilder extends ActionBuilder<rxf.server.CouchTx> {
+            public createDbActionBuilder(SynchronousQueue<rxf.server.CouchTx>... synchronousQueues) {
+                super(synchronousQueues);
+            }
 
+            @Override
+            public createDbTerminalBuilder fire() {
+                return new createDbTerminalBuilder() {
+                    public CouchTx tx() {
+                        try {
+                            return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.createDb.visit();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        return null;
+                    }
 
-        @Override
-        public ActionBuilder<rxf.server.CouchTx> to(SynchronousQueue<rxf.server.CouchTx>... dest) {
-            this.dest = dest;
-            if (parms.size() == parmsCount)
-                return new ActionBuilder<rxf.server.CouchTx>() {
-                    @Override
-                    public createDbTerminalBuilder<rxf.server.CouchTx> fire() {
-                        return new createDbTerminalBuilder<rxf.server.CouchTx>() {
-                            public CouchTx tx() {
+                    public void oneWay() {
+                        BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
+                            @Override
+                            public void run() {
                                 try {
-                                    return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.createDb.visit();
+                                    rxf.server.CouchMetaDriver.createDb.visit();
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
-                                return null;
                             }
-
-                            public void oneWay() {
-                                BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        try {
-                                            rxf.server.CouchMetaDriver.createDb.visit();
-                                        } catch (Exception e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-                                });
-                            }
-                        };
+                        });
                     }
                 };
+            }
+        }
+
+        @Override
+        public createDbActionBuilder to(SynchronousQueue<rxf.server.CouchTx>... dest) {
+            this.dest = dest;
+            if (parms.size() == parmsCount)
+                return new createDbActionBuilder(dest);
+
             throw new IllegalArgumentException("required parameters are: [db, validjson]");
         }
 
@@ -79,7 +82,6 @@ public interface CouchDriver {
 
     rxf.server.CouchTx createDoc(java.lang.String db, java.lang.String docId, java.lang.String validjson);
 
-
     public class createDocBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
         Rfc822HeaderState rfc822HeaderState;
         java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
@@ -91,41 +93,45 @@ public interface CouchDriver {
             void oneWay();
         }
 
-        ;
+        public class createDocActionBuilder extends ActionBuilder<rxf.server.CouchTx> {
+            public createDocActionBuilder(SynchronousQueue<rxf.server.CouchTx>... synchronousQueues) {
+                super(synchronousQueues);
+            }
 
+            @Override
+            public createDocTerminalBuilder fire() {
+                return new createDocTerminalBuilder() {
+                    public CouchTx tx() {
+                        try {
+                            return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.createDoc.visit();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        return null;
+                    }
 
-        @Override
-        public ActionBuilder<rxf.server.CouchTx> to(SynchronousQueue<rxf.server.CouchTx>... dest) {
-            this.dest = dest;
-            if (parms.size() == parmsCount)
-                return new ActionBuilder<rxf.server.CouchTx>() {
-                    @Override
-                    public createDocTerminalBuilder<rxf.server.CouchTx> fire() {
-                        return new createDocTerminalBuilder<rxf.server.CouchTx>() {
-                            public CouchTx tx() {
+                    public void oneWay() {
+                        BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
+                            @Override
+                            public void run() {
                                 try {
-                                    return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.createDoc.visit();
+                                    rxf.server.CouchMetaDriver.createDoc.visit();
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
-                                return null;
                             }
-
-                            public void oneWay() {
-                                BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        try {
-                                            rxf.server.CouchMetaDriver.createDoc.visit();
-                                        } catch (Exception e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-                                });
-                            }
-                        };
+                        });
                     }
                 };
+            }
+        }
+
+        @Override
+        public createDocActionBuilder to(SynchronousQueue<rxf.server.CouchTx>... dest) {
+            this.dest = dest;
+            if (parms.size() == parmsCount)
+                return new createDocActionBuilder(dest);
+
             throw new IllegalArgumentException("required parameters are: [db, docId, validjson]");
         }
 
@@ -150,7 +156,6 @@ public interface CouchDriver {
 
     java.lang.String getDoc(java.lang.String db, java.lang.String docId);
 
-
     public class getDocBuilder<T> extends DbKeysBuilder<java.lang.String> {
         Rfc822HeaderState rfc822HeaderState;
         java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
@@ -162,42 +167,46 @@ public interface CouchDriver {
             Future<java.lang.String> future();
         }
 
-        ;
+        public class getDocActionBuilder extends ActionBuilder<java.lang.String> {
+            public getDocActionBuilder(SynchronousQueue<java.lang.String>... synchronousQueues) {
+                super(synchronousQueues);
+            }
 
+            @Override
+            public getDocTerminalBuilder fire() {
+                return new getDocTerminalBuilder() {
+                    public java.lang.String pojo() {
+                        try {
+                            return (java.lang.String) rxf.server.CouchMetaDriver.getDoc.visit();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        return null;
+                    }
 
-        @Override
-        public ActionBuilder<java.lang.String> to(SynchronousQueue<java.lang.String>... dest) {
-            this.dest = dest;
-            if (parms.size() == parmsCount)
-                return new ActionBuilder<java.lang.String>() {
-                    @Override
-                    public getDocTerminalBuilder<java.lang.String> fire() {
-                        return new getDocTerminalBuilder<java.lang.String>() {
-                            public java.lang.String pojo() {
-                                try {
+                    public Future<java.lang.String> future() {
+                        try {
+
+                            BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<java.lang.String>() {
+                                public java.lang.String call() throws Exception {
                                     return (java.lang.String) rxf.server.CouchMetaDriver.getDoc.visit();
-                                } catch (Exception e) {
-                                    e.printStackTrace();
                                 }
-                                return null;
-                            }
-
-                            public Future<java.lang.String> future() {
-                                try {
-
-                                    BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<java.lang.String>() {
-                                        public java.lang.String call() throws Exception {
-                                            return (java.lang.String) rxf.server.CouchMetaDriver.getDoc.visit();
-                                        }
-                                    });
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                                return null;
-                            }
-                        };
+                            });
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        return null;
                     }
                 };
+            }
+        }
+
+        @Override
+        public getDocActionBuilder to(SynchronousQueue<java.lang.String>... dest) {
+            this.dest = dest;
+            if (parms.size() == parmsCount)
+                return new getDocActionBuilder(dest);
+
             throw new IllegalArgumentException("required parameters are: [db, docId]");
         }
 
@@ -217,7 +226,6 @@ public interface CouchDriver {
 
     java.lang.String getRevision(java.lang.String db, java.lang.String docId);
 
-
     public class getRevisionBuilder<T> extends DbKeysBuilder<java.lang.String> {
         Rfc822HeaderState rfc822HeaderState;
         java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
@@ -229,42 +237,46 @@ public interface CouchDriver {
             Future<java.lang.String> future();
         }
 
-        ;
+        public class getRevisionActionBuilder extends ActionBuilder<java.lang.String> {
+            public getRevisionActionBuilder(SynchronousQueue<java.lang.String>... synchronousQueues) {
+                super(synchronousQueues);
+            }
 
+            @Override
+            public getRevisionTerminalBuilder fire() {
+                return new getRevisionTerminalBuilder() {
+                    public CouchTx tx() {
+                        try {
+                            return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.getRevision.visit();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        return null;
+                    }
 
-        @Override
-        public ActionBuilder<java.lang.String> to(SynchronousQueue<java.lang.String>... dest) {
-            this.dest = dest;
-            if (parms.size() == parmsCount)
-                return new ActionBuilder<java.lang.String>() {
-                    @Override
-                    public getRevisionTerminalBuilder<java.lang.String> fire() {
-                        return new getRevisionTerminalBuilder<java.lang.String>() {
-                            public CouchTx tx() {
-                                try {
-                                    return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.getRevision.visit();
-                                } catch (Exception e) {
-                                    e.printStackTrace();
+                    public Future<java.lang.String> future() {
+                        try {
+
+                            BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<java.lang.String>() {
+                                public java.lang.String call() throws Exception {
+                                    return (java.lang.String) rxf.server.CouchMetaDriver.getRevision.visit();
                                 }
-                                return null;
-                            }
-
-                            public Future<java.lang.String> future() {
-                                try {
-
-                                    BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<java.lang.String>() {
-                                        public java.lang.String call() throws Exception {
-                                            return (java.lang.String) rxf.server.CouchMetaDriver.getRevision.visit();
-                                        }
-                                    });
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                                return null;
-                            }
-                        };
+                            });
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        return null;
                     }
                 };
+            }
+        }
+
+        @Override
+        public getRevisionActionBuilder to(SynchronousQueue<java.lang.String>... dest) {
+            this.dest = dest;
+            if (parms.size() == parmsCount)
+                return new getRevisionActionBuilder(dest);
+
             throw new IllegalArgumentException("required parameters are: [db, docId]");
         }
 
@@ -284,7 +296,6 @@ public interface CouchDriver {
 
     rxf.server.CouchTx updateDoc(java.lang.String db, java.lang.String docId, java.lang.String rev, java.lang.String validjson);
 
-
     public class updateDocBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
         Rfc822HeaderState rfc822HeaderState;
         java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
@@ -298,55 +309,59 @@ public interface CouchDriver {
             Future<rxf.server.CouchTx> future();
         }
 
-        ;
+        public class updateDocActionBuilder extends ActionBuilder<rxf.server.CouchTx> {
+            public updateDocActionBuilder(SynchronousQueue<rxf.server.CouchTx>... synchronousQueues) {
+                super(synchronousQueues);
+            }
 
+            @Override
+            public updateDocTerminalBuilder fire() {
+                return new updateDocTerminalBuilder() {
+                    public CouchTx tx() {
+                        try {
+                            return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.updateDoc.visit();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        return null;
+                    }
 
-        @Override
-        public ActionBuilder<rxf.server.CouchTx> to(SynchronousQueue<rxf.server.CouchTx>... dest) {
-            this.dest = dest;
-            if (parms.size() == parmsCount)
-                return new ActionBuilder<rxf.server.CouchTx>() {
-                    @Override
-                    public updateDocTerminalBuilder<rxf.server.CouchTx> fire() {
-                        return new updateDocTerminalBuilder<rxf.server.CouchTx>() {
-                            public CouchTx tx() {
+                    public void oneWay() {
+                        BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
+                            @Override
+                            public void run() {
                                 try {
+                                    rxf.server.CouchMetaDriver.updateDoc.visit();
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        });
+                    }
+
+                    public Future<rxf.server.CouchTx> future() {
+                        try {
+
+                            BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<rxf.server.CouchTx>() {
+                                public rxf.server.CouchTx call() throws Exception {
                                     return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.updateDoc.visit();
-                                } catch (Exception e) {
-                                    e.printStackTrace();
                                 }
-                                return null;
-                            }
-
-                            public void oneWay() {
-                                BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        try {
-                                            rxf.server.CouchMetaDriver.updateDoc.visit();
-                                        } catch (Exception e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-                                });
-                            }
-
-                            public Future<rxf.server.CouchTx> future() {
-                                try {
-
-                                    BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<rxf.server.CouchTx>() {
-                                        public rxf.server.CouchTx call() throws Exception {
-                                            return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.updateDoc.visit();
-                                        }
-                                    });
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                                return null;
-                            }
-                        };
+                            });
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        return null;
                     }
                 };
+            }
+        }
+
+        @Override
+        public updateDocActionBuilder to(SynchronousQueue<rxf.server.CouchTx>... dest) {
+            this.dest = dest;
+            if (parms.size() == parmsCount)
+                return new updateDocActionBuilder(dest);
+
             throw new IllegalArgumentException("required parameters are: [db, docId, rev, validjson]");
         }
 
@@ -376,7 +391,6 @@ public interface CouchDriver {
 
     rxf.server.CouchTx createNewDesignDoc(java.lang.String db, java.lang.String designDocId, java.lang.String validjson);
 
-
     public class createNewDesignDocBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
         Rfc822HeaderState rfc822HeaderState;
         java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
@@ -388,41 +402,45 @@ public interface CouchDriver {
             void oneWay();
         }
 
-        ;
+        public class createNewDesignDocActionBuilder extends ActionBuilder<rxf.server.CouchTx> {
+            public createNewDesignDocActionBuilder(SynchronousQueue<rxf.server.CouchTx>... synchronousQueues) {
+                super(synchronousQueues);
+            }
 
+            @Override
+            public createNewDesignDocTerminalBuilder fire() {
+                return new createNewDesignDocTerminalBuilder() {
+                    public CouchTx tx() {
+                        try {
+                            return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.createNewDesignDoc.visit();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        return null;
+                    }
 
-        @Override
-        public ActionBuilder<rxf.server.CouchTx> to(SynchronousQueue<rxf.server.CouchTx>... dest) {
-            this.dest = dest;
-            if (parms.size() == parmsCount)
-                return new ActionBuilder<rxf.server.CouchTx>() {
-                    @Override
-                    public createNewDesignDocTerminalBuilder<rxf.server.CouchTx> fire() {
-                        return new createNewDesignDocTerminalBuilder<rxf.server.CouchTx>() {
-                            public CouchTx tx() {
+                    public void oneWay() {
+                        BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
+                            @Override
+                            public void run() {
                                 try {
-                                    return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.createNewDesignDoc.visit();
+                                    rxf.server.CouchMetaDriver.createNewDesignDoc.visit();
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
-                                return null;
                             }
-
-                            public void oneWay() {
-                                BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        try {
-                                            rxf.server.CouchMetaDriver.createNewDesignDoc.visit();
-                                        } catch (Exception e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-                                });
-                            }
-                        };
+                        });
                     }
                 };
+            }
+        }
+
+        @Override
+        public createNewDesignDocActionBuilder to(SynchronousQueue<rxf.server.CouchTx>... dest) {
+            this.dest = dest;
+            if (parms.size() == parmsCount)
+                return new createNewDesignDocActionBuilder(dest);
+
             throw new IllegalArgumentException("required parameters are: [db, designDocId, validjson]");
         }
 
@@ -447,7 +465,6 @@ public interface CouchDriver {
 
     java.lang.String getDesignDoc(java.lang.String db, java.lang.String designDocId);
 
-
     public class getDesignDocBuilder<T> extends DbKeysBuilder<java.lang.String> {
         Rfc822HeaderState rfc822HeaderState;
         java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
@@ -457,28 +474,32 @@ public interface CouchDriver {
             CouchTx tx();
         }
 
-        ;
+        public class getDesignDocActionBuilder extends ActionBuilder<java.lang.String> {
+            public getDesignDocActionBuilder(SynchronousQueue<java.lang.String>... synchronousQueues) {
+                super(synchronousQueues);
+            }
 
-
-        @Override
-        public ActionBuilder<java.lang.String> to(SynchronousQueue<java.lang.String>... dest) {
-            this.dest = dest;
-            if (parms.size() == parmsCount)
-                return new ActionBuilder<java.lang.String>() {
-                    @Override
-                    public getDesignDocTerminalBuilder<java.lang.String> fire() {
-                        return new getDesignDocTerminalBuilder<java.lang.String>() {
-                            public CouchTx tx() {
-                                try {
-                                    return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.getDesignDoc.visit();
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                                return null;
-                            }
-                        };
+            @Override
+            public getDesignDocTerminalBuilder fire() {
+                return new getDesignDocTerminalBuilder() {
+                    public CouchTx tx() {
+                        try {
+                            return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.getDesignDoc.visit();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        return null;
                     }
                 };
+            }
+        }
+
+        @Override
+        public getDesignDocActionBuilder to(SynchronousQueue<java.lang.String>... dest) {
+            this.dest = dest;
+            if (parms.size() == parmsCount)
+                return new getDesignDocActionBuilder(dest);
+
             throw new IllegalArgumentException("required parameters are: [db, designDocId]");
         }
 
@@ -498,7 +519,6 @@ public interface CouchDriver {
 
     rxf.server.CouchTx updateDesignDoc(java.lang.String db, java.lang.String designDocId, java.lang.String rev, java.lang.String validjson);
 
-
     public class updateDesignDocBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
         Rfc822HeaderState rfc822HeaderState;
         java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
@@ -510,41 +530,45 @@ public interface CouchDriver {
             void oneWay();
         }
 
-        ;
+        public class updateDesignDocActionBuilder extends ActionBuilder<rxf.server.CouchTx> {
+            public updateDesignDocActionBuilder(SynchronousQueue<rxf.server.CouchTx>... synchronousQueues) {
+                super(synchronousQueues);
+            }
 
+            @Override
+            public updateDesignDocTerminalBuilder fire() {
+                return new updateDesignDocTerminalBuilder() {
+                    public CouchTx tx() {
+                        try {
+                            return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.updateDesignDoc.visit();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        return null;
+                    }
 
-        @Override
-        public ActionBuilder<rxf.server.CouchTx> to(SynchronousQueue<rxf.server.CouchTx>... dest) {
-            this.dest = dest;
-            if (parms.size() == parmsCount)
-                return new ActionBuilder<rxf.server.CouchTx>() {
-                    @Override
-                    public updateDesignDocTerminalBuilder<rxf.server.CouchTx> fire() {
-                        return new updateDesignDocTerminalBuilder<rxf.server.CouchTx>() {
-                            public CouchTx tx() {
+                    public void oneWay() {
+                        BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
+                            @Override
+                            public void run() {
                                 try {
-                                    return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.updateDesignDoc.visit();
+                                    rxf.server.CouchMetaDriver.updateDesignDoc.visit();
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
-                                return null;
                             }
-
-                            public void oneWay() {
-                                BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        try {
-                                            rxf.server.CouchMetaDriver.updateDesignDoc.visit();
-                                        } catch (Exception e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-                                });
-                            }
-                        };
+                        });
                     }
                 };
+            }
+        }
+
+        @Override
+        public updateDesignDocActionBuilder to(SynchronousQueue<rxf.server.CouchTx>... dest) {
+            this.dest = dest;
+            if (parms.size() == parmsCount)
+                return new updateDesignDocActionBuilder(dest);
+
             throw new IllegalArgumentException("required parameters are: [db, designDocId, rev, validjson]");
         }
 
@@ -574,7 +598,6 @@ public interface CouchDriver {
 
     rxf.server.CouchResultSet getView(java.lang.String db, java.lang.String view);
 
-
     public class getViewBuilder<T> extends DbKeysBuilder<rxf.server.CouchResultSet> {
         Rfc822HeaderState rfc822HeaderState;
         java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
@@ -586,48 +609,53 @@ public interface CouchDriver {
             Future<rxf.server.CouchResultSet> future();
 
             void continuousFeed();
+
         }
 
-        ;
+        public class getViewActionBuilder extends ActionBuilder<rxf.server.CouchResultSet> {
+            public getViewActionBuilder(SynchronousQueue<rxf.server.CouchResultSet>... synchronousQueues) {
+                super(synchronousQueues);
+            }
 
+            @Override
+            public getViewTerminalBuilder fire() {
+                return new getViewTerminalBuilder() {
+                    public CouchResultSet<rxf.server.CouchResultSet> rows() {
+                        try {
+                            return (CouchResultSet<rxf.server.CouchResultSet>) rxf.server.CouchMetaDriver.getView.visit();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        return null;
+                    }
 
-        @Override
-        public ActionBuilder<rxf.server.CouchResultSet> to(SynchronousQueue<rxf.server.CouchResultSet>... dest) {
-            this.dest = dest;
-            if (parms.size() == parmsCount)
-                return new ActionBuilder<rxf.server.CouchResultSet>() {
-                    @Override
-                    public getViewTerminalBuilder<rxf.server.CouchResultSet> fire() {
-                        return new getViewTerminalBuilder<rxf.server.CouchResultSet>() {
-                            public CouchResultSet<rxf.server.CouchResultSet> rows() {
-                                try {
-                                    return (CouchResultSet<rxf.server.CouchResultSet>) rxf.server.CouchMetaDriver.getView.visit();
-                                } catch (Exception e) {
-                                    e.printStackTrace();
+                    public Future<rxf.server.CouchResultSet> future() {
+                        try {
+
+                            BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<rxf.server.CouchResultSet>() {
+                                public rxf.server.CouchResultSet call() throws Exception {
+                                    return (rxf.server.CouchResultSet) rxf.server.CouchMetaDriver.getView.visit();
                                 }
-                                return null;
-                            }
+                            });
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        return null;
+                    }
 
-                            public Future<rxf.server.CouchResultSet> future() {
-                                try {
-
-                                    BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<rxf.server.CouchResultSet>() {
-                                        public rxf.server.CouchResultSet call() throws Exception {
-                                            return (rxf.server.CouchResultSet) rxf.server.CouchMetaDriver.getView.visit();
-                                        }
-                                    });
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                                return null;
-                            }
-
-                            public void continuousFeed() {
-                                throw new AbstractMethodError();
-                            }
-                        };
+                    public void continuousFeed() {
+                        throw new AbstractMethodError();
                     }
                 };
+            }
+        }
+
+        @Override
+        public getViewActionBuilder to(SynchronousQueue<rxf.server.CouchResultSet>... dest) {
+            this.dest = dest;
+            if (parms.size() == parmsCount)
+                return new getViewActionBuilder(dest);
+
             throw new IllegalArgumentException("required parameters are: [db, view]");
         }
 
@@ -647,7 +675,6 @@ public interface CouchDriver {
 
     rxf.server.CouchTx sendJson(java.lang.String opaque, java.lang.String validjson);
 
-
     public class sendJsonBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
         Rfc822HeaderState rfc822HeaderState;
         java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
@@ -663,70 +690,75 @@ public interface CouchDriver {
             Future<rxf.server.CouchTx> future();
 
             void continuousFeed();
+
         }
 
-        ;
+        public class sendJsonActionBuilder extends ActionBuilder<rxf.server.CouchTx> {
+            public sendJsonActionBuilder(SynchronousQueue<rxf.server.CouchTx>... synchronousQueues) {
+                super(synchronousQueues);
+            }
 
+            @Override
+            public sendJsonTerminalBuilder fire() {
+                return new sendJsonTerminalBuilder() {
+                    public CouchTx tx() {
+                        try {
+                            return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.sendJson.visit();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        return null;
+                    }
 
-        @Override
-        public ActionBuilder<rxf.server.CouchTx> to(SynchronousQueue<rxf.server.CouchTx>... dest) {
-            this.dest = dest;
-            if (parms.size() == parmsCount)
-                return new ActionBuilder<rxf.server.CouchTx>() {
-                    @Override
-                    public sendJsonTerminalBuilder<rxf.server.CouchTx> fire() {
-                        return new sendJsonTerminalBuilder<rxf.server.CouchTx>() {
-                            public CouchTx tx() {
+                    public void oneWay() {
+                        BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
+                            @Override
+                            public void run() {
                                 try {
+                                    rxf.server.CouchMetaDriver.sendJson.visit();
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        });
+                    }
+
+                    public CouchResultSet<rxf.server.CouchTx> rows() {
+                        try {
+                            return (CouchResultSet<rxf.server.CouchTx>) rxf.server.CouchMetaDriver.sendJson.visit();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        return null;
+                    }
+
+                    public Future<rxf.server.CouchTx> future() {
+                        try {
+
+                            BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<rxf.server.CouchTx>() {
+                                public rxf.server.CouchTx call() throws Exception {
                                     return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.sendJson.visit();
-                                } catch (Exception e) {
-                                    e.printStackTrace();
                                 }
-                                return null;
-                            }
+                            });
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        return null;
+                    }
 
-                            public void oneWay() {
-                                BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        try {
-                                            rxf.server.CouchMetaDriver.sendJson.visit();
-                                        } catch (Exception e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-                                });
-                            }
-
-                            public CouchResultSet<rxf.server.CouchTx> rows() {
-                                try {
-                                    return (CouchResultSet<rxf.server.CouchTx>) rxf.server.CouchMetaDriver.sendJson.visit();
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                                return null;
-                            }
-
-                            public Future<rxf.server.CouchTx> future() {
-                                try {
-
-                                    BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<rxf.server.CouchTx>() {
-                                        public rxf.server.CouchTx call() throws Exception {
-                                            return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.sendJson.visit();
-                                        }
-                                    });
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                                return null;
-                            }
-
-                            public void continuousFeed() {
-                                throw new AbstractMethodError();
-                            }
-                        };
+                    public void continuousFeed() {
+                        throw new AbstractMethodError();
                     }
                 };
+            }
+        }
+
+        @Override
+        public sendJsonActionBuilder to(SynchronousQueue<rxf.server.CouchTx>... dest) {
+            this.dest = dest;
+            if (parms.size() == parmsCount)
+                return new sendJsonActionBuilder(dest);
+
             throw new IllegalArgumentException("required parameters are: [opaque, validjson]");
         }
 
@@ -746,7 +778,6 @@ public interface CouchDriver {
 
     rxf.server.Rfc822HeaderState sendBlob(java.lang.String opaque, one.xio.MimeType mimetype, java.nio.ByteBuffer blob);
 
-
     public class sendBlobBuilder<T> extends DbKeysBuilder<rxf.server.Rfc822HeaderState> {
         Rfc822HeaderState rfc822HeaderState;
         java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
@@ -760,55 +791,59 @@ public interface CouchDriver {
             void oneWay();
         }
 
-        ;
+        public class sendBlobActionBuilder extends ActionBuilder<rxf.server.Rfc822HeaderState> {
+            public sendBlobActionBuilder(SynchronousQueue<rxf.server.Rfc822HeaderState>... synchronousQueues) {
+                super(synchronousQueues);
+            }
 
+            @Override
+            public sendBlobTerminalBuilder fire() {
+                return new sendBlobTerminalBuilder() {
+                    public CouchTx tx() {
+                        try {
+                            return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.sendBlob.visit();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        return null;
+                    }
 
-        @Override
-        public ActionBuilder<rxf.server.Rfc822HeaderState> to(SynchronousQueue<rxf.server.Rfc822HeaderState>... dest) {
-            this.dest = dest;
-            if (parms.size() == parmsCount)
-                return new ActionBuilder<rxf.server.Rfc822HeaderState>() {
-                    @Override
-                    public sendBlobTerminalBuilder<rxf.server.Rfc822HeaderState> fire() {
-                        return new sendBlobTerminalBuilder<rxf.server.Rfc822HeaderState>() {
-                            public CouchTx tx() {
+                    public Future<rxf.server.Rfc822HeaderState> future() {
+                        try {
+
+                            BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<rxf.server.Rfc822HeaderState>() {
+                                public rxf.server.Rfc822HeaderState call() throws Exception {
+                                    return (rxf.server.Rfc822HeaderState) rxf.server.CouchMetaDriver.sendBlob.visit();
+                                }
+                            });
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        return null;
+                    }
+
+                    public void oneWay() {
+                        BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
+                            @Override
+                            public void run() {
                                 try {
-                                    return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.sendBlob.visit();
+                                    rxf.server.CouchMetaDriver.sendBlob.visit();
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
-                                return null;
                             }
-
-                            public Future<rxf.server.Rfc822HeaderState> future() {
-                                try {
-
-                                    BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<rxf.server.Rfc822HeaderState>() {
-                                        public rxf.server.Rfc822HeaderState call() throws Exception {
-                                            return (rxf.server.Rfc822HeaderState) rxf.server.CouchMetaDriver.sendBlob.visit();
-                                        }
-                                    });
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                                return null;
-                            }
-
-                            public void oneWay() {
-                                BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        try {
-                                            rxf.server.CouchMetaDriver.sendBlob.visit();
-                                        } catch (Exception e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-                                });
-                            }
-                        };
+                        });
                     }
                 };
+            }
+        }
+
+        @Override
+        public sendBlobActionBuilder to(SynchronousQueue<rxf.server.Rfc822HeaderState>... dest) {
+            this.dest = dest;
+            if (parms.size() == parmsCount)
+                return new sendBlobActionBuilder(dest);
+
             throw new IllegalArgumentException("required parameters are: [opaque, mimetype, blob]");
         }
 

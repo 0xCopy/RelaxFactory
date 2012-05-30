@@ -77,7 +77,12 @@ public enum DbTerminal {
      * returns the Future<?> used.
      */
     future {
+        public String buildAction(final CouchMetaDriver couchDriver, DbKeys.etype[] parms, final Class unit, boolean implementation) {
+            return "";
+        }
+
         @Override
+
         public String builder(final CouchMetaDriver couchDriver, DbKeys.etype[] parms, final Class unit, boolean implementation) {
             final String rt = unit.getCanonicalName();
             final String canonicalName = rt;

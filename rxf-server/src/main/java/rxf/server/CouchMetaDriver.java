@@ -193,7 +193,7 @@ public enum CouchMetaDriver {
 
     public static final String XDEADBEEF_2 = "-0xdeadbeef.2";
     public static final String XXXXXXXXXXXXXXMETHODS = "/*XXXXXXXXXXXXXXMETHODS*/";
-    public static final String FIRETARGETS = "/*FIRE_IFACE*/";
+    public static final String IFACE_FIRE_TARGETS = "/*FIRE_IFACE*/";
     public static final String BAKED_IN_FIRE = "/*BAKED_IN_FIRE*/";
 
 
@@ -212,25 +212,14 @@ public enum CouchMetaDriver {
             } catch (Exception e) {
             }
             String cn = rtype.getCanonicalName();
-            @Language("JAVA") String s2 = "\n\npublic class _ename_Builder <T>extends DbKeysBuilder<" + cn + "> {\n" +
-                    "    Rfc822HeaderState rfc822HeaderState;\n" +
-                    "    java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);\n" +
-                    "  private SynchronousQueue<" +
-                    cn + ">[] dest;\n    \n    interface _ename_TerminalBuilder extends TerminalBuilder<" +
-                    cn + ">{" + FIRETARGETS +
-                    "};\n    \n    \n" +
-                    "  @Override\n" +
-                    "    public ActionBuilder<" + cn + "> to(SynchronousQueue<" +
-                    cn + ">...dest) {\n    this.dest = dest;\n    if (parms.size() == parmsCount)\n            return new ActionBuilder<" + cn + ">() {\n                @Override\n" +
-                    "                public _ename_TerminalBuilder<" + cn + "> fire() {\n" +
-                    "                    return new " +
-                    "_ename_TerminalBuilder <" + cn + ">(){" +
-                    BAKED_IN_FIRE + "};\n" +
-                    "                }\n" +
-                    "            };\n" +
-                    "        throw new IllegalArgumentException(\"required parameters are: " + arrToString(parms) + "\");\n" +
-                    "    }\n" +
-                    "    " + XXXXXXXXXXXXXXMETHODS + "\n" +
+            @Language("JAVA") String s2 = "public class _ename_Builder<T> extends DbKeysBuilder<" +
+                    cn + "> {\n    Rfc822HeaderState rfc822HeaderState;\n    java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);\n    private SynchronousQueue<" +
+                    cn + ">[] dest;\n\n    interface _ename_TerminalBuilder extends TerminalBuilder<" +
+                    cn + "> {\n        " + IFACE_FIRE_TARGETS + "\n    }\n\n   public  class _ename_ActionBuilder extends ActionBuilder<" +
+                    cn + "> {\n        public _ename_ActionBuilder(SynchronousQueue<" +
+                    cn + ">... synchronousQueues) {\n            super(synchronousQueues);\n        }\n\n        @Override\n        public _ename_TerminalBuilder fire() {\n            return new _ename_TerminalBuilder() {" + BAKED_IN_FIRE + "\n            };\n        }\n    }\n\n    @Override\n    public  _ename_ActionBuilder  to(SynchronousQueue<" +
+                    cn + ">... dest) {\n        this.dest = dest;\n        if (parms.size() == parmsCount)\n            return  new _ename_ActionBuilder(dest);\n\n        throw new IllegalArgumentException(\"required parameters are: " + arrToString(parms) + "\");\n    }\n    " +
+                    XXXXXXXXXXXXXXMETHODS + "\n" +
                     "}\n";
             s = s2;
             int vl = parms.length;
@@ -253,7 +242,7 @@ public enum CouchMetaDriver {
                         t += terminal.builder(couchDriver, parms, rtype, true);
 
                     }
-                    s = s.replace(BAKED_IN_FIRE, t).replace(FIRETARGETS, iface);
+                    s = s.replace(BAKED_IN_FIRE, t).replace(IFACE_FIRE_TARGETS, iface);
                 }
             }
 
@@ -301,7 +290,7 @@ public enum CouchMetaDriver {
     public void sanityCheck() {
 
         try {
-//            new CouchDriver.createDocBuilder().db("geoip").docId("current").validjson("{\"created\":\"" + new java.util.Date().toGMTString()+ "\"}").to().fire().;
+//            new CouchDriver.createDocBuilder().db("geoip").docId("current").validjson("{\"created\":\"" + new Date().toGMTString() + "\"}").to().fire();
         } catch (Exception e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
