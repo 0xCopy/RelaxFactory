@@ -1,11 +1,7 @@
 package rxf.server;
 //generated
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.SynchronousQueue;
-
-import static rxf.server.DbKeys.etype;
+import java.util.concurrent.*;
 
 /**
  * generated drivers
@@ -13,9 +9,10 @@ import static rxf.server.DbKeys.etype;
 public interface CouchDriver {
   rxf.server.CouchTx createDb(java.lang.String db, java.lang.String validjson);
 
-  public class createDbBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
+
+  class createDbBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
     private Rfc822HeaderState rfc822HeaderState;
-    private java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
+
 
     interface createDbTerminalBuilder extends TerminalBuilder<rxf.server.CouchTx> {
       CouchTx tx();
@@ -90,9 +87,10 @@ public interface CouchDriver {
 
   rxf.server.CouchTx createDoc(java.lang.String db, java.lang.String docId, java.lang.String validjson);
 
-  public class createDocBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
+
+  class createDocBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
     private Rfc822HeaderState rfc822HeaderState;
-    private java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
+
 
     interface createDocTerminalBuilder extends TerminalBuilder<rxf.server.CouchTx> {
       CouchTx tx();
@@ -172,9 +170,10 @@ public interface CouchDriver {
 
   java.lang.String getDoc(java.lang.String db, java.lang.String docId);
 
-  public class getDocBuilder<T> extends DbKeysBuilder<java.lang.String> {
+
+  class getDocBuilder<T> extends DbKeysBuilder<java.lang.String> {
     private Rfc822HeaderState rfc822HeaderState;
-    private java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
+
 
     interface getDocTerminalBuilder extends TerminalBuilder<java.lang.String> {
       java.lang.String pojo();
@@ -250,9 +249,10 @@ public interface CouchDriver {
 
   java.lang.String getRevision(java.lang.String db, java.lang.String docId);
 
-  public class getRevisionBuilder<T> extends DbKeysBuilder<java.lang.String> {
+
+  class getRevisionBuilder<T> extends DbKeysBuilder<java.lang.String> {
     private Rfc822HeaderState rfc822HeaderState;
-    private java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
+
 
     interface getRevisionTerminalBuilder extends TerminalBuilder<java.lang.String> {
       CouchTx tx();
@@ -328,9 +328,10 @@ public interface CouchDriver {
 
   rxf.server.CouchTx updateDoc(java.lang.String db, java.lang.String docId, java.lang.String rev, java.lang.String validjson);
 
-  public class updateDocBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
+
+  class updateDocBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
     private Rfc822HeaderState rfc822HeaderState;
-    private java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
+
 
     interface updateDocTerminalBuilder extends TerminalBuilder<rxf.server.CouchTx> {
       CouchTx tx();
@@ -431,9 +432,10 @@ public interface CouchDriver {
 
   rxf.server.CouchTx createNewDesignDoc(java.lang.String db, java.lang.String designDocId, java.lang.String validjson);
 
-  public class createNewDesignDocBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
+
+  class createNewDesignDocBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
     private Rfc822HeaderState rfc822HeaderState;
-    private java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
+
 
     interface createNewDesignDocTerminalBuilder extends TerminalBuilder<rxf.server.CouchTx> {
       CouchTx tx();
@@ -513,9 +515,10 @@ public interface CouchDriver {
 
   java.lang.String getDesignDoc(java.lang.String db, java.lang.String designDocId);
 
-  public class getDesignDocBuilder<T> extends DbKeysBuilder<java.lang.String> {
+
+  class getDesignDocBuilder<T> extends DbKeysBuilder<java.lang.String> {
     private Rfc822HeaderState rfc822HeaderState;
-    private java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
+
 
     interface getDesignDocTerminalBuilder extends TerminalBuilder<java.lang.String> {
       CouchTx tx();
@@ -575,9 +578,10 @@ public interface CouchDriver {
 
   rxf.server.CouchTx updateDesignDoc(java.lang.String db, java.lang.String designDocId, java.lang.String rev, java.lang.String validjson);
 
-  public class updateDesignDocBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
+
+  class updateDesignDocBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
     private Rfc822HeaderState rfc822HeaderState;
-    private java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
+
 
     interface updateDesignDocTerminalBuilder extends TerminalBuilder<rxf.server.CouchTx> {
       CouchTx tx();
@@ -662,9 +666,10 @@ public interface CouchDriver {
 
   rxf.server.CouchResultSet getView(java.lang.String db, java.lang.String view);
 
-  public class getViewBuilder<T> extends DbKeysBuilder<rxf.server.CouchResultSet> {
+
+  class getViewBuilder<T> extends DbKeysBuilder<rxf.server.CouchResultSet> {
     private Rfc822HeaderState rfc822HeaderState;
-    private java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
+
 
     interface getViewTerminalBuilder extends TerminalBuilder<rxf.server.CouchResultSet> {
       CouchResultSet<rxf.server.CouchResultSet> rows();
@@ -747,9 +752,10 @@ public interface CouchDriver {
 
   rxf.server.CouchTx sendJson(java.lang.String opaque, java.lang.String validjson);
 
-  public class sendJsonBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
+
+  class sendJsonBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
     private Rfc822HeaderState rfc822HeaderState;
-    private java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
+
 
     interface sendJsonTerminalBuilder extends TerminalBuilder<rxf.server.CouchTx> {
       CouchTx tx();
@@ -858,9 +864,10 @@ public interface CouchDriver {
 
   rxf.server.Rfc822HeaderState sendBlob(java.lang.String opaque, one.xio.MimeType mimetype, java.nio.ByteBuffer blob);
 
-  public class sendBlobBuilder<T> extends DbKeysBuilder<rxf.server.Rfc822HeaderState> {
+
+  class sendBlobBuilder<T> extends DbKeysBuilder<rxf.server.Rfc822HeaderState> {
     private Rfc822HeaderState rfc822HeaderState;
-    private java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
+
 
     interface sendBlobTerminalBuilder extends TerminalBuilder<rxf.server.Rfc822HeaderState> {
       CouchTx tx();

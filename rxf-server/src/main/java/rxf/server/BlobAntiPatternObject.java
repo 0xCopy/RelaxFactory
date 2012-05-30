@@ -1,22 +1,10 @@
 package rxf.server;
 
-import com.google.gson.FieldNamingPolicy;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import one.xio.AsioVisitor;
-import one.xio.HttpHeaders;
-import one.xio.HttpMethod;
-
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.nio.ByteBuffer;
-import java.nio.channels.ClosedChannelException;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.*;
 import java.nio.charset.Charset;
 import java.text.MessageFormat;
 import java.util.*;
@@ -24,11 +12,20 @@ import java.util.concurrent.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.google.gson.*;
+import one.xio.*;
+
 import static java.lang.Math.abs;
 import static java.lang.Math.min;
-import static java.nio.channels.SelectionKey.*;
+import static java.nio.channels.SelectionKey.OP_ACCEPT;
+import static java.nio.channels.SelectionKey.OP_CONNECT;
+import static java.nio.channels.SelectionKey.OP_READ;
+import static java.nio.channels.SelectionKey.OP_WRITE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static one.xio.HttpMethod.*;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static one.xio.HttpMethod.GET;
+import static one.xio.HttpMethod.UTF8;
+import static one.xio.HttpMethod.wheresWaldo;
 
 /**
  * User: jim
@@ -95,7 +92,7 @@ public class BlobAntiPatternObject {
 
                 final SocketChannel couchConnection = createCouchConnection();
                 HttpMethod.enqueue(couchConnection, OP_CONNECT | OP_WRITE,
-                    new Impl() {
+                    new AsioVisitor.Impl() {
                       @Override
                       public void onRead(final SelectionKey couchKey) throws Exception {
                         final SocketChannel channel = (SocketChannel) couchKey.channel();
@@ -115,9 +112,9 @@ public class BlobAntiPatternObject {
                         }
 
                         couchKey.selector().wakeup();
-                        couchKey.interestOps(OP_READ).attach(new Impl() {
+                        couchKey.interestOps(OP_READ).attach(new AsioVisitor.Impl() {
                           final ByteBuffer sharedBuf = ByteBuffer.allocateDirect(min(total, getReceiveBufferSize()));
-                          private Impl browserSlave = new Impl() {
+                          private AsioVisitor.Impl browserSlave = new AsioVisitor.Impl() {
                             @Override
                             public void onWrite(SelectionKey key) throws Exception {
                               try {
@@ -196,7 +193,7 @@ public class BlobAntiPatternObject {
   static public String getSessionCookieId() throws Exception {
     String id = null;
     try {
-      ThreadLocalSessionHeaders invoke = new ThreadLocalSessionHeaders().invoke();
+      BlobAntiPatternObject.ThreadLocalSessionHeaders invoke = new BlobAntiPatternObject.ThreadLocalSessionHeaders().invoke();
       ByteBuffer headerBuffer = invoke.getHb();
       Map<String, int[]> headerIndex = invoke.getHeaders();
 
@@ -329,7 +326,7 @@ public class BlobAntiPatternObject {
     while (!HttpMethod.killswitch) {
 
       try {
-        SocketChannel take = couchDq.take();
+        SocketChannel take = couchDq.poll(2, TimeUnit.SECONDS);
         if (take.isOpen()) {
           System.err.println("createCouch" + wheresWaldo());
           return take;
@@ -359,8 +356,9 @@ public class BlobAntiPatternObject {
   public static <T> String deepToString(T... d) {
     return Arrays.deepToString(d) + wheresWaldo();
   }
+
   public static <T> String arrToString(T... d) {
-    return Arrays.deepToString(d) ;
+    return Arrays.deepToString(d);
   }
 
   public static void recycleChannel(SocketChannel channel) {
@@ -442,11 +440,12 @@ public class BlobAntiPatternObject {
   public static CouchTx sendJson(String json, String... idver) throws Exception {
     String take;
     SocketChannel channel = null;
+    if (SendJsonVisitor.DEBUG_SENDJSON) System.err.println(arrToString(idver, json) + wheresWaldo());
     try {
       channel = createCouchConnection();
       SynchronousQueue<String> retVal = new SynchronousQueue<String>();
       HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, new SendJsonVisitor(json, retVal, idver));
-      take = retVal.take();
+      take = retVal.poll(2, SECONDS);
     } finally {
       recycleChannel(channel);
     }
@@ -459,7 +458,7 @@ public class BlobAntiPatternObject {
     try {
       SynchronousQueue<String> retVal = new SynchronousQueue<String>();
       HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, fetchJsonByPath(channel, retVal, locator.getPathPrefix() + '/' + key));
-      take1 = retVal.take();
+      take1 = retVal.poll(2, TimeUnit.SECONDS);
     } finally {
       recycleChannel(channel);
     }
@@ -506,10 +505,10 @@ public class BlobAntiPatternObject {
 
             if (null != bounds) {
 
-              key.attach(new Impl() {
+              key.attach(new AsioVisitor.Impl() {
                 ByteBuffer cursor = dst.slice();
 
-                private Impl prev = this;
+                private AsioVisitor.Impl prev = this;
                 LinkedList<ByteBuffer> ret = new LinkedList<ByteBuffer>();
 
                 @Override
@@ -562,7 +561,7 @@ public class BlobAntiPatternObject {
                   if (!(chunkSize < cursor.remaining())) {//fragments to assemble
 
                     dest.put(cursor);
-                    key.attach(new Impl() {
+                    key.attach(new AsioVisitor.Impl() {
                       @Override
                       public void onRead(SelectionKey key) throws Exception {
                         final int read1 = channel.read(dest);
@@ -601,7 +600,7 @@ public class BlobAntiPatternObject {
               final LinkedList<ByteBuffer> ll = new LinkedList<ByteBuffer>();
               ll.add(dst.slice());
               key.selector().wakeup();
-              key.interestOps(SelectionKey.OP_READ).attach(new Impl() {
+              key.interestOps(SelectionKey.OP_READ).attach(new AsioVisitor.Impl() {
                 @Override
                 public void onRead(SelectionKey key) throws InterruptedException, IOException {
                   ByteBuffer payload = ByteBuffer.allocateDirect(receiveBufferSize);
@@ -668,7 +667,7 @@ public class BlobAntiPatternObject {
       channel = createCouchConnection();
       SynchronousQueue<String> retVal = new SynchronousQueue<String>();
       HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, fetchJsonByPath(channel, retVal, path));
-      ret = retVal.take();
+      ret = retVal.poll(2, TimeUnit.SECONDS);
     } finally {
       recycleChannel(channel);
     }
@@ -690,7 +689,7 @@ public class BlobAntiPatternObject {
       final SynchronousQueue<String> returnTo = new SynchronousQueue<String>();
       couchConnection = createCouchConnection();
       fetchJsonByPath(couchConnection, returnTo, path);
-      final String take = returnTo.take();
+      final String take = returnTo.poll(2, TimeUnit.SECONDS);
       final Map map = GSON.fromJson(take, Map.class);
       return String.valueOf(map.get(key));
     } catch (Exception e) {
@@ -720,7 +719,7 @@ public class BlobAntiPatternObject {
       return headers;
     }
 
-    public ThreadLocalSessionHeaders invoke() {
+    public BlobAntiPatternObject.ThreadLocalSessionHeaders invoke() {
       hb = ThreadLocalHeaders.get();
       headers = HttpHeaders.getHeaders((ByteBuffer) hb.rewind());
       return this;
@@ -759,7 +758,11 @@ public class BlobAntiPatternObject {
             }
           }
         }
+        {
+          CouchTx tx = new CouchDriver.createDocBuilder().db("rxf_visitor").docId("current").validjson("{\"created\":\"" + new Date().toGMTString() + "\"}").to().state(new Rfc822HeaderState()).fire().tx();
 
+          System.err.println("=================================" + tx);
+        }
         {
           CouchLocator<Visitor> roSessionLocator = Visitor.createLocator();
 

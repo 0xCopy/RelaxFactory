@@ -1,46 +1,15 @@
 package rxf.server;
 
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.URL;
-import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.IntBuffer;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.SelectableChannel;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.SocketChannel;
+import javax.xml.xpath.*;
+import java.io.*;
+import java.net.*;
+import java.nio.*;
+import java.nio.channels.*;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.Random;
-import java.util.TreeMap;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.SynchronousQueue;
+import java.util.*;
+import java.util.concurrent.*;
 
-import one.xio.AsioVisitor;
-import one.xio.HttpHeaders;
-import one.xio.HttpMethod;
+import one.xio.*;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
@@ -118,7 +87,7 @@ public class GeoIpService {
             //noinspection unchecked
             map.put("created", new Date());
             HttpMethod.enqueue(couchConnection, OP_WRITE, new SendJsonPOST(GSON.toJson(map).trim(), retVal, GEOIP_ROOTNODE));
-            String json = retVal.take();
+            String json = retVal.poll(2, java.util.concurrent.TimeUnit.SECONDS);
 
 
             m = GSON.fromJson(json, Map.class);
@@ -158,7 +127,7 @@ public class GeoIpService {
             }
           });
     }
-    String take = retVal.take();
+    String take = retVal.poll(2, java.util.concurrent.TimeUnit.SECONDS);
     final CouchTx couchTx = GSON.fromJson(take, CouchTx.class);
     {
       couchConnection = createCouchConnection();
@@ -180,7 +149,7 @@ public class GeoIpService {
             }
           });
     }
-    take = retVal.take();
+    take = retVal.poll(2, java.util.concurrent.TimeUnit.SECONDS);
   }
 
   static void putFile(SelectionKey key, final ByteBuffer d2, String push, final SynchronousQueue<String> synchronousQueue) throws IOException {
@@ -472,7 +441,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
             Callable<Object> callable = new Callable<Object>() {
               public Object call() throws Exception {
 
-                String take = retVal.take();
+                String take = retVal.poll(2, java.util.concurrent.TimeUnit.SECONDS);
                 key.attach(this);
                 System.err.println("rootnode: " + take);
                 Map map = GSON.fromJson(take, Map.class);
@@ -529,7 +498,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
                 Callable<MappedByteBuffer> callable = new Callable<MappedByteBuffer>() {
                   @Override
                   public MappedByteBuffer call() throws Exception {
-                    return retVal.take();  //todo: verify for a purpose
+                    return retVal.poll(2, java.util.concurrent.TimeUnit.SECONDS);  //todo: verify for a purpose
                   }
                 };
 

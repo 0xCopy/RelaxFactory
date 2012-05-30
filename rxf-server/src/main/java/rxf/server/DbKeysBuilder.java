@@ -8,27 +8,22 @@ import java.util.concurrent.SynchronousQueue;
  * Time: 1:58 PM
  */
 public abstract class DbKeysBuilder<T> {
-    public static ThreadLocal<DbKeysBuilder> currentKeys = new ThreadLocal<DbKeysBuilder>();
+  public static ThreadLocal<DbKeysBuilder> currentKeys = new ThreadLocal<DbKeysBuilder>();
+  protected final java.util.EnumMap<DbKeys.etype, Object> parms = new java.util.EnumMap<DbKeys.etype, Object>(DbKeys.etype.class);
 
-    protected abstract ActionBuilder<T> to(SynchronousQueue<T>... clients);
+  protected abstract ActionBuilder<T> to(SynchronousQueue<T>... clients);
 
-    public DbKeysBuilder() {
-        currentKeys.set(this);
-    }
+  public DbKeysBuilder() {
+    currentKeys.set(this);
+  }
 
-    java.util.EnumMap<DbKeys.etype, Object> parms = new java.util.EnumMap<DbKeys.etype, Object>(DbKeys.etype.class);
-
-    public ThreadLocal<? extends DbKeysBuilder> getCurrentKeys() {
-        return currentKeys;
-    }
+  public ThreadLocal<? extends DbKeysBuilder> getCurrentKeys() {
+    return currentKeys;
+  }
 
 
-    public java.util.EnumMap<DbKeys.etype, Object> getParms() {
-        return this.parms;
-    }
+  public java.util.EnumMap<DbKeys.etype, Object> parms() {
+    return parms;
+  }
 
-    public DbKeysBuilder setParms(java.util.EnumMap<DbKeys.etype, Object> parms) {
-        this.parms = parms;
-        return this;
-    }
 }

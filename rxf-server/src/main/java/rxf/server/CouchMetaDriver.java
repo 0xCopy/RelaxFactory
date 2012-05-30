@@ -2,8 +2,7 @@ package rxf.server;
 
 import java.lang.reflect.Field;
 import java.nio.channels.SocketChannel;
-import java.util.Arrays;
-import java.util.Iterator;
+import java.util.*;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -52,16 +51,19 @@ public enum CouchMetaDriver {
   @DbTask({tx, oneWay}) @DbKeys({db, validjson})createDb {
     @Override
     <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
-      return sendJson((String) dbKeysBuilder.getParms().get(etype.validjson), (String) dbKeysBuilder.getParms().get(etype.db));
+      return sendJson((String) dbKeysBuilder.parms().get(etype.validjson), (String) dbKeysBuilder.parms().get(etype.db));
     }
   },
   @DbTask({tx, oneWay}) @DbKeys({db, docId, validjson})createDoc {
     @Override
     <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+      EnumMap<etype, Object> parms = dbKeysBuilder.parms();
+      String json = (String) parms.get(etype.validjson);
+      String o = (String) parms.get(etype.db);
+      String o1 = (String) parms.get(etype.docId);
       return sendJson(
-          (String) dbKeysBuilder.getParms().get(etype.validjson),
-          (String) dbKeysBuilder.getParms().get(etype.db),
-          (String) dbKeysBuilder.getParms().get(etype.docId)
+          json,
+          o + '/' + o1
       );
 
     }
@@ -88,7 +90,7 @@ public enum CouchMetaDriver {
       try {
         couchConnection = createCouchConnection();
         SynchronousQueue<String> q = getQ();
-        AsioVisitor asioVisitor = fetchHeadByPath(idpath(dbKeysBuilder, etype.docId), couchConnection, (SynchronousQueue<String>) q);
+        AsioVisitor asioVisitor = fetchHeadByPath(idpath(dbKeysBuilder, etype.docId), couchConnection, q);
         poll = (T) q.poll(3, TimeUnit.SECONDS);
 
       } catch (Exception e) {
@@ -107,10 +109,10 @@ public enum CouchMetaDriver {
     <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
 
       return sendJson(
-          (String) dbKeysBuilder.getParms().get(etype.validjson),
-          (String) dbKeysBuilder.getParms().get(etype.db),
-          (String) dbKeysBuilder.getParms().get(etype.docId),
-          (String) dbKeysBuilder.getParms().get(etype.rev));
+          (String) dbKeysBuilder.parms().get(etype.validjson),
+          (String) dbKeysBuilder.parms().get(etype.db),
+          (String) dbKeysBuilder.parms().get(etype.docId),
+          (String) dbKeysBuilder.parms().get(etype.rev));
 
     }
   },
@@ -119,9 +121,9 @@ public enum CouchMetaDriver {
     <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
 
       return sendJson(
-          (String) dbKeysBuilder.getParms().get(etype.validjson),
-          (String) dbKeysBuilder.getParms().get(etype.db),
-          (String) dbKeysBuilder.getParms().get(etype.designDocId));
+          (String) dbKeysBuilder.parms().get(etype.validjson),
+          (String) dbKeysBuilder.parms().get(etype.db),
+          (String) dbKeysBuilder.parms().get(etype.designDocId));
 
     }
 
@@ -143,10 +145,10 @@ public enum CouchMetaDriver {
     <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
 
       return sendJson(
-          (String) dbKeysBuilder.getParms().get(etype.validjson),
-          (String) dbKeysBuilder.getParms().get(etype.db),
-          (String) dbKeysBuilder.getParms().get(etype.designDocId),
-          (String) dbKeysBuilder.getParms().get(etype.rev));
+          (String) dbKeysBuilder.parms().get(etype.validjson),
+          (String) dbKeysBuilder.parms().get(etype.db),
+          (String) dbKeysBuilder.parms().get(etype.designDocId),
+          (String) dbKeysBuilder.parms().get(etype.rev));
 
     }
   },
@@ -174,8 +176,8 @@ public enum CouchMetaDriver {
   @DbTask({tx, oneWay, rows, future, continuousFeed}) @DbKeys({opaque, validjson})sendJson {
     @Override
     <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
-      String opaque = (String) dbKeysBuilder.getParms().get(etype.opaque);
-      String validjson = (String) dbKeysBuilder.getParms().get(etype.validjson);
+      String opaque = (String) dbKeysBuilder.parms().get(etype.opaque);
+      String validjson = (String) dbKeysBuilder.parms().get(etype.validjson);
       return sendJson(opaque, validjson);
     }
   },
@@ -192,8 +194,8 @@ public enum CouchMetaDriver {
   }
 
   static <T> String idpath(DbKeysBuilder<T> dbKeysBuilder, etype etype) {
-    String db = (String) dbKeysBuilder.getParms().get(etype.db);
-    String id = (String) dbKeysBuilder.getParms().get(etype);
+    String db = (String) dbKeysBuilder.parms().get(etype.db);
+    String id = (String) dbKeysBuilder.parms().get(etype);
     return '/' + db + '/' + id;
   }
 
@@ -230,13 +232,13 @@ public enum CouchMetaDriver {
       } catch (Exception e) {
       }
       String cn = rtype.getCanonicalName();
-      @Language("JAVA") String s2 = "public class _ename_Builder<T> extends DbKeysBuilder<" +
-          cn + "> {\n  private   Rfc822HeaderState rfc822HeaderState;\n    private java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);\n" +
-          "\ninterface _ename_TerminalBuilder extends TerminalBuilder<" +
-          cn + "> {\n        " + IFACE_FIRE_TARGETS + "\n    }\n\n   public  class _ename_ActionBuilder extends ActionBuilder<" +
-          cn + "> {\n        public _ename_ActionBuilder(SynchronousQueue<" +
-          cn + ">... synchronousQueues) {\n            super(synchronousQueues);\n        }\n \n       @Override\n        public _ename_TerminalBuilder fire() {\n            return new _ename_TerminalBuilder() {\n            " + BAKED_IN_FIRE + "\n            };\n        }\n\n       @Override\n       public _ename_ActionBuilder state(Rfc822HeaderState state) {\n           return super.state(state);     \n       }\n\n       @Override\n       public _ename_ActionBuilder key(java.nio.channels.SelectionKey key) {\n           return super.key(key);  \n       }\n   }\n\n    @Override\n    public  _ename_ActionBuilder  to(SynchronousQueue<" +
-          cn + ">... dest) {\n        if (parms.size() == parmsCount)\n            return  new _ename_ActionBuilder(dest);\n\n        throw new IllegalArgumentException(\"required parameters are: " + arrToString(parms) + "\");\n    }\n    " +
+      @Language("JAVA") String s2 = " \npublic class _ename_Builder<T> extends DbKeysBuilder<" +
+          cn + "> {\n  private Rfc822HeaderState rfc822HeaderState;\n\n" +
+          "\n  interface _ename_TerminalBuilder extends TerminalBuilder<" +
+          cn + "> {\n    " + IFACE_FIRE_TARGETS + "\n  }\n\n  public class _ename_ActionBuilder extends ActionBuilder<" +
+          cn + "> {\n    public _ename_ActionBuilder(SynchronousQueue<" +
+          cn + ">... synchronousQueues) {\n      super(synchronousQueues);\n    }\n\n    @Override\n    public _ename_TerminalBuilder fire() {\n      return new _ename_TerminalBuilder() {\n        " + BAKED_IN_FIRE + "\n      };\n    }\n\n    @Override\n    public _ename_ActionBuilder state(Rfc822HeaderState state) {\n      return super.state(state);\n    }\n\n    @Override\n    public _ename_ActionBuilder key(java.nio.channels.SelectionKey key) {\n      return super.key(key);\n    }\n  }\n\n  @Override\n  public _ename_ActionBuilder to(SynchronousQueue<" +
+          cn + ">... dest) {\n    if (parms.size() == parmsCount)\n      return new _ename_ActionBuilder(dest);\n\n    throw new IllegalArgumentException(\"required parameters are: " + arrToString(parms) + "\");\n  }\n  " +
           XXXXXXXXXXXXXXMETHODS + "\n" +
           "}\n";
       s = s2;
