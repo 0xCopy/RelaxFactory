@@ -6,13 +6,17 @@
     <artifactId>rxf-examples</artifactId>
     <parent>
         <groupId>rxf</groupId>
-        <version>0.8.0</version>
+        <version>0.8.1</version>
         <artifactId>relaxfactory</artifactId>
     </parent>
     <packaging>war</packaging>
 
     <dependencies>
-        <dependency><artifactId>rxf-shared</artifactId><groupId>${project.groupId}</groupId><version>${project.version}</version></dependency>
+        <dependency>
+            <artifactId>rxf-shared</artifactId>
+            <groupId>${project.groupId}</groupId>
+            <version>${project.version}</version>
+        </dependency>
         <!--<dependency><artifactId>rxf-server</artifactId><groupId>${project.groupId}</groupId><version>${project.version}</version></dependency>-->
 
     </dependencies>
@@ -42,9 +46,8 @@
                 <version>2.5</version>
                 <configuration>
                     <encoding>${project.build.sourceEncoding}</encoding>
-                 </configuration>
+                </configuration>
             </plugin>
-
 
 
             <plugin>
@@ -56,7 +59,8 @@
                         <contextPath>/${project.name}</contextPath>
                     </webAppConfig>
                 </configuration>
-            </plugin><!--<plugin>
+            </plugin>
+            <!--<plugin>
 <groupId>org.bsc.maven</groupId>
 <artifactId>maven-processor-plugin</artifactId>
 <version>2.0.5</version>
