@@ -10,7 +10,7 @@ import java.util.concurrent.SynchronousQueue;
 public abstract class DbKeysBuilder<T> {
     public static ThreadLocal<DbKeysBuilder> currentKeys = new ThreadLocal<DbKeysBuilder>();
 
-    public abstract ActionBuilder<T> to(SynchronousQueue<T>... clients);
+    protected abstract ActionBuilder<T> to(SynchronousQueue<T>... clients);
 
     public DbKeysBuilder() {
         currentKeys.set(this);

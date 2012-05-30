@@ -7,6 +7,7 @@ import rxf.server.DbKeys.etype;
 import java.lang.reflect.Field;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
@@ -217,7 +218,7 @@ public enum CouchMetaDriver {
                     cn + ">[] dest;\n\n    interface _ename_TerminalBuilder extends TerminalBuilder<" +
                     cn + "> {\n        " + IFACE_FIRE_TARGETS + "\n    }\n\n   public  class _ename_ActionBuilder extends ActionBuilder<" +
                     cn + "> {\n        public _ename_ActionBuilder(SynchronousQueue<" +
-                    cn + ">... synchronousQueues) {\n            super(synchronousQueues);\n        }\n\n        @Override\n        public _ename_TerminalBuilder fire() {\n            return new _ename_TerminalBuilder() {" + BAKED_IN_FIRE + "\n            };\n        }\n    }\n\n    @Override\n    public  _ename_ActionBuilder  to(SynchronousQueue<" +
+                    cn + ">... synchronousQueues) {\n            super(synchronousQueues);\n        }\n \n       @Override\n        public _ename_TerminalBuilder fire() {\n            return new _ename_TerminalBuilder() {" + BAKED_IN_FIRE + "\n            };\n        }\n\n       @Override\n       public _ename_ActionBuilder state(Rfc822HeaderState state) {\n           return super.state(state);     \n       }\n\n       @Override\n       public _ename_ActionBuilder key(java.nio.channels.SelectionKey key) {\n           return super.key(key);  \n       }\n   }\n\n    @Override\n    public  _ename_ActionBuilder  to(SynchronousQueue<" +
                     cn + ">... dest) {\n        this.dest = dest;\n        if (parms.size() == parmsCount)\n            return  new _ename_ActionBuilder(dest);\n\n        throw new IllegalArgumentException(\"required parameters are: " + arrToString(parms) + "\");\n    }\n    " +
                     XXXXXXXXXXXXXXMETHODS + "\n" +
                     "}\n";
@@ -290,7 +291,7 @@ public enum CouchMetaDriver {
     public void sanityCheck() {
 
         try {
-//            new CouchDriver.createDocBuilder().db("geoip").docId("current").validjson("{\"created\":\"" + new Date().toGMTString() + "\"}").to().fire();
+            new CouchDriver.createDocBuilder().db("geoip").docId("current").validjson("{\"created\":\"" + new Date().toGMTString() + "\"}").to().state(new Rfc822HeaderState()).fire().oneWay();
         } catch (Exception e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }

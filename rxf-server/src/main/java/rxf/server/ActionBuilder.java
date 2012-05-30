@@ -28,41 +28,22 @@ public abstract class ActionBuilder<T> {
         return this.state;
     }
 
-    public <B extends ActionBuilder<T>> B state(Rfc822HeaderState state) {
-        this.state = state;
-        return (B) this;
-    }
-
     public SelectionKey key() {
         return this.key;
     }
 
-    public <B extends ActionBuilder<T>> B key(SelectionKey key) {
-        this.key = key;
-
-        return (B) this;
-    }
-
-    abstract
-    protected <B extends TerminalBuilder<T>> B fire() throws Exception;
+    abstract protected <B extends TerminalBuilder<T>> B fire() throws Exception;
 
 
-    public Rfc822HeaderState getState() {
-        return this.state;
-    }
-
-    public <B extends ActionBuilder<T>> B setState(Rfc822HeaderState state) {
+    protected <B extends ActionBuilder<T>> B state(Rfc822HeaderState state) {
         this.state = state;
         return (B) this;
     }
 
-    public SelectionKey getKey() {
-        return this.key;
-    }
 
-    public <B extends ActionBuilder<T>>
-    B setKey(SelectionKey key) {
+    protected <B extends ActionBuilder<T>> B key(SelectionKey key) {
         this.key = key;
+
         return (B) this;
     }
 

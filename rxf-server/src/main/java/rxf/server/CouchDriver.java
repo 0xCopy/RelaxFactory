@@ -1,3 +1,11 @@
+//"C:\Program Files\Java\jdk1.7.0_01\bin\java" -Didea.launcher.port=7532 "-Didea.launcher.bin.path=C:\Program Files (x86)\JetBrains\IntelliJ IDEA 10.5.2\bin" -Dfile.encoding=UTF-8 -classpath "C:\Program Files\Java\jdk1.7.0_01\jre\lib\alt-rt.jar;C:\Program Files\Java\jdk1.7.0_01\jre\lib\charsets.jar;C:\Program Files\Java\jdk1.7.0_01\jre\lib\deploy.jar;C:\Program Files\Java\jdk1.7.0_01\jre\lib\javaws.jar;C:\Program Files\Java\jdk1.7.0_01\jre\lib\jce.jar;C:\Program Files\Java\jdk1.7.0_01\jre\lib\jsse.jar;C:\Program Files\Java\jdk1.7.0_01\jre\lib\management-agent.jar;C:\Program Files\Java\jdk1.7.0_01\jre\lib\plugin.jar;C:\Program Files\Java\jdk1.7.0_01\jre\lib\resources.jar;C:\Program Files\Java\jdk1.7.0_01\jre\lib\rt.jar;C:\Program Files\Java\jdk1.7.0_01\jre\lib\ext\dnsns.jar;C:\Program Files\Java\jdk1.7.0_01\jre\lib\ext\localedata.jar;C:\Program Files\Java\jdk1.7.0_01\jre\lib\ext\sunec.jar;C:\Program Files\Java\jdk1.7.0_01\jre\lib\ext\sunjce_provider.jar;C:\Program Files\Java\jdk1.7.0_01\jre\lib\ext\sunmscapi.jar;C:\Program Files\Java\jdk1.7.0_01\jre\lib\ext\zipfs.jar;C:\Users\jim\work\RelaxFactory\rxf-server\target\rxf-server-0.8.0\WEB-INF\classes;C:\Users\jim\work\RelaxFactory\rxf-shared\target\classes;C:\Users\jim\.m2\repository\org\json\json\20090211\json-20090211.jar;C:\Users\jim\.m2\repository\javax\validation\validation-api\1.0.0.GA\validation-api-1.0.0.GA.jar;C:\Users\jim\.m2\repository\org\hibernate\hibernate-validator\4.2.0.Final\hibernate-validator-4.2.0.Final.jar;C:\Users\jim\.m2\repository\org\slf4j\slf4j-api\1.6.1\slf4j-api-1.6.1.jar;C:\Users\jim\.m2\repository\jetbrains\annotations\10.5.4\annotations-10.5.4.jar;C:\Users\jim\work\RelaxFactory\1xio\target\classes;C:\Users\jim\.m2\repository\com\google\code\gson\gson\2.1\gson-2.1.jar;C:\Users\jim\.m2\repository\com\google\web\bindery\requestfactory-server\2.5.0-rfmap-SNAPSHOT\requestfactory-server-2.5.0-rfmap-SNAPSHOT.jar;C:\Users\jim\.m2\repository\net\sf\jtidy\jtidy\r938\jtidy-r938.jar;C:\Users\jim\.m2\repository\org\apache\commons\commons-compress\1.4\commons-compress-1.4.jar;C:\Users\jim\.m2\repository\org\tukaani\xz\1.0\xz-1.0.jar;C:\Program Files (x86)\JetBrains\IntelliJ IDEA 10.5.2\lib\idea_rt.jar" com.intellij.rt.execution.application.AppMain rxf.server.CouchMetaDriver
+//java 6 LOOPBACK detected
+//opening /127.0.0.1:5984
+//opening /127.0.0.1:5984
+//opening /127.0.0.1:5984
+//opening /127.0.0.1:5984
+//opening /127.0.0.1:5984
+//opening /127.0.0.1:5984
 package rxf.server;
 //generated
 
@@ -54,6 +62,16 @@ public interface CouchDriver {
                         });
                     }
                 };
+            }
+
+            @Override
+            public createDbActionBuilder state(Rfc822HeaderState state) {
+                return super.state(state);
+            }
+
+            @Override
+            public createDbActionBuilder key(java.nio.channels.SelectionKey key) {
+                return super.key(key);
             }
         }
 
@@ -123,6 +141,16 @@ public interface CouchDriver {
                         });
                     }
                 };
+            }
+
+            @Override
+            public createDocActionBuilder state(Rfc822HeaderState state) {
+                return super.state(state);
+            }
+
+            @Override
+            public createDocActionBuilder key(java.nio.channels.SelectionKey key) {
+                return super.key(key);
             }
         }
 
@@ -199,6 +227,16 @@ public interface CouchDriver {
                     }
                 };
             }
+
+            @Override
+            public getDocActionBuilder state(Rfc822HeaderState state) {
+                return super.state(state);
+            }
+
+            @Override
+            public getDocActionBuilder key(java.nio.channels.SelectionKey key) {
+                return super.key(key);
+            }
         }
 
         @Override
@@ -268,6 +306,16 @@ public interface CouchDriver {
                         return null;
                     }
                 };
+            }
+
+            @Override
+            public getRevisionActionBuilder state(Rfc822HeaderState state) {
+                return super.state(state);
+            }
+
+            @Override
+            public getRevisionActionBuilder key(java.nio.channels.SelectionKey key) {
+                return super.key(key);
             }
         }
 
@@ -354,6 +402,16 @@ public interface CouchDriver {
                     }
                 };
             }
+
+            @Override
+            public updateDocActionBuilder state(Rfc822HeaderState state) {
+                return super.state(state);
+            }
+
+            @Override
+            public updateDocActionBuilder key(java.nio.channels.SelectionKey key) {
+                return super.key(key);
+            }
         }
 
         @Override
@@ -433,6 +491,16 @@ public interface CouchDriver {
                     }
                 };
             }
+
+            @Override
+            public createNewDesignDocActionBuilder state(Rfc822HeaderState state) {
+                return super.state(state);
+            }
+
+            @Override
+            public createNewDesignDocActionBuilder key(java.nio.channels.SelectionKey key) {
+                return super.key(key);
+            }
         }
 
         @Override
@@ -491,6 +559,16 @@ public interface CouchDriver {
                         return null;
                     }
                 };
+            }
+
+            @Override
+            public getDesignDocActionBuilder state(Rfc822HeaderState state) {
+                return super.state(state);
+            }
+
+            @Override
+            public getDesignDocActionBuilder key(java.nio.channels.SelectionKey key) {
+                return super.key(key);
             }
         }
 
@@ -560,6 +638,16 @@ public interface CouchDriver {
                         });
                     }
                 };
+            }
+
+            @Override
+            public updateDesignDocActionBuilder state(Rfc822HeaderState state) {
+                return super.state(state);
+            }
+
+            @Override
+            public updateDesignDocActionBuilder key(java.nio.channels.SelectionKey key) {
+                return super.key(key);
             }
         }
 
@@ -647,6 +735,16 @@ public interface CouchDriver {
                         throw new AbstractMethodError();
                     }
                 };
+            }
+
+            @Override
+            public getViewActionBuilder state(Rfc822HeaderState state) {
+                return super.state(state);
+            }
+
+            @Override
+            public getViewActionBuilder key(java.nio.channels.SelectionKey key) {
+                return super.key(key);
             }
         }
 
@@ -751,6 +849,16 @@ public interface CouchDriver {
                     }
                 };
             }
+
+            @Override
+            public sendJsonActionBuilder state(Rfc822HeaderState state) {
+                return super.state(state);
+            }
+
+            @Override
+            public sendJsonActionBuilder key(java.nio.channels.SelectionKey key) {
+                return super.key(key);
+            }
         }
 
         @Override
@@ -835,6 +943,16 @@ public interface CouchDriver {
                         });
                     }
                 };
+            }
+
+            @Override
+            public sendBlobActionBuilder state(Rfc822HeaderState state) {
+                return super.state(state);
+            }
+
+            @Override
+            public sendBlobActionBuilder key(java.nio.channels.SelectionKey key) {
+                return super.key(key);
             }
         }
 
