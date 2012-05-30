@@ -1,20 +1,37 @@
 package rxf.server;
 
-import one.xio.AsioVisitor;
-import org.intellij.lang.annotations.Language;
-import rxf.server.DbKeys.etype;
-
 import java.lang.reflect.Field;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 
-import static rxf.server.BlobAntiPatternObject.*;
-import static rxf.server.DbKeys.etype.*;
-import static rxf.server.DbTerminal.*;
+import one.xio.AsioVisitor;
+import org.intellij.lang.annotations.Language;
+import rxf.server.DbKeys.etype;
+
+import static rxf.server.BlobAntiPatternObject.arrToString;
+import static rxf.server.BlobAntiPatternObject.createCouchConnection;
+import static rxf.server.BlobAntiPatternObject.fetchHeadByPath;
+import static rxf.server.BlobAntiPatternObject.fetchJsonByPath;
+import static rxf.server.BlobAntiPatternObject.recycleChannel;
+import static rxf.server.BlobAntiPatternObject.sendJson;
+import static rxf.server.DbKeys.etype.blob;
+import static rxf.server.DbKeys.etype.db;
+import static rxf.server.DbKeys.etype.designDocId;
+import static rxf.server.DbKeys.etype.docId;
+import static rxf.server.DbKeys.etype.mimetype;
+import static rxf.server.DbKeys.etype.opaque;
+import static rxf.server.DbKeys.etype.rev;
+import static rxf.server.DbKeys.etype.validjson;
+import static rxf.server.DbKeys.etype.view;
+import static rxf.server.DbTerminal.continuousFeed;
+import static rxf.server.DbTerminal.future;
+import static rxf.server.DbTerminal.oneWay;
+import static rxf.server.DbTerminal.pojo;
+import static rxf.server.DbTerminal.rows;
+import static rxf.server.DbTerminal.tx;
 
 
 /**
@@ -32,269 +49,258 @@ import static rxf.server.DbTerminal.*;
  */
 public enum CouchMetaDriver {
 
-    @DbTask({tx, oneWay}) @DbKeys({db, validjson})createDb {
-        @Override
-        <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
-            return sendJson((String) dbKeysBuilder.getParms().get(etype.validjson), (String) dbKeysBuilder.getParms().get(etype.db));
-        }
-    },
-    @DbTask({tx, oneWay}) @DbKeys({db, docId, validjson})createDoc {
-        @Override
-        <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
-            return sendJson(
-                    (String) dbKeysBuilder.getParms().get(etype.validjson),
-                    (String) dbKeysBuilder.getParms().get(etype.db),
-                    (String) dbKeysBuilder.getParms().get(etype.docId)
-            );
-
-        }
-
-
-    },
-    @DbTask({pojo, future}) @DbResultUnit(String.class) @DbKeys({db, docId})getDoc {
-        @Override
-        <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
-            String path = idpath(dbKeysBuilder, etype.docId);
-            SocketChannel couchConnection = createCouchConnection();
-            SynchronousQueue returnTo = getQ();
-            AsioVisitor asioVisitor = fetchJsonByPath(couchConnection, returnTo, path);
-            T take = (T) returnTo.poll(3, TimeUnit.SECONDS);
-            recycleChannel(couchConnection);
-            return take;
-        }
-    },
-    @DbTask({tx, future}) @DbResultUnit(String.class) @DbKeys({db, docId})getRevision {
-        @Override
-        <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
-            SocketChannel couchConnection = null;
-            T poll = null;
-            try {
-                couchConnection = createCouchConnection();
-                SynchronousQueue<String> q = getQ();
-                AsioVisitor asioVisitor = fetchHeadByPath(idpath(dbKeysBuilder, etype.docId), couchConnection, (SynchronousQueue<String>) q);
-                poll = (T) q.poll(3, TimeUnit.SECONDS);
-
-            } catch (Exception e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-            } finally {
-                recycleChannel(couchConnection);
-            }
-
-
-            return poll
-                    ;
-        }
-    },
-    @DbTask({tx, oneWay, future}) @DbKeys({db, docId, rev, validjson})updateDoc {
-        @Override
-        <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
-
-            return sendJson(
-                    (String) dbKeysBuilder.getParms().get(etype.validjson),
-                    (String) dbKeysBuilder.getParms().get(etype.db),
-                    (String) dbKeysBuilder.getParms().get(etype.docId),
-                    (String) dbKeysBuilder.getParms().get(etype.rev));
-
-        }
-    },
-    @DbTask({tx, oneWay}) @DbKeys({db, designDocId, validjson})createNewDesignDoc {
-        @Override
-        <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
-
-            return sendJson(
-                    (String) dbKeysBuilder.getParms().get(etype.validjson),
-                    (String) dbKeysBuilder.getParms().get(etype.db),
-                    (String) dbKeysBuilder.getParms().get(etype.designDocId));
-
-        }
-
-    },
-    @DbTask({tx}) @DbResultUnit(String.class) @DbKeys({db, designDocId})getDesignDoc {
-        @Override
-        <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
-            String path = idpath(dbKeysBuilder, etype.designDocId);
-            SocketChannel couchConnection = createCouchConnection();
-            SynchronousQueue returnTo = getQ();
-            AsioVisitor asioVisitor = fetchJsonByPath(couchConnection, returnTo, path);
-            T take = (T) returnTo.poll(3, TimeUnit.SECONDS);
-            recycleChannel(couchConnection);
-            return take;
-        }
-    },
-    @DbTask({tx, oneWay}) @DbKeys({db, designDocId, rev, validjson})updateDesignDoc {
-        @Override
-        <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
-
-            return sendJson(
-                    (String) dbKeysBuilder.getParms().get(etype.validjson),
-                    (String) dbKeysBuilder.getParms().get(etype.db),
-                    (String) dbKeysBuilder.getParms().get(etype.designDocId),
-                    (String) dbKeysBuilder.getParms().get(etype.rev));
-
-        }
-    },
-    @DbTask({rows, future, continuousFeed}) @DbResultUnit(CouchResultSet.class) @DbKeys({db, view})getView {
-        @Override
-        <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
-
-            SocketChannel couchConnection = null;
-            String poll = null;
-            try {
-                couchConnection = createCouchConnection();
-                SynchronousQueue<String> q = CouchMetaDriver.<String>getQ();
-                String idpath = idpath(dbKeysBuilder, etype.view);
-                fetchJsonByPath(couchConnection, q, idpath);
-                poll = q.poll(3, TimeUnit.SECONDS);
-            } catch (Exception e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-            } finally {
-                recycleChannel(couchConnection);
-            }
-
-            return poll;
-        }
-    },
-    @DbTask({tx, oneWay, rows, future, continuousFeed}) @DbKeys({opaque, validjson})sendJson {
-        @Override
-        <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
-            String opaque = (String) dbKeysBuilder.getParms().get(etype.opaque);
-            String validjson = (String) dbKeysBuilder.getParms().get(etype.validjson);
-            return sendJson(opaque, validjson);
-        }
-    },
-    @DbTask({tx, future, oneWay}) @DbResultUnit(Rfc822HeaderState.class) @DbKeys({opaque, mimetype, blob})sendBlob {};
-
-    static <T> SynchronousQueue<T> getQ() {
-        SynchronousQueue<T>[] sync = ActionBuilder.currentAction.get().sync();
-        SynchronousQueue<T> returnTo = null;
-        for (SynchronousQueue<T> synchronousQueue : sync) {
-            returnTo = synchronousQueue;
-        }
-        if (null == returnTo) returnTo = new SynchronousQueue<T>();
-        return returnTo;
+  @DbTask({tx, oneWay}) @DbKeys({db, validjson})createDb {
+    @Override
+    <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+      return sendJson((String) dbKeysBuilder.getParms().get(etype.validjson), (String) dbKeysBuilder.getParms().get(etype.db));
     }
+  },
+  @DbTask({tx, oneWay}) @DbKeys({db, docId, validjson})createDoc {
+    @Override
+    <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+      return sendJson(
+          (String) dbKeysBuilder.getParms().get(etype.validjson),
+          (String) dbKeysBuilder.getParms().get(etype.db),
+          (String) dbKeysBuilder.getParms().get(etype.docId)
+      );
 
-    static <T> String idpath(DbKeysBuilder<T> dbKeysBuilder, etype etype) {
-        String db = (String) dbKeysBuilder.getParms().get(etype.db);
-        String id = (String) dbKeysBuilder.getParms().get(etype);
-        return '/' + db + '/' + id;
     }
 
 
-    <T> Object visit() throws Exception {
-        DbKeysBuilder<T> dbKeysBuilder = (DbKeysBuilder<T>) DbKeysBuilder.currentKeys.get();
-        ActionBuilder<T> actionBuilder = (ActionBuilder<T>) ActionBuilder.currentAction.get();
-        return visit(dbKeysBuilder, actionBuilder);
+  },
+  @DbTask({pojo, future}) @DbResultUnit(String.class) @DbKeys({db, docId})getDoc {
+    @Override
+    <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+      String path = idpath(dbKeysBuilder, etype.docId);
+      SocketChannel couchConnection = createCouchConnection();
+      SynchronousQueue returnTo = getQ();
+      AsioVisitor asioVisitor = fetchJsonByPath(couchConnection, returnTo, path);
+      T take = (T) returnTo.poll(3, TimeUnit.SECONDS);
+      recycleChannel(couchConnection);
+      return take;
+    }
+  },
+  @DbTask({tx, future}) @DbResultUnit(String.class) @DbKeys({db, docId})getRevision {
+    @Override
+    <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+      SocketChannel couchConnection = null;
+      T poll = null;
+      try {
+        couchConnection = createCouchConnection();
+        SynchronousQueue<String> q = getQ();
+        AsioVisitor asioVisitor = fetchHeadByPath(idpath(dbKeysBuilder, etype.docId), couchConnection, (SynchronousQueue<String>) q);
+        poll = (T) q.poll(3, TimeUnit.SECONDS);
+
+      } catch (Exception e) {
+        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      } finally {
+        recycleChannel(couchConnection);
+      }
+
+
+      return poll
+          ;
+    }
+  },
+  @DbTask({tx, oneWay, future}) @DbKeys({db, docId, rev, validjson})updateDoc {
+    @Override
+    <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
+
+      return sendJson(
+          (String) dbKeysBuilder.getParms().get(etype.validjson),
+          (String) dbKeysBuilder.getParms().get(etype.db),
+          (String) dbKeysBuilder.getParms().get(etype.docId),
+          (String) dbKeysBuilder.getParms().get(etype.rev));
+
+    }
+  },
+  @DbTask({tx, oneWay}) @DbKeys({db, designDocId, validjson})createNewDesignDoc {
+    @Override
+    <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
+
+      return sendJson(
+          (String) dbKeysBuilder.getParms().get(etype.validjson),
+          (String) dbKeysBuilder.getParms().get(etype.db),
+          (String) dbKeysBuilder.getParms().get(etype.designDocId));
+
     }
 
-    /*abstract */<T> Object visit(DbKeysBuilder<T> dbKeysBuilder,
-                                  ActionBuilder<T> actionBuilder) throws Exception {
-        throw new AbstractMethodError();
+  },
+  @DbTask({tx}) @DbResultUnit(String.class) @DbKeys({db, designDocId})getDesignDoc {
+    @Override
+    <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+      String path = idpath(dbKeysBuilder, etype.designDocId);
+      SocketChannel couchConnection = createCouchConnection();
+      SynchronousQueue returnTo = getQ();
+      AsioVisitor asioVisitor = fetchJsonByPath(couchConnection, returnTo, path);
+      T take = (T) returnTo.poll(3, TimeUnit.SECONDS);
+      recycleChannel(couchConnection);
+      return take;
     }
+  },
+  @DbTask({tx, oneWay}) @DbKeys({db, designDocId, rev, validjson})updateDesignDoc {
+    @Override
+    <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
 
-    public static final String XDEADBEEF_2 = "-0xdeadbeef.2";
-    public static final String XXXXXXXXXXXXXXMETHODS = "/*XXXXXXXXXXXXXXMETHODS*/";
-    public static final String IFACE_FIRE_TARGETS = "/*FIRE_IFACE*/";
-    public static final String BAKED_IN_FIRE = "/*BAKED_IN_FIRE*/";
+      return sendJson(
+          (String) dbKeysBuilder.getParms().get(etype.validjson),
+          (String) dbKeysBuilder.getParms().get(etype.db),
+          (String) dbKeysBuilder.getParms().get(etype.designDocId),
+          (String) dbKeysBuilder.getParms().get(etype.rev));
+
+    }
+  },
+  @DbTask({rows, future, continuousFeed}) @DbResultUnit(CouchResultSet.class) @DbKeys({db, view})getView {
+    @Override
+    <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
+
+      SocketChannel couchConnection = null;
+      String poll = null;
+      try {
+        couchConnection = createCouchConnection();
+        SynchronousQueue<String> q = CouchMetaDriver.<String>getQ();
+        String idpath = idpath(dbKeysBuilder, etype.view);
+        fetchJsonByPath(couchConnection, q, idpath);
+        poll = q.poll(3, TimeUnit.SECONDS);
+      } catch (Exception e) {
+        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      } finally {
+        recycleChannel(couchConnection);
+      }
+
+      return poll;
+    }
+  },
+  @DbTask({tx, oneWay, rows, future, continuousFeed}) @DbKeys({opaque, validjson})sendJson {
+    @Override
+    <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+      String opaque = (String) dbKeysBuilder.getParms().get(etype.opaque);
+      String validjson = (String) dbKeysBuilder.getParms().get(etype.validjson);
+      return sendJson(opaque, validjson);
+    }
+  },
+  @DbTask({tx, future, oneWay}) @DbResultUnit(Rfc822HeaderState.class) @DbKeys({opaque, mimetype, blob})sendBlob {};
+
+  static <T> SynchronousQueue<T> getQ() {
+    SynchronousQueue<T>[] sync = ActionBuilder.currentAction.get().sync();
+    SynchronousQueue<T> returnTo = null;
+    for (SynchronousQueue<T> synchronousQueue : sync) {
+      returnTo = synchronousQueue;
+    }
+    if (null == returnTo) returnTo = new SynchronousQueue<T>();
+    return returnTo;
+  }
+
+  static <T> String idpath(DbKeysBuilder<T> dbKeysBuilder, etype etype) {
+    String db = (String) dbKeysBuilder.getParms().get(etype.db);
+    String id = (String) dbKeysBuilder.getParms().get(etype);
+    return '/' + db + '/' + id;
+  }
 
 
-    public <T> String builder() throws NoSuchFieldException {
-        Field field = CouchMetaDriver.class.getField(name());
+  <T> Object visit() throws Exception {
+    DbKeysBuilder<T> dbKeysBuilder = (DbKeysBuilder<T>) DbKeysBuilder.currentKeys.get();
+    ActionBuilder<T> actionBuilder = (ActionBuilder<T>) ActionBuilder.currentAction.get();
+    return visit(dbKeysBuilder, actionBuilder);
+  }
+
+  /*abstract */<T> Object visit(DbKeysBuilder<T> dbKeysBuilder,
+                                ActionBuilder<T> actionBuilder) throws Exception {
+    throw new AbstractMethodError();
+  }
+
+  public static final String XDEADBEEF_2 = "-0xdeadbeef.2";
+  public static final String XXXXXXXXXXXXXXMETHODS = "/*XXXXXXXXXXXXXXMETHODS*/";
+  public static final String IFACE_FIRE_TARGETS = "/*FIRE_IFACE*/";
+  public static final String BAKED_IN_FIRE = "/*BAKED_IN_FIRE*/";
 
 
-        String s = null;
-        if (field.getType().isAssignableFrom(CouchMetaDriver.class)) {
-            CouchMetaDriver couchDriver = CouchMetaDriver.valueOf(field.getName());
+  public <T> String builder() throws NoSuchFieldException {
+    Field field = CouchMetaDriver.class.getField(name());
 
-            etype[] parms = field.getAnnotation(DbKeys.class).value();
-            Class rtype = CouchTx.class;
-            try {
-                rtype = field.getAnnotation(DbResultUnit.class).value();
-            } catch (Exception e) {
-            }
-            String cn = rtype.getCanonicalName();
-            @Language("JAVA") String s2 = "public class _ename_Builder<T> extends DbKeysBuilder<" +
-                    cn + "> {\n    Rfc822HeaderState rfc822HeaderState;\n    java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);\n    private SynchronousQueue<" +
-                    cn + ">[] dest;\n\n    interface _ename_TerminalBuilder extends TerminalBuilder<" +
-                    cn + "> {\n        " + IFACE_FIRE_TARGETS + "\n    }\n\n   public  class _ename_ActionBuilder extends ActionBuilder<" +
-                    cn + "> {\n        public _ename_ActionBuilder(SynchronousQueue<" +
-                    cn + ">... synchronousQueues) {\n            super(synchronousQueues);\n        }\n \n       @Override\n        public _ename_TerminalBuilder fire() {\n            return new _ename_TerminalBuilder() {" + BAKED_IN_FIRE + "\n            };\n        }\n\n       @Override\n       public _ename_ActionBuilder state(Rfc822HeaderState state) {\n           return super.state(state);     \n       }\n\n       @Override\n       public _ename_ActionBuilder key(java.nio.channels.SelectionKey key) {\n           return super.key(key);  \n       }\n   }\n\n    @Override\n    public  _ename_ActionBuilder  to(SynchronousQueue<" +
-                    cn + ">... dest) {\n        this.dest = dest;\n        if (parms.size() == parmsCount)\n            return  new _ename_ActionBuilder(dest);\n\n        throw new IllegalArgumentException(\"required parameters are: " + arrToString(parms) + "\");\n    }\n    " +
-                    XXXXXXXXXXXXXXMETHODS + "\n" +
-                    "}\n";
-            s = s2;
-            int vl = parms.length;
-            String s1 = "\nstatic private final int parmsCount=" + XDEADBEEF_2 + ";\n";
-            for (int i = 0; i < vl; i++) {
-                etype etype = parms[i];
-                String name = etype.name();
-                Class<? extends Object> clazz = etype.clazz;
-                @Language("JAVA") String y = "public _ename_Builder _name_(_clazz_ _sclazz_){parms.put(DbKeys.etype." + etype.name() + ",_sclazz_);return this;}\n";
-                s1 += y.replace("_name_", etype.name()).replace("_clazz_", clazz.getCanonicalName()).replace("_sclazz_", clazz.getSimpleName().toLowerCase()).replace("_ename_", name());
-            }
-            {
 
-                DbTask annotation = field.getAnnotation(DbTask.class);
-                if (null != annotation) {
-                    DbTerminal[] terminals = annotation.value();
-                    String t = "", iface = "";
-                    for (DbTerminal terminal : terminals) {
-                        iface += terminal.builder(couchDriver, parms, rtype, false);
-                        t += terminal.builder(couchDriver, parms, rtype, true);
+    String s = null;
+    if (field.getType().isAssignableFrom(CouchMetaDriver.class)) {
+      CouchMetaDriver couchDriver = CouchMetaDriver.valueOf(field.getName());
 
-                    }
-                    s = s.replace(BAKED_IN_FIRE, t).replace(IFACE_FIRE_TARGETS, iface);
-                }
-            }
+      etype[] parms = field.getAnnotation(DbKeys.class).value();
+      Class rtype = CouchTx.class;
+      try {
+        rtype = field.getAnnotation(DbResultUnit.class).value();
+      } catch (Exception e) {
+      }
+      String cn = rtype.getCanonicalName();
+      @Language("JAVA") String s2 = "public class _ename_Builder<T> extends DbKeysBuilder<" +
+          cn + "> {\n  private   Rfc822HeaderState rfc822HeaderState;\n    private java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);\n" +
+          "\ninterface _ename_TerminalBuilder extends TerminalBuilder<" +
+          cn + "> {\n        " + IFACE_FIRE_TARGETS + "\n    }\n\n   public  class _ename_ActionBuilder extends ActionBuilder<" +
+          cn + "> {\n        public _ename_ActionBuilder(SynchronousQueue<" +
+          cn + ">... synchronousQueues) {\n            super(synchronousQueues);\n        }\n \n       @Override\n        public _ename_TerminalBuilder fire() {\n            return new _ename_TerminalBuilder() {\n            " + BAKED_IN_FIRE + "\n            };\n        }\n\n       @Override\n       public _ename_ActionBuilder state(Rfc822HeaderState state) {\n           return super.state(state);     \n       }\n\n       @Override\n       public _ename_ActionBuilder key(java.nio.channels.SelectionKey key) {\n           return super.key(key);  \n       }\n   }\n\n    @Override\n    public  _ename_ActionBuilder  to(SynchronousQueue<" +
+          cn + ">... dest) {\n        if (parms.size() == parmsCount)\n            return  new _ename_ActionBuilder(dest);\n\n        throw new IllegalArgumentException(\"required parameters are: " + arrToString(parms) + "\");\n    }\n    " +
+          XXXXXXXXXXXXXXMETHODS + "\n" +
+          "}\n";
+      s = s2;
+      int vl = parms.length;
+      String s1 = "\nstatic private final int parmsCount=" + XDEADBEEF_2 + ";\n";
+      for (int i = 0; i < vl; i++) {
+        etype etype = parms[i];
+        String name = etype.name();
+        Class<? extends Object> clazz = etype.clazz;
+        @Language("JAVA") String y = "public _ename_Builder _name_(_clazz_ _sclazz_){parms.put(DbKeys.etype." + etype.name() + ",_sclazz_);return this;}\n";
+        s1 += y.replace("_name_", etype.name()).replace("_clazz_", clazz.getCanonicalName()).replace("_sclazz_", clazz.getSimpleName().toLowerCase()).replace("_ename_", name());
+      }
+      {
 
-            s = s.replace(XXXXXXXXXXXXXXMETHODS, s1).replace("_ename_", name()).replace(XDEADBEEF_2, String.valueOf(vl));
+        DbTask annotation = field.getAnnotation(DbTask.class);
+        if (null != annotation) {
+          DbTerminal[] terminals = annotation.value();
+          String t = "", iface = "";
+          for (DbTerminal terminal : terminals) {
+            iface += terminal.builder(couchDriver, parms, rtype, false);
+            t += terminal.builder(couchDriver, parms, rtype, true);
+
+          }
+          s = s.replace(BAKED_IN_FIRE, t).replace(IFACE_FIRE_TARGETS, iface);
         }
-        return s;
+      }
+
+      s = s.replace(XXXXXXXXXXXXXXMETHODS, s1).replace("_ename_", name()).replace(XDEADBEEF_2, String.valueOf(vl));
     }
+    return s;
+  }
 
-    public static void main(String... args) throws NoSuchFieldException {
-        Field[] fields = CouchMetaDriver.class.getFields();
-        @Language("JAVA")
-        String s = "package rxf.server;\n//generated\nimport java.util.concurrent.*;\nimport java.util.*;\nimport static rxf.server.DbKeys.*;\nimport static rxf.server.DbKeys.etype.*;\nimport static rxf.server.CouchMetaDriver.*;\nimport java.util.*;\n\n/**\n * generated drivers\n */\npublic interface CouchDriver{";
-        for (Field field : fields)
-            if (field.getType().isAssignableFrom(CouchMetaDriver.class)) {
-                CouchMetaDriver couchDriver = CouchMetaDriver.valueOf(field.getName());
-                DbKeys dbKeys = field.getAnnotation(DbKeys.class);
-                etype[] value = dbKeys.value();
-                {
+  public static void main(String... args) throws NoSuchFieldException {
+    Field[] fields = CouchMetaDriver.class.getFields();
+    @Language("JAVA")
+    String s = "package rxf.server;\n//generated\nimport java.util.concurrent.*;\nimport java.util.*;\nimport static rxf.server.DbKeys.*;\nimport static rxf.server.DbKeys.etype.*;\nimport static rxf.server.CouchMetaDriver.*;\nimport java.util.*;\n\n/**\n * generated drivers\n */\npublic interface CouchDriver{";
+    for (Field field : fields)
+      if (field.getType().isAssignableFrom(CouchMetaDriver.class)) {
+        CouchMetaDriver couchDriver = CouchMetaDriver.valueOf(field.getName());
+        DbKeys dbKeys = field.getAnnotation(DbKeys.class);
+        etype[] value = dbKeys.value();
+        {
 
-                    DbResultUnit annotation = field.getAnnotation(DbResultUnit.class);
-                    s += null != annotation ? annotation.value().getCanonicalName() : CouchTx.class.getCanonicalName();
-                    s += ' ' + couchDriver.name() + '(';
-                    Iterator<etype> iterator = Arrays.asList(value).iterator();
-                    while (iterator.hasNext()) {
-                        etype etype = iterator.next();
-                        s += " " +
-                                etype.clazz.getCanonicalName() + " " + etype.name();
-                        if (iterator.hasNext())
-                            s += ',';
-                    }
-                    s += " );\n";
-                    String builder = couchDriver.builder();
-                    s += "\n" + builder;
-                }
-            }
-        s += "}";
-        System.out.println(s);
-    }
-
-    public static ThreadLocal<SynchronousQueue[]> currentSync = new ThreadLocal<SynchronousQueue[]>();
-
-    /**
-     * try to bind in common couchDriver stuff
-     */
-    public void sanityCheck() {
-
-        try {
-            new CouchDriver.createDocBuilder().db("geoip").docId("current").validjson("{\"created\":\"" + new Date().toGMTString() + "\"}").to().state(new Rfc822HeaderState()).fire().oneWay();
-        } catch (Exception e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+          DbResultUnit annotation = field.getAnnotation(DbResultUnit.class);
+          s += null != annotation ? annotation.value().getCanonicalName() : CouchTx.class.getCanonicalName();
+          s += ' ' + couchDriver.name() + '(';
+          Iterator<etype> iterator = Arrays.asList(value).iterator();
+          while (iterator.hasNext()) {
+            etype etype = iterator.next();
+            s += " " +
+                etype.clazz.getCanonicalName() + " " + etype.name();
+            if (iterator.hasNext())
+              s += ',';
+          }
+          s += " );\n";
+          String builder = couchDriver.builder();
+          s += "\n" + builder;
         }
-    }
+      }
+    s += "}";
+    System.out.println(s);
+  }
+
+  public static ThreadLocal<SynchronousQueue[]> currentSync = new ThreadLocal<SynchronousQueue[]>();
+
 }
 
