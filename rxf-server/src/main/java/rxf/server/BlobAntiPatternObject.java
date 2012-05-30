@@ -633,8 +633,17 @@ public class BlobAntiPatternObject {
     };
   }
 
+  /**
+   * SHOULD NOT handle recycling
+   *
+   * @param returnTo
+   * @param key
+   * @param rescode
+   * @param payload
+   * @throws InterruptedException
+   */
   static void returnJsonStringOrErrorResponse(SynchronousQueue<String> returnTo, SelectionKey key, String rescode, ByteBuffer payload) throws InterruptedException {
-    key.attach(null);
+
     System.err.println("payload: " + UTF8.decode((ByteBuffer) payload.duplicate().rewind()));
     if (!payload.hasRemaining())
       payload.rewind();
