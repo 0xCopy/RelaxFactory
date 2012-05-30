@@ -19,14 +19,23 @@ public interface CouchDriver {
         java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
         private SynchronousQueue<rxf.server.CouchTx>[] dest;
 
+        interface createDbTerminalBuilder extends TerminalBuilder<rxf.server.CouchTx> {
+            CouchTx tx();
+
+            void oneWay();
+        }
+
+        ;
+
+
         @Override
         public ActionBuilder<rxf.server.CouchTx> to(SynchronousQueue<rxf.server.CouchTx>... dest) {
             this.dest = dest;
             if (parms.size() == parmsCount)
                 return new ActionBuilder<rxf.server.CouchTx>() {
                     @Override
-                    public AbstractTerminalBuilder<rxf.server.CouchTx> fire() {
-                        return new AbstractTerminalBuilder<rxf.server.CouchTx>() {
+                    public createDbTerminalBuilder<rxf.server.CouchTx> fire() {
+                        return new createDbTerminalBuilder<rxf.server.CouchTx>() {
                             public CouchTx tx() {
                                 try {
                                     return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.createDb.visit();
@@ -36,7 +45,7 @@ public interface CouchDriver {
                                 return null;
                             }
 
-                            void oneWay() {
+                            public void oneWay() {
                                 BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
                                     @Override
                                     public void run() {
@@ -76,14 +85,23 @@ public interface CouchDriver {
         java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
         private SynchronousQueue<rxf.server.CouchTx>[] dest;
 
+        interface createDocTerminalBuilder extends TerminalBuilder<rxf.server.CouchTx> {
+            CouchTx tx();
+
+            void oneWay();
+        }
+
+        ;
+
+
         @Override
         public ActionBuilder<rxf.server.CouchTx> to(SynchronousQueue<rxf.server.CouchTx>... dest) {
             this.dest = dest;
             if (parms.size() == parmsCount)
                 return new ActionBuilder<rxf.server.CouchTx>() {
                     @Override
-                    public AbstractTerminalBuilder<rxf.server.CouchTx> fire() {
-                        return new AbstractTerminalBuilder<rxf.server.CouchTx>() {
+                    public createDocTerminalBuilder<rxf.server.CouchTx> fire() {
+                        return new createDocTerminalBuilder<rxf.server.CouchTx>() {
                             public CouchTx tx() {
                                 try {
                                     return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.createDoc.visit();
@@ -93,7 +111,7 @@ public interface CouchDriver {
                                 return null;
                             }
 
-                            void oneWay() {
+                            public void oneWay() {
                                 BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
                                     @Override
                                     public void run() {
@@ -138,14 +156,23 @@ public interface CouchDriver {
         java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
         private SynchronousQueue<java.lang.String>[] dest;
 
+        interface getDocTerminalBuilder extends TerminalBuilder<java.lang.String> {
+            java.lang.String pojo();
+
+            Future<java.lang.String> future();
+        }
+
+        ;
+
+
         @Override
         public ActionBuilder<java.lang.String> to(SynchronousQueue<java.lang.String>... dest) {
             this.dest = dest;
             if (parms.size() == parmsCount)
                 return new ActionBuilder<java.lang.String>() {
                     @Override
-                    public AbstractTerminalBuilder<java.lang.String> fire() {
-                        return new AbstractTerminalBuilder<java.lang.String>() {
+                    public getDocTerminalBuilder<java.lang.String> fire() {
+                        return new getDocTerminalBuilder<java.lang.String>() {
                             public java.lang.String pojo() {
                                 try {
                                     return (java.lang.String) rxf.server.CouchMetaDriver.getDoc.visit();
@@ -196,14 +223,23 @@ public interface CouchDriver {
         java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
         private SynchronousQueue<java.lang.String>[] dest;
 
+        interface getRevisionTerminalBuilder extends TerminalBuilder<java.lang.String> {
+            CouchTx tx();
+
+            Future<java.lang.String> future();
+        }
+
+        ;
+
+
         @Override
         public ActionBuilder<java.lang.String> to(SynchronousQueue<java.lang.String>... dest) {
             this.dest = dest;
             if (parms.size() == parmsCount)
                 return new ActionBuilder<java.lang.String>() {
                     @Override
-                    public AbstractTerminalBuilder<java.lang.String> fire() {
-                        return new AbstractTerminalBuilder<java.lang.String>() {
+                    public getRevisionTerminalBuilder<java.lang.String> fire() {
+                        return new getRevisionTerminalBuilder<java.lang.String>() {
                             public CouchTx tx() {
                                 try {
                                     return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.getRevision.visit();
@@ -254,14 +290,25 @@ public interface CouchDriver {
         java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
         private SynchronousQueue<rxf.server.CouchTx>[] dest;
 
+        interface updateDocTerminalBuilder extends TerminalBuilder<rxf.server.CouchTx> {
+            CouchTx tx();
+
+            void oneWay();
+
+            Future<rxf.server.CouchTx> future();
+        }
+
+        ;
+
+
         @Override
         public ActionBuilder<rxf.server.CouchTx> to(SynchronousQueue<rxf.server.CouchTx>... dest) {
             this.dest = dest;
             if (parms.size() == parmsCount)
                 return new ActionBuilder<rxf.server.CouchTx>() {
                     @Override
-                    public AbstractTerminalBuilder<rxf.server.CouchTx> fire() {
-                        return new AbstractTerminalBuilder<rxf.server.CouchTx>() {
+                    public updateDocTerminalBuilder<rxf.server.CouchTx> fire() {
+                        return new updateDocTerminalBuilder<rxf.server.CouchTx>() {
                             public CouchTx tx() {
                                 try {
                                     return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.updateDoc.visit();
@@ -271,7 +318,7 @@ public interface CouchDriver {
                                 return null;
                             }
 
-                            void oneWay() {
+                            public void oneWay() {
                                 BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
                                     @Override
                                     public void run() {
@@ -335,14 +382,23 @@ public interface CouchDriver {
         java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
         private SynchronousQueue<rxf.server.CouchTx>[] dest;
 
+        interface createNewDesignDocTerminalBuilder extends TerminalBuilder<rxf.server.CouchTx> {
+            CouchTx tx();
+
+            void oneWay();
+        }
+
+        ;
+
+
         @Override
         public ActionBuilder<rxf.server.CouchTx> to(SynchronousQueue<rxf.server.CouchTx>... dest) {
             this.dest = dest;
             if (parms.size() == parmsCount)
                 return new ActionBuilder<rxf.server.CouchTx>() {
                     @Override
-                    public AbstractTerminalBuilder<rxf.server.CouchTx> fire() {
-                        return new AbstractTerminalBuilder<rxf.server.CouchTx>() {
+                    public createNewDesignDocTerminalBuilder<rxf.server.CouchTx> fire() {
+                        return new createNewDesignDocTerminalBuilder<rxf.server.CouchTx>() {
                             public CouchTx tx() {
                                 try {
                                     return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.createNewDesignDoc.visit();
@@ -352,7 +408,7 @@ public interface CouchDriver {
                                 return null;
                             }
 
-                            void oneWay() {
+                            public void oneWay() {
                                 BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
                                     @Override
                                     public void run() {
@@ -397,14 +453,21 @@ public interface CouchDriver {
         java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
         private SynchronousQueue<java.lang.String>[] dest;
 
+        interface getDesignDocTerminalBuilder extends TerminalBuilder<java.lang.String> {
+            CouchTx tx();
+        }
+
+        ;
+
+
         @Override
         public ActionBuilder<java.lang.String> to(SynchronousQueue<java.lang.String>... dest) {
             this.dest = dest;
             if (parms.size() == parmsCount)
                 return new ActionBuilder<java.lang.String>() {
                     @Override
-                    public AbstractTerminalBuilder<java.lang.String> fire() {
-                        return new AbstractTerminalBuilder<java.lang.String>() {
+                    public getDesignDocTerminalBuilder<java.lang.String> fire() {
+                        return new getDesignDocTerminalBuilder<java.lang.String>() {
                             public CouchTx tx() {
                                 try {
                                     return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.getDesignDoc.visit();
@@ -433,7 +496,7 @@ public interface CouchDriver {
 
     }
 
-    rxf.server.CouchTx updateDesignDoc(java.lang.String db, java.lang.String designDocId, java.lang.String validjson);
+    rxf.server.CouchTx updateDesignDoc(java.lang.String db, java.lang.String designDocId, java.lang.String rev, java.lang.String validjson);
 
 
     public class updateDesignDocBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
@@ -441,14 +504,23 @@ public interface CouchDriver {
         java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
         private SynchronousQueue<rxf.server.CouchTx>[] dest;
 
+        interface updateDesignDocTerminalBuilder extends TerminalBuilder<rxf.server.CouchTx> {
+            CouchTx tx();
+
+            void oneWay();
+        }
+
+        ;
+
+
         @Override
         public ActionBuilder<rxf.server.CouchTx> to(SynchronousQueue<rxf.server.CouchTx>... dest) {
             this.dest = dest;
             if (parms.size() == parmsCount)
                 return new ActionBuilder<rxf.server.CouchTx>() {
                     @Override
-                    public AbstractTerminalBuilder<rxf.server.CouchTx> fire() {
-                        return new AbstractTerminalBuilder<rxf.server.CouchTx>() {
+                    public updateDesignDocTerminalBuilder<rxf.server.CouchTx> fire() {
+                        return new updateDesignDocTerminalBuilder<rxf.server.CouchTx>() {
                             public CouchTx tx() {
                                 try {
                                     return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.updateDesignDoc.visit();
@@ -458,7 +530,7 @@ public interface CouchDriver {
                                 return null;
                             }
 
-                            void oneWay() {
+                            public void oneWay() {
                                 BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
                                     @Override
                                     public void run() {
@@ -473,10 +545,10 @@ public interface CouchDriver {
                         };
                     }
                 };
-            throw new IllegalArgumentException("required parameters are: [db, designDocId, validjson]");
+            throw new IllegalArgumentException("required parameters are: [db, designDocId, rev, validjson]");
         }
 
-        static private final int parmsCount = 3;
+        static private final int parmsCount = 4;
 
         public updateDesignDocBuilder db(java.lang.String string) {
             parms.put(DbKeys.etype.db, string);
@@ -485,6 +557,11 @@ public interface CouchDriver {
 
         public updateDesignDocBuilder designDocId(java.lang.String string) {
             parms.put(DbKeys.etype.designDocId, string);
+            return this;
+        }
+
+        public updateDesignDocBuilder rev(java.lang.String string) {
+            parms.put(DbKeys.etype.rev, string);
             return this;
         }
 
@@ -503,14 +580,25 @@ public interface CouchDriver {
         java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
         private SynchronousQueue<rxf.server.CouchResultSet>[] dest;
 
+        interface getViewTerminalBuilder extends TerminalBuilder<rxf.server.CouchResultSet> {
+            CouchResultSet<rxf.server.CouchResultSet> rows();
+
+            Future<rxf.server.CouchResultSet> future();
+
+            void continuousFeed();
+        }
+
+        ;
+
+
         @Override
         public ActionBuilder<rxf.server.CouchResultSet> to(SynchronousQueue<rxf.server.CouchResultSet>... dest) {
             this.dest = dest;
             if (parms.size() == parmsCount)
                 return new ActionBuilder<rxf.server.CouchResultSet>() {
                     @Override
-                    public AbstractTerminalBuilder<rxf.server.CouchResultSet> fire() {
-                        return new AbstractTerminalBuilder<rxf.server.CouchResultSet>() {
+                    public getViewTerminalBuilder<rxf.server.CouchResultSet> fire() {
+                        return new getViewTerminalBuilder<rxf.server.CouchResultSet>() {
                             public CouchResultSet<rxf.server.CouchResultSet> rows() {
                                 try {
                                     return (CouchResultSet<rxf.server.CouchResultSet>) rxf.server.CouchMetaDriver.getView.visit();
@@ -565,14 +653,29 @@ public interface CouchDriver {
         java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
         private SynchronousQueue<rxf.server.CouchTx>[] dest;
 
+        interface sendJsonTerminalBuilder extends TerminalBuilder<rxf.server.CouchTx> {
+            CouchTx tx();
+
+            void oneWay();
+
+            CouchResultSet<rxf.server.CouchTx> rows();
+
+            Future<rxf.server.CouchTx> future();
+
+            void continuousFeed();
+        }
+
+        ;
+
+
         @Override
         public ActionBuilder<rxf.server.CouchTx> to(SynchronousQueue<rxf.server.CouchTx>... dest) {
             this.dest = dest;
             if (parms.size() == parmsCount)
                 return new ActionBuilder<rxf.server.CouchTx>() {
                     @Override
-                    public AbstractTerminalBuilder<rxf.server.CouchTx> fire() {
-                        return new AbstractTerminalBuilder<rxf.server.CouchTx>() {
+                    public sendJsonTerminalBuilder<rxf.server.CouchTx> fire() {
+                        return new sendJsonTerminalBuilder<rxf.server.CouchTx>() {
                             public CouchTx tx() {
                                 try {
                                     return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.sendJson.visit();
@@ -582,7 +685,7 @@ public interface CouchDriver {
                                 return null;
                             }
 
-                            void oneWay() {
+                            public void oneWay() {
                                 BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
                                     @Override
                                     public void run() {
@@ -649,14 +752,25 @@ public interface CouchDriver {
         java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<etype, Object>(etype.class);
         private SynchronousQueue<rxf.server.Rfc822HeaderState>[] dest;
 
+        interface sendBlobTerminalBuilder extends TerminalBuilder<rxf.server.Rfc822HeaderState> {
+            CouchTx tx();
+
+            Future<rxf.server.Rfc822HeaderState> future();
+
+            void oneWay();
+        }
+
+        ;
+
+
         @Override
         public ActionBuilder<rxf.server.Rfc822HeaderState> to(SynchronousQueue<rxf.server.Rfc822HeaderState>... dest) {
             this.dest = dest;
             if (parms.size() == parmsCount)
                 return new ActionBuilder<rxf.server.Rfc822HeaderState>() {
                     @Override
-                    public AbstractTerminalBuilder<rxf.server.Rfc822HeaderState> fire() {
-                        return new AbstractTerminalBuilder<rxf.server.Rfc822HeaderState>() {
+                    public sendBlobTerminalBuilder<rxf.server.Rfc822HeaderState> fire() {
+                        return new sendBlobTerminalBuilder<rxf.server.Rfc822HeaderState>() {
                             public CouchTx tx() {
                                 try {
                                     return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.sendBlob.visit();
@@ -680,7 +794,7 @@ public interface CouchDriver {
                                 return null;
                             }
 
-                            void oneWay() {
+                            public void oneWay() {
                                 BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
                                     @Override
                                     public void run() {
