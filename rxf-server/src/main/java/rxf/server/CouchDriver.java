@@ -1,6 +1,7 @@
 package rxf.server;
 //generated
 
+import java.util.Map;
 import java.util.concurrent.*;
 
 /**
@@ -681,6 +682,8 @@ public interface CouchDriver {
     }
 
     public class getViewActionBuilder extends ActionBuilder<rxf.server.CouchResultSet> {
+      private Class<?> cast = Map.class;
+
       public getViewActionBuilder(SynchronousQueue/*<rxf.server.CouchResultSet>*/... synchronousQueues) {
         super(synchronousQueues);
       }
@@ -727,6 +730,11 @@ public interface CouchDriver {
       @Override
       public getViewActionBuilder key(java.nio.channels.SelectionKey key) {
         return super.key(key);
+      }
+
+      public getViewActionBuilder cast(Class<?> entityType1) {
+        cast = entityType1;
+        return this;
       }
     }
 
