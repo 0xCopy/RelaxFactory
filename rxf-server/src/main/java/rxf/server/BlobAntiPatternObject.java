@@ -14,6 +14,10 @@ import java.util.regex.Pattern;
 
 import com.google.gson.*;
 import one.xio.*;
+import rxf.server.CouchDriver.getViewBuilder;
+import rxf.server.CouchDriver.getViewBuilder.getViewActionBuilder;
+import rxf.server.CouchDriver.getViewBuilder.getViewTerminalBuilder;
+import rxf.server.CouchResultSet.tuple;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.min;
@@ -73,7 +77,7 @@ public class BlobAntiPatternObject {
               ByteBuffer headers;
               final ByteBuffer dst;
               //receives impl,path,headers,first block
-              final Object attachment = browserKey.attachment();
+              Object attachment = browserKey.attachment();
               if (!(attachment instanceof Object[])) {
                 throw new UnsupportedOperationException("this GET proxy requires attach(this,path,headers,block0) to function correctly");
               }
@@ -81,7 +85,7 @@ public class BlobAntiPatternObject {
               path = (String) objects[1];
               headers = (ByteBuffer) objects[2];
               dst = (ByteBuffer) objects[3];
-              final Matcher matcher = passthroughExpr.matcher(path);
+              Matcher matcher = passthroughExpr.matcher(path);
               if (matcher.matches()) {
                 String link = matcher.group(1);
 
@@ -95,13 +99,13 @@ public class BlobAntiPatternObject {
                     new AsioVisitor.Impl() {
                       @Override
                       public void onRead(final SelectionKey couchKey) throws Exception {
-                        final SocketChannel channel = (SocketChannel) couchKey.channel();
+                        SocketChannel channel = (SocketChannel) couchKey.channel();
                         channel.read((ByteBuffer) dst.clear());
                         moveCaretToDoubleEol((ByteBuffer) dst.flip());
                         ByteBuffer headers = ((ByteBuffer) dst.duplicate().flip()).slice();
 
-                        final Map<String, int[]> map = HttpHeaders.getHeaders((ByteBuffer) headers.rewind());
-                        final int[] ints = map.get("Content-Length");
+                        Map<String, int[]> map = HttpHeaders.getHeaders((ByteBuffer) headers.rewind());
+                        int[] ints = map.get("Content-Length");
                         final int total = Integer.parseInt(UTF8.decode((ByteBuffer) headers.duplicate().clear().position(ints[0]).limit(ints[1])).toString().trim());
                         final SocketChannel browserChannel = (SocketChannel) browserKey.channel();
                         try {
@@ -118,7 +122,7 @@ public class BlobAntiPatternObject {
                             @Override
                             public void onWrite(SelectionKey key) throws Exception {
                               try {
-                                final int write = browserChannel.write(dst);
+                                int write = browserChannel.write(dst);
                                 if (!dst.hasRemaining() && remaining == 0)
                                   browserChannel.close();
                                 browserKey.selector().wakeup();
@@ -208,7 +212,7 @@ public class BlobAntiPatternObject {
       Visitor roSession;
       roSession = VISITOR_LOCATOR.create(Visitor.class);
       id = roSession.getId();
-      final CouchTx persist = VISITOR_LOCATOR.persist(roSession);
+      CouchTx persist = VISITOR_LOCATOR.persist(roSession);
       id = persist.getId();
       Map<String, String> stringMap = ThreadLocalSetCookies.get();
       if (null == stringMap) {
@@ -250,7 +254,7 @@ public class BlobAntiPatternObject {
   }
 
   public static final BlockingDeque<SocketChannel> couchDq = new LinkedBlockingDeque<SocketChannel>(5);static {
-    final Runnable task = new Runnable() {
+    Runnable task = new Runnable() {
       @Override
       public void run() {
         while (!HttpMethod.killswitch) {
@@ -410,17 +414,17 @@ public class BlobAntiPatternObject {
   }
 
   public static AsioVisitor fetchHeadByPath(final String path, final SocketChannel channel, final SynchronousQueue<String> returnTo) throws ClosedChannelException {
-    final String format = (MessageFormat.format("HEAD /{0} HTTP/1.1\r\n\r\n", path.trim()));
+    String format = (MessageFormat.format("HEAD /{0} HTTP/1.1\r\n\r\n", path.trim()));
     return executeCouchRequest(channel, returnTo, format);
   }
 
   public static AsioVisitor fetchJsonByPath(final SocketChannel channel, final SynchronousQueue<String> returnTo, final String path) throws ClosedChannelException {
-    final String format = (MessageFormat.format("GET /{0} HTTP/1.1\r\n\r\n", path.trim())).replace("//", "/");
+    String format = (MessageFormat.format("GET /{0} HTTP/1.1\r\n\r\n", path.trim())).replace("//", "/");
     return executeCouchRequest(channel, returnTo, format);
   }
 
   public static AsioVisitor executeCouchRequest(final SocketChannel channel, final SynchronousQueue<String> returnTo, final String requestHeaders) throws ClosedChannelException {
-    final AsioVisitor.Impl impl = new AsioVisitor.Impl() {
+    AsioVisitor.Impl impl = new AsioVisitor.Impl() {
       @Override
       public void onWrite(final SelectionKey key) throws IOException {
         System.err.println("attempting connect: " + requestHeaders.trim());
@@ -483,7 +487,7 @@ public class BlobAntiPatternObject {
           int read = channel.read(dst);
           if (-1 == read) {
             channel.socket().close();
-            final String o = GSON.toJson(new CouchTx() {{
+            String o = GSON.toJson(new CouchTx() {{
               setError("closed socket");
               setReason("closed socket");
             }});
@@ -496,7 +500,7 @@ public class BlobAntiPatternObject {
           final String rescode = BlobAntiPatternObject.parseResponseCode(dst);
 
           BlobAntiPatternObject.moveCaretToDoubleEol(dst);
-          final ByteBuffer[] headerBuf = {(ByteBuffer) dst.duplicate().flip()};
+          ByteBuffer[] headerBuf = {(ByteBuffer) dst.duplicate().flip()};
           System.err.println("result: " + UTF8.decode((ByteBuffer) headerBuf[0].rewind()));
           int[] bounds = HttpHeaders.getHeaders((ByteBuffer) headerBuf[0].rewind()).get("Content-Length");
           if (null == bounds) {
@@ -515,13 +519,13 @@ public class BlobAntiPatternObject {
                 public void onRead(SelectionKey key) throws Exception {//chuksizeparser
                   if (cursor == null) {
                     cursor = ByteBuffer.allocate(receiveBufferSize);
-                    final int read1 = channel.read(cursor);
+                    int read1 = channel.read(cursor);
                     cursor.flip();
                   }
                   System.err.println("chunking: " + UTF8.decode(cursor.duplicate()));
-                  final int anchor = cursor.position();
+                  int anchor = cursor.position();
                   while (cursor.hasRemaining() && cursor.get() != '\n') ;
-                  final ByteBuffer line = (ByteBuffer) cursor.duplicate().position(anchor).limit(cursor.position());
+                  ByteBuffer line = (ByteBuffer) cursor.duplicate().position(anchor).limit(cursor.position());
                   String res = UTF8.decode(line).toString().trim();
                   long chunkSize = 0;
                   try {
@@ -537,12 +541,12 @@ public class BlobAntiPatternObject {
                           for (ByteBuffer byteBuffer : ret) {
                             sum += byteBuffer.limit();
                           }
-                          final ByteBuffer allocate = ByteBuffer.allocate(sum);
+                          ByteBuffer allocate = ByteBuffer.allocate(sum);
                           for (ByteBuffer byteBuffer : ret) {
                             allocate.put((ByteBuffer) byteBuffer.flip());
                           }
 
-                          final String o = UTF8.decode((ByteBuffer) allocate.flip()).toString();
+                          String o = UTF8.decode((ByteBuffer) allocate.flip()).toString();
                           System.err.println("total chunked bundle was: " + o);
                           returnTo.put(o);
                           return null;
@@ -564,7 +568,7 @@ public class BlobAntiPatternObject {
                     key.attach(new AsioVisitor.Impl() {
                       @Override
                       public void onRead(SelectionKey key) throws Exception {
-                        final int read1 = channel.read(dest);
+                        int read1 = channel.read(dest);
                         key.selector().wakeup();
                         if (!dest.hasRemaining()) {
                           key.attach(prev);
@@ -695,11 +699,11 @@ public class BlobAntiPatternObject {
   public static String getGenericDocumentProperty(String path, String key) throws IOException {
     SocketChannel couchConnection = null;
     try {
-      final SynchronousQueue<String> returnTo = new SynchronousQueue<String>();
+      SynchronousQueue<String> returnTo = new SynchronousQueue<String>();
       couchConnection = createCouchConnection();
       fetchJsonByPath(couchConnection, returnTo, path);
-      final String take = returnTo.poll(2, TimeUnit.SECONDS);
-      final Map map = GSON.fromJson(take, Map.class);
+      String take = returnTo.poll(2, TimeUnit.SECONDS);
+      Map map = GSON.fromJson(take, Map.class);
       return String.valueOf(map.get(key));
     } catch (Exception e) {
       e.printStackTrace();
@@ -757,7 +761,7 @@ public class BlobAntiPatternObject {
           {
             roSessionLocator = Visitor.createLocator();
             try {
-              final CouchTx persist = roSessionLocator.persist(roSession);
+              CouchTx persist = roSessionLocator.persist(roSession);
 
               id = persist.getId();
               s = GSON.toJson(persist);
@@ -773,6 +777,13 @@ public class BlobAntiPatternObject {
           System.err.println("=================================" + tx);
         }
         {
+          getViewActionBuilder rxf_deal2 = new getViewBuilder().db("rxf_deal").view("_design/rxf__rxf_deal/_view/findByProduct?key=\"test\"").to();
+          getViewTerminalBuilder rxf_deal1 = rxf_deal2.fire();
+          CouchResultSet<CouchResultSet> rxf_deal = rxf_deal1.rows();
+          List<tuple<CouchResultSet>> rows = rxf_deal.rows;
+          System.err.println("==================================" + deepToString(rows));
+        }
+        {
           CouchLocator<Visitor> roSessionLocator = Visitor.createLocator();
 
           Visitor roSession = roSessionLocator.find(Visitor.class, id);
@@ -781,9 +792,9 @@ public class BlobAntiPatternObject {
         }
 
         {
-          final SynchronousQueue<String> returnTo = new SynchronousQueue<String>();
-          final SocketChannel couchConnection = createCouchConnection();
-          final AsioVisitor asioVisitor = fetchHeadByPath("/geoip/current", couchConnection, returnTo);
+          SynchronousQueue<String> returnTo = new SynchronousQueue<String>();
+          SocketChannel couchConnection = createCouchConnection();
+          AsioVisitor asioVisitor = fetchHeadByPath("/geoip/current", couchConnection, returnTo);
           System.err.println("head: " + returnTo.take());
           recycleChannel(couchConnection);
         }
@@ -804,7 +815,7 @@ public class BlobAntiPatternObject {
     serverSocketChannel.socket().bind(new InetSocketAddress(8888));
     serverSocketChannel.configureBlocking(false);
     HttpMethod.enqueue(serverSocketChannel, OP_ACCEPT, topLevel);
-    final SessionCouchAgent<Visitor, String, Class<Visitor>> ro = new SessionCouchAgent<Visitor, String, Class<Visitor>>(VISITOR_LOCATOR);
+    SessionCouchAgent<Visitor, String, Class<Visitor>> ro = new SessionCouchAgent<Visitor, String, Class<Visitor>>(VISITOR_LOCATOR);
     HttpMethod.enqueue(createCouchConnection(), OP_CONNECT | OP_WRITE, ro, ro.getFeedString());
     HttpMethod.init(args, topLevel, 1000);
   }

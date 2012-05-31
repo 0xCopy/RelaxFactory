@@ -5,11 +5,7 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import one.xio.HttpHeaders;
 
@@ -30,6 +26,22 @@ public class Rfc822HeaderState {
   public boolean dirty;
   public String[] headers = {};
   private String[] cookies = {};
+
+  @Override
+  public String toString() {
+    return "Rfc822HeaderState{" +
+        "dirty=" + dirty +
+        ", headers=" + (headers == null ? null : Arrays.asList(headers)) +
+        ", cookies=" + (cookies == null ? null : Arrays.asList(cookies)) +
+        ", sourceRoute=" + sourceRoute +
+        ", headerBuf=" + headerBuf +
+        ", headerStrings=" + headerStrings +
+        ", cookieStrings=" + cookieStrings +
+        ", methodProtocol='" + methodProtocol + '\'' +
+        ", pathRescode='" + pathRescode + '\'' +
+        '}';
+  }
+
   private InetAddress sourceRoute;
 
 
@@ -164,3 +176,69 @@ public class Rfc822HeaderState {
     return this;
   }
 }
+
+//}
+//      rfc822HeaderState.apply((ByteBuffer) dst.flip());
+//
+//            BlobAntiPatternObject.moveCaretToDoubleEol(dst);
+//            ByteBuffer[] headerBuf = {((ByteBuffer) dst.duplicate().flip()).slice()};
+//            if (SendJsonVisitor.DEBUG_SENDJSON) {
+//              System.err.println("result: " + UTF8.decode((ByteBuffer) headerBuf[0].rewind()));
+//            }
+//
+//            int[] bounds = HttpHeaders.getHeaders((ByteBuffer) headerBuf[0].rewind()).get(CONTENT_LENGTH);
+//            if (null == bounds) {
+//
+//              bounds = HttpHeaders.getHeaders((ByteBuffer) headerBuf[0].rewind()).get(TRANSFER_ENCODING);
+//
+//              if (null != bounds) {
+//                key.selector().wakeup();
+//                key.interestOps(OP_READ).attach(new ChunkedEncodingVisitor(dst, receiveBufferSize, channel, returnTo));
+//
+//              }//doChunked
+//            } else {
+//              total = Long.parseLong(UTF8.decode((ByteBuffer) dst.duplicate().limit(bounds[1]).position(bounds[0])).toString().trim());
+//              remaining = total - dst.remaining();
+//
+//              ByteBuffer payload;
+//              if (remaining <= 0) {
+//                payload = dst.slice();
+//                String rescode = rfc822HeaderState.getPathRescode();
+//                BlobAntiPatternObject.returnJsonString(returnTo, key, rescode, payload);
+//              } else {
+//                final LinkedList<ByteBuffer> ll = new LinkedList<ByteBuffer>();
+//                ll.add(dst.slice());
+//                key.selector().wakeup();
+//                key.interestOps(SelectionKey.OP_READ).attach(new Impl() {
+//                  @Override
+//                  public void onRead(SelectionKey key) throws InterruptedException, IOException, ExecutionException {
+//                    ByteBuffer payload = ByteBuffer.allocateDirect(receiveBufferSize);
+//                    int read = channel.read(payload);
+//                    if (-1 == read) {
+//                      key.channel().close();
+//                      if ($DBG && RfPostWrapper.ORIGINS.containsKey(key)) {
+//                        Rfc822HeaderState rfc822HeaderState = RfPostWrapper.ORIGINS.get(key);
+//                        System.err.println("closing " + arrToString(rfc822HeaderState) + wheresWaldo());
+//                      }
+//                      return;
+//                    }
+//                    ll.add(payload);
+//                    remaining -= read;
+//                    if (0 == remaining) {
+//                      payload = ByteBuffer.allocateDirect((int) total);
+//                      ListIterator<ByteBuffer> iter = ll.listIterator();
+//                      while (iter.hasNext()) {
+//                        ByteBuffer buffer = iter.next();
+//                        iter.remove();
+//                        if (buffer.position() == total)
+//                          payload = (ByteBuffer) buffer.flip();
+//                        else
+//                          payload.put(buffer);
+//                      }
+//                      BlobAntiPatternObject.returnJsonString(returnTo, key, rfc822HeaderState.getPathRescode(), payload);
+//                    }
+//                  }
+//                });
+//              }
+//            }
+//            return null;

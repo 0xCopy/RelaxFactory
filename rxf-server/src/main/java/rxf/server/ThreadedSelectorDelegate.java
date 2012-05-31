@@ -15,7 +15,6 @@ public class ThreadedSelectorDelegate<T> extends AsioVisitor.Impl {
 
   @Override
   public void onRead(final SelectionKey key) throws Exception {
-    CouchMetaDriver.currentSync.set(ActionBuilder.currentAction.get().sync());
     BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
       public void run() {
         try {

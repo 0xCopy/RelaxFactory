@@ -1,19 +1,30 @@
 package rxf.server;
 
 import java.lang.reflect.Field;
+import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.text.MessageFormat;
 import java.util.*;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import one.xio.AsioVisitor;
+import one.xio.AsioVisitor.Impl;
+import one.xio.HttpMethod;
 import org.intellij.lang.annotations.Language;
 import rxf.server.DbKeys.etype;
 
+import static java.nio.channels.SelectionKey.OP_CONNECT;
+import static java.nio.channels.SelectionKey.OP_READ;
+import static java.nio.channels.SelectionKey.OP_WRITE;
+import static rxf.server.BlobAntiPatternObject.COOKIE;
+import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 import static rxf.server.BlobAntiPatternObject.arrToString;
 import static rxf.server.BlobAntiPatternObject.createCouchConnection;
+import static rxf.server.BlobAntiPatternObject.deepToString;
 import static rxf.server.BlobAntiPatternObject.fetchHeadByPath;
 import static rxf.server.BlobAntiPatternObject.fetchJsonByPath;
+import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
 import static rxf.server.BlobAntiPatternObject.recycleChannel;
 import static rxf.server.BlobAntiPatternObject.sendJson;
 import static rxf.server.DbKeys.etype.blob;
@@ -75,7 +86,8 @@ public enum CouchMetaDriver {
     <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
       String path = idpath(dbKeysBuilder, etype.docId);
       SocketChannel couchConnection = createCouchConnection();
-      SynchronousQueue returnTo = getQ();
+      SynchronousQueue<Object> returnTo1 = ActionBuilder.get().sync();
+      SynchronousQueue returnTo = returnTo1;
       AsioVisitor asioVisitor = fetchJsonByPath(couchConnection, returnTo, path);
       T take = (T) returnTo.poll(3, TimeUnit.SECONDS);
       recycleChannel(couchConnection);
@@ -89,9 +101,8 @@ public enum CouchMetaDriver {
       T poll = null;
       try {
         couchConnection = createCouchConnection();
-        SynchronousQueue<String> q = getQ();
-        AsioVisitor asioVisitor = fetchHeadByPath(idpath(dbKeysBuilder, etype.docId), couchConnection, q);
-        poll = (T) q.poll(3, TimeUnit.SECONDS);
+        AsioVisitor asioVisitor = fetchHeadByPath(idpath(dbKeysBuilder, etype.docId), couchConnection, (SynchronousQueue<String>) actionBuilder.sync());
+        poll = actionBuilder.sync().poll(3, TimeUnit.SECONDS);
 
       } catch (Exception e) {
         e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
@@ -133,7 +144,8 @@ public enum CouchMetaDriver {
     <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
       String path = idpath(dbKeysBuilder, etype.designDocId);
       SocketChannel couchConnection = createCouchConnection();
-      SynchronousQueue returnTo = getQ();
+      SynchronousQueue<Object> returnTo1 = ActionBuilder.get().sync();
+      SynchronousQueue returnTo = returnTo1;
       AsioVisitor asioVisitor = fetchJsonByPath(couchConnection, returnTo, path);
       T take = (T) returnTo.poll(3, TimeUnit.SECONDS);
       recycleChannel(couchConnection);
@@ -154,16 +166,154 @@ public enum CouchMetaDriver {
   },
   @DbTask({rows, future, continuousFeed}) @DbResultUnit(CouchResultSet.class) @DbKeys({db, view})getView {
     @Override
-    <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
-
+    <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+      SelectionKey key = actionBuilder.key();
       SocketChannel couchConnection = null;
-      String poll = null;
+      Object poll = null;
       try {
-        couchConnection = createCouchConnection();
-        SynchronousQueue<String> q = CouchMetaDriver.<String>getQ();
+        couchConnection = null == key || key.channel().isOpen() ? createCouchConnection() : (SocketChannel) key.channel();
+
         String idpath = idpath(dbKeysBuilder, etype.view);
-        fetchJsonByPath(couchConnection, q, idpath);
-        poll = q.poll(3, TimeUnit.SECONDS);
+        final String format = (MessageFormat.format("GET " + idpath + " HTTP/1.1\r\n\r\n", idpath.trim())).replace("//", "/");
+        final SocketChannel cc = couchConnection;
+        HttpMethod.enqueue(couchConnection, OP_WRITE | OP_CONNECT, new Impl() {
+          @Override
+          public void onWrite(SelectionKey key) throws Exception {
+            actionBuilder.key(key);
+            byte[] bytes = format.getBytes();
+            int write = cc.write(ByteBuffer.wrap(bytes));
+            key.interestOps(OP_READ).attach(new Impl() {
+              @Override
+              public void onRead(SelectionKey key) throws Exception {
+                final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
+                int read = cc.read(dst);
+                Rfc822HeaderState state = new Rfc822HeaderState(COOKIE, "ETag", CONTENT_LENGTH, TRANSFER_ENCODING).apply((ByteBuffer) dst.flip());
+                actionBuilder.state(state);
+
+
+                if (state.getHeaderStrings().containsKey(TRANSFER_ENCODING)) {
+
+                  final ByteBuffer dst1 = dst;
+                  HttpMethod.enqueue(new Impl() {
+                    ByteBuffer cursor = dst1.slice();
+                    private Impl prev = this;
+                    LinkedList<ByteBuffer> ret = new LinkedList<ByteBuffer>();
+                    private final ByteBuffer dst = dst1;
+                    private final int receiveBufferSize = getReceiveBufferSize();
+                    // private final SocketChannel channel;
+                    private SynchronousQueue<String> returnTo = new SynchronousQueue<String>();
+
+                    @Override
+                    public void onRead(SelectionKey key) throws Exception {//chuksizeparser
+                      final SocketChannel channel = (SocketChannel) key.channel();
+
+                      if (null == cursor) {
+                        cursor = ByteBuffer.allocate(receiveBufferSize);
+                        int read1 = channel.read(cursor);
+                        cursor.flip();
+                      }
+                      System.err.println("chunking: " + HttpMethod.UTF8.decode(cursor.duplicate()));
+                      int anchor = cursor.position();
+                      while (cursor.hasRemaining() && '\n' != cursor.get()) ;
+                      ByteBuffer line = (ByteBuffer) cursor.duplicate().position(anchor).limit(cursor.position());
+                      String res = HttpMethod.UTF8.decode(line).toString().trim();
+                      long chunkSize = 0;
+                      try {
+
+                        chunkSize = Long.parseLong(res, 0x10);
+
+
+                        if (0 == chunkSize) {
+                          //send the unwrap to threadpool.
+                          EXECUTOR_SERVICE.submit(new Callable() {
+                            public Void call() throws InterruptedException {
+                              int sum = 0;
+                              for (ByteBuffer byteBuffer : ret) {
+                                sum += byteBuffer.limit();
+                              }
+                              ByteBuffer allocate = ByteBuffer.allocate(sum);
+                              for (ByteBuffer byteBuffer : ret) {
+                                allocate.put((ByteBuffer) byteBuffer.flip());
+                              }
+
+                              String o = HttpMethod.UTF8.decode((ByteBuffer) allocate.flip()).toString();
+                              System.err.println("total chunked bundle was: " + o);
+                              returnTo.put(o);
+                              return null;
+                            }
+                          });
+                          key.selector().wakeup();
+                          key.interestOps(OP_READ).attach(null);
+                          return;
+                        }
+                      } catch (NumberFormatException ignored) {
+
+
+                      }
+                      final ByteBuffer dest = ByteBuffer.allocate((int) chunkSize);
+                      if (!(chunkSize < cursor.remaining())) {//fragments to assemble
+
+                        dest.put(cursor);
+                        key.attach(new Impl() {
+                          @Override
+                          public void onRead(SelectionKey key) throws Exception {
+                            int read1 = channel.read(dest);
+                            key.selector().wakeup();
+                            if (!dest.hasRemaining()) {
+                              key.attach(prev);
+                              cursor = null;
+                              ret.add(dest);
+                            }
+                          }
+                        });
+                      } else {
+                        ByteBuffer src = (ByteBuffer) cursor.slice().limit((int) chunkSize);
+                        cursor.position((int) (cursor.position() + chunkSize + 2));
+                        //                      cursor = dest;
+                        dest.put(src);
+                        ret.add(dest);
+                        onRead(key);      // a goto
+                      }
+
+                    }
+                  });
+//                  final T poll1 = actionBuilder.sync().poll(3, TimeUnit.SECONDS);               inner.poll
+                  EXECUTOR_SERVICE.submit(new Runnable() {
+                    public void run() {
+                      try {
+                        actionBuilder.sync().put((T) new SynchronousQueue<String>().poll(3, TimeUnit.SECONDS));
+                      } catch (Exception e) {
+                        e.printStackTrace();  //todo: verify for a purpose
+                      }
+                      recycleChannel(cc);
+                    }
+                  }).get();
+                  return;
+                }
+                actionBuilder.key(null);
+                System.err.println("view fetch error: " + deepToString(state, HttpMethod.UTF8.decode(dst.slice())));
+                actionBuilder.sync().put(null);
+                cc.close();
+
+
+              }
+            });
+
+
+          }
+        });
+        final Object o = EXECUTOR_SERVICE.submit(
+            new Callable<Object>() {
+              public void run() {
+              }
+
+              @Override
+              public Object call() throws Exception {
+                return actionBuilder.sync().poll(3, TimeUnit.SECONDS);
+              }
+            }).get();
+        System.err.println("view res: " + deepToString(o, actionBuilder));
+        return o;
       } catch (Exception e) {
         e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
       } finally {
@@ -182,16 +332,8 @@ public enum CouchMetaDriver {
     }
   },
   @DbTask({tx, future, oneWay}) @DbResultUnit(Rfc822HeaderState.class) @DbKeys({opaque, mimetype, blob})sendBlob {};
-
-  static <T> SynchronousQueue<T> getQ() {
-    SynchronousQueue<T>[] sync = ActionBuilder.currentAction.get().sync();
-    SynchronousQueue<T> returnTo = null;
-    for (SynchronousQueue<T> synchronousQueue : sync) {
-      returnTo = synchronousQueue;
-    }
-    if (null == returnTo) returnTo = new SynchronousQueue<T>();
-    return returnTo;
-  }
+  public static final String CONTENT_LENGTH = "Content-Length";
+  public static final String TRANSFER_ENCODING = "Transfer-Encoding";
 
   static <T> String idpath(DbKeysBuilder<T> dbKeysBuilder, etype etype) {
     String db = (String) dbKeysBuilder.parms().get(etype.db);
@@ -201,8 +343,8 @@ public enum CouchMetaDriver {
 
 
   <T> Object visit() throws Exception {
-    DbKeysBuilder<T> dbKeysBuilder = (DbKeysBuilder<T>) DbKeysBuilder.currentKeys.get();
-    ActionBuilder<T> actionBuilder = (ActionBuilder<T>) ActionBuilder.currentAction.get();
+    DbKeysBuilder<T> dbKeysBuilder = (DbKeysBuilder<T>) DbKeysBuilder.get();
+    ActionBuilder<T> actionBuilder = (ActionBuilder<T>) ActionBuilder.get();
     return visit(dbKeysBuilder, actionBuilder);
   }
 

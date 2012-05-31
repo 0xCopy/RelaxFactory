@@ -1,6 +1,7 @@
 package rxf.server;
 
 import java.nio.channels.SelectionKey;
+import java.util.Arrays;
 import java.util.concurrent.SynchronousQueue;
 
 /**
@@ -10,41 +11,62 @@ import java.util.concurrent.SynchronousQueue;
  */
 public abstract class ActionBuilder<T> {
 
-    Rfc822HeaderState state;
-    SelectionKey key;
-    static ThreadLocal<ActionBuilder> currentAction = new ThreadLocal<ActionBuilder>();
-    private SynchronousQueue<T>[] synchronousQueues;
+  private Rfc822HeaderState state;
+  private SelectionKey key;
+  private static ThreadLocal<ActionBuilder> currentAction = new ThreadLocal<ActionBuilder>();
+  private SynchronousQueue<T>[] synchronousQueues;
 
-    public ActionBuilder(SynchronousQueue<T>... synchronousQueues) {
-        this.synchronousQueues = synchronousQueues;
-        currentAction.set(this);
-    }
+  public ActionBuilder(SynchronousQueue<T>... synchronousQueues) {
+    this.synchronousQueues = synchronousQueues;
+    currentAction.set(this);
+  }
 
-    public SynchronousQueue<T>[] sync() {
-        return this.synchronousQueues;
-    }
+  public SynchronousQueue<T> sync() {
+    return (0 >= this.synchronousQueues.length ? (synchronousQueues = many(new SynchronousQueue<T>())) : synchronousQueues)[0];
+  }
 
-    public Rfc822HeaderState state() {
-        return this.state;
-    }
+  private SynchronousQueue<T>[] many(SynchronousQueue<T>... ts) {
+    return ts;
+  }
 
-    public SelectionKey key() {
-        return this.key;
-    }
+  @Override
+  public String toString() {
+    return "ActionBuilder{" +
+        "state=" + state +
+        ", key=" + key +
+        ", synchronousQueues=" + (synchronousQueues == null ? null : Arrays.asList(synchronousQueues)) +
+        '}';
+  }
 
-    abstract protected <B extends TerminalBuilder<T>> B fire() throws Exception;
+  public Rfc822HeaderState state() {
+    return this.state == null ? this.state = new Rfc822HeaderState(BlobAntiPatternObject.COOKIE, "ETag") : state;
+  }
+
+  public SelectionKey key() {
+    return this.key;
+  }
+
+  abstract protected <B extends TerminalBuilder<T>> B fire() throws Exception;
 
 
-    protected <B extends ActionBuilder<T>> B state(Rfc822HeaderState state) {
-        this.state = state;
-        return (B) this;
-    }
+  protected <B extends ActionBuilder<T>> B state(Rfc822HeaderState state) {
+    this.state = state;
+    return (B) this;
+  }
 
 
-    protected <B extends ActionBuilder<T>> B key(SelectionKey key) {
-        this.key = key;
+  protected <B extends ActionBuilder<T>> B key(SelectionKey key) {
+    this.key = key;
 
-        return (B) this;
-    }
+    return (B) this;
+  }
 
+  public static <T, B extends ActionBuilder<T>> B get() {
+    return (B) currentAction.get();
+  }
+
+  public <B extends ActionBuilder<T>> B sync(SynchronousQueue<T>... ts) {
+    this.synchronousQueues = ts;
+    return (B) this;
+  }
 }

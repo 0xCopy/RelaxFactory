@@ -8,7 +8,7 @@ import java.util.concurrent.SynchronousQueue;
  * Time: 1:58 PM
  */
 public abstract class DbKeysBuilder<T> {
-  public static ThreadLocal<DbKeysBuilder> currentKeys = new ThreadLocal<DbKeysBuilder>();
+  private static ThreadLocal<DbKeysBuilder> currentKeys = new ThreadLocal<DbKeysBuilder>();
   protected final java.util.EnumMap<DbKeys.etype, Object> parms = new java.util.EnumMap<DbKeys.etype, Object>(DbKeys.etype.class);
 
   protected abstract ActionBuilder<T> to(SynchronousQueue<T>... clients);
@@ -21,9 +21,11 @@ public abstract class DbKeysBuilder<T> {
     return currentKeys;
   }
 
-
   public java.util.EnumMap<DbKeys.etype, Object> parms() {
     return parms;
   }
 
+  public static <T, B extends DbKeysBuilder<T>> B get() {
+    return (B) currentKeys.get();
+  }
 }
