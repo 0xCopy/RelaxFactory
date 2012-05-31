@@ -10,7 +10,7 @@ public interface CouchDriver {
   rxf.server.CouchTx createDb(java.lang.String db, java.lang.String validjson);
 
 
-  class createDbBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
+  public class createDbBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
     private Rfc822HeaderState rfc822HeaderState;
 
 
@@ -21,7 +21,7 @@ public interface CouchDriver {
     }
 
     public class createDbActionBuilder extends ActionBuilder<rxf.server.CouchTx> {
-      public createDbActionBuilder(SynchronousQueue<rxf.server.CouchTx>... synchronousQueues) {
+      public createDbActionBuilder(SynchronousQueue/*<rxf.server.CouchTx>*/... synchronousQueues) {
         super(synchronousQueues);
       }
 
@@ -64,7 +64,7 @@ public interface CouchDriver {
     }
 
     @Override
-    public createDbActionBuilder to(SynchronousQueue<rxf.server.CouchTx>... dest) {
+    public createDbActionBuilder to(SynchronousQueue/*<rxf.server.CouchTx>*/... dest) {
       if (parms.size() == parmsCount)
         return new createDbActionBuilder(dest);
 
@@ -88,7 +88,7 @@ public interface CouchDriver {
   rxf.server.CouchTx createDoc(java.lang.String db, java.lang.String docId, java.lang.String validjson);
 
 
-  class createDocBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
+  public class createDocBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
     private Rfc822HeaderState rfc822HeaderState;
 
 
@@ -99,7 +99,7 @@ public interface CouchDriver {
     }
 
     public class createDocActionBuilder extends ActionBuilder<rxf.server.CouchTx> {
-      public createDocActionBuilder(SynchronousQueue<rxf.server.CouchTx>... synchronousQueues) {
+      public createDocActionBuilder(SynchronousQueue/*<rxf.server.CouchTx>*/... synchronousQueues) {
         super(synchronousQueues);
       }
 
@@ -142,7 +142,7 @@ public interface CouchDriver {
     }
 
     @Override
-    public createDocActionBuilder to(SynchronousQueue<rxf.server.CouchTx>... dest) {
+    public createDocActionBuilder to(SynchronousQueue/*<rxf.server.CouchTx>*/... dest) {
       if (parms.size() == parmsCount)
         return new createDocActionBuilder(dest);
 
@@ -171,7 +171,7 @@ public interface CouchDriver {
   java.lang.String getDoc(java.lang.String db, java.lang.String docId);
 
 
-  class getDocBuilder<T> extends DbKeysBuilder<java.lang.String> {
+  public class getDocBuilder<T> extends DbKeysBuilder<java.lang.String> {
     private Rfc822HeaderState rfc822HeaderState;
 
 
@@ -182,7 +182,7 @@ public interface CouchDriver {
     }
 
     public class getDocActionBuilder extends ActionBuilder<java.lang.String> {
-      public getDocActionBuilder(SynchronousQueue<java.lang.String>... synchronousQueues) {
+      public getDocActionBuilder(SynchronousQueue/*<java.lang.String>*/... synchronousQueues) {
         super(synchronousQueues);
       }
 
@@ -226,7 +226,7 @@ public interface CouchDriver {
     }
 
     @Override
-    public getDocActionBuilder to(SynchronousQueue<java.lang.String>... dest) {
+    public getDocActionBuilder to(SynchronousQueue/*<java.lang.String>*/... dest) {
       if (parms.size() == parmsCount)
         return new getDocActionBuilder(dest);
 
@@ -250,7 +250,7 @@ public interface CouchDriver {
   java.lang.String getRevision(java.lang.String db, java.lang.String docId);
 
 
-  class getRevisionBuilder<T> extends DbKeysBuilder<java.lang.String> {
+  public class getRevisionBuilder<T> extends DbKeysBuilder<java.lang.String> {
     private Rfc822HeaderState rfc822HeaderState;
 
 
@@ -261,7 +261,7 @@ public interface CouchDriver {
     }
 
     public class getRevisionActionBuilder extends ActionBuilder<java.lang.String> {
-      public getRevisionActionBuilder(SynchronousQueue<java.lang.String>... synchronousQueues) {
+      public getRevisionActionBuilder(SynchronousQueue/*<java.lang.String>*/... synchronousQueues) {
         super(synchronousQueues);
       }
 
@@ -305,7 +305,7 @@ public interface CouchDriver {
     }
 
     @Override
-    public getRevisionActionBuilder to(SynchronousQueue<java.lang.String>... dest) {
+    public getRevisionActionBuilder to(SynchronousQueue/*<java.lang.String>*/... dest) {
       if (parms.size() == parmsCount)
         return new getRevisionActionBuilder(dest);
 
@@ -329,7 +329,7 @@ public interface CouchDriver {
   rxf.server.CouchTx updateDoc(java.lang.String db, java.lang.String docId, java.lang.String rev, java.lang.String validjson);
 
 
-  class updateDocBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
+  public class updateDocBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
     private Rfc822HeaderState rfc822HeaderState;
 
 
@@ -342,7 +342,7 @@ public interface CouchDriver {
     }
 
     public class updateDocActionBuilder extends ActionBuilder<rxf.server.CouchTx> {
-      public updateDocActionBuilder(SynchronousQueue<rxf.server.CouchTx>... synchronousQueues) {
+      public updateDocActionBuilder(SynchronousQueue/*<rxf.server.CouchTx>*/... synchronousQueues) {
         super(synchronousQueues);
       }
 
@@ -399,7 +399,7 @@ public interface CouchDriver {
     }
 
     @Override
-    public updateDocActionBuilder to(SynchronousQueue<rxf.server.CouchTx>... dest) {
+    public updateDocActionBuilder to(SynchronousQueue/*<rxf.server.CouchTx>*/... dest) {
       if (parms.size() == parmsCount)
         return new updateDocActionBuilder(dest);
 
@@ -433,7 +433,7 @@ public interface CouchDriver {
   rxf.server.CouchTx createNewDesignDoc(java.lang.String db, java.lang.String designDocId, java.lang.String validjson);
 
 
-  class createNewDesignDocBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
+  public class createNewDesignDocBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
     private Rfc822HeaderState rfc822HeaderState;
 
 
@@ -444,7 +444,7 @@ public interface CouchDriver {
     }
 
     public class createNewDesignDocActionBuilder extends ActionBuilder<rxf.server.CouchTx> {
-      public createNewDesignDocActionBuilder(SynchronousQueue<rxf.server.CouchTx>... synchronousQueues) {
+      public createNewDesignDocActionBuilder(SynchronousQueue/*<rxf.server.CouchTx>*/... synchronousQueues) {
         super(synchronousQueues);
       }
 
@@ -487,7 +487,7 @@ public interface CouchDriver {
     }
 
     @Override
-    public createNewDesignDocActionBuilder to(SynchronousQueue<rxf.server.CouchTx>... dest) {
+    public createNewDesignDocActionBuilder to(SynchronousQueue/*<rxf.server.CouchTx>*/... dest) {
       if (parms.size() == parmsCount)
         return new createNewDesignDocActionBuilder(dest);
 
@@ -516,7 +516,7 @@ public interface CouchDriver {
   java.lang.String getDesignDoc(java.lang.String db, java.lang.String designDocId);
 
 
-  class getDesignDocBuilder<T> extends DbKeysBuilder<java.lang.String> {
+  public class getDesignDocBuilder<T> extends DbKeysBuilder<java.lang.String> {
     private Rfc822HeaderState rfc822HeaderState;
 
 
@@ -525,7 +525,7 @@ public interface CouchDriver {
     }
 
     public class getDesignDocActionBuilder extends ActionBuilder<java.lang.String> {
-      public getDesignDocActionBuilder(SynchronousQueue<java.lang.String>... synchronousQueues) {
+      public getDesignDocActionBuilder(SynchronousQueue/*<java.lang.String>*/... synchronousQueues) {
         super(synchronousQueues);
       }
 
@@ -555,7 +555,7 @@ public interface CouchDriver {
     }
 
     @Override
-    public getDesignDocActionBuilder to(SynchronousQueue<java.lang.String>... dest) {
+    public getDesignDocActionBuilder to(SynchronousQueue/*<java.lang.String>*/... dest) {
       if (parms.size() == parmsCount)
         return new getDesignDocActionBuilder(dest);
 
@@ -579,7 +579,7 @@ public interface CouchDriver {
   rxf.server.CouchTx updateDesignDoc(java.lang.String db, java.lang.String designDocId, java.lang.String rev, java.lang.String validjson);
 
 
-  class updateDesignDocBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
+  public class updateDesignDocBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
     private Rfc822HeaderState rfc822HeaderState;
 
 
@@ -590,7 +590,7 @@ public interface CouchDriver {
     }
 
     public class updateDesignDocActionBuilder extends ActionBuilder<rxf.server.CouchTx> {
-      public updateDesignDocActionBuilder(SynchronousQueue<rxf.server.CouchTx>... synchronousQueues) {
+      public updateDesignDocActionBuilder(SynchronousQueue/*<rxf.server.CouchTx>*/... synchronousQueues) {
         super(synchronousQueues);
       }
 
@@ -633,7 +633,7 @@ public interface CouchDriver {
     }
 
     @Override
-    public updateDesignDocActionBuilder to(SynchronousQueue<rxf.server.CouchTx>... dest) {
+    public updateDesignDocActionBuilder to(SynchronousQueue/*<rxf.server.CouchTx>*/... dest) {
       if (parms.size() == parmsCount)
         return new updateDesignDocActionBuilder(dest);
 
@@ -667,7 +667,7 @@ public interface CouchDriver {
   rxf.server.CouchResultSet getView(java.lang.String db, java.lang.String view);
 
 
-  class getViewBuilder<T> extends DbKeysBuilder<rxf.server.CouchResultSet> {
+  public class getViewBuilder<T> extends DbKeysBuilder<rxf.server.CouchResultSet> {
     private Rfc822HeaderState rfc822HeaderState;
 
 
@@ -681,7 +681,7 @@ public interface CouchDriver {
     }
 
     public class getViewActionBuilder extends ActionBuilder<rxf.server.CouchResultSet> {
-      public getViewActionBuilder(SynchronousQueue<rxf.server.CouchResultSet>... synchronousQueues) {
+      public getViewActionBuilder(SynchronousQueue/*<rxf.server.CouchResultSet>*/... synchronousQueues) {
         super(synchronousQueues);
       }
 
@@ -729,7 +729,7 @@ public interface CouchDriver {
     }
 
     @Override
-    public getViewActionBuilder to(SynchronousQueue<rxf.server.CouchResultSet>... dest) {
+    public getViewActionBuilder to(SynchronousQueue/*<rxf.server.CouchResultSet>*/... dest) {
       if (parms.size() == parmsCount)
         return new getViewActionBuilder(dest);
 
@@ -753,7 +753,7 @@ public interface CouchDriver {
   rxf.server.CouchTx sendJson(java.lang.String opaque, java.lang.String validjson);
 
 
-  class sendJsonBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
+  public class sendJsonBuilder<T> extends DbKeysBuilder<rxf.server.CouchTx> {
     private Rfc822HeaderState rfc822HeaderState;
 
 
@@ -771,7 +771,7 @@ public interface CouchDriver {
     }
 
     public class sendJsonActionBuilder extends ActionBuilder<rxf.server.CouchTx> {
-      public sendJsonActionBuilder(SynchronousQueue<rxf.server.CouchTx>... synchronousQueues) {
+      public sendJsonActionBuilder(SynchronousQueue/*<rxf.server.CouchTx>*/... synchronousQueues) {
         super(synchronousQueues);
       }
 
@@ -841,7 +841,7 @@ public interface CouchDriver {
     }
 
     @Override
-    public sendJsonActionBuilder to(SynchronousQueue<rxf.server.CouchTx>... dest) {
+    public sendJsonActionBuilder to(SynchronousQueue/*<rxf.server.CouchTx>*/... dest) {
       if (parms.size() == parmsCount)
         return new sendJsonActionBuilder(dest);
 
@@ -865,7 +865,7 @@ public interface CouchDriver {
   rxf.server.Rfc822HeaderState sendBlob(java.lang.String opaque, one.xio.MimeType mimetype, java.nio.ByteBuffer blob);
 
 
-  class sendBlobBuilder<T> extends DbKeysBuilder<rxf.server.Rfc822HeaderState> {
+  public class sendBlobBuilder<T> extends DbKeysBuilder<rxf.server.Rfc822HeaderState> {
     private Rfc822HeaderState rfc822HeaderState;
 
 
@@ -878,7 +878,7 @@ public interface CouchDriver {
     }
 
     public class sendBlobActionBuilder extends ActionBuilder<rxf.server.Rfc822HeaderState> {
-      public sendBlobActionBuilder(SynchronousQueue<rxf.server.Rfc822HeaderState>... synchronousQueues) {
+      public sendBlobActionBuilder(SynchronousQueue/*<rxf.server.Rfc822HeaderState>*/... synchronousQueues) {
         super(synchronousQueues);
       }
 
@@ -935,7 +935,7 @@ public interface CouchDriver {
     }
 
     @Override
-    public sendBlobActionBuilder to(SynchronousQueue<rxf.server.Rfc822HeaderState>... dest) {
+    public sendBlobActionBuilder to(SynchronousQueue/*<rxf.server.Rfc822HeaderState>*/... dest) {
       if (parms.size() == parmsCount)
         return new sendBlobActionBuilder(dest);
 

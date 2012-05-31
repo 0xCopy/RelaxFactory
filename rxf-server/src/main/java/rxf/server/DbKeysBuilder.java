@@ -11,7 +11,7 @@ public abstract class DbKeysBuilder<T> {
   private static ThreadLocal<DbKeysBuilder> currentKeys = new ThreadLocal<DbKeysBuilder>();
   protected final java.util.EnumMap<DbKeys.etype, Object> parms = new java.util.EnumMap<DbKeys.etype, Object>(DbKeys.etype.class);
 
-  protected abstract ActionBuilder<T> to(SynchronousQueue<T>... clients);
+  protected abstract ActionBuilder<T> to(SynchronousQueue... clients);
 
   public DbKeysBuilder() {
     currentKeys.set(this);

@@ -14,18 +14,18 @@ public abstract class ActionBuilder<T> {
   private Rfc822HeaderState state;
   private SelectionKey key;
   private static ThreadLocal<ActionBuilder> currentAction = new ThreadLocal<ActionBuilder>();
-  private SynchronousQueue<T>[] synchronousQueues;
+  private SynchronousQueue[] synchronousQueues;
 
-  public ActionBuilder(SynchronousQueue<T>... synchronousQueues) {
+  public ActionBuilder(SynchronousQueue... synchronousQueues) {
     this.synchronousQueues = synchronousQueues;
     currentAction.set(this);
   }
 
-  public SynchronousQueue<T> sync() {
-    return (0 >= this.synchronousQueues.length ? (synchronousQueues = many(new SynchronousQueue<T>())) : synchronousQueues)[0];
+  public SynchronousQueue sync() {
+    return (0 >= this.synchronousQueues.length ? (synchronousQueues = many(new SynchronousQueue())) : synchronousQueues)[0];
   }
 
-  private SynchronousQueue<T>[] many(SynchronousQueue<T>... ts) {
+  private SynchronousQueue[] many(SynchronousQueue... ts) {
     return ts;
   }
 
@@ -65,7 +65,7 @@ public abstract class ActionBuilder<T> {
     return (B) currentAction.get();
   }
 
-  public <B extends ActionBuilder<T>> B sync(SynchronousQueue<T>... ts) {
+  public <B extends ActionBuilder<T>> B sync(SynchronousQueue... ts) {
     this.synchronousQueues = ts;
     return (B) this;
   }

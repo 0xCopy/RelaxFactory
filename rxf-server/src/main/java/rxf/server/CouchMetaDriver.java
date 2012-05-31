@@ -1,12 +1,14 @@
 package rxf.server;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.text.MessageFormat;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.TimeUnit;
 
 import one.xio.AsioVisitor;
 import one.xio.AsioVisitor.Impl;
@@ -102,7 +104,7 @@ public enum CouchMetaDriver {
       try {
         couchConnection = createCouchConnection();
         AsioVisitor asioVisitor = fetchHeadByPath(idpath(dbKeysBuilder, etype.docId), couchConnection, (SynchronousQueue<String>) actionBuilder.sync());
-        poll = actionBuilder.sync().poll(3, TimeUnit.SECONDS);
+        poll = (T) actionBuilder.sync().poll(3, TimeUnit.SECONDS);
 
       } catch (Exception e) {
         e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
@@ -170,6 +172,7 @@ public enum CouchMetaDriver {
       SelectionKey key = actionBuilder.key();
       SocketChannel couchConnection = null;
       Object poll = null;
+      T poll1 = null;
       try {
         couchConnection = null == key || key.channel().isOpen() ? createCouchConnection() : (SocketChannel) key.channel();
 
@@ -187,114 +190,31 @@ public enum CouchMetaDriver {
               public void onRead(SelectionKey key) throws Exception {
                 final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
                 int read = cc.read(dst);
-                Rfc822HeaderState state = new Rfc822HeaderState(COOKIE, "ETag", CONTENT_LENGTH, TRANSFER_ENCODING).apply((ByteBuffer) dst.flip());
+                final Rfc822HeaderState state = new Rfc822HeaderState(COOKIE, "ETag", CONTENT_LENGTH, TRANSFER_ENCODING).apply((ByteBuffer) dst.flip());
                 actionBuilder.state(state);
 
 
                 if (state.getHeaderStrings().containsKey(TRANSFER_ENCODING)) {
 
-                  final ByteBuffer dst1 = dst;
-                  HttpMethod.enqueue(new Impl() {
-                    ByteBuffer cursor = dst1.slice();
-                    private Impl prev = this;
-                    LinkedList<ByteBuffer> ret = new LinkedList<ByteBuffer>();
-                    private final ByteBuffer dst = dst1;
-                    private final int receiveBufferSize = getReceiveBufferSize();
-                    // private final SocketChannel channel;
-                    private SynchronousQueue<String> returnTo = new SynchronousQueue<String>();
-
-                    @Override
-                    public void onRead(SelectionKey key) throws Exception {//chuksizeparser
-                      final SocketChannel channel = (SocketChannel) key.channel();
-
-                      if (null == cursor) {
-                        cursor = ByteBuffer.allocate(receiveBufferSize);
-                        int read1 = channel.read(cursor);
-                        cursor.flip();
-                      }
-                      System.err.println("chunking: " + HttpMethod.UTF8.decode(cursor.duplicate()));
-                      int anchor = cursor.position();
-                      while (cursor.hasRemaining() && '\n' != cursor.get()) ;
-                      ByteBuffer line = (ByteBuffer) cursor.duplicate().position(anchor).limit(cursor.position());
-                      String res = HttpMethod.UTF8.decode(line).toString().trim();
-                      long chunkSize = 0;
-                      try {
-
-                        chunkSize = Long.parseLong(res, 0x10);
-
-
-                        if (0 == chunkSize) {
-                          //send the unwrap to threadpool.
-                          EXECUTOR_SERVICE.submit(new Callable() {
-                            public Void call() throws InterruptedException {
-                              int sum = 0;
-                              for (ByteBuffer byteBuffer : ret) {
-                                sum += byteBuffer.limit();
-                              }
-                              ByteBuffer allocate = ByteBuffer.allocate(sum);
-                              for (ByteBuffer byteBuffer : ret) {
-                                allocate.put((ByteBuffer) byteBuffer.flip());
-                              }
-
-                              String o = HttpMethod.UTF8.decode((ByteBuffer) allocate.flip()).toString();
-                              System.err.println("total chunked bundle was: " + o);
-                              returnTo.put(o);
-                              return null;
-                            }
-                          });
-                          key.selector().wakeup();
-                          key.interestOps(OP_READ).attach(null);
-                          return;
-                        }
-                      } catch (NumberFormatException ignored) {
-
-
-                      }
-                      final ByteBuffer dest = ByteBuffer.allocate((int) chunkSize);
-                      if (!(chunkSize < cursor.remaining())) {//fragments to assemble
-
-                        dest.put(cursor);
-                        key.attach(new Impl() {
-                          @Override
-                          public void onRead(SelectionKey key) throws Exception {
-                            int read1 = channel.read(dest);
-                            key.selector().wakeup();
-                            if (!dest.hasRemaining()) {
-                              key.attach(prev);
-                              cursor = null;
-                              ret.add(dest);
-                            }
-                          }
-                        });
-                      } else {
-                        ByteBuffer src = (ByteBuffer) cursor.slice().limit((int) chunkSize);
-                        cursor.position((int) (cursor.position() + chunkSize + 2));
-                        //                      cursor = dest;
-                        dest.put(src);
-                        ret.add(dest);
-                        onRead(key);      // a goto
-                      }
-
-                    }
-                  });
-//                  final T poll1 = actionBuilder.sync().poll(3, TimeUnit.SECONDS);               inner.poll
+                }
+                {
+                  actionBuilder.key(null);
                   EXECUTOR_SERVICE.submit(new Runnable() {
                     public void run() {
                       try {
-                        actionBuilder.sync().put((T) new SynchronousQueue<String>().poll(3, TimeUnit.SECONDS));
-                      } catch (Exception e) {
+                        System.err.println("view fetch error: " + deepToString(state, HttpMethod.UTF8.decode(dst.slice())));
+                        actionBuilder.sync().put((T) HttpMethod.UTF8.decode((ByteBuffer) dst.slice()));
+                        cc.close();
+                      } catch (RuntimeException e) {
+                        e.printStackTrace();  //todo: verify for a purpose
+                      } catch (InterruptedException e) {
+                        e.printStackTrace();  //todo: verify for a purpose
+                      } catch (IOException e) {
                         e.printStackTrace();  //todo: verify for a purpose
                       }
-                      recycleChannel(cc);
                     }
-                  }).get();
-                  return;
+                  });
                 }
-                actionBuilder.key(null);
-                System.err.println("view fetch error: " + deepToString(state, HttpMethod.UTF8.decode(dst.slice())));
-                actionBuilder.sync().put(null);
-                cc.close();
-
 
               }
             });
@@ -302,25 +222,17 @@ public enum CouchMetaDriver {
 
           }
         });
-        final Object o = EXECUTOR_SERVICE.submit(
-            new Callable<Object>() {
-              public void run() {
-              }
 
-              @Override
-              public Object call() throws Exception {
-                return actionBuilder.sync().poll(3, TimeUnit.SECONDS);
-              }
-            }).get();
-        System.err.println("view res: " + deepToString(o, actionBuilder));
-        return o;
+        poll1 = (T) actionBuilder.sync().poll(3, TimeUnit.SECONDS);
+        System.err.println("view res: " + deepToString(poll1, actionBuilder));
+
       } catch (Exception e) {
         e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
       } finally {
         recycleChannel(couchConnection);
       }
 
-      return poll;
+      return poll1;
     }
   },
   @DbTask({tx, oneWay, rows, future, continuousFeed}) @DbKeys({opaque, validjson})sendJson {
@@ -378,9 +290,9 @@ public enum CouchMetaDriver {
           cn + "> {\n  private Rfc822HeaderState rfc822HeaderState;\n\n" +
           "\n  interface _ename_TerminalBuilder extends TerminalBuilder<" +
           cn + "> {\n    " + IFACE_FIRE_TARGETS + "\n  }\n\n  public class _ename_ActionBuilder extends ActionBuilder<" +
-          cn + "> {\n    public _ename_ActionBuilder(SynchronousQueue<" +
-          cn + ">... synchronousQueues) {\n      super(synchronousQueues);\n    }\n\n    @Override\n    public _ename_TerminalBuilder fire() {\n      return new _ename_TerminalBuilder() {\n        " + BAKED_IN_FIRE + "\n      };\n    }\n\n    @Override\n    public _ename_ActionBuilder state(Rfc822HeaderState state) {\n      return super.state(state);\n    }\n\n    @Override\n    public _ename_ActionBuilder key(java.nio.channels.SelectionKey key) {\n      return super.key(key);\n    }\n  }\n\n  @Override\n  public _ename_ActionBuilder to(SynchronousQueue<" +
-          cn + ">... dest) {\n    if (parms.size() == parmsCount)\n      return new _ename_ActionBuilder(dest);\n\n    throw new IllegalArgumentException(\"required parameters are: " + arrToString(parms) + "\");\n  }\n  " +
+          cn + "> {\n    public _ename_ActionBuilder(SynchronousQueue/*<" +
+          cn + ">*/... synchronousQueues) {\n      super(synchronousQueues);\n    }\n\n    @Override\n    public _ename_TerminalBuilder fire() {\n      return new _ename_TerminalBuilder() {\n        " + BAKED_IN_FIRE + "\n      };\n    }\n\n    @Override\n    public _ename_ActionBuilder state(Rfc822HeaderState state) {\n      return super.state(state);\n    }\n\n    @Override\n    public _ename_ActionBuilder key(java.nio.channels.SelectionKey key) {\n      return super.key(key);\n    }\n  }\n\n  @Override\n  public _ename_ActionBuilder to(SynchronousQueue/*<" +
+          cn + ">*/... dest) {\n    if (parms.size() == parmsCount)\n      return new _ename_ActionBuilder(dest);\n\n    throw new IllegalArgumentException(\"required parameters are: " + arrToString(parms) + "\");\n  }\n  " +
           XXXXXXXXXXXXXXMETHODS + "\n" +
           "}\n";
       s = s2;
