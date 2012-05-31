@@ -14,7 +14,6 @@ import java.util.regex.Pattern;
 
 import com.google.gson.*;
 import one.xio.*;
-import rxf.server.CouchDriver.getViewBuilder;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.min;
@@ -27,6 +26,8 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static one.xio.HttpMethod.GET;
 import static one.xio.HttpMethod.UTF8;
 import static one.xio.HttpMethod.wheresWaldo;
+import static rxf.server.CouchDriver.createDocBuilder;
+import static rxf.server.CouchDriver.getViewBuilder;
 
 /**
  * User: jim
@@ -101,7 +102,7 @@ public class BlobAntiPatternObject {
                         moveCaretToDoubleEol((ByteBuffer) dst.flip());
                         ByteBuffer headers = ((ByteBuffer) dst.duplicate().flip()).slice();
 
-                        Map<String, int[]> map = HttpHeaders.getHeaders((ByteBuffer) headers.rewind());
+                        Map<String, int[]> map = one.xio.HttpHeaders.getHeaders((ByteBuffer) headers.rewind());
                         int[] ints = map.get("Content-Length");
                         final int total = Integer.parseInt(UTF8.decode((ByteBuffer) headers.duplicate().clear().position(ints[0]).limit(ints[1])).toString().trim());
                         final SocketChannel browserChannel = (SocketChannel) browserKey.channel();
@@ -769,12 +770,15 @@ public class BlobAntiPatternObject {
           }
         }
         {
-          CouchTx tx = new CouchDriver.createDocBuilder().db("rxf_visitor").docId("current").validjson("{\"created\":\"" + new Date().toGMTString() + "\"}").to().state(new Rfc822HeaderState()).fire().tx();
+          String json = "{\"created\":\"" + new Date().toGMTString() + "\"}";
+          createDocBuilder createDocBuilder = new createDocBuilder();
+          CouchTx tx = createDocBuilder.db("rxf_visitor").docId("current").validjson(json).to().state(new Rfc822HeaderState()).fire().tx();
 
           System.err.println("=================================" + tx);
         }
         {
-          final CouchResultSet rows = new getViewBuilder().db("rxf_deal").view("_design/rxf__rxf_deal/_view/findByProduct?key=\"test\"").to().fire().rows();
+          getViewBuilder getViewBuilder = new getViewBuilder();
+          CouchResultSet rows = getViewBuilder.db("rxf_deal").view("_design/rxf__rxf_deal/_view/findByProduct?key=\"test\"").to().fire().rows();
           System.err.println("==================================" + deepToString(rows));
         }
         {
