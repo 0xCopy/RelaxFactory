@@ -21,9 +21,9 @@ class SendJsonVisitor extends AsioVisitor.Impl {
   public static final boolean DEBUG_SENDJSON = System.getenv().containsKey("DEBUG_SENDJSON");
   private final String json;
   private final String[] idver;
-  private final SynchronousQueue<String> returnTo;
+  private final SynchronousQueue returnTo;
 
-  public SendJsonVisitor(String json, SynchronousQueue<String> returnTo, String... idver) {
+  public SendJsonVisitor(String json, SynchronousQueue returnTo, String... idver) {
     this.json = json;
     this.returnTo = returnTo;
     this.idver = idver;

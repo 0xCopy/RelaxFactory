@@ -15,9 +15,6 @@ import java.util.regex.Pattern;
 import com.google.gson.*;
 import one.xio.*;
 import rxf.server.CouchDriver.getViewBuilder;
-import rxf.server.CouchDriver.getViewBuilder.getViewActionBuilder;
-import rxf.server.CouchDriver.getViewBuilder.getViewTerminalBuilder;
-import rxf.server.CouchResultSet.tuple;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.min;
@@ -413,17 +410,17 @@ public class BlobAntiPatternObject {
     return rev;
   }
 
-  public static AsioVisitor fetchHeadByPath(final String path, final SocketChannel channel, final SynchronousQueue<String> returnTo) throws ClosedChannelException {
+  public static AsioVisitor fetchHeadByPath(final String path, final SocketChannel channel, final SynchronousQueue returnTo) throws ClosedChannelException {
     String format = (MessageFormat.format("HEAD /{0} HTTP/1.1\r\n\r\n", path.trim()));
     return executeCouchRequest(channel, returnTo, format);
   }
 
-  public static AsioVisitor fetchJsonByPath(final SocketChannel channel, final SynchronousQueue<String> returnTo, final String path) throws ClosedChannelException {
+  public static AsioVisitor fetchJsonByPath(final SocketChannel channel, final SynchronousQueue returnTo, final String path) throws ClosedChannelException {
     String format = (MessageFormat.format("GET /{0} HTTP/1.1\r\n\r\n", path.trim())).replace("//", "/");
     return executeCouchRequest(channel, returnTo, format);
   }
 
-  public static AsioVisitor executeCouchRequest(final SocketChannel channel, final SynchronousQueue<String> returnTo, final String requestHeaders) throws ClosedChannelException {
+  public static AsioVisitor executeCouchRequest(final SocketChannel channel, final SynchronousQueue returnTo, final String requestHeaders) throws ClosedChannelException {
     AsioVisitor.Impl impl = new AsioVisitor.Impl() {
       @Override
       public void onWrite(final SelectionKey key) throws IOException {
@@ -447,9 +444,9 @@ public class BlobAntiPatternObject {
     if (SendJsonVisitor.DEBUG_SENDJSON) System.err.println(arrToString(idver, json) + wheresWaldo());
     try {
       channel = createCouchConnection();
-      SynchronousQueue<String> retVal = new SynchronousQueue<String>();
+      SynchronousQueue retVal = new SynchronousQueue();
       HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, new SendJsonVisitor(json, retVal, idver));
-      take = retVal.poll(2, SECONDS);
+      take = (String) retVal.poll(2, SECONDS);
     } finally {
       recycleChannel(channel);
     }
@@ -460,9 +457,9 @@ public class BlobAntiPatternObject {
     SocketChannel channel = createCouchConnection();
     String take1;
     try {
-      SynchronousQueue<String> retVal = new SynchronousQueue<String>();
+      SynchronousQueue retVal = new SynchronousQueue();
       HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, fetchJsonByPath(channel, retVal, locator.getPathPrefix() + '/' + key));
-      take1 = retVal.poll(2, TimeUnit.SECONDS);
+      take1 = (String) retVal.poll(2, TimeUnit.SECONDS);
     } finally {
       recycleChannel(channel);
     }
@@ -473,7 +470,7 @@ public class BlobAntiPatternObject {
     return linkedHashMap;
   }
 
-  public static AsioVisitor createJsonResponseReader(final SynchronousQueue<String> returnTo) {
+  public static AsioVisitor createJsonResponseReader(final SynchronousQueue returnTo) {
     return new AsioVisitor.Impl() {
       public long total;
       public long remaining;
@@ -646,7 +643,7 @@ public class BlobAntiPatternObject {
    * @param payload
    * @throws InterruptedException
    */
-  static void returnJsonStringOrErrorResponse(SynchronousQueue<String> returnTo, SelectionKey key, String rescode, ByteBuffer payload) throws InterruptedException {
+  static void returnJsonStringOrErrorResponse(SynchronousQueue returnTo, SelectionKey key, String rescode, ByteBuffer payload) throws InterruptedException {
 
     System.err.println("payload: " + UTF8.decode((ByteBuffer) payload.duplicate().rewind()));
     if (!payload.hasRemaining())
@@ -678,9 +675,9 @@ public class BlobAntiPatternObject {
     SocketChannel channel = null;
     try {
       channel = createCouchConnection();
-      SynchronousQueue<String> retVal = new SynchronousQueue<String>();
+      SynchronousQueue retVal = new SynchronousQueue();
       HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, fetchJsonByPath(channel, retVal, path));
-      ret = retVal.poll(2, TimeUnit.SECONDS);
+      ret = (String) retVal.poll(2, TimeUnit.SECONDS);
     } finally {
       recycleChannel(channel);
     }
@@ -699,10 +696,10 @@ public class BlobAntiPatternObject {
   public static String getGenericDocumentProperty(String path, String key) throws IOException {
     SocketChannel couchConnection = null;
     try {
-      SynchronousQueue<String> returnTo = new SynchronousQueue<String>();
+      SynchronousQueue returnTo = new SynchronousQueue();
       couchConnection = createCouchConnection();
       fetchJsonByPath(couchConnection, returnTo, path);
-      String take = returnTo.poll(2, TimeUnit.SECONDS);
+      String take = (String) returnTo.poll(2, TimeUnit.SECONDS);
       Map map = GSON.fromJson(take, Map.class);
       return String.valueOf(map.get(key));
     } catch (Exception e) {
@@ -777,10 +774,7 @@ public class BlobAntiPatternObject {
           System.err.println("=================================" + tx);
         }
         {
-          getViewActionBuilder rxf_deal2 = new getViewBuilder().db("rxf_deal").view("_design/rxf__rxf_deal/_view/findByProduct?key=\"test\"").to();
-          getViewTerminalBuilder rxf_deal1 = rxf_deal2.fire();
-          CouchResultSet<CouchResultSet> rxf_deal = rxf_deal1.rows();
-          List<tuple<CouchResultSet>> rows = rxf_deal.rows;
+          final CouchResultSet rows = new getViewBuilder().db("rxf_deal").view("_design/rxf__rxf_deal/_view/findByProduct?key=\"test\"").to().fire().rows();
           System.err.println("==================================" + deepToString(rows));
         }
         {
@@ -792,7 +786,7 @@ public class BlobAntiPatternObject {
         }
 
         {
-          SynchronousQueue<String> returnTo = new SynchronousQueue<String>();
+          SynchronousQueue returnTo = new SynchronousQueue();
           SocketChannel couchConnection = createCouchConnection();
           AsioVisitor asioVisitor = fetchHeadByPath("/geoip/current", couchConnection, returnTo);
           System.err.println("head: " + returnTo.take());

@@ -78,16 +78,16 @@ public class GeoIpService {
         Map m = null;
         SocketChannel couchConnection = BlobAntiPatternObject.createCouchConnection();
         try {
-          SynchronousQueue<String> retVal = new SynchronousQueue<String>();
+          SynchronousQueue retVal = new SynchronousQueue();
           fetchJsonByPath(couchConnection, retVal, GEOIP_ROOTNODE);
 
-          m = GSON.fromJson(retVal.take(), Map.class);
+          m = GSON.fromJson((String) retVal.take(), Map.class);
           if (2 == m.size() && m.containsKey("responseCode")) {
             Map<String, Date> map = new HashMap<String, Date>();
             //noinspection unchecked
             map.put("created", new Date());
             HttpMethod.enqueue(couchConnection, OP_WRITE, new SendJsonPOST(GSON.toJson(map).trim(), retVal, GEOIP_ROOTNODE));
-            String json = retVal.poll(2, java.util.concurrent.TimeUnit.SECONDS);
+            String json = (String) retVal.poll(2, TimeUnit.SECONDS);
 
 
             m = GSON.fromJson(json, Map.class);
@@ -103,7 +103,7 @@ public class GeoIpService {
     final Map map = EXECUTOR_SERVICE.submit(callable).get();
 
 
-    final SynchronousQueue<String> retVal = new SynchronousQueue<String>();
+    final SynchronousQueue retVal = new SynchronousQueue();
     SocketChannel couchConnection;
     {
       couchConnection = createCouchConnection();
@@ -127,7 +127,7 @@ public class GeoIpService {
             }
           });
     }
-    String take = retVal.poll(2, java.util.concurrent.TimeUnit.SECONDS);
+    String take = (String) retVal.poll(2, TimeUnit.SECONDS);
     final CouchTx couchTx = GSON.fromJson(take, CouchTx.class);
     {
       couchConnection = createCouchConnection();
@@ -149,10 +149,10 @@ public class GeoIpService {
             }
           });
     }
-    take = retVal.poll(2, java.util.concurrent.TimeUnit.SECONDS);
+    take = (String) retVal.poll(2, TimeUnit.SECONDS);
   }
 
-  static void putFile(SelectionKey key, final ByteBuffer d2, String push, final SynchronousQueue<String> synchronousQueue) throws IOException {
+  static void putFile(SelectionKey key, final ByteBuffer d2, String push, final SynchronousQueue synchronousQueue) throws IOException {
     final SocketChannel channel = (SocketChannel) key.channel();
 
     int write = (channel).write(UTF8.encode(push));
@@ -394,7 +394,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
    *
    */
   static void startGeoIpService(final String dbinstance) throws IOException, XPathExpressionException, InterruptedException {
-    final SynchronousQueue<String> retVal = new SynchronousQueue<String>();
+    final SynchronousQueue retVal = new SynchronousQueue();
     SocketChannel connection = BlobAntiPatternObject.createCouchConnection();
 
     HttpMethod.enqueue(connection, OP_CONNECT | OP_WRITE, new AsioVisitor.Impl() {
@@ -441,7 +441,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
             Callable<Object> callable = new Callable<Object>() {
               public Object call() throws Exception {
 
-                String take = retVal.poll(2, java.util.concurrent.TimeUnit.SECONDS);
+                String take = (String) retVal.poll(2, TimeUnit.SECONDS);
                 key.attach(this);
                 System.err.println("rootnode: " + take);
                 Map map = GSON.fromJson(take, Map.class);

@@ -61,9 +61,9 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
       SocketChannel channel = createCouchConnection();
       String take;
       try {
-        SynchronousQueue<String> retVal = new SynchronousQueue<String>();
+        SynchronousQueue retVal = new SynchronousQueue();
         HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, BlobAntiPatternObject.fetchJsonByPath(channel, retVal, getPathPrefix() + '/' + id));
-        take = retVal.poll(2, java.util.concurrent.TimeUnit.SECONDS);
+        take = (String) retVal.poll(2, java.util.concurrent.TimeUnit.SECONDS);
       } finally {
         recycleChannel(channel);
       }
@@ -105,10 +105,10 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
     SocketChannel channel = null;
     try {
       channel = createCouchConnection();
-      SynchronousQueue<String> retVal = new SynchronousQueue<String>();
+      SynchronousQueue retVal = new SynchronousQueue();
       final String s = GSON.toJson(domainObject);
       HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, b ? new SendJsonPOST(s, retVal, getPathPrefix()) : new SendJsonPUT(s, retVal, getPathPrefix() + '/' + id));
-      take = retVal.poll(2, java.util.concurrent.TimeUnit.SECONDS);
+      take = (String) retVal.poll(2, java.util.concurrent.TimeUnit.SECONDS);
     } finally {
       recycleChannel(channel);
     }

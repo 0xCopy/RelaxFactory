@@ -672,7 +672,7 @@ public interface CouchDriver {
 
 
     interface getViewTerminalBuilder extends TerminalBuilder<rxf.server.CouchResultSet> {
-      CouchResultSet<rxf.server.CouchResultSet> rows();
+      CouchResultSet/*<rxf.server.CouchResultSet>*/ rows();
 
       Future<rxf.server.CouchResultSet> future();
 
@@ -688,9 +688,11 @@ public interface CouchDriver {
       @Override
       public getViewTerminalBuilder fire() {
         return new getViewTerminalBuilder() {
-          public CouchResultSet<rxf.server.CouchResultSet> rows() {
+          public CouchResultSet/*<rxf.server.CouchResultSet>*/ rows() {
             try {
-              return (CouchResultSet<rxf.server.CouchResultSet>) rxf.server.CouchMetaDriver.getView.visit();
+              final Object visit = CouchMetaDriver.getView.visit();
+              final CouchResultSet couchResultSet = BlobAntiPatternObject.GSON.fromJson((String) visit, CouchResultSet/*<rxf.server.CouchResultSet>*/.class);
+              return (CouchResultSet/*<rxf.server.CouchResultSet>*/) couchResultSet;
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -762,7 +764,7 @@ public interface CouchDriver {
 
       void oneWay();
 
-      CouchResultSet<rxf.server.CouchTx> rows();
+      CouchResultSet/*<rxf.server.CouchTx>*/ rows();
 
       Future<rxf.server.CouchTx> future();
 
@@ -800,9 +802,9 @@ public interface CouchDriver {
             });
           }
 
-          public CouchResultSet<rxf.server.CouchTx> rows() {
+          public CouchResultSet/*<rxf.server.CouchTx>*/ rows() {
             try {
-              return (CouchResultSet<rxf.server.CouchTx>) rxf.server.CouchMetaDriver.sendJson.visit();
+              return (CouchResultSet/*<rxf.server.CouchTx>*/) BlobAntiPatternObject.GSON.fromJson((String) rxf.server.CouchMetaDriver.sendJson.visit(), CouchResultSet/*<rxf.server.CouchTx>*/.class);
             } catch (Exception e) {
               e.printStackTrace();
             }

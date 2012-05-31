@@ -1,6 +1,5 @@
 package rxf.server;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -103,7 +102,7 @@ public enum CouchMetaDriver {
       T poll = null;
       try {
         couchConnection = createCouchConnection();
-        AsioVisitor asioVisitor = fetchHeadByPath(idpath(dbKeysBuilder, etype.docId), couchConnection, (SynchronousQueue<String>) actionBuilder.sync());
+        AsioVisitor asioVisitor = fetchHeadByPath(idpath(dbKeysBuilder, etype.docId), couchConnection, (SynchronousQueue) actionBuilder.sync());
         poll = (T) actionBuilder.sync().poll(3, TimeUnit.SECONDS);
 
       } catch (Exception e) {
@@ -195,21 +194,19 @@ public enum CouchMetaDriver {
 
 
                 if (state.getHeaderStrings().containsKey(TRANSFER_ENCODING)) {
-
-                }
-                {
+                  //noinspection unchecked
+                  final ChunkedEncodingVisitor ob = new ChunkedEncodingVisitor(dst, getReceiveBufferSize(), actionBuilder.sync());
+                  key.attach(ob);
+                  ob.onRead(key);
+                } else {
                   actionBuilder.key(null);
                   EXECUTOR_SERVICE.submit(new Runnable() {
                     public void run() {
                       try {
                         System.err.println("view fetch error: " + deepToString(state, HttpMethod.UTF8.decode(dst.slice())));
-                        actionBuilder.sync().put((T) HttpMethod.UTF8.decode((ByteBuffer) dst.slice()));
+                        actionBuilder.sync().put(HttpMethod.UTF8.decode(dst.slice()));
                         cc.close();
-                      } catch (RuntimeException e) {
-                        e.printStackTrace();  //todo: verify for a purpose
-                      } catch (InterruptedException e) {
-                        e.printStackTrace();  //todo: verify for a purpose
-                      } catch (IOException e) {
+                      } catch (Throwable e) {
                         e.printStackTrace();  //todo: verify for a purpose
                       }
                     }

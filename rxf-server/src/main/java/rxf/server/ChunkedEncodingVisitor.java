@@ -11,6 +11,7 @@ import one.xio.AsioVisitor;
 
 import static one.xio.HttpMethod.UTF8;
 import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
+import static rxf.server.BlobAntiPatternObject.recycleChannel;
 
 /**
  * User: jim
@@ -25,12 +26,11 @@ class ChunkedEncodingVisitor extends AsioVisitor.Impl {
   private final ByteBuffer dst;
   private final int receiveBufferSize;
   // private final SocketChannel channel;
-  private SynchronousQueue<String> returnTo;
+  private SynchronousQueue returnTo;
 
-  public ChunkedEncodingVisitor(ByteBuffer dst, int receiveBufferSize, SynchronousQueue<String> returnTo) {
+  public ChunkedEncodingVisitor(ByteBuffer dst, int receiveBufferSize, SynchronousQueue returnTo) {
     this.dst = dst;
     this.receiveBufferSize = receiveBufferSize;
-//   this.channel = channel;
     this.returnTo = returnTo;
     cursor = dst.slice();
     prev = this;
@@ -77,7 +77,7 @@ class ChunkedEncodingVisitor extends AsioVisitor.Impl {
           }
         });
         key.selector().wakeup();
-        key.interestOps(SelectionKey.OP_READ).attach(null);
+        recycleChannel(channel);
         return;
       }
     } catch (NumberFormatException ignored) {
