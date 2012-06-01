@@ -7,9 +7,15 @@ public enum DbTerminal {
   oneWay {
     @Override
     public String builder(final CouchMetaDriver couchDriver, DbKeys.etype[] parms, Class unit, boolean implementation) {
-      return (implementation ? " public " : "") + "void " + name() + "()" + (implementation ?
-          "{\n    BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable(){\n@Override\npublic void run(){\n" +
-              "    try{\n    rxf.server.CouchMetaDriver." + couchDriver + ".visit();\n}catch(Exception e){\n    e.printStackTrace();}\n    }\n    });\n}" : ";");
+      return (implementation ? "public " : "") + "void " + name() + "()" + (implementation ?
+          "{\n    BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable(){\n " +
+              " DbKeysBuilder<Object>dbKeysBuilder=(DbKeysBuilder<Object>)DbKeysBuilder.get();\n " +
+              " ActionBuilder<Object>actionBuilder=(ActionBuilder<Object>)ActionBuilder.get();\n " +
+              "\n" +
+              "@Override\n" +
+              "public void run(){\n" +
+              "    try{\n\n" +
+              "rxf.server.CouchMetaDriver." + couchDriver + ".visit(dbKeysBuilder,actionBuilder);\n}catch(Exception e){\n    e.printStackTrace();}\n    }\n    });\n}" : ";");
     }
   },
   /**
@@ -68,25 +74,22 @@ public enum DbTerminal {
    * returns the Future<?> used.
    */
   future {
-    public String buildAction(final CouchMetaDriver couchDriver, DbKeys.etype[] parms, final Class unit, boolean implementation) {
-      return "";
-    }
-
     @Override
 
     public String builder(final CouchMetaDriver couchDriver, DbKeys.etype[] parms, final Class unit, boolean implementation) {
       final String rt = unit.getCanonicalName();
       final String canonicalName = rt;
       return
-          (implementation ? " public " : "") + " Future<" + rt +
+          (implementation ? "public " : "") + "Future<" + rt +
               ">future()" +
-              (implementation ? "{\n    try {\n\n    BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<" + canonicalName +
-                  ">(){\n"
+              (implementation ? "{\n    try{\n    BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<" + canonicalName +
+                  ">(){\n\n\n    DbKeysBuilder<" + rt + ">dbKeysBuilder=(DbKeysBuilder<" + rt + ">)DbKeysBuilder.get();\n" +
+                  "ActionBuilder<" + rt + ">actionBuilder=(ActionBuilder<" + rt + ">)ActionBuilder.get();\n\n"
                   +
                   "public " +
-                  canonicalName + " call()throws Exception{\n" +
-                  "    return(" + canonicalName + ")rxf.server.CouchMetaDriver." + couchDriver +
-                  ".visit();}});\n    }catch(Exception e){e.printStackTrace();} return null;} " : ";");
+                  canonicalName + " call()throws Exception{ \n    " +
+                  "return(" + canonicalName + ")rxf.server.CouchMetaDriver." + couchDriver +
+                  ".visit(dbKeysBuilder,actionBuilder);}});\n}catch(Exception e){e.printStackTrace();}return null;}" : ";");
     }
   },
   /**
