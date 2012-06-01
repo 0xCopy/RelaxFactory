@@ -8,14 +8,17 @@ public enum DbTerminal {
     @Override
     public String builder(final CouchMetaDriver couchDriver, DbKeys.etype[] parms, Class unit, boolean implementation) {
       return (implementation ? "public " : "") + "void " + name() + "()" + (implementation ?
-          "{\n    BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable(){\n " +
-              " DbKeysBuilder<Object>dbKeysBuilder=(DbKeysBuilder<Object>)DbKeysBuilder.get();\n " +
-              " ActionBuilder<Object>actionBuilder=(ActionBuilder<Object>)ActionBuilder.get();\n " +
+          "{\n    " +
+              "final DbKeysBuilder<Object>dbKeysBuilder=(DbKeysBuilder<Object>)DbKeysBuilder.get();\n " +
+              "final ActionBuilder<Object>actionBuilder=(ActionBuilder<Object>)ActionBuilder.get();\n " +
+              "BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable(){\n " +
               "\n" +
               "@Override\n" +
               "public void run(){\n" +
               "    try{\n\n" +
-              "rxf.server.CouchMetaDriver." + couchDriver + ".visit(dbKeysBuilder,actionBuilder);\n}catch(Exception e){\n    e.printStackTrace();}\n    }\n    });\n}" : ";");
+              "      DbKeysBuilder.currentKeys.set(dbKeysBuilder);   \n" +
+              "      ActionBuilder.currentAction.set(actionBuilder); \n" +
+              "rxf.server.CouchMetaDriver." + couchDriver + ".visit(/*dbKeysBuilder,actionBuilder*/);\n}catch(Exception e){\n    e.printStackTrace();}\n    }\n    });\n}" : ";");
     }
   },
   /**
@@ -83,11 +86,13 @@ public enum DbTerminal {
           (implementation ? "public " : "") + "Future<" + rt +
               ">future()" +
               (implementation ? "{\n    try{\n    BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<" + canonicalName +
-                  ">(){\n\n\n    DbKeysBuilder<" + rt + ">dbKeysBuilder=(DbKeysBuilder<" + rt + ">)DbKeysBuilder.get();\n" +
-                  "ActionBuilder<" + rt + ">actionBuilder=(ActionBuilder<" + rt + ">)ActionBuilder.get();\n\n"
+                  ">(){\n\n\n  final  DbKeysBuilder dbKeysBuilder=(DbKeysBuilder )DbKeysBuilder.get();\n" +
+                  "final ActionBuilder actionBuilder=(ActionBuilder )ActionBuilder.get();\n\n"
                   +
                   "public " +
-                  canonicalName + " call()throws Exception{ \n    " +
+                  canonicalName + " call()throws Exception{ \n        \n" +
+                  "                    DbKeysBuilder.currentKeys.set(dbKeysBuilder);  \n" +
+                  " ActionBuilder.currentAction.set(actionBuilder);  " +
                   "return(" + canonicalName + ")rxf.server.CouchMetaDriver." + couchDriver +
                   ".visit(dbKeysBuilder,actionBuilder);}});\n}catch(Exception e){e.printStackTrace();}return null;}" : ";");
     }

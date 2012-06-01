@@ -46,7 +46,7 @@ class ChunkedEncodingVisitor extends AsioVisitor.Impl {
       int read1 = channel.read(cursor);
       cursor.flip();
     }
-    System.err.println("chunking: " + UTF8.decode(cursor.duplicate()));
+//    System.err.println("chunking: " + UTF8.decode(cursor.duplicate()));
     int anchor = cursor.position();
     while (cursor.hasRemaining() && '\n' != cursor.get()) ;
     ByteBuffer line = (ByteBuffer) cursor.duplicate().position(anchor).limit(cursor.position());

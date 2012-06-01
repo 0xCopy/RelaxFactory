@@ -13,7 +13,7 @@ public abstract class ActionBuilder<T> {
 
   private Rfc822HeaderState state;
   private SelectionKey key;
-  private static ThreadLocal<ActionBuilder> currentAction = new ThreadLocal<ActionBuilder>();
+  protected static ThreadLocal<ActionBuilder> currentAction = new InheritableThreadLocal<ActionBuilder>();
   private SynchronousQueue[] synchronousQueues;
 
   public ActionBuilder(SynchronousQueue... synchronousQueues) {

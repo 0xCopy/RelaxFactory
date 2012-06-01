@@ -8,7 +8,7 @@ import java.util.concurrent.SynchronousQueue;
  * Time: 1:58 PM
  */
 public abstract class DbKeysBuilder<T> {
-  private static ThreadLocal<DbKeysBuilder> currentKeys = new ThreadLocal<DbKeysBuilder>();
+  protected static ThreadLocal<DbKeysBuilder> currentKeys = new InheritableThreadLocal<DbKeysBuilder>();
   protected final java.util.EnumMap<DbKeys.etype, Object> parms = new java.util.EnumMap<DbKeys.etype, Object>(DbKeys.etype.class);
 
   protected abstract ActionBuilder<T> to(SynchronousQueue... clients);

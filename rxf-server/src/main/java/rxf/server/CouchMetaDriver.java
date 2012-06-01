@@ -197,9 +197,7 @@ public enum CouchMetaDriver {
 
     @Override
     <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
-//
-//      return sendJson(
-//          (String) dbKeysBuilder.parms().get(etype.validjson),
+
       final String s1 = (String) dbKeysBuilder.parms().get(etype.validjson);
       final byte[] bytes = s1.getBytes(UTF8);
 

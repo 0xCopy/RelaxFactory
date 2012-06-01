@@ -38,15 +38,17 @@ public interface CouchDriver {
           }
 
           public void oneWay() {
+            final DbKeysBuilder<Object> dbKeysBuilder = (DbKeysBuilder<Object>) DbKeysBuilder.get();
+            final ActionBuilder<Object> actionBuilder = (ActionBuilder<Object>) ActionBuilder.get();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
-              DbKeysBuilder<Object> dbKeysBuilder = (DbKeysBuilder<Object>) DbKeysBuilder.get();
-              ActionBuilder<Object> actionBuilder = (ActionBuilder<Object>) ActionBuilder.get();
 
               @Override
               public void run() {
                 try {
 
-                  rxf.server.CouchMetaDriver.createDb.visit(dbKeysBuilder, actionBuilder);
+                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+                  ActionBuilder.currentAction.set(actionBuilder);
+                  rxf.server.CouchMetaDriver.createDb.visit(/*dbKeysBuilder,actionBuilder*/);
                 } catch (Exception e) {
                   e.printStackTrace();
                 }
@@ -120,15 +122,17 @@ public interface CouchDriver {
           }
 
           public void oneWay() {
+            final DbKeysBuilder<Object> dbKeysBuilder = (DbKeysBuilder<Object>) DbKeysBuilder.get();
+            final ActionBuilder<Object> actionBuilder = (ActionBuilder<Object>) ActionBuilder.get();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
-              DbKeysBuilder<Object> dbKeysBuilder = (DbKeysBuilder<Object>) DbKeysBuilder.get();
-              ActionBuilder<Object> actionBuilder = (ActionBuilder<Object>) ActionBuilder.get();
 
               @Override
               public void run() {
                 try {
 
-                  rxf.server.CouchMetaDriver.createDoc.visit(dbKeysBuilder, actionBuilder);
+                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+                  ActionBuilder.currentAction.set(actionBuilder);
+                  rxf.server.CouchMetaDriver.createDoc.visit(/*dbKeysBuilder,actionBuilder*/);
                 } catch (Exception e) {
                   e.printStackTrace();
                 }
@@ -211,10 +215,13 @@ public interface CouchDriver {
               BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<java.lang.String>() {
 
 
-                DbKeysBuilder<java.lang.String> dbKeysBuilder = (DbKeysBuilder<java.lang.String>) DbKeysBuilder.get();
-                ActionBuilder<java.lang.String> actionBuilder = (ActionBuilder<java.lang.String>) ActionBuilder.get();
+                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
+                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
                 public java.lang.String call() throws Exception {
+
+                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+                  ActionBuilder.currentAction.set(actionBuilder);
                   return (java.lang.String) rxf.server.CouchMetaDriver.getDoc.visit(dbKeysBuilder, actionBuilder);
                 }
               });
@@ -294,10 +301,13 @@ public interface CouchDriver {
               BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<java.lang.String>() {
 
 
-                DbKeysBuilder<java.lang.String> dbKeysBuilder = (DbKeysBuilder<java.lang.String>) DbKeysBuilder.get();
-                ActionBuilder<java.lang.String> actionBuilder = (ActionBuilder<java.lang.String>) ActionBuilder.get();
+                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
+                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
                 public java.lang.String call() throws Exception {
+
+                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+                  ActionBuilder.currentAction.set(actionBuilder);
                   return (java.lang.String) rxf.server.CouchMetaDriver.getRevision.visit(dbKeysBuilder, actionBuilder);
                 }
               });
@@ -375,15 +385,17 @@ public interface CouchDriver {
           }
 
           public void oneWay() {
+            final DbKeysBuilder<Object> dbKeysBuilder = (DbKeysBuilder<Object>) DbKeysBuilder.get();
+            final ActionBuilder<Object> actionBuilder = (ActionBuilder<Object>) ActionBuilder.get();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
-              DbKeysBuilder<Object> dbKeysBuilder = (DbKeysBuilder<Object>) DbKeysBuilder.get();
-              ActionBuilder<Object> actionBuilder = (ActionBuilder<Object>) ActionBuilder.get();
 
               @Override
               public void run() {
                 try {
 
-                  rxf.server.CouchMetaDriver.updateDoc.visit(dbKeysBuilder, actionBuilder);
+                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+                  ActionBuilder.currentAction.set(actionBuilder);
+                  rxf.server.CouchMetaDriver.updateDoc.visit(/*dbKeysBuilder,actionBuilder*/);
                 } catch (Exception e) {
                   e.printStackTrace();
                 }
@@ -396,10 +408,13 @@ public interface CouchDriver {
               BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<rxf.server.CouchTx>() {
 
 
-                DbKeysBuilder<rxf.server.CouchTx> dbKeysBuilder = (DbKeysBuilder<rxf.server.CouchTx>) DbKeysBuilder.get();
-                ActionBuilder<rxf.server.CouchTx> actionBuilder = (ActionBuilder<rxf.server.CouchTx>) ActionBuilder.get();
+                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
+                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
                 public rxf.server.CouchTx call() throws Exception {
+
+                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+                  ActionBuilder.currentAction.set(actionBuilder);
                   return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.updateDoc.visit(dbKeysBuilder, actionBuilder);
                 }
               });
@@ -485,15 +500,17 @@ public interface CouchDriver {
           }
 
           public void oneWay() {
+            final DbKeysBuilder<Object> dbKeysBuilder = (DbKeysBuilder<Object>) DbKeysBuilder.get();
+            final ActionBuilder<Object> actionBuilder = (ActionBuilder<Object>) ActionBuilder.get();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
-              DbKeysBuilder<Object> dbKeysBuilder = (DbKeysBuilder<Object>) DbKeysBuilder.get();
-              ActionBuilder<Object> actionBuilder = (ActionBuilder<Object>) ActionBuilder.get();
 
               @Override
               public void run() {
                 try {
 
-                  rxf.server.CouchMetaDriver.createNewDesignDoc.visit(dbKeysBuilder, actionBuilder);
+                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+                  ActionBuilder.currentAction.set(actionBuilder);
+                  rxf.server.CouchMetaDriver.createNewDesignDoc.visit(/*dbKeysBuilder,actionBuilder*/);
                 } catch (Exception e) {
                   e.printStackTrace();
                 }
@@ -635,15 +652,17 @@ public interface CouchDriver {
           }
 
           public void oneWay() {
+            final DbKeysBuilder<Object> dbKeysBuilder = (DbKeysBuilder<Object>) DbKeysBuilder.get();
+            final ActionBuilder<Object> actionBuilder = (ActionBuilder<Object>) ActionBuilder.get();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
-              DbKeysBuilder<Object> dbKeysBuilder = (DbKeysBuilder<Object>) DbKeysBuilder.get();
-              ActionBuilder<Object> actionBuilder = (ActionBuilder<Object>) ActionBuilder.get();
 
               @Override
               public void run() {
                 try {
 
-                  rxf.server.CouchMetaDriver.updateDesignDoc.visit(dbKeysBuilder, actionBuilder);
+                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+                  ActionBuilder.currentAction.set(actionBuilder);
+                  rxf.server.CouchMetaDriver.updateDesignDoc.visit(/*dbKeysBuilder,actionBuilder*/);
                 } catch (Exception e) {
                   e.printStackTrace();
                 }
@@ -734,10 +753,13 @@ public interface CouchDriver {
               BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<rxf.server.CouchResultSet>() {
 
 
-                DbKeysBuilder<rxf.server.CouchResultSet> dbKeysBuilder = (DbKeysBuilder<rxf.server.CouchResultSet>) DbKeysBuilder.get();
-                ActionBuilder<rxf.server.CouchResultSet> actionBuilder = (ActionBuilder<rxf.server.CouchResultSet>) ActionBuilder.get();
+                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
+                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
                 public rxf.server.CouchResultSet call() throws Exception {
+
+                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+                  ActionBuilder.currentAction.set(actionBuilder);
                   return (rxf.server.CouchResultSet) rxf.server.CouchMetaDriver.getView.visit(dbKeysBuilder, actionBuilder);
                 }
               });
@@ -824,15 +846,17 @@ public interface CouchDriver {
           }
 
           public void oneWay() {
+            final DbKeysBuilder<Object> dbKeysBuilder = (DbKeysBuilder<Object>) DbKeysBuilder.get();
+            final ActionBuilder<Object> actionBuilder = (ActionBuilder<Object>) ActionBuilder.get();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
-              DbKeysBuilder<Object> dbKeysBuilder = (DbKeysBuilder<Object>) DbKeysBuilder.get();
-              ActionBuilder<Object> actionBuilder = (ActionBuilder<Object>) ActionBuilder.get();
 
               @Override
               public void run() {
                 try {
 
-                  rxf.server.CouchMetaDriver.sendJson.visit(dbKeysBuilder, actionBuilder);
+                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+                  ActionBuilder.currentAction.set(actionBuilder);
+                  rxf.server.CouchMetaDriver.sendJson.visit(/*dbKeysBuilder,actionBuilder*/);
                 } catch (Exception e) {
                   e.printStackTrace();
                 }
@@ -854,10 +878,13 @@ public interface CouchDriver {
               BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<rxf.server.CouchTx>() {
 
 
-                DbKeysBuilder<rxf.server.CouchTx> dbKeysBuilder = (DbKeysBuilder<rxf.server.CouchTx>) DbKeysBuilder.get();
-                ActionBuilder<rxf.server.CouchTx> actionBuilder = (ActionBuilder<rxf.server.CouchTx>) ActionBuilder.get();
+                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
+                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
                 public rxf.server.CouchTx call() throws Exception {
+
+                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+                  ActionBuilder.currentAction.set(actionBuilder);
                   return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.sendJson.visit(dbKeysBuilder, actionBuilder);
                 }
               });
@@ -943,10 +970,13 @@ public interface CouchDriver {
               BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<rxf.server.Rfc822HeaderState>() {
 
 
-                DbKeysBuilder<rxf.server.Rfc822HeaderState> dbKeysBuilder = (DbKeysBuilder<rxf.server.Rfc822HeaderState>) DbKeysBuilder.get();
-                ActionBuilder<rxf.server.Rfc822HeaderState> actionBuilder = (ActionBuilder<rxf.server.Rfc822HeaderState>) ActionBuilder.get();
+                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
+                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
                 public rxf.server.Rfc822HeaderState call() throws Exception {
+
+                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+                  ActionBuilder.currentAction.set(actionBuilder);
                   return (rxf.server.Rfc822HeaderState) rxf.server.CouchMetaDriver.sendBlob.visit(dbKeysBuilder, actionBuilder);
                 }
               });
@@ -957,15 +987,17 @@ public interface CouchDriver {
           }
 
           public void oneWay() {
+            final DbKeysBuilder<Object> dbKeysBuilder = (DbKeysBuilder<Object>) DbKeysBuilder.get();
+            final ActionBuilder<Object> actionBuilder = (ActionBuilder<Object>) ActionBuilder.get();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
-              DbKeysBuilder<Object> dbKeysBuilder = (DbKeysBuilder<Object>) DbKeysBuilder.get();
-              ActionBuilder<Object> actionBuilder = (ActionBuilder<Object>) ActionBuilder.get();
 
               @Override
               public void run() {
                 try {
 
-                  rxf.server.CouchMetaDriver.sendBlob.visit(dbKeysBuilder, actionBuilder);
+                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+                  ActionBuilder.currentAction.set(actionBuilder);
+                  rxf.server.CouchMetaDriver.sendBlob.visit(/*dbKeysBuilder,actionBuilder*/);
                 } catch (Exception e) {
                   e.printStackTrace();
                 }
