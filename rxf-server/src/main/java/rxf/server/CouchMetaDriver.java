@@ -19,6 +19,7 @@ import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpMethod.UTF8;
+import static one.xio.HttpMethod.wheresWaldo;
 import static rxf.server.BlobAntiPatternObject.COOKIE;
 import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 import static rxf.server.BlobAntiPatternObject.arrToString;
@@ -140,15 +141,13 @@ public enum CouchMetaDriver {
           });
           cyclicBarrier.await(3, TimeUnit.SECONDS);
           Map<String, String> headerStrings = state.getHeaderStrings();
-          final boolean b = null == headerStrings;
-          final boolean b1 = !headerStrings.containsKey(ETAG);
 
-          final boolean b2 = b || b1;
+          boolean b2 = null == headerStrings || !headerStrings.containsKey(ETAG);
 
           CouchTx ctx = new CouchTx().id(pathRescode).ok(!b2);
 
           ctx = b2 ?
-              ctx.error(state.pathRescode()).reason(state.methodProtocol()) :
+              ctx.error(state.pathResCode()).reason(state.methodProtocol()) :
               ctx.ok(true).rev(state.headerString(ETAG));
           return ctx;
         }
@@ -196,80 +195,107 @@ public enum CouchMetaDriver {
     AtomicReference<CouchTx> payload = new AtomicReference<CouchTx>();
 
     @Override
-    <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+    <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+      Callable<T> callable = new Callable<T>() {
+        public T call() throws Exception {
 
-      final String s1 = (String) dbKeysBuilder.parms().get(etype.validjson);
-      final byte[] bytes = s1.getBytes(UTF8);
+          final String s1 = (String) dbKeysBuilder.parms().get(etype.validjson);
+          final byte[] bytes = s1.getBytes(UTF8);
 
-      final String path = "/" + dbKeysBuilder.parms().get(etype.db) +
-          "/" + dbKeysBuilder.parms().get(etype.designDocId) +
-          "?rev=" + dbKeysBuilder.parms().get(etype.rev);
-      final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
+          final String o = (String) dbKeysBuilder.parms().get(etype.rev);
+          assert null != o;
+          final Object o1 = dbKeysBuilder.parms().get(etype.db);
+          final Object o2 = dbKeysBuilder.parms().get(etype.designDocId);
+          final String path = "/" + o1 +
+              "/" + o2 +
+              "?rev=" + o.replace("\"", "");                          //todo: find out where the quotes come from
+          final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
 
-      final Rfc822HeaderState state = actionBuilder.state();
-      HttpMethod.enqueue(createCouchConnection(), OP_WRITE | OP_CONNECT, new Impl() {
+          final Rfc822HeaderState state = actionBuilder.state();
+          HttpMethod.enqueue(createCouchConnection(), OP_WRITE | OP_CONNECT, new Impl() {
 
-        public ByteBuffer cursor;
+            public ByteBuffer cursor;
 
-        @Override
-        public void onWrite(SelectionKey key) throws Exception {
-          final SocketChannel channel = (SocketChannel) key.channel();
-          state.methodProtocol("PUT").pathResCode(path);
-          state.headerStrings().put(CONTENT_LENGTH, String.valueOf(s1.length()));
-          int write = channel.write(state.asRequestHeaders());
-          key.selector().wakeup();
-          key.attach(new Impl() {
             @Override
             public void onWrite(SelectionKey key) throws Exception {
-              int write = channel.write(ByteBuffer.wrap(bytes));
-              key.interestOps(OP_READ);
-            }
-
-            @Override
-            public void onRead(SelectionKey key) throws Exception {
-              ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
-              int read = channel.read(dst);
-              state.apply((ByteBuffer) dst.flip());
-
-              final long remaining = Long.parseLong(state.headerString(CONTENT_LENGTH));
-
-              final ByteBuffer cursor = ByteBuffer.allocateDirect((int) remaining).put(dst);
-              if (!cursor.hasRemaining()) {
-                deliver();
-              }
+              final SocketChannel channel = (SocketChannel) key.channel();
+              state.methodProtocol("PUT").pathResCode(path);
+              state.headerStrings().put(CONTENT_LENGTH, String.valueOf(s1.length()));
+              int write = channel.write(state.asRequestHeaders());
+              key.selector().wakeup();
               key.attach(new Impl() {
                 @Override
-                public void onRead(SelectionKey key) throws Exception {
-                  if (!cursor.hasRemaining()) {
-
-                    deliver();
-                  }
+                public void onWrite(SelectionKey key) throws Exception {
+                  int write = channel.write(ByteBuffer.wrap(bytes));
+                  key.interestOps(OP_READ);
                 }
 
-
-              });
-
-            }
-
-            private void deliver() {
-              EXECUTOR_SERVICE.submit(new Callable() {
                 @Override
-                public Object call() throws Exception {
-                  payload.set(BlobAntiPatternObject.GSON.fromJson(UTF8.decode(cursor).toString(), CouchTx.class));
-                  cyclicBarrier.await(/*10, TimeUnit.MILLISECONDS*/);
-                  recycleChannel(channel);
-                  return null;
+                public void onRead(SelectionKey key) throws Exception {
+                  ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
+                  int read = channel.read(dst);
+                  if (-1 == read) {
+                    System.err.println("unexpected bad stuff socket" + wheresWaldo());
+                    recycleChannel(channel);
+                    cyclicBarrier.reset();
+                    return;
+                  } else {
+                    final String s3 = state.pathResCode();
+                    final Rfc822HeaderState apply = state.apply((ByteBuffer) dst.flip());
+                    if (!apply.pathResCode().startsWith("20")) {
+                      System.err.println("unexpected bad stuff socket: " + deepToString(s3, UTF8.decode((ByteBuffer) dst.rewind()), apply));
+                      recycleChannel(channel);
+                      cyclicBarrier.reset();
+                      return;
+                    } else {
+
+                      final String s2 = state.pathResCode();
+
+                      final String s = state.headerString(CONTENT_LENGTH);
+                      long remaining = Long.parseLong(s);
+
+                      final ByteBuffer cursor = ByteBuffer.allocateDirect((int) remaining).put(dst);
+                      if (!cursor.hasRemaining()) {
+                        deliver();
+                      }
+                      key.attach(new Impl() {
+                        @Override
+                        public void onRead(SelectionKey key) throws Exception {
+                          if (!cursor.hasRemaining()) {
+                            deliver();
+                          }
+                        }
+
+
+                      });
+                    }
+                  }
+
+                }
+
+                private void deliver() {
+                  EXECUTOR_SERVICE.submit(new Callable() {
+                    @Override
+                    public Object call() throws Exception {
+                      payload.set(BlobAntiPatternObject.GSON.fromJson(UTF8.decode(cursor).toString(), CouchTx.class));
+                      cyclicBarrier.await(/*10, TimeUnit.MILLISECONDS*/);
+                      recycleChannel(channel);
+                      return null;
+                    }
+                  });
                 }
               });
             }
+
           });
+          cyclicBarrier.await(3, TimeUnit.SECONDS)
+          ;
+
+          return (T) payload.get();
+
         }
-
-      });
-      cyclicBarrier.await(3, TimeUnit.SECONDS)
-      ;
-
-      return payload.get();
+      };
+      return (T) EXECUTOR_SERVICE.submit(callable).get();
     }
   },
   @DbTask({rows, future, continuousFeed}) @DbResultUnit(CouchResultSet.class) @DbKeys({db, view})getView {

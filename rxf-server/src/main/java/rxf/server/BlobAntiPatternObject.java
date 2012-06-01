@@ -330,7 +330,7 @@ public class BlobAntiPatternObject {
       try {
         SocketChannel take = couchDq.poll(3, TimeUnit.SECONDS);
         if (take.isOpen()) {
-          System.err.println("createCouch" + wheresWaldo());
+          System.err.println("+++ createCouch" + wheresWaldo());
           return take;
         }
       } catch (InterruptedException e) {

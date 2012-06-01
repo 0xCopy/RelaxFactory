@@ -166,7 +166,7 @@ public class Rfc822HeaderState {
   }
 
   public Map<String, String> headerStrings() {
-    return headerStrings;
+    return headerStrings == null ? headerStrings = new LinkedHashMap<String, String>() : headerStrings;
   }
 
   public Map<String, String> cookieStrings() {
@@ -187,7 +187,7 @@ public class Rfc822HeaderState {
     return this;
   }
 
-  public String pathRescode() {
+  public String pathResCode() {
     return this.pathRescode;
   }
 
@@ -207,7 +207,7 @@ public class Rfc822HeaderState {
         ", headerStrings=" + headerStrings +
         ", cookieStrings=" + cookieStrings +
         ", methodProtocol='" + methodProtocol + '\'' +
-        ", pathRescode='" + pathRescode + '\'' +
+        ", pathResCode='" + pathRescode + '\'' +
         '}';
   }
 
@@ -217,7 +217,7 @@ public class Rfc822HeaderState {
    * @return http headers for use with http 1.1
    */
   public ByteBuffer asRequestHeaders() {
-    String s = methodProtocol() + " " + pathRescode() + " HTTP/1.1\r\n";
+    String s = methodProtocol() + " " + pathResCode() + " HTTP/1.1\r\n";
     if (null != headerStrings && !headerStrings.isEmpty())
       for (Entry<String, String> stringStringEntry : headerStrings().entrySet()) {
         s += stringStringEntry.getKey() + ": " + stringStringEntry.getValue() + "\r\n";
