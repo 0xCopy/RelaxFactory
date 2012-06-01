@@ -75,7 +75,7 @@ public enum CouchMetaDriver {
       String o1 = (String) parms.get(etype.docId);
       return sendJson(
           json,
-          o + '/' + o1
+          '/' + o + '/' + o1
       );
 
     }
@@ -126,7 +126,7 @@ public enum CouchMetaDriver {
                         ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
                         int read = channel.read(dst);
                         state.apply((ByteBuffer) dst.flip());
-                        cyclicBarrier.await(10, TimeUnit.MILLISECONDS);
+                        cyclicBarrier.await(/*10, TimeUnit.MILLISECONDS*/);
                       } catch (Exception e) {
                         e.printStackTrace();
                       } finally {
@@ -258,7 +258,7 @@ public enum CouchMetaDriver {
                 @Override
                 public Object call() throws Exception {
                   payload.set(BlobAntiPatternObject.GSON.fromJson(UTF8.decode(cursor).toString(), CouchTx.class));
-                  cyclicBarrier.await(10, TimeUnit.MILLISECONDS);
+                  cyclicBarrier.await(/*10, TimeUnit.MILLISECONDS*/);
                   recycleChannel(channel);
                   return null;
                 }
@@ -298,7 +298,7 @@ public enum CouchMetaDriver {
               public void onRead(SelectionKey key) throws Exception {
                 final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
                 int read = cc.read(dst);
-                final Rfc822HeaderState state = new Rfc822HeaderState(COOKIE, "ETag", CONTENT_LENGTH, TRANSFER_ENCODING).apply((ByteBuffer) dst.flip());
+                final Rfc822HeaderState state = new Rfc822HeaderState(COOKIE, ETAG, CONTENT_LENGTH, TRANSFER_ENCODING).apply((ByteBuffer) dst.flip());
                 actionBuilder.state(state);
 
 

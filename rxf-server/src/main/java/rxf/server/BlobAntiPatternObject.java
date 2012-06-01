@@ -521,7 +521,7 @@ public class BlobAntiPatternObject {
                     int read1 = channel.read(cursor);
                     cursor.flip();
                   }
-                  System.err.println("chunking: " + UTF8.decode(cursor.duplicate()));
+//                  System.err.println("chunking: " + UTF8.decode(cursor.duplicate()));
                   int anchor = cursor.position();
                   while (cursor.hasRemaining() && cursor.get() != '\n') ;
                   ByteBuffer line = (ByteBuffer) cursor.duplicate().position(anchor).limit(cursor.position());
@@ -546,7 +546,7 @@ public class BlobAntiPatternObject {
                           }
 
                           String o = UTF8.decode((ByteBuffer) allocate.flip()).toString();
-                          System.err.println("total chunked bundle was: " + o);
+//                          System.err.println("total chunked bundle was: " + o);
                           returnTo.put(o);
                           return null;
                         }
