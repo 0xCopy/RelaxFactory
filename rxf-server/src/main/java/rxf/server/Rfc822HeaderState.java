@@ -231,4 +231,8 @@ public class Rfc822HeaderState {
     s += "\r\n";
     return ByteBuffer.wrap(s.getBytes(HttpMethod.UTF8));
   }
+
+  public String headerString(String key) {
+    return headerStrings().get(key); //To change body of created methods use File | Settings | File Templates.
+  }
 }
