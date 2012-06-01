@@ -87,7 +87,7 @@ public class GeoIpService {
             //noinspection unchecked
             map.put("created", new Date());
             HttpMethod.enqueue(couchConnection, OP_WRITE, new SendJsonPOST(GSON.toJson(map).trim(), retVal, GEOIP_ROOTNODE));
-            String json = (String) retVal.poll(2, TimeUnit.SECONDS);
+            String json = (String) retVal.poll(3, TimeUnit.SECONDS);
 
 
             m = GSON.fromJson(json, Map.class);
@@ -127,7 +127,7 @@ public class GeoIpService {
             }
           });
     }
-    String take = (String) retVal.poll(2, TimeUnit.SECONDS);
+    String take = (String) retVal.poll(3, TimeUnit.SECONDS);
     final CouchTx couchTx = GSON.fromJson(take, CouchTx.class);
     {
       couchConnection = createCouchConnection();
@@ -142,14 +142,14 @@ public class GeoIpService {
               String fn = GEOIP_CURRENT_INDEX;
               int limit = d2.limit();
               String ctype = "application/octet-stream";
-              String push = getBlobPutString(fn, limit, ctype, couchTx.getRev());
+              String push = getBlobPutString(fn, limit, ctype, couchTx.rev());
               System.err.println("pushing: " + push);
 
               putFile(key, d2, push, retVal);
             }
           });
     }
-    take = (String) retVal.poll(2, TimeUnit.SECONDS);
+    take = (String) retVal.poll(3, TimeUnit.SECONDS);
   }
 
   static void putFile(SelectionKey key, final ByteBuffer d2, String push, final SynchronousQueue synchronousQueue) throws IOException {
@@ -441,7 +441,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
             Callable<Object> callable = new Callable<Object>() {
               public Object call() throws Exception {
 
-                String take = (String) retVal.poll(2, TimeUnit.SECONDS);
+                String take = (String) retVal.poll(3, TimeUnit.SECONDS);
                 key.attach(this);
                 System.err.println("rootnode: " + take);
                 Map map = GSON.fromJson(take, Map.class);

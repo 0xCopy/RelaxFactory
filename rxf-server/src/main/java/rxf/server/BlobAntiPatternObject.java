@@ -211,7 +211,7 @@ public class BlobAntiPatternObject {
       roSession = VISITOR_LOCATOR.create(Visitor.class);
       id = roSession.getId();
       CouchTx persist = VISITOR_LOCATOR.persist(roSession);
-      id = persist.getId();
+      id = persist.id();
       Map<String, String> stringMap = ThreadLocalSetCookies.get();
       if (null == stringMap) {
         Map<String, String> value = new TreeMap<String, String>();
@@ -328,7 +328,7 @@ public class BlobAntiPatternObject {
     while (!HttpMethod.killswitch) {
 
       try {
-        SocketChannel take = couchDq.poll(2, TimeUnit.SECONDS);
+        SocketChannel take = couchDq.poll(3, TimeUnit.SECONDS);
         if (take.isOpen()) {
           System.err.println("createCouch" + wheresWaldo());
           return take;
@@ -365,6 +365,7 @@ public class BlobAntiPatternObject {
 
   public static void recycleChannel(SocketChannel channel) {
     try {
+      channel.register(HttpMethod.getSelector(), OP_READ, null);
       lazyQueue.add(channel);
       System.err.println("--- recycling" + wheresWaldo());
     } catch (Exception ignored) {
@@ -447,7 +448,7 @@ public class BlobAntiPatternObject {
       channel = createCouchConnection();
       SynchronousQueue retVal = new SynchronousQueue();
       HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, new SendJsonVisitor(json, retVal, idver));
-      take = (String) retVal.poll(2, SECONDS);
+      take = (String) retVal.poll(3, SECONDS);
     } finally {
       recycleChannel(channel);
     }
@@ -460,7 +461,7 @@ public class BlobAntiPatternObject {
     try {
       SynchronousQueue retVal = new SynchronousQueue();
       HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, fetchJsonByPath(channel, retVal, locator.getPathPrefix() + '/' + key));
-      take1 = (String) retVal.poll(2, TimeUnit.SECONDS);
+      take1 = (String) retVal.poll(3, TimeUnit.SECONDS);
     } finally {
       recycleChannel(channel);
     }
@@ -486,8 +487,8 @@ public class BlobAntiPatternObject {
           if (-1 == read) {
             channel.socket().close();
             String o = GSON.toJson(new CouchTx() {{
-              setError("closed socket");
-              setReason("closed socket");
+              error("closed socket");
+              reason("closed socket");
             }});
             returnTo.put(o);
             throw new IOException(o);
@@ -678,7 +679,7 @@ public class BlobAntiPatternObject {
       channel = createCouchConnection();
       SynchronousQueue retVal = new SynchronousQueue();
       HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, fetchJsonByPath(channel, retVal, path));
-      ret = (String) retVal.poll(2, TimeUnit.SECONDS);
+      ret = (String) retVal.poll(3, TimeUnit.SECONDS);
     } finally {
       recycleChannel(channel);
     }
@@ -700,7 +701,7 @@ public class BlobAntiPatternObject {
       SynchronousQueue returnTo = new SynchronousQueue();
       couchConnection = createCouchConnection();
       fetchJsonByPath(couchConnection, returnTo, path);
-      String take = (String) returnTo.poll(2, TimeUnit.SECONDS);
+      String take = (String) returnTo.poll(3, TimeUnit.SECONDS);
       Map map = GSON.fromJson(take, Map.class);
       return String.valueOf(map.get(key));
     } catch (Exception e) {
@@ -761,7 +762,7 @@ public class BlobAntiPatternObject {
             try {
               CouchTx persist = roSessionLocator.persist(roSession);
 
-              id = persist.getId();
+              id = persist.id();
               s = GSON.toJson(persist);
               System.err.println("persisted: " + s);
             } catch (Exception ignored) {

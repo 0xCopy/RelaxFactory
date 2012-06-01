@@ -35,7 +35,7 @@ public class CouchPropertiesAccess<T> {
     try {
       tx = setGenericDocumentProperty(path, key, value);
       System.err.println("tx: " + tx.toString());
-      return tx.getRev();
+      return tx.rev();
     } catch (Exception e) {
       e.printStackTrace();  //todo: verify for a purpose
     }

@@ -6,8 +6,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.text.MessageFormat;
 import java.util.*;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import one.xio.AsioVisitor;
 import one.xio.AsioVisitor.Impl;
@@ -23,7 +22,6 @@ import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 import static rxf.server.BlobAntiPatternObject.arrToString;
 import static rxf.server.BlobAntiPatternObject.createCouchConnection;
 import static rxf.server.BlobAntiPatternObject.deepToString;
-import static rxf.server.BlobAntiPatternObject.fetchHeadByPath;
 import static rxf.server.BlobAntiPatternObject.fetchJsonByPath;
 import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
 import static rxf.server.BlobAntiPatternObject.recycleChannel;
@@ -98,22 +96,55 @@ public enum CouchMetaDriver {
   @DbTask({tx, future}) @DbResultUnit(String.class) @DbKeys({db, docId})getRevision {
     @Override
     <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
-      SocketChannel couchConnection = null;
-      T poll = null;
-      try {
-        couchConnection = createCouchConnection();
-        AsioVisitor asioVisitor = fetchHeadByPath(idpath(dbKeysBuilder, etype.docId), couchConnection, (SynchronousQueue) actionBuilder.sync());
-        poll = (T) actionBuilder.sync().poll(3, TimeUnit.SECONDS);
+      EnumMap<etype, Object> parms = dbKeysBuilder.parms();
 
-      } catch (Exception e) {
-        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-      } finally {
-        recycleChannel(couchConnection);
-      }
+      final String pathRescode = "/" + parms.get(db) + "/" + parms.get(etype.docId);
+      final Rfc822HeaderState state = actionBuilder.state().methodProtocol("HEAD").pathResCode(pathRescode);
+      return EXECUTOR_SERVICE.submit(new Callable<Object>() {
+        public Object call() throws Exception {
+          final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
 
+          HttpMethod.enqueue(createCouchConnection(), OP_WRITE | OP_CONNECT, new Impl() {
+            @Override
+            public void onWrite(SelectionKey key) throws Exception {
+              SocketChannel channel = (SocketChannel) key.channel();
+              int write = channel.write(state.asRequestHeaders());
+              key.interestOps(OP_READ).selector().wakeup();
 
-      return poll
-          ;
+            }
+
+            @Override
+            public void onRead(final SelectionKey key) throws Exception {
+              EXECUTOR_SERVICE.submit(
+                  new Runnable() {
+                    public void run() {
+                      SocketChannel channel;
+                      try {
+                        channel = (SocketChannel) key.channel();
+                        ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
+                        int read = channel.read(dst);
+                        state.apply((ByteBuffer) dst.flip());
+                        recycleChannel(channel);
+                        cyclicBarrier.await(10, TimeUnit.MILLISECONDS);
+
+                      } catch (Exception e) {
+                        e.printStackTrace();  //todo: verify for a purpose
+                      } finally {
+
+                      }
+                    }
+                  });
+            }
+
+          });
+          cyclicBarrier.await(3, TimeUnit.SECONDS);
+          Map<String, String> headerStrings = state.getHeaderStrings();
+          CouchTx ctx = new CouchTx().id(pathRescode);
+          return null == headerStrings || !headerStrings.containsKey(ETAG) ?
+              ctx.ok(false).error(state.pathRescode()).reason(HttpMethod.UTF8.decode((ByteBuffer) state.headerBuf().rewind()).toString().substring(0, 20)) :
+              ctx.rev(state.headerStrings().get(ETAG)).ok(true);
+        }
+      }).get();
     }
   },
   @DbTask({tx, oneWay, future}) @DbKeys({db, docId, rev, validjson})updateDoc {
@@ -176,7 +207,7 @@ public enum CouchMetaDriver {
         couchConnection = null == key || key.channel().isOpen() ? createCouchConnection() : (SocketChannel) key.channel();
 
         String idpath = idpath(dbKeysBuilder, etype.view);
-        final String format = (MessageFormat.format("GET " + idpath + " HTTP/1.1\r\n\r\n", idpath.trim())).replace("//", "/");
+        final String format = MessageFormat.format("GET " + idpath + " HTTP/1.1\r\n\r\n", idpath.trim()).replace("//", "/");
         final SocketChannel cc = couchConnection;
         HttpMethod.enqueue(couchConnection, OP_WRITE | OP_CONNECT, new Impl() {
           @Override
@@ -195,7 +226,7 @@ public enum CouchMetaDriver {
 
                 if (state.getHeaderStrings().containsKey(TRANSFER_ENCODING)) {
                   //noinspection unchecked
-                  final ChunkedEncodingVisitor ob = new ChunkedEncodingVisitor(dst, getReceiveBufferSize(), actionBuilder.sync());
+                  ChunkedEncodingVisitor ob = new ChunkedEncodingVisitor(dst, getReceiveBufferSize(), actionBuilder.sync());
                   key.attach(ob);
                   ob.onRead(key);
                 } else {
@@ -241,6 +272,7 @@ public enum CouchMetaDriver {
     }
   },
   @DbTask({tx, future, oneWay}) @DbResultUnit(Rfc822HeaderState.class) @DbKeys({opaque, mimetype, blob})sendBlob {};
+  public static final String ETAG = "ETag";
   public static final String CONTENT_LENGTH = "Content-Length";
   public static final String TRANSFER_ENCODING = "Transfer-Encoding";
 
