@@ -235,4 +235,15 @@ public class Rfc822HeaderState {
   public String headerString(String key) {
     return headerStrings().get(key); //To change body of created methods use File | Settings | File Templates.
   }
+
+  public String dequotedHeader(String etag) {
+    String ret;
+    final String s = ret = headerString(etag);
+    if (s.startsWith("\"") && s.endsWith("\"")) {
+      ret = s.substring(1, s.lastIndexOf('"'));
+    }
+
+    return ret;
+
+  }
 }

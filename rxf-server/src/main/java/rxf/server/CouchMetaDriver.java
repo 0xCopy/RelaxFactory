@@ -142,13 +142,11 @@ public enum CouchMetaDriver {
           cyclicBarrier.await(3, TimeUnit.SECONDS);
           Map<String, String> headerStrings = state.getHeaderStrings();
 
-          boolean b2 = null == headerStrings || !headerStrings.containsKey(ETAG);
+          CouchTx ctx = new CouchTx().id(pathRescode);
 
-          CouchTx ctx = new CouchTx().id(pathRescode).ok(!b2);
-
-          ctx = b2 ?
+          ctx = null == headerStrings || !headerStrings.containsKey(ETAG) ?
               ctx.error(state.pathResCode()).reason(state.methodProtocol()) :
-              ctx.ok(true).rev(state.headerString(ETAG));
+              ctx.ok(true).rev(state.dequotedHeader(ETAG));
           return ctx;
         }
       }).get();
@@ -196,16 +194,17 @@ public enum CouchMetaDriver {
 
     @Override
     <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
-      Callable<T> callable = new Callable<T>() {
-        public T call() throws Exception {
+      //noinspection unchecked
+      return EXECUTOR_SERVICE.submit(new Callable() {
+        public Object call() throws Exception {
 
           final String s1 = (String) dbKeysBuilder.parms().get(etype.validjson);
           final byte[] bytes = s1.getBytes(UTF8);
 
-          final String o = (String) dbKeysBuilder.parms().get(etype.rev);
+          String o = (String) dbKeysBuilder.parms().get(etype.rev);
           assert null != o;
-          final Object o1 = dbKeysBuilder.parms().get(etype.db);
-          final Object o2 = dbKeysBuilder.parms().get(etype.designDocId);
+          Object o1 = dbKeysBuilder.parms().get(etype.db);
+          Object o2 = dbKeysBuilder.parms().get(etype.designDocId);
           final String path = "/" + o1 +
               "/" + o2 +
               "?rev=" + o.replace("\"", "");                          //todo: find out where the quotes come from
@@ -238,20 +237,17 @@ public enum CouchMetaDriver {
                     System.err.println("unexpected bad stuff socket" + wheresWaldo());
                     recycleChannel(channel);
                     cyclicBarrier.reset();
-                    return;
                   } else {
-                    final String s3 = state.pathResCode();
-                    final Rfc822HeaderState apply = state.apply((ByteBuffer) dst.flip());
+                    String s3 = state.pathResCode();
+                    Rfc822HeaderState apply = state.headers(COOKIE, ETAG, CONTENT_LENGTH).apply((ByteBuffer) dst.flip());
                     if (!apply.pathResCode().startsWith("20")) {
                       System.err.println("unexpected bad stuff socket: " + deepToString(s3, UTF8.decode((ByteBuffer) dst.rewind()), apply));
                       recycleChannel(channel);
                       cyclicBarrier.reset();
-                      return;
                     } else {
 
-                      final String s2 = state.pathResCode();
 
-                      final String s = state.headerString(CONTENT_LENGTH);
+                      String s = state.headerString(CONTENT_LENGTH);
                       long remaining = Long.parseLong(s);
 
                       final ByteBuffer cursor = ByteBuffer.allocateDirect((int) remaining).put(dst);
@@ -291,11 +287,10 @@ public enum CouchMetaDriver {
           cyclicBarrier.await(3, TimeUnit.SECONDS)
           ;
 
-          return (T) payload.get();
+          return payload.get();
 
         }
-      };
-      return (T) EXECUTOR_SERVICE.submit(callable).get();
+      }).get();
     }
   },
   @DbTask({rows, future, continuousFeed}) @DbResultUnit(CouchResultSet.class) @DbKeys({db, view})getView {
