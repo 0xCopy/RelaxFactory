@@ -10,15 +10,30 @@ import java.util.Map.Entry;
 
 import one.xio.HttpHeaders;
 import one.xio.HttpMethod;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import static one.xio.HttpMethod.UTF8;
 import static rxf.server.BlobAntiPatternObject.COOKIE;
 import static rxf.server.BlobAntiPatternObject.moveCaretToDoubleEol;
 
 /**
- * long overdue utility class to parse a request header or response header according to declared need of header/cookie
+ * this is a utility class to parse a request header or
+ * response header according to declared need of
+ * header/cookies downstream.
  * <p/>
- * preload headers and cookies, send response and request initial onRead for .apply()
+ * much of what is in {@link BlobAntiPatternObject} can
+ * be teased into this class peicemeal.
+ * <p/>
+ * since java string parsing can be expensive and headers
+ * can be numerous this class is designed to parse only
+ * what is necessary or typical and enable slower dynamic
+ * grep operations to suit against a captured
+ * {@link ByteBuffer} as needed (still cheap)
+ * <p/>
+ * preload headers and cookies, send response
+ * and request initial onRead for .apply()
+ * <p/>
+ * <p/>
  * <p/>
  * User: jim
  * Date: 5/19/12
@@ -28,37 +43,104 @@ public class Rfc822HeaderState {
   public boolean dirty;
   public String[] headers = {};
   private String[] cookies = {};
-
+  /**
+   * the source route froom the active socket.
+   * <p/>
+   * this is necessary to look up {@link GeoIpService } queries among other things
+   */
   private InetAddress sourceRoute;
 
-
+  /**
+   * stored buffer from which things are parsed and later grepped.
+   */
   private ByteBuffer headerBuf;
+  /**
+   * parsed valued post-{@link #apply(java.nio.ByteBuffer)}
+   */
   private Map<String, String> headerStrings;
+  /**
+   * parsed cookie values post-{@link #apply(java.nio.ByteBuffer)}
+   */
   private Map<String, String> cookieStrings;
+  /**
+   * dual purpose HTTP protocol header token found on the first line of a request/response in the first position.
+   * <p/>
+   * contains either the method (request) or a the "HTTP/1.1" string (the protocol) on responses.
+   * <p/>
+   * user is responsible for populating this on outbound headers
+   */
   private String methodProtocol;
+
+  /**
+   * dual purpose HTTP protocol header token found on the first line of a request/response in the second position
+   * <p/>
+   * contains either the path (request) or a the numeric result code on responses.
+   * <p/>
+   * user is responsible for populating this on outbound headers
+   */
   private String pathRescode;
 
+  /**
+   * default ctor populates {@link #headers}
+   *
+   * @param headers keys placed in     {@link #headers} which will be parsed on {@link #apply(java.nio.ByteBuffer)}
+   */
   public Rfc822HeaderState(String... headers) {
 
     this.headers = headers;
   }
 
-  public Rfc822HeaderState sourceKey(SelectionKey key
-  ) throws IOException {
+  /**
+   * assigns a state parser to a  {@link SelectionKey} and attempts to grab the source route froom the active socket.
+   * <p/>
+   * this is necessary to look up {@link GeoIpService } queries among other things
+   *
+   * @param key a NIO select key
+   * @return self
+   * @throws IOException
+   */
+  public Rfc822HeaderState sourceKey(SelectionKey key) throws IOException {
     SocketChannel channel = (SocketChannel) key.channel();
-    InetAddress inetAddress1 = channel.socket().getInetAddress();
-    InetAddress inetAddress = sourceRoute = inetAddress1;
+    sourceRoute = channel.socket().getInetAddress();
     return this;
   }
+
+  /**
+   * the actual {@link ByteBuffer} associated with the state.
+   * <p/>
+   * this buffer must start at position 0 in most cases requiring {@link   java.nio.channels.ReadableByteChannel#read(java.nio.ByteBuffer)}
+   *
+   * @return what is sent to {@link #apply(java.nio.ByteBuffer)}
+   */
 
   public ByteBuffer headerBuf() {
     return headerBuf;
   }
 
+  /**
+   * header values which are pre-parsed during {@link #apply(java.nio.ByteBuffer)}.
+   * <p/>
+   * headers in the request/response not so named in this list will be passed over.
+   * <p/>
+   * the value of a header appearing more than once is unspecified.
+   * <p/>
+   * multiple occuring headers require {@link #getHeadersNamed(String)}
+   *
+   * @return the parsed values designated by the {@link #headers} list of keys.  headers present in {@link #headers}
+   *         not appearing in the {@link ByteBuffer} input will not be in this map.
+   */
   public Map<String, String> getHeaderStrings() {
     return headerStrings;
   }
 
+  /**
+   * this is agrep of the full header state to find one or more headers of a given name.
+   * <p/>
+   * todo: regex?
+   *
+   * @param header a header name
+   * @return a list of values
+   */
   List<String> getHeadersNamed(String header) {
     String decode = UTF8.decode((ByteBuffer) headerBuf().rewind()).toString();
     String prefix = new StringBuilder().append(header).append(": ").toString();
@@ -75,7 +157,12 @@ public class Rfc822HeaderState {
     return a;
   }
 
-
+  /**
+   * fluent setter
+   *
+   * @param cookies a list of cookies registered to be auto-parsed
+   * @return self
+   */
   public Rfc822HeaderState cookies(String... cookies) {
     this.cookies = cookies;
     List<? extends String> headersNamed = getHeadersNamed(COOKIE);
@@ -93,6 +180,20 @@ public class Rfc822HeaderState {
     return this;
   }
 
+  /**
+   * direction-agnostic RFC822 header state is mapped from a ByteBuffer with tolerance for HTTP method and results in the first line.
+   * <p/>
+   * {@link #headers } contains a list of headers that will be converted to a {@link Map} and available via {@link rxf.server.Rfc822HeaderState#getHeaderStrings()}
+   * <p/>
+   * {@link #cookies } contains a list of cookies from which to parse from Cookie header into {@link #cookieStrings}
+   * <p/>
+   * setting cookies for a response header is possible by setting {@link #dirty()} to true and setting  {@link #cookieStrings} map values.
+   * <p/>
+   * currently this is  done inside of {@link RfPostWrapper.RfProcessTask   } surrounding {@link com.google.web.bindery.requestfactory.server.SimpleRequestProcessor#process(String)}
+   *
+   * @param cursor
+   * @return this
+   */
   public Rfc822HeaderState apply(ByteBuffer cursor) {
     if (!cursor.hasRemaining()) cursor.flip();
     int anchor = cursor.position();
@@ -122,80 +223,168 @@ public class Rfc822HeaderState {
     return this;
   }
 
-
+  /**
+   * declares the list of header keys this parser is interested in mapping to strings.
+   * <p/>
+   * these headers are mapped at cardinality<=1 when  {@link #apply(java.nio.ByteBuffer)}  }is called.
+   * <p/>
+   * for cardinality=>1  headers {@link #getHeadersNamed(String)} is a pure grep over the entire ByteBuffer.
+   * <p/>
+   *
+   * @param headers
+   * @return
+   * @see #getHeadersNamed(String)
+   * @see #apply(java.nio.ByteBuffer)
+   */
   public Rfc822HeaderState headers(String... headers) {
     this.headers = headers;
     return this;
   }
 
-
+  /**
+   * @return
+   * @see #dirty
+   */
   public boolean dirty() {
     return this.dirty;
   }
 
+  /**
+   * indicate whether or not we want to rewrite the cookies and push SetCookie to client.  if this is set, the contents of {@link #cookieStrings} will be written each as cookies during {@link #asResponseHeaders()}
+   *
+   * @param dirty
+   * @return
+   */
   public Rfc822HeaderState dirty(boolean dirty) {
     this.dirty = dirty;
     return this;
   }
 
+  /**
+   * @see #headers
+   */
+
   public String[] headers() {
     return this.headers;
   }
 
+  /**
+   * @see #cookies
+   */
   public String[] cookies() {
     return this.cookies;
   }
 
+  /**
+   * @return inet4 addr
+   * @see #sourceRoute
+   */
   public InetAddress sourceRoute() {
     return this.sourceRoute;
   }
 
+  /**
+   * this holds an inet address which may be inferred diuring {@link #sourceKey(java.nio.channels.SelectionKey)} as well as directly
+   *
+   * @param sourceRoute an internet ipv4 address
+   * @return self
+   */
   public Rfc822HeaderState sourceRoute(InetAddress sourceRoute) {
     this.sourceRoute = sourceRoute;
     return this;
   }
 
+  /**
+   * this is what has been sent to {@link #apply(java.nio.ByteBuffer)}.
+   * <p/>
+   * care must be taken to avoid {@link java.nio.ByteBuffer#compact()} during the handling of
+   * the dst/cursor found in AsioVisitor code if this is sent in without a clean ByteBuffer.
+   *
+   * @param headerBuf an immutable  {@link  ByteBuffer}
+   * @return self
+   */
   public Rfc822HeaderState headerBuf(ByteBuffer headerBuf) {
     this.headerBuf = headerBuf;
     return this;
   }
 
+  /**
+   * holds the values parsed during {@link #apply(java.nio.ByteBuffer)} and holds the key-values created as headers in
+   * {@link #asRequestHeaders()} and {@link #asResponseHeaders()}
+   */
   public Rfc822HeaderState headerStrings(Map<String, String> headerStrings) {
     this.headerStrings = headerStrings;
     return this;
   }
 
+  /**
+   * fluent getter
+   *
+   * @return {@link #headerStrings}
+   * @see #headerStrings
+   */
   public Map<String, String> headerStrings() {
     return headerStrings == null ? headerStrings = new LinkedHashMap<String, String>() : headerStrings;
   }
 
+  /**
+   * fluent getter
+   *
+   * @see #cookieStrings
+   */
   public Map<String, String> cookieStrings() {
     return this.cookieStrings;
   }
+
+  /**
+   * fluent setter
+   *
+   * @param cookieStrings
+   * @return self
+   * @see #cookieStrings
+   */
 
   public Rfc822HeaderState cookieStrings(Map<String, String> cookieStrings) {
     this.cookieStrings = cookieStrings;
     return this;
   }
 
+  /**
+   * @see #methodProtocol
+   */
   public String methodProtocol() {
     return this.methodProtocol;
   }
 
+  /**
+   * @see #methodProtocol
+   */
   public Rfc822HeaderState methodProtocol(String methodProtocol) {
     this.methodProtocol = methodProtocol;
     return this;
   }
 
+  /**
+   * @see #pathRescode
+   */
+
   public String pathResCode() {
     return this.pathRescode;
   }
 
+  /**
+   * @see #pathRescode
+   */
   public Rfc822HeaderState pathResCode(String pathRescode) {
     this.pathRescode = pathRescode;
     return this;
   }
 
+  /**
+   * hard to explain what this does. very complicated.
+   *
+   * @return a string
+   */
   @Override
   public String toString() {
     return "Rfc822HeaderState{" +
@@ -212,7 +401,23 @@ public class Rfc822HeaderState {
   }
 
   /**
-   * writes method, headersStrings, and cookieStrings to a string
+   * writes method, headersStrings, and cookieStrings to a {@link ByteBuffer} suitable for Response headers
+   * <p/>
+   * populates headers from {@link #headerStrings}
+   * <p/>
+   * if {@link #dirty} is set this will include SetCookie headers (plural) one for each of {@link #cookieStrings()}
+   *
+   * @return http headers for use with http 1.1
+   */
+  public ByteBuffer asResponseHeaders() {
+    //todo: finish the asResponse migration in rfpw
+    throw new NotImplementedException();
+  }
+
+  /**
+   * writes method, headersStrings, and cookieStrings to a {@link ByteBuffer} suitable for RequestHeaders
+   * <p/>
+   * populates headers from {@link #headerStrings}
    *
    * @return http headers for use with http 1.1
    */
@@ -232,12 +437,24 @@ public class Rfc822HeaderState {
     return ByteBuffer.wrap(s.getBytes(HttpMethod.UTF8));
   }
 
-  public String headerString(String key) {
-    return headerStrings().get(key); //To change body of created methods use File | Settings | File Templates.
+  /**
+   * utliity shortcut method to get the parsed value from the {@link #headerStrings} map
+   *
+   * @param headerKey name of a header presumed to be parsed during {@link #apply(java.nio.ByteBuffer)}
+   * @return the parsed value from the {@link #headerStrings} map
+   */
+  public String headerString(String headerKey) {
+    return headerStrings().get(headerKey); //To change body of created methods use File | Settings | File Templates.
   }
 
-  public String dequotedHeader(String etag) {
-    final String s = headerString(etag);
+  /**
+   * utility method to strip quotes off of things that makes couchdb choke
+   *
+   * @param headerKey name of a header
+   * @return same string without quotes
+   */
+  public String dequotedHeader(String headerKey) {
+    final String s = headerString(headerKey);
     return BlobAntiPatternObject.dequote(s);
   }
 

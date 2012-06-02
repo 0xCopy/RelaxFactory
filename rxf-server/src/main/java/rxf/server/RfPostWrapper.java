@@ -1,15 +1,10 @@
 package rxf.server;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.URLDecoder;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.*;
 import java.text.MessageFormat;
 import java.util.Iterator;
 import java.util.Map;
@@ -18,11 +13,8 @@ import java.util.regex.Pattern;
 
 import com.google.web.bindery.requestfactory.server.ServiceLayer;
 import com.google.web.bindery.requestfactory.server.SimpleRequestProcessor;
-import one.xio.AsioVisitor;
+import one.xio.*;
 import one.xio.AsioVisitor.Impl;
-import one.xio.HttpHeaders;
-import one.xio.HttpMethod;
-import one.xio.MimeType;
 
 import static java.lang.Math.min;
 import static java.nio.channels.SelectionKey.OP_CONNECT;
@@ -244,7 +236,7 @@ public class RfPostWrapper extends Impl {
 
   }
 
-  private static class RfProcessTask implements Runnable {
+  public static class RfProcessTask implements Runnable {
     private final ByteBuffer headers;
     private final ByteBuffer data;
     SelectionKey key;
@@ -292,7 +284,7 @@ public class RfPostWrapper extends Impl {
 
     }
 
-    String setOutboundCookies() {
+    public String setOutboundCookies() {
       System.err.println("+++ headers " + UTF8.decode((ByteBuffer) headers.rewind()).toString());
       Map setCookiesMap = BlobAntiPatternObject.ThreadLocalSetCookies.get();
       String sc = "";
