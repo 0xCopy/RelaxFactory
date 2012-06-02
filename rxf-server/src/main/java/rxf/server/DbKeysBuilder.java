@@ -1,6 +1,9 @@
 package rxf.server;
 
+import javax.validation.ValidationException;
 import java.util.concurrent.SynchronousQueue;
+
+import rxf.server.DbKeys.etype;
 
 /**
  * User: jim
@@ -17,8 +20,13 @@ public abstract class DbKeysBuilder<T> {
     currentKeys.set(this);
   }
 
-  public ThreadLocal<? extends DbKeysBuilder> getCurrentKeys() {
-    return currentKeys;
+  public boolean validate() {
+    for (etype etype : parms.keySet()) {
+      final Object o = parms().get(etype);
+      if (!
+          etype.validate(o)) throw new ValidationException("!!! " + etype + " fails with value: " + o);
+    }
+    return true;
   }
 
   public java.util.EnumMap<DbKeys.etype, Object> parms() {
@@ -28,4 +36,5 @@ public abstract class DbKeysBuilder<T> {
   public static <T, B extends DbKeysBuilder<T>> B get() {
     return (B) currentKeys.get();
   }
+
 }

@@ -18,7 +18,6 @@ import static one.xio.HttpMethod.wheresWaldo;
  * Time: 10:20 PM
  */
 class SendJsonVisitor extends AsioVisitor.Impl {
-  public static final boolean DEBUG_SENDJSON = System.getenv().containsKey("DEBUG_SENDJSON");
   private final String json;
   private final String[] idver;
   private final SynchronousQueue returnTo;
@@ -49,7 +48,7 @@ class SendJsonVisitor extends AsioVisitor.Impl {
     }
 //    call = MessageFormat.format("{0} /{1} HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: {2}\r\n\r\n{3}", method, path, json.length(), json);
     call = MessageFormat.format("{0} /{1} HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: " + json.length() + "\r\n\r\n{2}", method, path, json).replace("//", "/");
-    if (DEBUG_SENDJSON) {
+    if (BlobAntiPatternObject.DEBUG_SENDJSON) {
       System.err.println("dsj: attempting call to " + call + " " + wheresWaldo());
     }
     ByteBuffer encode = UTF8.encode(call);

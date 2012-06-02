@@ -44,6 +44,7 @@ public interface CouchDriver {
           public void oneWay() {
             final DbKeysBuilder<Object> dbKeysBuilder = (DbKeysBuilder<Object>) DbKeysBuilder.get();
             final ActionBuilder<Object> actionBuilder = (ActionBuilder<Object>) ActionBuilder.get();
+            dbKeysBuilder.validate();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
 
               @Override
@@ -128,6 +129,7 @@ public interface CouchDriver {
           public void oneWay() {
             final DbKeysBuilder<Object> dbKeysBuilder = (DbKeysBuilder<Object>) DbKeysBuilder.get();
             final ActionBuilder<Object> actionBuilder = (ActionBuilder<Object>) ActionBuilder.get();
+            dbKeysBuilder.validate();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
 
               @Override
@@ -391,6 +393,7 @@ public interface CouchDriver {
           public void oneWay() {
             final DbKeysBuilder<Object> dbKeysBuilder = (DbKeysBuilder<Object>) DbKeysBuilder.get();
             final ActionBuilder<Object> actionBuilder = (ActionBuilder<Object>) ActionBuilder.get();
+            dbKeysBuilder.validate();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
 
               @Override
@@ -506,6 +509,7 @@ public interface CouchDriver {
           public void oneWay() {
             final DbKeysBuilder<Object> dbKeysBuilder = (DbKeysBuilder<Object>) DbKeysBuilder.get();
             final ActionBuilder<Object> actionBuilder = (ActionBuilder<Object>) ActionBuilder.get();
+            dbKeysBuilder.validate();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
 
               @Override
@@ -658,6 +662,7 @@ public interface CouchDriver {
           public void oneWay() {
             final DbKeysBuilder<Object> dbKeysBuilder = (DbKeysBuilder<Object>) DbKeysBuilder.get();
             final ActionBuilder<Object> actionBuilder = (ActionBuilder<Object>) ActionBuilder.get();
+            dbKeysBuilder.validate();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
 
               @Override
@@ -666,7 +671,7 @@ public interface CouchDriver {
 
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  CouchMetaDriver.updateDesignDoc.visit();
+                  CouchMetaDriver.updateDesignDoc.visit(/*dbKeysBuilder,actionBuilder*/);
                 } catch (Exception e) {
                   e.printStackTrace();
                 }
@@ -852,6 +857,7 @@ public interface CouchDriver {
           public void oneWay() {
             final DbKeysBuilder<Object> dbKeysBuilder = (DbKeysBuilder<Object>) DbKeysBuilder.get();
             final ActionBuilder<Object> actionBuilder = (ActionBuilder<Object>) ActionBuilder.get();
+            dbKeysBuilder.validate();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
 
               @Override
@@ -993,6 +999,7 @@ public interface CouchDriver {
           public void oneWay() {
             final DbKeysBuilder<Object> dbKeysBuilder = (DbKeysBuilder<Object>) DbKeysBuilder.get();
             final ActionBuilder<Object> actionBuilder = (ActionBuilder<Object>) ActionBuilder.get();
+            dbKeysBuilder.validate();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
 
               @Override

@@ -19,7 +19,7 @@ public class CouchTx {
   }
 
   public Boolean ok() {
-    return ok;
+    return null != ok && ok;
   }
 
   public String id() {

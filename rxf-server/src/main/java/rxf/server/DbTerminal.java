@@ -7,18 +7,7 @@ public enum DbTerminal {
   oneWay {
     @Override
     public String builder(final CouchMetaDriver couchDriver, DbKeys.etype[] parms, Class unit, boolean implementation) {
-      return (implementation ? "public " : "") + "void " + name() + "()" + (implementation ?
-          "{\n    " +
-              "final DbKeysBuilder<Object>dbKeysBuilder=(DbKeysBuilder<Object>)DbKeysBuilder.get();\n " +
-              "final ActionBuilder<Object>actionBuilder=(ActionBuilder<Object>)ActionBuilder.get();\n " +
-              "BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable(){\n " +
-              "\n" +
-              "@Override\n" +
-              "public void run(){\n" +
-              "    try{\n\n" +
-              "      DbKeysBuilder.currentKeys.set(dbKeysBuilder);   \n" +
-              "      ActionBuilder.currentAction.set(actionBuilder); \n" +
-              "rxf.server.CouchMetaDriver." + couchDriver + ".visit(/*dbKeysBuilder,actionBuilder*/);\n}catch(Exception e){\n    e.printStackTrace();}\n    }\n    });\n}" : ";");
+      return (implementation ? "public " : "") + "void " + name() + "()" + (implementation ? "{\n    final DbKeysBuilder<Object>dbKeysBuilder=(DbKeysBuilder<Object>)DbKeysBuilder.get();\n final ActionBuilder<Object>actionBuilder=(ActionBuilder<Object>)ActionBuilder.get();\ndbKeysBuilder.validate();\n BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable(){\n \n@Override\npublic void run(){\n" + "    try{\n\n      DbKeysBuilder.currentKeys.set(dbKeysBuilder);   \n      ActionBuilder.currentAction.set(actionBuilder); \nrxf.server.CouchMetaDriver." + couchDriver + ".visit(/*dbKeysBuilder,actionBuilder*/);\n}catch(Exception e){\n    e.printStackTrace();}\n    }\n    });\n}" : ";");
     }
   },
   /**

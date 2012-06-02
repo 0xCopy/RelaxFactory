@@ -237,13 +237,8 @@ public class Rfc822HeaderState {
   }
 
   public String dequotedHeader(String etag) {
-    String ret;
-    final String s = ret = headerString(etag);
-    if (s.startsWith("\"") && s.endsWith("\"")) {
-      ret = s.substring(1, s.lastIndexOf('"'));
-    }
-
-    return ret;
-
+    final String s = headerString(etag);
+    return BlobAntiPatternObject.dequote(s);
   }
+
 }

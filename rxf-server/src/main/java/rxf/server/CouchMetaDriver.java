@@ -25,6 +25,7 @@ import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 import static rxf.server.BlobAntiPatternObject.arrToString;
 import static rxf.server.BlobAntiPatternObject.createCouchConnection;
 import static rxf.server.BlobAntiPatternObject.deepToString;
+import static rxf.server.BlobAntiPatternObject.dequote;
 import static rxf.server.BlobAntiPatternObject.fetchJsonByPath;
 import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
 import static rxf.server.BlobAntiPatternObject.recycleChannel;
@@ -102,7 +103,7 @@ public enum CouchMetaDriver {
       EnumMap<etype, Object> parms = dbKeysBuilder.parms();
 
       final String pathRescode = "/" + parms.get(db) + "/" + parms.get(etype.docId);
-      final Rfc822HeaderState state = actionBuilder.state().methodProtocol("HEAD").pathResCode(pathRescode);
+      final Rfc822HeaderState state = actionBuilder.state().headers(ETAG).methodProtocol("HEAD").pathResCode(pathRescode);
       return EXECUTOR_SERVICE.submit(new Callable<Object>() {
         public Object call() throws Exception {
           final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
@@ -139,15 +140,18 @@ public enum CouchMetaDriver {
             }
 
           });
-          cyclicBarrier.await(3, TimeUnit.SECONDS);
+          if (BlobAntiPatternObject.DEBUG_SENDJSON) cyclicBarrier.await();
+          else
+            cyclicBarrier.await(3, TimeUnit.SECONDS);
           Map<String, String> headerStrings = state.getHeaderStrings();
 
           CouchTx ctx = new CouchTx().id(pathRescode);
 
-          ctx = null == headerStrings || !headerStrings.containsKey(ETAG) ?
-              ctx.error(state.pathResCode()).reason(state.methodProtocol()) :
-              ctx.ok(true).rev(state.dequotedHeader(ETAG));
-          return ctx;
+          if (null == headerStrings || !headerStrings.containsKey(ETAG))
+            return ctx.error(state.pathResCode()).reason(state.methodProtocol());
+          final String rev1 = state.dequotedHeader(ETAG);
+          return ctx.ok(true).rev(rev1);
+
         }
       }).get();
     }
@@ -194,103 +198,116 @@ public enum CouchMetaDriver {
 
     @Override
     <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
-      //noinspection unchecked
-      return EXECUTOR_SERVICE.submit(new Callable() {
-        public Object call() throws Exception {
 
-          final String s1 = (String) dbKeysBuilder.parms().get(etype.validjson);
-          final byte[] bytes = s1.getBytes(UTF8);
+//      return EXECUTOR_SERVICE.submit(new Callable() {
+//
+//        public Object call() throws Exception {
+//          DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+//          ActionBuilder.currentAction.set(actionBuilder);
+      final String json = (String) dbKeysBuilder.parms().get(etype.validjson);
+      final byte[] bytes = json.getBytes(UTF8);
 
-          String o = (String) dbKeysBuilder.parms().get(etype.rev);
-          assert null != o;
-          Object o1 = dbKeysBuilder.parms().get(etype.db);
-          Object o2 = dbKeysBuilder.parms().get(etype.designDocId);
-          final String path = "/" + o1 +
-              "/" + o2 +
-              "?rev=" + o.replace("\"", "");                          //todo: find out where the quotes come from
-          final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
+      String db = (String) dbKeysBuilder.parms().get(etype.db);
+      String docId = (String) dbKeysBuilder.parms().get(etype.designDocId);
+      String rev = (String) dbKeysBuilder.parms().get(etype.rev);
+      assert null != rev;
+      final String path = "/" + db +
+          "/" + docId +
+          "?rev=" + dequote(rev);
+      final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
 
-          final Rfc822HeaderState state = actionBuilder.state();
-          HttpMethod.enqueue(createCouchConnection(), OP_WRITE | OP_CONNECT, new Impl() {
+      final Rfc822HeaderState state = actionBuilder.state();
+      HttpMethod.enqueue(createCouchConnection(), OP_WRITE | OP_CONNECT, new Impl() {
 
-            public ByteBuffer cursor;
+        public ByteBuffer cursor;
 
+        @Override
+        public void onWrite(SelectionKey key) throws Exception {
+          final SocketChannel channel = (SocketChannel) key.channel();
+          state.methodProtocol("PUT").pathResCode(path);
+          state.headerStrings().put(CONTENT_LENGTH, String.valueOf(json.length()));
+          int write = channel.write(state.asRequestHeaders());
+          key.selector().wakeup();
+          key.attach(new Impl() {
             @Override
             public void onWrite(SelectionKey key) throws Exception {
-              final SocketChannel channel = (SocketChannel) key.channel();
-              state.methodProtocol("PUT").pathResCode(path);
-              state.headerStrings().put(CONTENT_LENGTH, String.valueOf(s1.length()));
-              int write = channel.write(state.asRequestHeaders());
-              key.selector().wakeup();
-              key.attach(new Impl() {
-                @Override
-                public void onWrite(SelectionKey key) throws Exception {
-                  int write = channel.write(ByteBuffer.wrap(bytes));
-                  key.interestOps(OP_READ);
-                }
+              int write = channel.write(ByteBuffer.wrap(bytes));
+              key.interestOps(OP_READ);
+            }
 
-                @Override
-                public void onRead(SelectionKey key) throws Exception {
-                  ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
-                  int read = channel.read(dst);
-                  if (-1 == read) {
-                    System.err.println("unexpected bad stuff socket" + wheresWaldo());
-                    recycleChannel(channel);
-                    cyclicBarrier.reset();
-                  } else {
-                    String s3 = state.pathResCode();
-                    Rfc822HeaderState apply = state.headers(COOKIE, ETAG, CONTENT_LENGTH).apply((ByteBuffer) dst.flip());
-                    if (!apply.pathResCode().startsWith("20")) {
-                      System.err.println("unexpected bad stuff socket: " + deepToString(s3, UTF8.decode((ByteBuffer) dst.rewind()), apply));
-                      recycleChannel(channel);
-                      cyclicBarrier.reset();
-                    } else {
+            @Override
+            public void onRead(SelectionKey key) throws Exception {
+              ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
+              int read = channel.read(dst);
+              if (-1 == read) {
+                System.err.println("unexpected bad stuff " + wheresWaldo());
+                recycleChannel(channel);
+                cyclicBarrier.reset();
+              } else {
+                String s3 = state.pathResCode();
+                Rfc822HeaderState apply = state.headers(COOKIE, ETAG, CONTENT_LENGTH).apply((ByteBuffer) dst.flip());
+                if (!apply.pathResCode().startsWith("20")) {
+                  cyclicBarrier.reset();
+                  channel.close();
+                  throw new Error("!!! unexpected bad stuff: " + deepToString(s3, UTF8.decode((ByteBuffer) dst.rewind()), apply));
+                } else {
 
 
-                      String s = state.headerString(CONTENT_LENGTH);
-                      long remaining = Long.parseLong(s);
+                  String s = state.headerString(CONTENT_LENGTH);
+                  long remaining = Long.parseLong(s);
 
-                      final ByteBuffer cursor = ByteBuffer.allocateDirect((int) remaining).put(dst);
+                  final ByteBuffer cursor = ByteBuffer.allocateDirect((int) remaining).put(dst);
+                  if (!cursor.hasRemaining()) {
+                    deliver();
+                  }
+                  key.attach(new Impl() {
+                    @Override
+                    public void onRead(SelectionKey key) throws Exception {
                       if (!cursor.hasRemaining()) {
                         deliver();
                       }
-                      key.attach(new Impl() {
-                        @Override
-                        public void onRead(SelectionKey key) throws Exception {
-                          if (!cursor.hasRemaining()) {
-                            deliver();
-                          }
-                        }
-
-
-                      });
                     }
-                  }
 
-                }
 
-                private void deliver() {
-                  EXECUTOR_SERVICE.submit(new Callable() {
-                    @Override
-                    public Object call() throws Exception {
-                      payload.set(BlobAntiPatternObject.GSON.fromJson(UTF8.decode(cursor).toString(), CouchTx.class));
-                      cyclicBarrier.await(/*10, TimeUnit.MILLISECONDS*/);
-                      recycleChannel(channel);
-                      return null;
-                    }
                   });
                 }
-              });
+              }
+
             }
 
-          });
-          cyclicBarrier.await(3, TimeUnit.SECONDS)
-          ;
+            private void deliver() {
+              EXECUTOR_SERVICE.submit(new Runnable() {
+                @Override
+                public void run() {
+                  try {
+                    cyclicBarrier.await(/*10, TimeUnit.MILLISECONDS*/);
+                  } catch (RuntimeException e) {
+                    e.printStackTrace();  //todo: verify for a purpose
+                  } catch (Throwable e) {
+                    e.printStackTrace();  //todo: verify for a purpose
+                  } finally {
 
-          return payload.get();
+                    recycleChannel(channel);  // V
+                  }
+                }                           // V
+              });                           // V
+            }                               // V
+          });                               // V
+        }                                   // V
+        //                                     V
+      });                                   // V
 
-        }
-      }).get();
+      if (BlobAntiPatternObject.DEBUG_SENDJSON) {
+        cyclicBarrier.await();
+      } else {
+        cyclicBarrier.await(3, TimeUnit.SECONDS);
+      }
+
+      return
+          payload.get();
+      //
+      //        }
+      //      }).get();
     }
   },
   @DbTask({rows, future, continuousFeed}) @DbResultUnit(CouchResultSet.class) @DbKeys({db, view})getView {
@@ -383,7 +400,10 @@ public enum CouchMetaDriver {
   <T> Object visit() throws Exception {
     DbKeysBuilder<T> dbKeysBuilder = (DbKeysBuilder<T>) DbKeysBuilder.get();
     ActionBuilder<T> actionBuilder = (ActionBuilder<T>) ActionBuilder.get();
-    return visit(dbKeysBuilder, actionBuilder);
+
+    if (dbKeysBuilder.validate())
+      return visit(dbKeysBuilder, actionBuilder);
+    throw new Error("validation error");
   }
 
   /*abstract */<T> Object visit(DbKeysBuilder<T> dbKeysBuilder,

@@ -174,6 +174,7 @@ public class BlobAntiPatternObject {
 
     }
   };
+  public static final boolean DEBUG_SENDJSON = System.getenv().containsKey("DEBUG_SENDJSON");
 
   static {
     try {
@@ -443,7 +444,7 @@ public class BlobAntiPatternObject {
   public static CouchTx sendJson(String json, String... idver) throws Exception {
     String take;
     SocketChannel channel = null;
-    if (SendJsonVisitor.DEBUG_SENDJSON) System.err.println(arrToString(idver, json) + wheresWaldo());
+    if (DEBUG_SENDJSON) System.err.println(arrToString(idver, json) + wheresWaldo());
     try {
       channel = createCouchConnection();
       SynchronousQueue retVal = new SynchronousQueue();
@@ -714,6 +715,15 @@ public class BlobAntiPatternObject {
 
   public static EnumMap<HttpMethod, LinkedHashMap<Pattern, AsioVisitor>> getNamespace() {
     return NAMESPACE;
+  }
+
+  public static String dequote(String s) {
+    String ret = s;
+    if (ret.startsWith("\"") && ret.endsWith("\"")) {
+      ret = ret.substring(1, ret.lastIndexOf('"'));
+    }
+
+    return ret;
   }
 
 

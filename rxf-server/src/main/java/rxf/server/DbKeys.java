@@ -1,8 +1,6 @@
 package rxf.server;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 import java.nio.ByteBuffer;
 
 import one.xio.MimeType;
@@ -20,7 +18,12 @@ import static java.lang.annotation.ElementType.TYPE;
 public @interface DbKeys {
   enum etype {
 
-    opaque, db, docId, rev, designDocId, view, validjson, mimetype {{
+    opaque, db, docId, rev {
+      @Override
+      <T> boolean validate(T... data) {
+        return data[0].toString().length() > 0;
+      }
+    }, designDocId, view, validjson, mimetype {{
       clazz = MimeType.class;
     }}, blob {{
       clazz = ByteBuffer.class;
