@@ -19,9 +19,16 @@ public @interface DbKeys {
   enum etype {
 
     opaque, db, docId, rev {
+      /**
+       * couchdb only returns a quoted etag for entities.  this quoted etag breaks in queries sent back to couchdb as rev="breakage"
+       * @param data
+       * @param <T>
+       * @return
+       */
       @Override
       <T> boolean validate(T... data) {
-        return data[0].toString().length() > 0;
+        final String t = (String) data[0];
+        return t.toString().length() > 0 && !t.startsWith("\"") && !t.endsWith("\"");
       }
     }, designDocId, view, validjson, mimetype {{
       clazz = MimeType.class;
