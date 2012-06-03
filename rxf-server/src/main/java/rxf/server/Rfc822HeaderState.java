@@ -10,7 +10,6 @@ import java.util.Map.Entry;
 
 import one.xio.HttpHeaders;
 import one.xio.HttpMethod;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import static one.xio.HttpMethod.UTF8;
 import static rxf.server.BlobAntiPatternObject.COOKIE;
@@ -79,6 +78,7 @@ public class Rfc822HeaderState {
    * user is responsible for populating this on outbound headers
    */
   private String pathRescode;
+  private static final String SET_COOKIE = "Set-Cookie";
 
   /**
    * default ctor populates {@link #headers}
@@ -187,9 +187,9 @@ public class Rfc822HeaderState {
    * <p/>
    * {@link #cookies } contains a list of cookies from which to parse from Cookie header into {@link #cookieStrings}
    * <p/>
-   * setting cookies for a response header is possible by setting {@link #dirty()} to true and setting  {@link #cookieStrings} map values.
+   * setting cookies for a response header is possible by setting {@link #dirty } to true and setting  {@link #cookieStrings} map values.
    * <p/>
-   * currently this is  done inside of {@link RfPostWrapper.RfProcessTask   } surrounding {@link com.google.web.bindery.requestfactory.server.SimpleRequestProcessor#process(String)}
+   * currently this is  done inside of {@link RfPostWrapper } surrounding {@link com.google.web.bindery.requestfactory.server.SimpleRequestProcessor#process(String)}
    *
    * @param cursor
    * @return this
@@ -371,9 +371,11 @@ public class Rfc822HeaderState {
     return this;
   }
 
-  /**       dual purpose HTTP protocol header token found on the first line of a request/response in the second position
-contains either the path (request) or a the numeric result code on responses.
-user is responsible for populating this on outbound headers
+  /**
+   * dual purpose HTTP protocol header token found on the first line of a request/response in the second position
+   * contains either the path (request) or a the numeric result code on responses.
+   * user is responsible for populating this on outbound headers
+   *
    * @return
    * @see #pathRescode
    */
@@ -421,8 +423,16 @@ user is responsible for populating this on outbound headers
    * @return http headers for use with http 1.1
    */
   public ByteBuffer asResponseHeaders() {
-    //todo: finish the asResponse migration in rfpw
-    throw new NotImplementedException();
+    String protocol = methodProtocol() + " " + pathResCode() + " OK\r\n";
+    for (Entry<String, String> stringStringEntry : headerStrings().entrySet()) {
+      protocol += stringStringEntry.getKey() + ": " + stringStringEntry.getValue() + "\r\n";
+    }
+    for (Entry<String, String> stringStringEntry : cookieStrings().entrySet()) {
+      protocol += SET_COOKIE + ": " + stringStringEntry.getKey() + "=" + stringStringEntry.getValue() + "\r\n";
+    }
+
+    protocol += "\r\n";
+    return ByteBuffer.wrap(protocol.getBytes(HttpMethod.UTF8));
   }
 
   /**
@@ -434,15 +444,12 @@ user is responsible for populating this on outbound headers
    */
   public ByteBuffer asRequestHeaders() {
     String protocol = methodProtocol() + " " + pathResCode() + " HTTP/1.1\r\n";
-    if (true)
-      for (Entry<String, String> stringStringEntry : headerStrings().entrySet()) {
-        protocol += stringStringEntry.getKey() + ": " + stringStringEntry.getValue() + "\r\n";
-      }
-    if (true)
-
-      for (Entry<String, String> stringStringEntry : cookieStrings().entrySet()) {
-        protocol += COOKIE + ": " + stringStringEntry.getKey() + "=" + stringStringEntry.getValue() + "\r\n";
-      }
+    for (Entry<String, String> stringStringEntry : headerStrings().entrySet()) {
+      protocol += stringStringEntry.getKey() + ": " + stringStringEntry.getValue() + "\r\n";
+    }
+    for (Entry<String, String> stringStringEntry : cookieStrings().entrySet()) {
+      protocol += COOKIE + ": " + stringStringEntry.getKey() + "=" + stringStringEntry.getValue() + "\r\n";
+    }
 
     protocol += "\r\n";
     return ByteBuffer.wrap(protocol.getBytes(HttpMethod.UTF8));

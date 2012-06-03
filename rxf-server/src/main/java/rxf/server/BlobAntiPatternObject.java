@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 
 import com.google.gson.*;
 import one.xio.*;
+import one.xio.AsioVisitor.Impl;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.min;
@@ -61,11 +62,11 @@ public class BlobAntiPatternObject {
   public static InetAddress LOOPBACK = null;
 
   public static final VisitorPropertiesAccess SESSION_PROPERTIES_ACCESS = new VisitorPropertiesAccess();
-  public static final EnumMap<HttpMethod, LinkedHashMap<Pattern, AsioVisitor>> NAMESPACE = new EnumMap<HttpMethod, LinkedHashMap<Pattern, AsioVisitor>>(HttpMethod.class) {
+  public static final EnumMap<HttpMethod, LinkedHashMap<Pattern, Impl>> NAMESPACE = new EnumMap<HttpMethod, LinkedHashMap<Pattern, Impl>>(HttpMethod.class) {
 
     {
       final Pattern passthroughExpr = Pattern.compile("^/i(/.*)$");
-      put(GET, new LinkedHashMap<Pattern, AsioVisitor>() {
+      put(GET, new LinkedHashMap<Pattern, Impl>() {
         {
           put(passthroughExpr, new AsioVisitor.Impl() {
             @Override
@@ -79,13 +80,13 @@ public class BlobAntiPatternObject {
               Rfc822HeaderState state = null;
               for (Object o : Arrays.asList(browserKey.attachment())) {
                 if (o instanceof Rfc822HeaderState) {
-                  RfPostWrapper.RFState.set(state= (Rfc822HeaderState) o);
+                  RfPostWrapper.RFState.set(state = (Rfc822HeaderState) o);
                   break
                       ;
                 }
               }
-              if(null==state) {
-                throw new Error("this GET proxy requires " + Rfc822HeaderState.class.getCanonicalName() + " in "+SelectionKey.class.getCanonicalName()+".attachments :(");
+              if (null == state) {
+                throw new Error("this GET proxy requires " + Rfc822HeaderState.class.getCanonicalName() + " in " + SelectionKey.class.getCanonicalName() + ".attachments :(");
               }
 
               path = state.pathResCode();
@@ -114,7 +115,7 @@ public class BlobAntiPatternObject {
                         final SocketChannel browserChannel = (SocketChannel) browserKey.channel();
                         try {
 
-                           int write = browserChannel.write((ByteBuffer) dst.rewind());
+                          int write = browserChannel.write((ByteBuffer) dst.rewind());
                         } catch (IOException e) {
                           couchConnection.close();
                           return;
@@ -720,7 +721,7 @@ public class BlobAntiPatternObject {
     return path;
   }
 
-  public static EnumMap<HttpMethod, LinkedHashMap<Pattern, AsioVisitor>> getNamespace() {
+  public static EnumMap<HttpMethod, LinkedHashMap<Pattern, Impl>> getNamespace() {
     return NAMESPACE;
   }
 

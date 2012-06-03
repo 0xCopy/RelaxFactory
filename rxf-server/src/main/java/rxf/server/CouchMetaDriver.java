@@ -468,6 +468,7 @@ public enum CouchMetaDriver {
   public static final String CONTENT_TYPE = "Content-Type";
   public static final String CONTENT_ENCODING = "Content-Encoding";
   public static final String ACCEPT = "Accept";
+  public static final String ACCEPT_ENCODING = "Accept-Encoding";
   public static final String TRANSFER_ENCODING = "Transfer-Encoding";
 
   static <T> String idpath(DbKeysBuilder<T> dbKeysBuilder, etype etype) {

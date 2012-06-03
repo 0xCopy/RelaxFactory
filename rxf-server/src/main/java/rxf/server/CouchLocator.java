@@ -101,9 +101,9 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
   }
 
   public CouchTx persist(T domainObject) throws Exception {
-    final String pathPrefix = getPathPrefix();
-    final String id = getId(domainObject);
-    final Object version = getVersion(domainObject);
+    String pathPrefix = getPathPrefix();
+    String id = getId(domainObject);
+    Object version = getVersion(domainObject);
 
     /**
      * no slash as char[0] will disconnect couchdb
@@ -111,7 +111,7 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
      *
      */
     String s = "/" + pathPrefix + (null != id ? "/" + (id + null != version ? "?rev=" + version : "") : "");
-    final sendJsonTerminalBuilder fire = new sendJsonBuilder().validjson(GSON.toJson(domainObject)).opaque(pathPrefix).to().fire();
+    sendJsonTerminalBuilder fire = new sendJsonBuilder().validjson(GSON.toJson(domainObject)).opaque(pathPrefix).to().fire();
     return fire.tx();
   }
 
