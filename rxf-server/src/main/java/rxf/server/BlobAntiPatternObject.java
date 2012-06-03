@@ -28,6 +28,7 @@ import static one.xio.HttpMethod.UTF8;
 import static one.xio.HttpMethod.wheresWaldo;
 import static rxf.server.CouchDriver.createDocBuilder;
 import static rxf.server.CouchDriver.getViewBuilder;
+import static rxf.server.CouchMetaDriver.CONTENT_LENGTH;
 
 /**
  * User: jim
@@ -74,16 +75,20 @@ public class BlobAntiPatternObject {
               browserKey.interestOps(OP_READ);
               String path;
               ByteBuffer headers;
-              final ByteBuffer dst;
-              //receives impl,path,headers,first block
-              Object attachment = browserKey.attachment();
-              if (!(attachment instanceof Object[])) {
-                throw new UnsupportedOperationException("this GET proxy requires attach(this,path,headers,block0) to function correctly");
+              ByteBuffer dst;
+              Rfc822HeaderState state = null;
+              for (Object o : Arrays.asList(browserKey.attachment())) {
+                if (o instanceof Rfc822HeaderState) {
+                  RfPostWrapper.RFState.set(state= (Rfc822HeaderState) o);
+                  break
+                      ;
+                }
               }
-              Object[] objects = (Object[]) attachment;
-              path = (String) objects[1];
-              headers = (ByteBuffer) objects[2];
-              dst = (ByteBuffer) objects[3];
+              if(null==state) {
+                throw new Error("this GET proxy requires " + Rfc822HeaderState.class.getCanonicalName() + " in "+SelectionKey.class.getCanonicalName()+".attachments :(");
+              }
+
+              path = state.pathResCode();
               Matcher matcher = passthroughExpr.matcher(path);
               if (matcher.matches()) {
                 String link = matcher.group(1);
@@ -99,16 +104,17 @@ public class BlobAntiPatternObject {
                       @Override
                       public void onRead(final SelectionKey couchKey) throws Exception {
                         SocketChannel channel = (SocketChannel) couchKey.channel();
-                        channel.read((ByteBuffer) dst.clear());
-                        moveCaretToDoubleEol((ByteBuffer) dst.flip());
-                        ByteBuffer headers = ((ByteBuffer) dst.duplicate().flip()).slice();
+                        final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
+                        int read = channel.read(dst);
+                        Rfc822HeaderState proxyState = new Rfc822HeaderState(CONTENT_LENGTH);
+//                        ByteBuffer outBuf=;
 
-                        Map<String, int[]> map = one.xio.HttpHeaders.getHeaders((ByteBuffer) headers.rewind());
-                        int[] ints = map.get("Content-Length");
-                        final int total = Integer.parseInt(UTF8.decode((ByteBuffer) headers.duplicate().clear().position(ints[0]).limit(ints[1])).toString().trim());
+//                        final int total = Integer.parseInt(UTF8.decode((ByteBuffer) headers.duplicate().clear().position(ints[0]).limit(ints[1])).toString().trim());
+                        final int total = Integer.parseInt(proxyState.headerString(CONTENT_LENGTH));
                         final SocketChannel browserChannel = (SocketChannel) browserKey.channel();
                         try {
-                          browserChannel.write((ByteBuffer) headers.rewind());
+
+                           int write = browserChannel.write((ByteBuffer) dst.rewind());
                         } catch (IOException e) {
                           couchConnection.close();
                           return;

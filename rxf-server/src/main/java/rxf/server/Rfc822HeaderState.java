@@ -371,7 +371,9 @@ public class Rfc822HeaderState {
     return this;
   }
 
-  /**
+  /**       dual purpose HTTP protocol header token found on the first line of a request/response in the second position
+contains either the path (request) or a the numeric result code on responses.
+user is responsible for populating this on outbound headers
    * @return
    * @see #pathRescode
    */

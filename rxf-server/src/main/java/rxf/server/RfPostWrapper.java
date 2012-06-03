@@ -1,27 +1,25 @@
 package rxf.server;
 
-import java.io.*;
-import java.net.InetAddress;
-import java.net.URLDecoder;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
-import java.text.MessageFormat;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.google.web.bindery.requestfactory.server.ServiceLayer;
 import com.google.web.bindery.requestfactory.server.SimpleRequestProcessor;
-import one.xio.*;
+import one.xio.AsioVisitor;
 import one.xio.AsioVisitor.Impl;
+import one.xio.HttpMethod;
 
-import static java.lang.Math.min;
-import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
-import static java.nio.channels.SelectionKey.OP_WRITE;
-import static one.xio.HttpMethod.UTF8;
-import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
+import static rxf.server.CouchMetaDriver.ACCEPT;
+import static rxf.server.CouchMetaDriver.CONTENT_ENCODING;
+import static rxf.server.CouchMetaDriver.CONTENT_LENGTH;
+import static rxf.server.CouchMetaDriver.CONTENT_TYPE;
+import static rxf.server.CouchMetaDriver.ETAG;
+import static rxf.server.CouchMetaDriver.TRANSFER_ENCODING;
 
 /**
  * a POST interception wrapper for http protocol cracking
@@ -32,8 +30,9 @@ import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 public class RfPostWrapper extends Impl {
 
   public static final SimpleRequestProcessor SIMPLE_REQUEST_PROCESSOR = new SimpleRequestProcessor(ServiceLayer.create());
+  public static ThreadLocal<Rfc822HeaderState> RFState = new ThreadLocal<Rfc822HeaderState>();
 
-
+/*
   @Override
   public void onRead(final SelectionKey key) throws IOException {
     SocketChannel channel = (SocketChannel) key.channel();
@@ -62,7 +61,9 @@ public class RfPostWrapper extends Impl {
         case POST: {
           BlobAntiPatternObject.moveCaretToDoubleEol(dst);
           ByteBuffer headers = (ByteBuffer) dst.duplicate().flip();
-          System.err.println("+++ headers: " + UTF8.decode((ByteBuffer) headers.duplicate().rewind()).toString());
+          if (DEBUG_SENDJSON) {
+            System.err.println("### headers: " + UTF8.decode((ByteBuffer) headers.duplicate().rewind()).toString());
+          }
           Map<String, int[]> headers1 = HttpHeaders.getHeaders(headers);
           int[] ints = headers1.get("Content-Length");
 
@@ -81,6 +82,7 @@ public class RfPostWrapper extends Impl {
               dst.compact().limit((int) total);
 
             } else {
+              //noinspection NumericCastThatLosesPrecision
               dst = ByteBuffer.allocateDirect((int) total).put(dst);
             }
             final ByteBuffer finalDst = dst;
@@ -112,8 +114,11 @@ public class RfPostWrapper extends Impl {
 
               key.selector().wakeup();
               key.interestOps(OP_CONNECT | OP_WRITE).attach(
-                  /**sends impl,path,headers,first block
-                   */
+                  */
+
+  /**
+   * sends impl,path,headers,first block
+   *//*
                   new Object[]{visitorEntry.getValue(), path, headers, dst.rewind()});
               key.selector().wakeup();
               return;
@@ -183,9 +188,9 @@ public class RfPostWrapper extends Impl {
                 String substring = finalFname.substring(finalFname.lastIndexOf('.') + 1);
                 MimeType mimeType = MimeType.valueOf(substring);
                 long length;
-                /* try {
+                *//* try {
               length = filex.length();
-            } catch (Exception e) */
+            } catch (Exception e) *//*
                 {
                   length = randomAccessFile.length();
                 }
@@ -220,13 +225,7 @@ public class RfPostWrapper extends Impl {
       }
     }
   }
-
-
-  public void onConnect(SelectionKey key) {
-    HttpMethod.$.onConnect(key);         // hugely deprecated
-  }
-
-
+ */
   @Override
   public void onAccept(SelectionKey key) throws IOException {
     ServerSocketChannel channel = (ServerSocketChannel) key.channel();
@@ -235,6 +234,7 @@ public class RfPostWrapper extends Impl {
     HttpMethod.enqueue(accept, OP_READ, this);
 
   }
+/*
 
   public static class RfProcessTask implements Runnable {
     private final ByteBuffer headers;
@@ -283,7 +283,8 @@ public class RfPostWrapper extends Impl {
       }
 
     }
-
+*/
+/*
     public String setOutboundCookies() {
       System.err.println("+++ headers " + UTF8.decode((ByteBuffer) headers.rewind()).toString());
       Map setCookiesMap = BlobAntiPatternObject.ThreadLocalSetCookies.get();
@@ -303,6 +304,27 @@ public class RfPostWrapper extends Impl {
 
       }
       return sc;
+  }
+    }*/
+
+  @Override
+  public void onRead(SelectionKey key) throws Exception {
+    SocketChannel channel = (SocketChannel) key.channel();
+
+    ByteBuffer dst = ByteBuffer.allocateDirect(BlobAntiPatternObject.getReceiveBufferSize());
+    channel.read(dst);
+
+
+    final Rfc822HeaderState state = new Rfc822HeaderState(CONTENT_LENGTH, CONTENT_TYPE, CONTENT_ENCODING, ETAG, TRANSFER_ENCODING, ACCEPT).sourceKey(key);
+    HttpMethod method = HttpMethod.valueOf(RFState.get().methodProtocol());
+    for (Map.Entry<Pattern, AsioVisitor> visitorEntry : BlobAntiPatternObject.getNamespace().get(method).entrySet()) {
+      Matcher matcher = visitorEntry.getKey().matcher(RFState.get().pathResCode());
+      if (matcher.find()) {
+
+
+        key.selector().wakeup();
+         return;
+      }
     }
   }
 }
