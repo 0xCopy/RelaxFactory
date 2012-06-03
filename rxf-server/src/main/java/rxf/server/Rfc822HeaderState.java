@@ -423,7 +423,7 @@ public class Rfc822HeaderState {
    * @return http headers for use with http 1.1
    */
   public ByteBuffer asResponseHeaders() {
-    String protocol = methodProtocol() + " " + pathResCode() + " OK\r\n";
+    String protocol = /*methodProtocol() + */"HTTP/1.1 " + pathResCode() + " OK\r\n";
     for (Entry<String, String> stringStringEntry : headerStrings().entrySet()) {
       protocol += stringStringEntry.getKey() + ": " + stringStringEntry.getValue() + "\r\n";
     }

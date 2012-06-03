@@ -318,18 +318,24 @@ public class RfPostWrapper extends Impl {
     final SocketChannel channel = (SocketChannel) key.channel();
 
     ByteBuffer cursor = ByteBuffer.allocateDirect(BlobAntiPatternObject.getReceiveBufferSize());
-    channel.read(cursor);
-
+    int read = channel.read(cursor);
+    if (-1 == read) {
+      key.cancel();
+      return;
+    }
     //break down the incoming headers.
-    final Rfc822HeaderState state = new Rfc822HeaderState(CONTENT_LENGTH, CONTENT_TYPE, CONTENT_ENCODING, ETAG, TRANSFER_ENCODING, ACCEPT).sourceKey(key);
+    final Rfc822HeaderState state;
+    RFState.set(state =
+        new Rfc822HeaderState(CONTENT_LENGTH, CONTENT_TYPE, CONTENT_ENCODING, ETAG, TRANSFER_ENCODING, ACCEPT)
+            .sourceKey(key).apply((ByteBuffer) cursor.flip()));
 
 
     //find the method to dispatch
-    HttpMethod method = HttpMethod.valueOf(RFState.get().methodProtocol());
+    HttpMethod method = HttpMethod.valueOf(state.methodProtocol());
 
     //check for namespace registration
     for (Map.Entry<Pattern, Impl> visitorEntry : BlobAntiPatternObject.getNamespace().get(method).entrySet()) {
-      Matcher matcher = visitorEntry.getKey().matcher(RFState.get().pathResCode());
+      Matcher matcher = visitorEntry.getKey().matcher(state.pathResCode());
       if (matcher.find()) {
         Impl impl = visitorEntry.getValue();
 
@@ -345,7 +351,7 @@ public class RfPostWrapper extends Impl {
 
 
         String path = state.pathResCode();
-        final String fname = URLDecoder.decode(MessageFormat.format("./{0}", path.split("[\\#\\?]")).replace("//", "/").replace("../", "./"), UTF8.name());
+        String fname = URLDecoder.decode(MessageFormat.format("./{0}", path.split("[\\#\\?]")).replace("//", "/").replace("../", "./"), UTF8.name());
 
         File filex = new File(fname);
         final File[] file = {filex};
@@ -358,7 +364,7 @@ public class RfPostWrapper extends Impl {
           @Override
           public void onWrite(SelectionKey key) throws Exception {
 
-            final String accepts = state.headerString(ACCEPT_ENCODING);
+            String accepts = state.headerString(ACCEPT_ENCODING);
             String ceString = null;
             if (null != accepts) {
 //              String accepts = UTF8.decode((ByteBuffer) headers.clear().limit(ints[1]).position(ints[0])).toString().trim();
@@ -390,14 +396,14 @@ public class RfPostWrapper extends Impl {
               String substring = finalFname.substring(finalFname.lastIndexOf('.') + 1);
               MimeType mimeType = MimeType.valueOf(substring);
               long length = randomAccessFile.length();
-              final Rfc822HeaderState responseHeader = new Rfc822HeaderState()
+              Rfc822HeaderState responseHeader = new Rfc822HeaderState()
                   .headerString(CONTENT_TYPE, (null == mimeType ? MimeType.bin : mimeType).contentType)
                   .headerString(CONTENT_LENGTH, String.valueOf(length))
                   .pathResCode("200")
-                  .methodProtocol("HTTP/1.1");
-              if (ceString != null)
+                  /*  .methodProtocol("HTTP/1.1")*/;
+              if (null != ceString)
                 responseHeader.headerString(CONTENT_ENCODING, ceString);
-              final ByteBuffer response = responseHeader.asResponseHeaders();
+              ByteBuffer response = responseHeader.asResponseHeaders();
               int write = channel.write(response);
               final int sendBufferSize = BlobAntiPatternObject.getSendBufferSize();
               final long[] progress = {fileChannel.transferTo(0, sendBufferSize, channel)};
@@ -409,7 +415,7 @@ public class RfPostWrapper extends Impl {
                   long remaining = total - progress[0];
                   progress[0] += fileChannel.transferTo(progress[0], min(sendBufferSize, remaining), channel);
                   remaining = total - progress[0];
-                  if (remaining == 0) {
+                  if (0 == remaining) {
                     fileChannel.close();
                     randomAccessFile.close();
                     key.selector().wakeup();
