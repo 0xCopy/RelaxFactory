@@ -198,15 +198,15 @@ public class Rfc822HeaderState {
     if (!cursor.hasRemaining()) cursor.flip();
     int anchor = cursor.position();
     ByteBuffer slice1 = cursor.duplicate().slice();
-    while (slice1.hasRemaining() && slice1.get() != ' ') ;
+    while (slice1.hasRemaining() && ' ' != slice1.get()) ;
     methodProtocol = UTF8.decode((ByteBuffer) slice1.flip()).toString().trim();
-    while (cursor.hasRemaining() && cursor.get() != ' ') ; //method/proto
+    while (cursor.hasRemaining() && ' ' != cursor.get()) ; //method/proto
     ByteBuffer slice = cursor.slice();
-    while (slice.hasRemaining() && slice.get() != ' ') ;
+    while (slice.hasRemaining() && ' ' != slice.get()) ;
     pathRescode = UTF8.decode((ByteBuffer) slice.flip()).toString().trim();
     headerBuf = null;
-    boolean wantsCookies = cookies != null && cookies.length > 0;
-    boolean wantsHeaders = wantsCookies || headers.length > 0;
+    boolean wantsCookies = null != cookies && 0 < cookies.length;
+    boolean wantsHeaders = wantsCookies || 0 < headers.length;
     headerBuf = (ByteBuffer) moveCaretToDoubleEol(cursor).duplicate().flip();
     headerStrings = null;
     cookieStrings = null;
@@ -246,7 +246,7 @@ public class Rfc822HeaderState {
    * @see #dirty
    */
   public boolean dirty() {
-    return this.dirty;
+    return dirty;
   }
 
   /**
@@ -261,18 +261,20 @@ public class Rfc822HeaderState {
   }
 
   /**
+   * @return
    * @see #headers
    */
 
   public String[] headers() {
-    return this.headers;
+    return headers;
   }
 
   /**
+   * @return
    * @see #cookies
    */
   public String[] cookies() {
-    return this.cookies;
+    return cookies;
   }
 
   /**
@@ -280,7 +282,7 @@ public class Rfc822HeaderState {
    * @see #sourceRoute
    */
   public InetAddress sourceRoute() {
-    return this.sourceRoute;
+    return sourceRoute;
   }
 
   /**
@@ -311,6 +313,8 @@ public class Rfc822HeaderState {
   /**
    * holds the values parsed during {@link #apply(java.nio.ByteBuffer)} and holds the key-values created as headers in
    * {@link #asRequestHeaders()} and {@link #asResponseHeaders()}
+   *
+   * @return
    */
   public Rfc822HeaderState headerStrings(Map<String, String> headerStrings) {
     this.headerStrings = headerStrings;
@@ -318,22 +322,23 @@ public class Rfc822HeaderState {
   }
 
   /**
-   * fluent getter
+   * fluent lazy getter
    *
    * @return {@link #headerStrings}
    * @see #headerStrings
    */
   public Map<String, String> headerStrings() {
-    return headerStrings == null ? headerStrings = new LinkedHashMap<String, String>() : headerStrings;
+    return null == headerStrings ? headerStrings = new LinkedHashMap<String, String>() : headerStrings;
   }
 
   /**
-   * fluent getter
+   * fluent lazy getter
    *
+   * @return
    * @see #cookieStrings
    */
   public Map<String, String> cookieStrings() {
-    return this.cookieStrings;
+    return null == cookieStrings ? cookieStrings = new LinkedHashMap<String, String>() : cookieStrings;
   }
 
   /**
@@ -350,13 +355,15 @@ public class Rfc822HeaderState {
   }
 
   /**
+   * @return
    * @see #methodProtocol
    */
   public String methodProtocol() {
-    return this.methodProtocol;
+    return methodProtocol;
   }
 
   /**
+   * @return
    * @see #methodProtocol
    */
   public Rfc822HeaderState methodProtocol(String methodProtocol) {
@@ -365,14 +372,16 @@ public class Rfc822HeaderState {
   }
 
   /**
+   * @return
    * @see #pathRescode
    */
 
   public String pathResCode() {
-    return this.pathRescode;
+    return pathRescode;
   }
 
   /**
+   * @return
    * @see #pathRescode
    */
   public Rfc822HeaderState pathResCode(String pathRescode) {
@@ -389,8 +398,8 @@ public class Rfc822HeaderState {
   public String toString() {
     return "Rfc822HeaderState{" +
         "dirty=" + dirty +
-        ", headers=" + (headers == null ? null : Arrays.asList(headers)) +
-        ", cookies=" + (cookies == null ? null : Arrays.asList(cookies)) +
+        ", headers=" + (null == headers ? null : Arrays.asList(headers)) +
+        ", cookies=" + (null == cookies ? null : Arrays.asList(cookies)) +
         ", sourceRoute=" + sourceRoute +
         ", headerBuf=" + headerBuf +
         ", headerStrings=" + headerStrings +
@@ -422,19 +431,19 @@ public class Rfc822HeaderState {
    * @return http headers for use with http 1.1
    */
   public ByteBuffer asRequestHeaders() {
-    String s = methodProtocol() + " " + pathResCode() + " HTTP/1.1\r\n";
-    if (null != headerStrings && !headerStrings.isEmpty())
+    String protocol = methodProtocol() + " " + pathResCode() + " HTTP/1.1\r\n";
+    if (true)
       for (Entry<String, String> stringStringEntry : headerStrings().entrySet()) {
-        s += stringStringEntry.getKey() + ": " + stringStringEntry.getValue() + "\r\n";
+        protocol += stringStringEntry.getKey() + ": " + stringStringEntry.getValue() + "\r\n";
       }
-    if (null != cookieStrings && !cookieStrings.isEmpty())
+    if (true)
 
-      for (Entry<String, String> stringStringEntry : cookieStrings.entrySet()) {
-        s += COOKIE + ": " + stringStringEntry.getKey() + "=" + stringStringEntry.getValue() + "\r\n";
+      for (Entry<String, String> stringStringEntry : cookieStrings().entrySet()) {
+        protocol += COOKIE + ": " + stringStringEntry.getKey() + "=" + stringStringEntry.getValue() + "\r\n";
       }
 
-    s += "\r\n";
-    return ByteBuffer.wrap(s.getBytes(HttpMethod.UTF8));
+    protocol += "\r\n";
+    return ByteBuffer.wrap(protocol.getBytes(HttpMethod.UTF8));
   }
 
   /**
@@ -458,4 +467,16 @@ public class Rfc822HeaderState {
     return BlobAntiPatternObject.dequote(s);
   }
 
+  /**
+   * setter for a header (String)
+   *
+   * @param key headername
+   * @param val header value
+   * @return
+   * @see #headerStrings
+   */
+  public Rfc822HeaderState headerString(String key, String val) {
+    headerStrings().put(key, val);
+    return this;
+  }
 }

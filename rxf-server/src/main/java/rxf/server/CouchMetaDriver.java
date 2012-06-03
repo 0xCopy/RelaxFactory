@@ -2,6 +2,7 @@ package rxf.server;
 
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.text.MessageFormat;
@@ -21,7 +22,9 @@ import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpMethod.UTF8;
 import static one.xio.HttpMethod.wheresWaldo;
 import static rxf.server.BlobAntiPatternObject.COOKIE;
+import static rxf.server.BlobAntiPatternObject.DEBUG_SENDJSON;
 import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
+import static rxf.server.BlobAntiPatternObject.GSON;
 import static rxf.server.BlobAntiPatternObject.arrToString;
 import static rxf.server.BlobAntiPatternObject.createCouchConnection;
 import static rxf.server.BlobAntiPatternObject.deepToString;
@@ -149,7 +152,7 @@ public enum CouchMetaDriver {
 
           if (null == headerStrings || !headerStrings.containsKey(ETAG))
             return ctx.error(state.pathResCode()).reason(state.methodProtocol());
-          final String rev1 = state.dequotedHeader(ETAG);
+          String rev1 = state.dequotedHeader(ETAG);
           return ctx.ok(true).rev(rev1);
 
         }
@@ -380,14 +383,91 @@ public enum CouchMetaDriver {
   @DbTask({tx, oneWay, rows, future, continuousFeed}) @DbKeys({opaque, validjson})sendJson {
     @Override
     <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
-      String opaque = (String) dbKeysBuilder.parms().get(etype.opaque);
+      final AtomicReference<CouchTx> payload = new AtomicReference<CouchTx>();
+      final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
+      String opaque = '/' + ((String) dbKeysBuilder.parms().get(etype.opaque)).replace("//", "/");
       String validjson = (String) dbKeysBuilder.parms().get(etype.validjson);
-      return sendJson(opaque, validjson);
+      int lastSlashIndex = opaque.lastIndexOf('/');
+      final byte[] outbound = validjson.getBytes(UTF8);
+      final Rfc822HeaderState state = actionBuilder.state();
+      final ByteBuffer header = state.headers(ETAG, CONTENT_LENGTH, CONTENT_ENCODING)
+          .methodProtocol(lastSlashIndex < opaque.lastIndexOf('?') || lastSlashIndex != opaque.indexOf('/') ? "PUT" : "POST")//works with or without _id [Version]set.
+          .pathResCode(opaque)
+          .headerString(CONTENT_LENGTH, String.valueOf(outbound.length))
+          .headerString(ACCEPT, APPLICATION_JSON)
+          .headerString(CONTENT_TYPE, APPLICATION_JSON)
+          .asRequestHeaders();
+      if (DEBUG_SENDJSON) System.err.println(deepToString(opaque, validjson, UTF8.decode(header.duplicate()), state));
+      final SocketChannel channel = createCouchConnection();
+      HttpMethod.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
+        ByteBuffer cursor = null;
+
+        @Override
+        public void onWrite(SelectionKey key) throws Exception {
+          if (cursor == null) {
+            int write = channel.write((ByteBuffer) header);
+            cursor = ByteBuffer.wrap(outbound);
+
+          }
+          int write = channel.write(cursor);
+          if (!cursor.hasRemaining()) {
+            key.interestOps(OP_READ).selector().wakeup();
+            cursor = null;
+          }
+        }
+
+        @Override
+        public void onRead(SelectionKey key) throws Exception {
+          if (cursor == null) {
+            cursor = ByteBuffer.allocateDirect(getReceiveBufferSize());
+            int read = channel.read(cursor);
+            state.headerStrings().clear();
+            state.apply((ByteBuffer) cursor.flip());
+            if (BlobAntiPatternObject.DEBUG_SENDJSON) {
+              System.err.println(deepToString(state.pathResCode(), state, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
+            }
+
+            int remaining = Integer.parseInt(state.apply(cursor).headerString(CONTENT_LENGTH));
+
+            if (remaining == cursor.remaining()) {
+              deliver();
+            } else {
+              cursor = ByteBuffer.allocate(remaining).put(cursor);
+            }
+          } else {
+            int read = channel.read(cursor);
+            if (!cursor.hasRemaining()) {
+              cursor.flip();
+              deliver();
+            }
+          }
+        }
+
+        void deliver() throws BrokenBarrierException, InterruptedException {
+          CharBuffer decode = UTF8.decode(cursor);
+          String json = decode.toString();
+          payload.set(GSON.fromJson(json, CouchTx.class));
+          int await = cyclicBarrier.await();
+          recycleChannel(channel);
+        }
+      });
+      if (DEBUG_SENDJSON) {
+        cyclicBarrier.await(/*3, TimeUnit.SECONDS*/);
+      } else {
+        cyclicBarrier.await(3, TimeUnit.SECONDS);
+      }
+
+      CouchTx couchTx = payload.get();
+      return couchTx;
     }
   },
   @DbTask({tx, future, oneWay}) @DbResultUnit(Rfc822HeaderState.class) @DbKeys({opaque, mimetype, blob})sendBlob {};
+  private static final String APPLICATION_JSON = "application/json";
   public static final String ETAG = "ETag";
   public static final String CONTENT_LENGTH = "Content-Length";
+  public static final String CONTENT_TYPE = "Content-Type";
+  public static final String CONTENT_ENCODING = "Content-Encoding";
+  public static final String ACCEPT = "Accept";
   public static final String TRANSFER_ENCODING = "Transfer-Encoding";
 
   static <T> String idpath(DbKeysBuilder<T> dbKeysBuilder, etype etype) {

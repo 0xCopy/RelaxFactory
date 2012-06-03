@@ -6,6 +6,8 @@ import java.util.concurrent.SynchronousQueue;
 
 import com.google.web.bindery.requestfactory.shared.Locator;
 import one.xio.HttpMethod;
+import rxf.server.CouchDriver.sendJsonBuilder;
+import rxf.server.CouchDriver.sendJsonBuilder.sendJsonTerminalBuilder;
 
 import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_WRITE;
@@ -99,20 +101,18 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
   }
 
   public CouchTx persist(T domainObject) throws Exception {
+    final String pathPrefix = getPathPrefix();
     final String id = getId(domainObject);
-    final boolean b = null == id;
-    String take;
-    SocketChannel channel = null;
-    try {
-      channel = createCouchConnection();
-      SynchronousQueue retVal = new SynchronousQueue();
-      final String s = GSON.toJson(domainObject);
-      HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, b ? new SendJsonPOST(s, retVal, getPathPrefix()) : new SendJsonPUT(s, retVal, getPathPrefix() + '/' + id));
-      take = (String) retVal.poll(2, java.util.concurrent.TimeUnit.SECONDS);
-    } finally {
-      recycleChannel(channel);
-    }
-    return GSON.fromJson(take, CouchTx.class);
+    final Object version = getVersion(domainObject);
+
+    /**
+     * no slash as char[0] will disconnect couchdb
+     * no slash at end of POST will fail to write entity?
+     *
+     */
+    String s = "/" + pathPrefix + (null != id ? "/" + (id + null != version ? "?rev=" + version : "") : "");
+    final sendJsonTerminalBuilder fire = new sendJsonBuilder().validjson(GSON.toJson(domainObject)).opaque(pathPrefix).to().fire();
+    return fire.tx();
   }
 
   List<T> findAll() {

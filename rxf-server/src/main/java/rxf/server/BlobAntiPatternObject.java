@@ -45,7 +45,7 @@ public class BlobAntiPatternObject {
   public static final String YYYY_MM_DD_T_HH_MM_SS_SSSZ = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
   public static final Gson GSON = new GsonBuilder()
 //    .registerTypeAdapter(Id.class, new IdTypeAdapter())
-      .enableComplexMapKeySerialization()
+//      .enableComplexMapKeySerialization()
 //    .serializeNulls()
       .setDateFormat(YYYY_MM_DD_T_HH_MM_SS_SSSZ)
       .setFieldNamingPolicy(FieldNamingPolicy.IDENTITY)
@@ -61,6 +61,7 @@ public class BlobAntiPatternObject {
 
   public static final VisitorPropertiesAccess SESSION_PROPERTIES_ACCESS = new VisitorPropertiesAccess();
   public static final EnumMap<HttpMethod, LinkedHashMap<Pattern, AsioVisitor>> NAMESPACE = new EnumMap<HttpMethod, LinkedHashMap<Pattern, AsioVisitor>>(HttpMethod.class) {
+
     {
       final Pattern passthroughExpr = Pattern.compile("^/i(/.*)$");
       put(GET, new LinkedHashMap<Pattern, AsioVisitor>() {
