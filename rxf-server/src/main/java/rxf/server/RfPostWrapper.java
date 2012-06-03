@@ -320,7 +320,7 @@ public class RfPostWrapper extends Impl {
     ByteBuffer cursor = ByteBuffer.allocateDirect(BlobAntiPatternObject.getReceiveBufferSize());
     int read = channel.read(cursor);
     if (-1 == read) {
-      key.cancel();
+      ((SocketChannel) key.channel()).socket().close();//cancel();
       return;
     }
     //break down the incoming headers.
@@ -333,6 +333,11 @@ public class RfPostWrapper extends Impl {
     //find the method to dispatch
     HttpMethod method = HttpMethod.valueOf(state.methodProtocol());
 
+    if (null == method) {
+      ((SocketChannel) key.channel()).socket().close();//cancel();
+
+      return;
+    }
     //check for namespace registration
     for (Map.Entry<Pattern, Impl> visitorEntry : BlobAntiPatternObject.getNamespace().get(method).entrySet()) {
       Matcher matcher = visitorEntry.getKey().matcher(state.pathResCode());
@@ -441,6 +446,8 @@ public class RfPostWrapper extends Impl {
           }
         });
         break;
+      default:
+        throw new Error(BlobAntiPatternObject.arrToString("unknown method in", state));
     }
   }
 

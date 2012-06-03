@@ -61,10 +61,18 @@ public class BlobAntiPatternObject {
   //  private static ByteBuffer locBuf;
   public static InetAddress LOOPBACK = null;
 
-  public static final VisitorPropertiesAccess SESSION_PROPERTIES_ACCESS = new VisitorPropertiesAccess();
   public static final EnumMap<HttpMethod, LinkedHashMap<Pattern, Impl>> NAMESPACE = new EnumMap<HttpMethod, LinkedHashMap<Pattern, Impl>>(HttpMethod.class) {
 
     {
+      put(HttpMethod.POST, new LinkedHashMap<Pattern, Impl>() {{
+        put(Pattern.compile("^/gwtRequest"), new Impl() {
+          @Override
+          public Impl preRead(Object... env) {
+            System.err.println("hello world.  POST received: " + deepToString(env));
+            return this;
+          }
+        });
+      }});
       final Pattern passthroughExpr = Pattern.compile("^/i(/.*)$");
       put(GET, new LinkedHashMap<Pattern, Impl>() {
         {
