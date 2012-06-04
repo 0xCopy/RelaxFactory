@@ -10,7 +10,7 @@ import junit.framework.TestCase;
 public class CouchMetaDriverTest extends TestCase {
   public void setUp() {
 /*    try {
-      HttpMethod.init(new String[0], new RfPostWrapper(), 1000);
+      HttpMethod.init(new String[0], new ProtocolMethodDispatch(), 1000);
     } catch (IOException e) {
       e.printStackTrace();  //todo: verify for a purpose
     }*/

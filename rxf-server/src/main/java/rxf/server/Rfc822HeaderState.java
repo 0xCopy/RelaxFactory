@@ -205,7 +205,7 @@ public class Rfc822HeaderState {
    * <p/>
    * setting cookies for a response header is possible by setting {@link #dirty } to true and setting  {@link #cookieStrings} map values.
    * <p/>
-   * currently this is  done inside of {@link RfPostWrapper } surrounding {@link com.google.web.bindery.requestfactory.server.SimpleRequestProcessor#process(String)}
+   * currently this is  done inside of {@link ProtocolMethodDispatch } surrounding {@link com.google.web.bindery.requestfactory.server.SimpleRequestProcessor#process(String)}
    *
    * @param cursor
    * @return this

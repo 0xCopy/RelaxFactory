@@ -6,6 +6,8 @@ import java.nio.channels.SocketChannel;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.google.web.bindery.requestfactory.server.ServiceLayer;
+import com.google.web.bindery.requestfactory.server.SimpleRequestProcessor;
 import one.xio.AsioVisitor.Impl;
 
 import static java.nio.channels.SelectionKey.OP_READ;
@@ -19,6 +21,8 @@ import static rxf.server.CouchMetaDriver.CONTENT_LENGTH;
  * Time: 7:42 PM
  */
 class GwtRequestFactoryVisitor extends Impl {
+  public static final SimpleRequestProcessor SIMPLE_REQUEST_PROCESSOR = new SimpleRequestProcessor(ServiceLayer.create());
+
   @Override
   public Impl preRead(Object... env) {
     final AtomicReference<Rfc822HeaderState> state = new AtomicReference<Rfc822HeaderState>();
@@ -65,7 +69,7 @@ class GwtRequestFactoryVisitor extends Impl {
       public String call() throws Exception {
         try {
           String decode = UTF8.decode(buffer).toString().trim();
-          String json = RfPostWrapper.SIMPLE_REQUEST_PROCESSOR.process(decode);
+          String json = SIMPLE_REQUEST_PROCESSOR.process(decode);
 
 
           final ByteBuffer payload = ByteBuffer.wrap(json.getBytes(UTF8));

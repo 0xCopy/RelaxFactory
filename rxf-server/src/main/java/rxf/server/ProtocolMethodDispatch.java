@@ -3,16 +3,17 @@ package rxf.server;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
+import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.google.web.bindery.requestfactory.server.ServiceLayer;
-import com.google.web.bindery.requestfactory.server.SimpleRequestProcessor;
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpMethod;
 
 import static java.nio.channels.SelectionKey.OP_READ;
+import static one.xio.HttpMethod.GET;
 import static rxf.server.CouchMetaDriver.ACCEPT;
 import static rxf.server.CouchMetaDriver.CONTENT_ENCODING;
 import static rxf.server.CouchMetaDriver.CONTENT_LENGTH;
@@ -26,10 +27,27 @@ import static rxf.server.CouchMetaDriver.TRANSFER_ENCODING;
  * Date: 4/18/12
  * Time: 12:37 PM
  */
-public class RfPostWrapper extends Impl {
-
-  public static final SimpleRequestProcessor SIMPLE_REQUEST_PROCESSOR = new SimpleRequestProcessor(ServiceLayer.create());
+public class ProtocolMethodDispatch extends Impl {
+  /**
+   * this is set, and hopefully helps with cookies and session details, but is possibly redundant with other means of
+   * headerstate access.
+   */
   public static ThreadLocal<Rfc822HeaderState> RFState = new ThreadLocal<Rfc822HeaderState>();
+  public static final EnumMap<HttpMethod, LinkedHashMap<Pattern, Impl>> NAMESPACE = new EnumMap<HttpMethod, LinkedHashMap<Pattern, Impl>>(HttpMethod.class) {
+    {
+      put(HttpMethod.POST, new LinkedHashMap<Pattern, Impl>() {{
+        put(Pattern.compile("^/gwtRequest"), new GwtRequestFactoryVisitor());
+      }});
+
+      final Pattern passthroughExpr = Pattern.compile("^/i(/.*)$");
+      put(GET, new LinkedHashMap<Pattern, Impl>() {
+        {
+          put(passthroughExpr, new HttpProxyImpl(passthroughExpr));
+          put(Pattern.compile(".*"), new ContentRootImpl(System.getProperty("rxf.server.content.root", "./")));
+        }
+      });
+    }
+  };
 
 /*
   @Override
@@ -174,7 +192,7 @@ public class RfPostWrapper extends Impl {
                         "Content-Length: 0\n\n";
                     int write = socketChannel.write(UTF8.encode(response));
                     key.selector().wakeup();
-                    key.interestOps(OP_READ).attach(RfPostWrapper.this);
+                    key.interestOps(OP_READ).attach(ProtocolMethodDispatch.this);
                     key.selector().wakeup();
                   }
                 });

@@ -1,6 +1,6 @@
 package rxf.server;
 
-import java.io.*;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.*;
 import java.nio.ByteBuffer;
@@ -9,8 +9,6 @@ import java.nio.charset.Charset;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.google.gson.*;
@@ -18,22 +16,16 @@ import one.xio.*;
 import one.xio.AsioVisitor.Impl;
 
 import static java.lang.Math.abs;
-import static java.lang.Math.min;
 import static java.nio.channels.SelectionKey.OP_ACCEPT;
 import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static one.xio.HttpMethod.GET;
 import static one.xio.HttpMethod.UTF8;
 import static one.xio.HttpMethod.wheresWaldo;
 import static rxf.server.CouchDriver.createDocBuilder;
 import static rxf.server.CouchDriver.getViewBuilder;
-import static rxf.server.CouchMetaDriver.ACCEPT_ENCODING;
-import static rxf.server.CouchMetaDriver.CONTENT_ENCODING;
-import static rxf.server.CouchMetaDriver.CONTENT_LENGTH;
-import static rxf.server.CouchMetaDriver.CONTENT_TYPE;
 
 /**
  * User: jim
@@ -65,242 +57,6 @@ public class BlobAntiPatternObject {
   //  private static ByteBuffer locBuf;
   public static InetAddress LOOPBACK = null;
 
-  public static final EnumMap<HttpMethod, LinkedHashMap<Pattern, Impl>> NAMESPACE = new EnumMap<HttpMethod, LinkedHashMap<Pattern, Impl>>(HttpMethod.class) {
-
-    {
-      put(HttpMethod.POST, new LinkedHashMap<Pattern, Impl>() {{
-        put(Pattern.compile("^/gwtRequest"), new GwtRequestFactoryVisitor());
-      }});
-
-      final Pattern passthroughExpr = Pattern.compile("^/i(/.*)$");
-      put(GET, new LinkedHashMap<Pattern, Impl>() {
-        {
-          put(passthroughExpr, new AsioVisitor.Impl() {
-            @Override
-            public void onWrite(final SelectionKey browserKey) throws Exception {
-
-              browserKey.selector().wakeup();
-              browserKey.interestOps(OP_READ);
-              String path;
-              ByteBuffer headers;
-              ByteBuffer dst;
-              Rfc822HeaderState state = null;
-              for (Object o : Arrays.asList(browserKey.attachment())) {
-                if (o instanceof Rfc822HeaderState) {
-                  RfPostWrapper.RFState.set(state = (Rfc822HeaderState) o);
-                  break
-                      ;
-                }
-              }
-              if (null == state) {
-                throw new Error("this GET proxy requires " + Rfc822HeaderState.class.getCanonicalName() + " in " + SelectionKey.class.getCanonicalName() + ".attachments :(");
-              }
-
-              path = state.pathResCode();
-              Matcher matcher = passthroughExpr.matcher(path);
-              if (matcher.matches()) {
-                String link = matcher.group(1);
-
-                final String req = "GET " + link + " HTTP/1.1\r\n" +
-                    "Accept: image/*, text/*\r\n" +
-                    "Connection: close\r\n" +
-                    "\r\n";
-
-                final SocketChannel couchConnection = createCouchConnection();
-                HttpMethod.enqueue(couchConnection, OP_CONNECT | OP_WRITE,
-                    new AsioVisitor.Impl() {
-                      @Override
-                      public void onRead(final SelectionKey couchKey) throws Exception {
-                        SocketChannel channel = (SocketChannel) couchKey.channel();
-                        final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
-                        int read = channel.read(dst);
-                        Rfc822HeaderState proxyState = new Rfc822HeaderState(CONTENT_LENGTH);
-//                        ByteBuffer outBuf=;
-
-//                        final int total = Integer.parseInt(UTF8.decode((ByteBuffer) headers.duplicate().clear().position(ints[0]).limit(ints[1])).toString().trim());
-                        final int total = Integer.parseInt(proxyState.headerString(CONTENT_LENGTH));
-                        final SocketChannel browserChannel = (SocketChannel) browserKey.channel();
-                        try {
-
-                          int write = browserChannel.write((ByteBuffer) dst.rewind());
-                        } catch (IOException e) {
-                          couchConnection.close();
-                          return;
-                        }
-
-                        couchKey.selector().wakeup();
-                        couchKey.interestOps(OP_READ).attach(new AsioVisitor.Impl() {
-                          final ByteBuffer sharedBuf = ByteBuffer.allocateDirect(min(total, getReceiveBufferSize()));
-                          private AsioVisitor.Impl browserSlave = new AsioVisitor.Impl() {
-                            @Override
-                            public void onWrite(SelectionKey key) throws Exception {
-                              try {
-                                int write = browserChannel.write(dst);
-                                if (!dst.hasRemaining() && remaining == 0)
-                                  browserChannel.close();
-                                browserKey.selector().wakeup();
-                                browserKey.interestOps(0);
-                                couchKey.selector().wakeup();
-                                couchKey.interestOps(OP_READ).selector().wakeup();
-                              } catch (Exception e) {
-                                browserChannel.close();
-                              } finally {
-                              }
-                            }
-                          };
-                          public int remaining = total; {
-                            browserKey.attach(browserSlave);
-                          }
-
-                          @Override
-                          public void onRead(final SelectionKey couchKey) throws Exception {
-
-                            if (browserKey.isValid() && remaining != 0) {
-                              dst.compact();//threadsafety guarantee by monothreaded selector
-
-                              remaining -= couchConnection.read(dst);
-                              dst.flip();
-                              couchKey.selector().wakeup();
-                              couchKey.interestOps(0);
-                              browserKey.selector().wakeup();
-                              browserKey.interestOps(OP_WRITE).selector().wakeup();
-
-                            } else {
-                              recycleChannel(couchConnection);
-                            }
-                          }
-                        });
-                      }
-
-                      @Override
-                      public void onWrite(SelectionKey couchKey) throws Exception {
-                        couchConnection.write(UTF8.encode(req));
-                        couchKey.selector().wakeup();
-                        couchKey.interestOps(OP_READ);
-                      }
-                    });
-              }
-            }
-
-          });
-          put(Pattern.compile(".*"), new Impl() {
-            @Override
-            public Impl preRead(Object... env) {
-
-              final AtomicReference<Rfc822HeaderState> state = new AtomicReference<Rfc822HeaderState>();
-              for (Object o : env) {
-                if (o instanceof Rfc822HeaderState) {
-                  state.set((Rfc822HeaderState) o);
-                  break;
-                }
-              }
-
-              String path = state.get().pathResCode();
-              String fname = null;
-              try {
-                fname = URLDecoder.decode(MessageFormat.format("./{0}", path.split("[\\#\\?]")).replace("//", "/").replace("../", "./"), UTF8.name());
-              } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();  //todo: verify for a purpose
-              }
-
-              File filex = new File(fname);
-              final File[] file = {filex};
-
-              final String finalFname = fname;
-//              state.get().sourceKey().selector().wakeup();
-              state.get().sourceKey().interestOps(OP_WRITE);
-              final SocketChannel channel = (SocketChannel) state.get().sourceKey().channel();
-              return (new Impl() {
-
-                @Override
-                public void onWrite(SelectionKey key) throws Exception {
-
-                  String accepts = state.get().headerString(ACCEPT_ENCODING);
-                  String ceString = null;
-                  if (null != accepts) {
-//              String accepts = UTF8.decode((ByteBuffer) headers.clear().limit(ints[1]).position(ints[0])).toString().trim();
-                    for (CompressionTypes compType : CompressionTypes.values()) {
-                      if (accepts.contains(compType.name())) {
-                        File file1 = new File(finalFname + "." + compType.suffix);
-                        if (file1.isFile()) {
-                          file[0] = file1;
-                          System.err.println("sending compressed archive: " + file1.getAbsolutePath());
-                          ceString = MessageFormat.format("Content-Encoding: {0}\r\n", compType.name());
-                          break;
-                        }
-                      }
-                    }
-                  }
-                  boolean send200 = false;
-                  try {
-                    send200 = file[0].canRead();
-                  } finally {
-
-                  }
-
-                  if (send200) {
-                    final RandomAccessFile randomAccessFile = new RandomAccessFile(file[0], "r");
-                    final long total = randomAccessFile.length();
-                    final FileChannel fileChannel = randomAccessFile.getChannel();
-
-
-                    String substring = finalFname.substring(finalFname.lastIndexOf('.') + 1);
-                    MimeType mimeType = MimeType.valueOf(substring);
-                    long length = randomAccessFile.length();
-                    Rfc822HeaderState responseHeader = new Rfc822HeaderState()
-                        .headerString(CONTENT_TYPE, (null == mimeType ? MimeType.bin : mimeType).contentType)
-                        .headerString(CONTENT_LENGTH, String.valueOf(length))
-                        .pathResCode("200")
-                        /*  .methodProtocol("HTTP/1.1")*/;
-                    if (null != ceString)
-                      responseHeader.headerString(CONTENT_ENCODING, ceString);
-                    ByteBuffer response = responseHeader.asResponseHeaders();
-                    int write = channel.write(response);
-                    final int sendBufferSize = BlobAntiPatternObject.getSendBufferSize();
-                    final long[] progress = {fileChannel.transferTo(0, sendBufferSize, channel)};
-                    key.interestOps(OP_WRITE | OP_CONNECT);
-                    key.selector().wakeup();
-                    key.attach(new Impl() {
-                      @Override
-                      public void onWrite(SelectionKey key) throws Exception {
-                        long remaining = total - progress[0];
-                        progress[0] += fileChannel.transferTo(progress[0], min(sendBufferSize, remaining), channel);
-                        remaining = total - progress[0];
-                        if (0 == remaining) {
-                          fileChannel.close();
-                          randomAccessFile.close();
-                          key.selector().wakeup();
-                          key.interestOps(OP_READ);
-                          key.attach(new Object[0]);
-                        }
-                      }
-                    });
-                  } else {
-                    key.selector().wakeup();
-                    key.interestOps(OP_WRITE).attach(new Impl() {
-
-                      @Override
-                      public void onWrite(SelectionKey key) throws Exception {
-
-                        String response = "HTTP/1.1 404 Not Found\n" +
-                            "Content-Length: 0\n\n";
-
-                        int write = channel.write(UTF8.encode(response));
-                        key.selector().wakeup();
-                        key.interestOps(OP_READ).attach(null);
-                      }
-                    });
-                  }
-                }
-              });
-            }
-          });
-        }
-      });
-
-
-    }
-  };
   public static final boolean DEBUG_SENDJSON = System.getenv().containsKey("DEBUG_SENDJSON");
 
   static {
@@ -841,7 +597,7 @@ public class BlobAntiPatternObject {
   }
 
   public static EnumMap<HttpMethod, LinkedHashMap<Pattern, Impl>> getNamespace() {
-    return NAMESPACE;
+    return ProtocolMethodDispatch.NAMESPACE;
   }
 
   public static String dequote(String s) {
@@ -942,7 +698,7 @@ public class BlobAntiPatternObject {
   }
 
   public static void startServer(String... args) throws IOException {
-    AsioVisitor topLevel = new RfPostWrapper();
+    AsioVisitor topLevel = new ProtocolMethodDispatch();
     ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
     serverSocketChannel.socket().bind(new InetSocketAddress(8080));
     serverSocketChannel.configureBlocking(false);
