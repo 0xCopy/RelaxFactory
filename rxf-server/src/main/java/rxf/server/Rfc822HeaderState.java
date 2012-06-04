@@ -78,7 +78,10 @@ public class Rfc822HeaderState {
    * user is responsible for populating this on outbound headers
    */
   private String pathRescode;
-  private static final String SET_COOKIE = "Set-Cookie";
+  /**
+   * passed in on 0.0.0.0 dispatch to tie the header state to an nio object, to provide a socketchannel handle, and to lookup up the incoming source route
+   */
+  private SelectionKey sourceKey;
 
   /**
    * default ctor populates {@link #headers}
@@ -100,7 +103,8 @@ public class Rfc822HeaderState {
    * @throws IOException
    */
   public Rfc822HeaderState sourceKey(SelectionKey key) throws IOException {
-    SocketChannel channel = (SocketChannel) key.channel();
+    sourceKey = key;
+    SocketChannel channel = (SocketChannel) sourceKey.channel();
     sourceRoute = channel.socket().getInetAddress();
     return this;
   }
@@ -428,7 +432,7 @@ public class Rfc822HeaderState {
       protocol += stringStringEntry.getKey() + ": " + stringStringEntry.getValue() + "\r\n";
     }
     for (Entry<String, String> stringStringEntry : cookieStrings().entrySet()) {
-      protocol += SET_COOKIE + ": " + stringStringEntry.getKey() + "=" + stringStringEntry.getValue() + "\r\n";
+      protocol += CouchMetaDriver.SET_COOKIE + ": " + stringStringEntry.getKey() + "=" + stringStringEntry.getValue() + "\r\n";
     }
 
     protocol += "\r\n";
@@ -487,5 +491,13 @@ public class Rfc822HeaderState {
   public Rfc822HeaderState headerString(String key, String val) {
     headerStrings().put(key, val);
     return this;
+  }
+
+  /**
+   * @return the key
+   * @see #sourceKey
+   */
+  public SelectionKey sourceKey() {
+    return sourceKey;  //To change body of created methods use File | Settings | File Templates.
   }
 }

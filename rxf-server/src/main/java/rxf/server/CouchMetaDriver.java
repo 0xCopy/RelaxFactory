@@ -470,6 +470,7 @@ public enum CouchMetaDriver {
   public static final String ACCEPT = "Accept";
   public static final String ACCEPT_ENCODING = "Accept-Encoding";
   public static final String TRANSFER_ENCODING = "Transfer-Encoding";
+  static final String SET_COOKIE = "Set-Cookie";
 
   static <T> String idpath(DbKeysBuilder<T> dbKeysBuilder, etype etype) {
     String db = (String) dbKeysBuilder.parms().get(etype.db);

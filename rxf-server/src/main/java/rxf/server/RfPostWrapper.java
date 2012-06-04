@@ -1,11 +1,9 @@
 package rxf.server;
 
-import java.io.*;
-import java.net.URLDecoder;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
-import java.text.MessageFormat;
-import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,14 +11,9 @@ import com.google.web.bindery.requestfactory.server.ServiceLayer;
 import com.google.web.bindery.requestfactory.server.SimpleRequestProcessor;
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpMethod;
-import one.xio.MimeType;
 
-import static java.lang.Math.min;
 import static java.nio.channels.SelectionKey.OP_READ;
-import static java.nio.channels.SelectionKey.OP_WRITE;
-import static one.xio.HttpMethod.UTF8;
 import static rxf.server.CouchMetaDriver.ACCEPT;
-import static rxf.server.CouchMetaDriver.ACCEPT_ENCODING;
 import static rxf.server.CouchMetaDriver.CONTENT_ENCODING;
 import static rxf.server.CouchMetaDriver.CONTENT_LENGTH;
 import static rxf.server.CouchMetaDriver.CONTENT_TYPE;
@@ -325,9 +318,7 @@ public class RfPostWrapper extends Impl {
     }
     //break down the incoming headers.
     final Rfc822HeaderState state;
-    RFState.set(state =
-        new Rfc822HeaderState(CONTENT_LENGTH, CONTENT_TYPE, CONTENT_ENCODING, ETAG, TRANSFER_ENCODING, ACCEPT)
-            .sourceKey(key).apply((ByteBuffer) cursor.flip()));
+    RFState.set(state = new Rfc822HeaderState(CONTENT_LENGTH, CONTENT_TYPE, CONTENT_ENCODING, ETAG, TRANSFER_ENCODING, ACCEPT).sourceKey(key).apply((ByteBuffer) cursor.flip()));
 
 
     //find the method to dispatch
@@ -339,113 +330,22 @@ public class RfPostWrapper extends Impl {
       return;
     }
     //check for namespace registration
-    for (Map.Entry<Pattern, Impl> visitorEntry : BlobAntiPatternObject.getNamespace().get(method).entrySet()) {
+    // todo: preRead is  wierd initiailizer which needs some review.
+    for (Entry<Pattern, Impl> visitorEntry : BlobAntiPatternObject.getNamespace().get(method).entrySet()) {
       Matcher matcher = visitorEntry.getKey().matcher(state.pathResCode());
       if (matcher.find()) {
         Impl impl = visitorEntry.getValue();
 
-        key.attach(impl.preRead(state, cursor));
-
-        visitorEntry.getValue().onRead(key);
-        key.selector().wakeup();
+        Impl ob = impl.preRead(state, cursor);
+        if (null != ob) {
+          key.attach(ob);
+//        visitorEntry.getValue().onRead(key);
+          key.selector().wakeup();
+        }
         return;
       }
     }
     switch (method) {
-      case GET:
-
-
-        String path = state.pathResCode();
-        String fname = URLDecoder.decode(MessageFormat.format("./{0}", path.split("[\\#\\?]")).replace("//", "/").replace("../", "./"), UTF8.name());
-
-        File filex = new File(fname);
-        final File[] file = {filex};
-
-        final String finalFname = fname;
-        key.selector().wakeup();
-        key.interestOps(OP_WRITE);
-        key.attach(new Impl() {
-
-          @Override
-          public void onWrite(SelectionKey key) throws Exception {
-
-            String accepts = state.headerString(ACCEPT_ENCODING);
-            String ceString = null;
-            if (null != accepts) {
-//              String accepts = UTF8.decode((ByteBuffer) headers.clear().limit(ints[1]).position(ints[0])).toString().trim();
-              for (CompressionTypes compType : CompressionTypes.values()) {
-                if (accepts.contains(compType.name())) {
-                  File file1 = new File(finalFname + "." + compType.suffix);
-                  if (file1.isFile()) {
-                    file[0] = file1;
-                    System.err.println("sending compressed archive: " + file1.getAbsolutePath());
-                    ceString = MessageFormat.format("Content-Encoding: {0}\r\n", compType.name());
-                    break;
-                  }
-                }
-              }
-            }
-            boolean send200 = false;
-            try {
-              send200 = file[0].canRead();
-            } finally {
-
-            }
-
-            if (send200) {
-              final RandomAccessFile randomAccessFile = new RandomAccessFile(file[0], "r");
-              final long total = randomAccessFile.length();
-              final FileChannel fileChannel = randomAccessFile.getChannel();
-
-
-              String substring = finalFname.substring(finalFname.lastIndexOf('.') + 1);
-              MimeType mimeType = MimeType.valueOf(substring);
-              long length = randomAccessFile.length();
-              Rfc822HeaderState responseHeader = new Rfc822HeaderState()
-                  .headerString(CONTENT_TYPE, (null == mimeType ? MimeType.bin : mimeType).contentType)
-                  .headerString(CONTENT_LENGTH, String.valueOf(length))
-                  .pathResCode("200")
-                  /*  .methodProtocol("HTTP/1.1")*/;
-              if (null != ceString)
-                responseHeader.headerString(CONTENT_ENCODING, ceString);
-              ByteBuffer response = responseHeader.asResponseHeaders();
-              int write = channel.write(response);
-              final int sendBufferSize = BlobAntiPatternObject.getSendBufferSize();
-              final long[] progress = {fileChannel.transferTo(0, sendBufferSize, channel)};
-              key.interestOps(OP_WRITE /*| OP_CONNECT*/);
-              key.selector().wakeup();
-              key.attach(new Impl() {
-                @Override
-                public void onWrite(SelectionKey key) throws Exception {
-                  long remaining = total - progress[0];
-                  progress[0] += fileChannel.transferTo(progress[0], min(sendBufferSize, remaining), channel);
-                  remaining = total - progress[0];
-                  if (0 == remaining) {
-                    fileChannel.close();
-                    randomAccessFile.close();
-                    key.selector().wakeup();
-                    key.interestOps(OP_READ);
-                    key.attach(new Object[0]);
-                  }
-                }
-              });
-            } else {
-              key.selector().wakeup();
-              key.interestOps(OP_WRITE).attach(new Impl() {
-                @Override
-                public void onWrite(SelectionKey key) throws Exception {
-
-                  String response = "HTTP/1.1 404 Not Found\n" +
-                      "Content-Length: 0\n\n";
-                  int write = channel.write(UTF8.encode(response));
-                  key.selector().wakeup();
-                  key.interestOps(OP_READ).attach(RfPostWrapper.this);
-                }
-              });
-            }
-          }
-        });
-        break;
       default:
         throw new Error(BlobAntiPatternObject.arrToString("unknown method in", state));
     }
