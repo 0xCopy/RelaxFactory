@@ -60,7 +60,7 @@ public class Rfc822HeaderState {
   /**
    * parsed cookie values post-{@link #apply(java.nio.ByteBuffer)}
    */
-  private Map<String, String> cookieStrings;
+  public Map<String, String> cookieStrings;
   /**
    * dual purpose HTTP protocol header token found on the first line of a request/response in the first position.
    * <p/>
@@ -82,6 +82,10 @@ public class Rfc822HeaderState {
    * passed in on 0.0.0.0 dispatch to tie the header state to an nio object, to provide a socketchannel handle, and to lookup up the incoming source route
    */
   private SelectionKey sourceKey;
+  /**
+   * terminates header keys
+   */
+  public static final String PREFIX = ": ";
 
   /**
    * default ctor populates {@link #headers}
@@ -146,19 +150,27 @@ public class Rfc822HeaderState {
    * @return a list of values
    */
   List<String> getHeadersNamed(String header) {
-    String decode = UTF8.decode((ByteBuffer) headerBuf().rewind()).toString();
-    String prefix = new StringBuilder().append(header).append(": ").toString();
+    final ByteBuffer byteBuffer = headerBuf();
+    List<String> ret;
+    if (byteBuffer != null) {
+      String decode = UTF8.decode((ByteBuffer) byteBuffer.rewind()).toString();
 
-    String[] lines = decode.split("\n[^ \t]");
-    Arrays.sort(lines);
-    ArrayList<String> a = new ArrayList<String>();
-    for (String line : lines) {
-      boolean trigger = false;
-      if (line.startsWith(prefix))
-        trigger = a.add(line.substring(prefix.length()));
-      else if (!trigger) break;
+      String[] lines = decode.split("\n[^ \t]");
+      Arrays.sort(lines);
+      ArrayList<String> a = new ArrayList<String>();
+      for (String line : lines) {
+        boolean trigger = false;
+        if (line.startsWith(PREFIX)) {
+          trigger = a.add(line.substring(PREFIX.length()));
+        } else {
+          if (!trigger) break;
+        }
+      }
+      ret = a;
+    } else {
+      ret = Arrays.asList();
     }
-    return a;
+    return ret;
   }
 
   /**
@@ -169,7 +181,7 @@ public class Rfc822HeaderState {
    */
   public Rfc822HeaderState cookies(String... cookies) {
     this.cookies = cookies;
-    List<? extends String> headersNamed = getHeadersNamed(COOKIE);
+    List<String> headersNamed = getHeadersNamed(COOKIE);
     cookieStrings = new LinkedHashMap<String, String>();
     Arrays.sort(cookies);
     for (String cookie : headersNamed) {
@@ -209,7 +221,7 @@ public class Rfc822HeaderState {
     while (slice.hasRemaining() && ' ' != slice.get()) ;
     pathRescode = UTF8.decode((ByteBuffer) slice.flip()).toString().trim();
     headerBuf = null;
-    boolean wantsCookies = null != cookies && 0 < cookies.length;
+    boolean wantsCookies = 0 < cookies().length;
     boolean wantsHeaders = wantsCookies || 0 < headers.length;
     headerBuf = (ByteBuffer) moveCaretToDoubleEol(cursor).duplicate().flip();
     headerStrings = null;
@@ -278,7 +290,7 @@ public class Rfc822HeaderState {
    * @see #cookies
    */
   public String[] cookies() {
-    return cookies;
+    return cookies == null ? cookies = new String[0] : cookies;
   }
 
   /**

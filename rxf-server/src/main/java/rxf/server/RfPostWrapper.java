@@ -318,7 +318,7 @@ public class RfPostWrapper extends Impl {
     }
     //break down the incoming headers.
     final Rfc822HeaderState state;
-    RFState.set(state = new Rfc822HeaderState(CONTENT_LENGTH, CONTENT_TYPE, CONTENT_ENCODING, ETAG, TRANSFER_ENCODING, ACCEPT).sourceKey(key).apply((ByteBuffer) cursor.flip()));
+    RFState.set(state = new Rfc822HeaderState(CONTENT_LENGTH, CONTENT_TYPE, CONTENT_ENCODING, ETAG, TRANSFER_ENCODING, ACCEPT).cookies(BlobAntiPatternObject.class.getCanonicalName(), BlobAntiPatternObject.MYGEOIPSTRING).sourceKey(key).apply((ByteBuffer) cursor.flip()));
 
 
     //find the method to dispatch

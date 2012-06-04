@@ -69,13 +69,7 @@ public class BlobAntiPatternObject {
 
     {
       put(HttpMethod.POST, new LinkedHashMap<Pattern, Impl>() {{
-        put(Pattern.compile("^/gwtRequest"), new Impl() {
-          @Override
-          public Impl preRead(Object... env) {
-            System.err.println("hello world.  POST received: " + deepToString(env));
-            return this;
-          }
-        });
+        put(Pattern.compile("^/gwtRequest"), new GwtRequestFactoryVisitor());
       }});
 
       final Pattern passthroughExpr = Pattern.compile("^/i(/.*)$");
@@ -961,4 +955,5 @@ public class BlobAntiPatternObject {
     HttpMethod.enqueue(createCouchConnection(), OP_CONNECT | OP_WRITE, ro, ro.getFeedString());
     HttpMethod.init(args, topLevel, 1000);
   }
+
 }
