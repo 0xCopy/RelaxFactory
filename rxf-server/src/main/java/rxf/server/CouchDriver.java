@@ -665,7 +665,6 @@ public interface CouchDriver {
             dbKeysBuilder.validate();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
 
-              @Override
               public void run() {
                 try {
 
@@ -860,7 +859,6 @@ public interface CouchDriver {
             dbKeysBuilder.validate();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
 
-              @Override
               public void run() {
                 try {
 

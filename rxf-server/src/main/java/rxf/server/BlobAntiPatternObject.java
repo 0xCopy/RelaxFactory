@@ -112,7 +112,7 @@ public class BlobAntiPatternObject {
         final String geoip = MessageFormat.format("{0} ; path=/ ; expires={1}", GeoIpService.mapAddressLookup(inet4Address), expire.toGMTString());
         ThreadLocalSetCookies.get().put(MYGEOIPSTRING, geoip);
         EXECUTOR_SERVICE.schedule(new Runnable() {
-          @Override
+
           public void run() {
             try {
 
@@ -137,7 +137,7 @@ public class BlobAntiPatternObject {
 
   public static final BlockingDeque<SocketChannel> couchDq = new LinkedBlockingDeque<SocketChannel>(5);static {
     Runnable task = new Runnable() {
-      @Override
+
       public void run() {
         while (!HttpMethod.killswitch) {
 
