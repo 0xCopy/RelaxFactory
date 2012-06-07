@@ -280,7 +280,6 @@ public enum CouchMetaDriver {
 
             private void deliver() {
               EXECUTOR_SERVICE.submit(new Runnable() {
-                @Override
                 public void run() {
                   try {
                     cyclicBarrier.await(/*10, TimeUnit.MILLISECONDS*/);

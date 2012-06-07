@@ -60,7 +60,7 @@ public class ProtocolMethodDispatch extends Impl {
 
   @Override
   public void onRead(SelectionKey key) throws Exception {
-    final SocketChannel channel = (SocketChannel) key.channel();
+    SocketChannel channel = (SocketChannel) key.channel();
 
     ByteBuffer cursor = ByteBuffer.allocateDirect(BlobAntiPatternObject.getReceiveBufferSize());
     int read = channel.read(cursor);
@@ -69,7 +69,8 @@ public class ProtocolMethodDispatch extends Impl {
       return;
     }
     //break down the incoming headers.
-    final Rfc822HeaderState state;
+    Rfc822HeaderState state;
+
     RFState.set(state = new Rfc822HeaderState(CONTENT_LENGTH, CONTENT_TYPE, CONTENT_ENCODING, ETAG, TRANSFER_ENCODING, ACCEPT).cookies(BlobAntiPatternObject.class.getCanonicalName(), BlobAntiPatternObject.MYGEOIPSTRING).sourceKey(key).apply((ByteBuffer) cursor.flip()));
 
 

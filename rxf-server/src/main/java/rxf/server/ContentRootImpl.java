@@ -52,7 +52,7 @@ class ContentRootImpl extends Impl {
     String fname = null;
     try {
       rootPath = ".";
-      fname = URLDecoder.decode(MessageFormat.format("{0}/{1}", absolutePath, path.split("[\\#\\?]")).replace("//", "/").replace("../", "./"), UTF8.name());
+      fname = URLDecoder.decode(MessageFormat.format("{0}/{1}", absolutePath, path.split("[\\#\\?]", 1)[0]).replace("//", "/").replace("../", "./"), UTF8.name());
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();  //todo: verify for a purpose
     }
