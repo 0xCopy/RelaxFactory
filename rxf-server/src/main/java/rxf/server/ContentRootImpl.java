@@ -4,8 +4,8 @@ import java.io.*;
 import java.net.URLDecoder;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
-import java.text.MessageFormat;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
 
 import one.xio.AsioVisitor.Impl;
 import one.xio.MimeType;
@@ -32,7 +32,7 @@ class ContentRootImpl extends Impl {
 
   ContentRootImpl(String rootPath) {
     this.rootPath = rootPath;
-    final File dir = new File(rootPath);
+    File dir = new File(rootPath);
     absolutePath = dir.getAbsoluteFile();
     if (!dir.isDirectory() && dir.canRead()) throw new IllegalAccessError("can't verify  readable dir at " + rootPath);
   }
@@ -52,7 +52,14 @@ class ContentRootImpl extends Impl {
     String fname = null;
     try {
       rootPath = ".";
-      fname = URLDecoder.decode(MessageFormat.format("{0}/{1}", absolutePath, path.split("[\\#\\?]", 1)[0]).replace("//", "/").replace("../", "./"), UTF8.name());
+//      System.err.println("attempting "+path);
+
+      System.err.println("### " + BlobAntiPatternObject.deepToString(path, Pattern.compile("[\\?#]").split(absolutePath.getAbsolutePath() + '/' + path, 2)));
+
+      fname = URLDecoder.decode((Pattern.compile("[\\?#]").split(absolutePath.getAbsolutePath() + '/' + path, 2)[0]).replace("//", "/").replace("../", "./"), UTF8.name());
+
+//      fname = URLDecoder.decode(MessageFormat.format("{0}/{1}", absolutePath, path.split("[#[:\\?:]]", 1)[0])
+//          .replace("//", "/").replace("../", "./"), UTF8.name());
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();  //todo: verify for a purpose
     }
@@ -138,7 +145,7 @@ class ContentRootImpl extends Impl {
 
               String response = "HTTP/1.1 404 Not Found\n" +
                   "Content-Length: 0\n\n";
-
+              System.err.println("!!! " + file[0].getAbsolutePath());
               int write = channel.write(UTF8.encode(response));
               key.selector().wakeup();
               key.interestOps(OP_READ).attach(null);
