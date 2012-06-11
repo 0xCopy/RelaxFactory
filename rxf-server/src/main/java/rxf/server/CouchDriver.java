@@ -47,6 +47,7 @@ public interface CouchDriver {
             dbKeysBuilder.validate();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
 
+              @Override
               public void run() {
                 try {
 
@@ -131,6 +132,7 @@ public interface CouchDriver {
             dbKeysBuilder.validate();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
 
+              @Override
               public void run() {
                 try {
 
@@ -394,6 +396,7 @@ public interface CouchDriver {
             dbKeysBuilder.validate();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
 
+              @Override
               public void run() {
                 try {
 
@@ -473,95 +476,6 @@ public interface CouchDriver {
 
   }
 
-  CouchTx createNewDesignDoc(String db, String designDocId, String validjson);
-
-
-  public class createNewDesignDocBuilder<T> extends DbKeysBuilder<CouchTx> {
-    private Rfc822HeaderState rfc822HeaderState;
-
-
-    interface createNewDesignDocTerminalBuilder extends TerminalBuilder<CouchTx> {
-      CouchTx tx();
-
-      void oneWay();
-    }
-
-    public class createNewDesignDocActionBuilder extends ActionBuilder<CouchTx> {
-      public createNewDesignDocActionBuilder(SynchronousQueue/*<rxf.server.CouchTx>*/... synchronousQueues) {
-        super(synchronousQueues);
-      }
-
-      @Override
-      public createNewDesignDocTerminalBuilder fire() {
-        return new createNewDesignDocTerminalBuilder() {
-          public CouchTx tx() {
-            try {
-              return (CouchTx) CouchMetaDriver.createNewDesignDoc.visit();
-            } catch (Exception e) {
-              e.printStackTrace();
-            }
-            return null;
-          }
-
-          public void oneWay() {
-            final DbKeysBuilder<Object> dbKeysBuilder = (DbKeysBuilder<Object>) DbKeysBuilder.get();
-            final ActionBuilder<Object> actionBuilder = (ActionBuilder<Object>) ActionBuilder.get();
-            dbKeysBuilder.validate();
-            BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
-
-              public void run() {
-                try {
-
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
-                  ActionBuilder.currentAction.set(actionBuilder);
-                  CouchMetaDriver.createNewDesignDoc.visit(/*dbKeysBuilder,actionBuilder*/);
-                } catch (Exception e) {
-                  e.printStackTrace();
-                }
-              }
-            });
-          }
-        };
-      }
-
-      @Override
-      public createNewDesignDocActionBuilder state(Rfc822HeaderState state) {
-        return super.state(state);
-      }
-
-      @Override
-      public createNewDesignDocActionBuilder key(SelectionKey key) {
-        return super.key(key);
-      }
-    }
-
-    @Override
-    public createNewDesignDocActionBuilder to(SynchronousQueue/*<rxf.server.CouchTx>*/... dest) {
-      if (parms.size() == parmsCount)
-        return new createNewDesignDocActionBuilder(dest);
-
-      throw new IllegalArgumentException("required parameters are: [db, designDocId, validjson]");
-    }
-
-    static private final int parmsCount = 3;
-
-    public createNewDesignDocBuilder db(String string) {
-      parms.put(DbKeys.etype.db, string);
-      return this;
-    }
-
-    public createNewDesignDocBuilder designDocId(String string) {
-      parms.put(DbKeys.etype.designDocId, string);
-      return this;
-    }
-
-    public createNewDesignDocBuilder validjson(String string) {
-      parms.put(DbKeys.etype.validjson, string);
-      return this;
-    }
-
-  }
-
   String getDesignDoc(String db, String designDocId);
 
 
@@ -625,30 +539,30 @@ public interface CouchDriver {
 
   }
 
-  CouchTx updateDesignDoc(String db, String designDocId, String rev, String validjson);
+  CouchTx DesignDoc(String db, String designDocId, String validjson);
 
 
-  public class updateDesignDocBuilder<T> extends DbKeysBuilder<CouchTx> {
+  public class DesignDocBuilder<T> extends DbKeysBuilder<CouchTx> {
     private Rfc822HeaderState rfc822HeaderState;
 
 
-    interface updateDesignDocTerminalBuilder extends TerminalBuilder<CouchTx> {
+    interface DesignDocTerminalBuilder extends TerminalBuilder<CouchTx> {
       CouchTx tx();
 
       void oneWay();
     }
 
-    public class updateDesignDocActionBuilder extends ActionBuilder<CouchTx> {
-      public updateDesignDocActionBuilder(SynchronousQueue/*<rxf.server.CouchTx>*/... synchronousQueues) {
+    public class DesignDocActionBuilder extends ActionBuilder<CouchTx> {
+      public DesignDocActionBuilder(SynchronousQueue/*<rxf.server.CouchTx>*/... synchronousQueues) {
         super(synchronousQueues);
       }
 
       @Override
-      public updateDesignDocTerminalBuilder fire() {
-        return new updateDesignDocTerminalBuilder() {
+      public DesignDocTerminalBuilder fire() {
+        return new DesignDocTerminalBuilder() {
           public CouchTx tx() {
             try {
-              return (CouchTx) CouchMetaDriver.updateDesignDoc.visit();
+              return (CouchTx) CouchMetaDriver.DesignDoc.visit();
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -661,12 +575,13 @@ public interface CouchDriver {
             dbKeysBuilder.validate();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
 
+              @Override
               public void run() {
                 try {
 
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  CouchMetaDriver.updateDesignDoc.visit(/*dbKeysBuilder,actionBuilder*/);
+                  CouchMetaDriver.DesignDoc.visit(/*dbKeysBuilder,actionBuilder*/);
                 } catch (Exception e) {
                   e.printStackTrace();
                 }
@@ -677,42 +592,37 @@ public interface CouchDriver {
       }
 
       @Override
-      public updateDesignDocActionBuilder state(Rfc822HeaderState state) {
+      public DesignDocActionBuilder state(Rfc822HeaderState state) {
         return super.state(state);
       }
 
       @Override
-      public updateDesignDocActionBuilder key(SelectionKey key) {
+      public DesignDocActionBuilder key(SelectionKey key) {
         return super.key(key);
       }
     }
 
     @Override
-    public updateDesignDocActionBuilder to(SynchronousQueue/*<rxf.server.CouchTx>*/... dest) {
+    public DesignDocActionBuilder to(SynchronousQueue/*<rxf.server.CouchTx>*/... dest) {
       if (parms.size() == parmsCount)
-        return new updateDesignDocActionBuilder(dest);
+        return new DesignDocActionBuilder(dest);
 
-      throw new IllegalArgumentException("required parameters are: [db, designDocId, rev, validjson]");
+      throw new IllegalArgumentException("required parameters are: [db, designDocId, validjson]");
     }
 
-    static private final int parmsCount = 4;
+    static private final int parmsCount = 3;
 
-    public updateDesignDocBuilder db(String string) {
+    public DesignDocBuilder db(String string) {
       parms.put(DbKeys.etype.db, string);
       return this;
     }
 
-    public updateDesignDocBuilder designDocId(String string) {
+    public DesignDocBuilder designDocId(String string) {
       parms.put(DbKeys.etype.designDocId, string);
       return this;
     }
 
-    public updateDesignDocBuilder rev(String string) {
-      parms.put(DbKeys.etype.rev, string);
-      return this;
-    }
-
-    public updateDesignDocBuilder validjson(String string) {
+    public DesignDocBuilder validjson(String string) {
       parms.put(DbKeys.etype.validjson, string);
       return this;
     }
@@ -855,6 +765,7 @@ public interface CouchDriver {
             dbKeysBuilder.validate();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
 
+              @Override
               public void run() {
                 try {
 
@@ -996,6 +907,7 @@ public interface CouchDriver {
             dbKeysBuilder.validate();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
 
+              @Override
               public void run() {
                 try {
 

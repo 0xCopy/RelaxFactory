@@ -14,6 +14,7 @@ import one.xio.AsioVisitor;
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpMethod;
 import org.intellij.lang.annotations.Language;
+import rxf.server.CouchDriver.getRevisionBuilder;
 import rxf.server.DbKeys.etype;
 
 import static java.nio.channels.SelectionKey.OP_CONNECT;
@@ -171,18 +172,6 @@ public enum CouchMetaDriver {
 
     }
   },
-  @DbTask({tx, oneWay}) @DbKeys({db, designDocId, validjson})createNewDesignDoc {
-    @Override
-    <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
-
-      return sendJson(
-          (String) dbKeysBuilder.parms().get(etype.validjson),
-          (String) dbKeysBuilder.parms().get(etype.db),
-          (String) dbKeysBuilder.parms().get(etype.designDocId));
-
-    }
-
-  },
   @DbTask({tx}) @DbResultUnit(String.class) @DbKeys({db, designDocId})getDesignDoc {
     @Override
     <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
@@ -196,27 +185,24 @@ public enum CouchMetaDriver {
       return take;
     }
   },
-  @DbTask({tx, oneWay}) @DbKeys({db, designDocId, rev, validjson})updateDesignDoc {
+  @DbTask({tx, oneWay}) @DbKeys({db, designDocId, validjson})DesignDoc {
     AtomicReference<CouchTx> payload = new AtomicReference<CouchTx>();
 
     @Override
     <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
-
-//      return EXECUTOR_SERVICE.submit(new Callable() {
-//
-//        public Object call() throws Exception {
-//          DbKeysBuilder.currentKeys.set(dbKeysBuilder);
-//          ActionBuilder.currentAction.set(actionBuilder);
       final String json = (String) dbKeysBuilder.parms().get(etype.validjson);
       final byte[] bytes = json.getBytes(UTF8);
 
       String db = (String) dbKeysBuilder.parms().get(etype.db);
       String docId = (String) dbKeysBuilder.parms().get(etype.designDocId);
-      String rev = (String) dbKeysBuilder.parms().get(etype.rev);
-      assert null != rev;
-      final String path = "/" + db +
-          "/" + docId +
-          "?rev=" + dequote(rev);
+
+      String rev = null;
+      final Rfc822HeaderState state1 = new Rfc822HeaderState();
+      CouchTx tx = new getRevisionBuilder().db(db).docId(docId).to().state(state1).fire().tx();
+      if (tx != null && tx.ok() && tx.rev() != null) rev = tx.rev();
+      final StringBuilder path = new StringBuilder().append("/").append(db).append("/").append(docId);
+      if (null != rev)
+        path.append("?rev=" + dequote(rev));
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
 
       final Rfc822HeaderState state = actionBuilder.state();
@@ -227,7 +213,7 @@ public enum CouchMetaDriver {
         @Override
         public void onWrite(SelectionKey key) throws Exception {
           final SocketChannel channel = (SocketChannel) key.channel();
-          state.methodProtocol("PUT").pathResCode(path);
+          state.methodProtocol("PUT").pathResCode(path.toString());
           state.headerStrings().put(CONTENT_LENGTH, String.valueOf(json.length()));
           int write = channel.write(state.asRequestHeaders());
           key.selector().wakeup();
@@ -235,7 +221,7 @@ public enum CouchMetaDriver {
             @Override
             public void onWrite(SelectionKey key) throws Exception {
               int write = channel.write(ByteBuffer.wrap(bytes));
-              key.interestOps(OP_READ);
+              key.interestOps(OP_READ).selector().wakeup();
             }
 
             @Override
@@ -270,8 +256,6 @@ public enum CouchMetaDriver {
                         deliver();
                       }
                     }
-
-
                   });
                 }
               }
@@ -282,15 +266,12 @@ public enum CouchMetaDriver {
               EXECUTOR_SERVICE.submit(new Runnable() {
                 public void run() {
                   try {
-                    cyclicBarrier.await(/*10, TimeUnit.MILLISECONDS*/);
-                  } catch (RuntimeException e) {
-                    e.printStackTrace();  //todo: verify for a purpose
-                  } catch (Throwable e) {
-                    e.printStackTrace();  //todo: verify for a purpose
-                  } finally {
-
+                    cyclicBarrier.await();//>>>>
+                  } catch (Throwable e) {   //  V
+                    e.printStackTrace();    //  V
+                  } finally {               //  V
                     recycleChannel(channel);  // V
-                  }
+                  }                          // V
                 }                           // V
               });                           // V
             }                               // V
@@ -298,18 +279,8 @@ public enum CouchMetaDriver {
         }                                   // V
         //                                     V
       });                                   // V
-
-      if (BlobAntiPatternObject.DEBUG_SENDJSON) {
-        cyclicBarrier.await();
-      } else {
-        cyclicBarrier.await(3, TimeUnit.SECONDS);
-      }
-
-      return
-          payload.get();
-      //
-      //        }
-      //      }).get();
+      cyclicBarrier.await(3, DEBUG_SENDJSON ? TimeUnit.DAYS : TimeUnit.SECONDS);
+      return payload.get();
     }
   },
   @DbTask({rows, future, continuousFeed}) @DbResultUnit(CouchResultSet.class) @DbKeys({db, view})getView {

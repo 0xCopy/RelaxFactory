@@ -604,7 +604,7 @@ public class BlobAntiPatternObject {
 
   public static String dequote(String s) {
     String ret = s;
-    if (ret.startsWith("\"") && ret.endsWith("\"")) {
+    if (null != s && ret.startsWith("\"") && ret.endsWith("\"")) {
       ret = ret.substring(1, ret.lastIndexOf('"'));
     }
 
