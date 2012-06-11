@@ -27,22 +27,33 @@ import static rxf.server.CouchMetaDriver.TRANSFER_ENCODING;
  * {@link  #NAMESPACE } is a  map of http methods each containing an ordered map of regexes tested in order of
  * map insertion.
  * <p/>
- * <p/>
- * <p/>
  * User: jim
  * Date: 4/18/12
  * Time: 12:37 PM
  */
 public class ProtocolMethodDispatch extends Impl {
 
+
+  /**
+   * todo: potentially redundant with the builders
+   */
   public static ThreadLocal<Rfc822HeaderState> RFState = new ThreadLocal<Rfc822HeaderState>();
+
+  /**
+   * a map of http methods each containing an ordered map of regexes tested in order of
+   * map insertion.
+   */
   public static final Map<HttpMethod, Map<Pattern, Impl>> NAMESPACE = new EnumMap<HttpMethod, Map<Pattern, Impl>>(HttpMethod.class);
 
   /**
    * the PUT protocol handlers, only static for the sake of javadocs
    */
-  static Map<Pattern, Impl> PUTmap = new LinkedHashMap<Pattern, Impl>(),
-      GETmap = new LinkedHashMap<Pattern, Impl>();
+  static Map<Pattern, Impl> PUTmap = new LinkedHashMap<Pattern, Impl>();
+
+  /**
+   * the GET protocol handlers, only static for the sake of javadocs
+   */
+  static Map<Pattern, Impl> GETmap = new LinkedHashMap<Pattern, Impl>();
 
   /**
    *
@@ -66,13 +77,15 @@ public class ProtocolMethodDispatch extends Impl {
      */
 
     Pattern passthroughExpr = Pattern.compile("^/i(/.*)$");
-    final HttpProxyImpl theCouchImagePassthru = new HttpProxyImpl(passthroughExpr);
+    HttpProxyImpl theCouchImagePassthru = new HttpProxyImpl(passthroughExpr);
     GETmap.put(passthroughExpr, theCouchImagePassthru);
 
     /**
      * general purpose httpd static content server that recognizes .gz and other compression suffixes when convenient
      *
      * any random config mechanism with a default will suffice here to define the content root.
+     *
+     * widest regex last intentionally
      */
     GETmap.put(Pattern.compile(".*"), new ContentRootImpl(System.getProperty(RXF_SERVER_CONTENT_ROOT, "./")));
   }
