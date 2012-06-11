@@ -7,8 +7,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.google.gson.JsonObject;
-import rxf.server.CouchDriver.DesignDocBuilder;
-import rxf.server.CouchDriver.ViewQueryBuilder;
+import rxf.server.CouchDriver.ViewFetch;
 import rxf.server.CouchResultSet.tuple;
 import rxf.server.CouchService.View;
 
@@ -79,7 +78,7 @@ public class CouchServiceFactory {
             }
             design.add("views", views);
             Rfc822HeaderState etag1 = new Rfc822HeaderState(ETAG);
-            new DesignDocBuilder().db(pathPrefix).designDocId(id).validjson(design.toString()).to().fire().oneWay();
+            CouchDriver.DocPersist.$().db(pathPrefix)/*.designDocId(id)*/.validjson(design.toString()).to().fire().oneWay();
 
           } catch (Exception e) {
             e.printStackTrace();  //todo: verify for a purpose
@@ -99,7 +98,7 @@ public class CouchServiceFactory {
           String name = method.getName();
           Class<?> entityType1 = CouchServiceHandler.this.entityType;
           if (viewMethods.containsKey(name)) {
-            CouchResultSet rows = new ViewQueryBuilder().db(pathPrefix).view(String.format(viewMethods.get(name), args)).to().fire().rows();
+            CouchResultSet rows = ViewFetch.$().db(pathPrefix).view(String.format(viewMethods.get(name), args)).to().fire().rows();
             Class<?> entityType11 = entityType1;
             ArrayList ar = new ArrayList();
             for (Object row : rows.rows) {

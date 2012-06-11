@@ -112,7 +112,7 @@ public class ContentRootImpl extends Impl {
               /*  .methodProtocol("HTTP/1.1")*/;
           if (null != ceString)
             responseHeader.headerString(CONTENT_ENCODING, ceString);
-          ByteBuffer response = responseHeader.asResponseHeaders();
+          ByteBuffer response = responseHeader.asResponseHeaderByteBuffer();
           int write = channel.write(response);
           final int sendBufferSize = BlobAntiPatternObject.getSendBufferSize();
           final long[] progress = {fileChannel.transferTo(0, sendBufferSize, channel)};

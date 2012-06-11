@@ -114,10 +114,12 @@ public class ProtocolMethodDispatch extends Impl {
     Rfc822HeaderState state;
 
     RFState.set(state = new Rfc822HeaderState(CONTENT_LENGTH, CONTENT_TYPE, CONTENT_ENCODING, ETAG, TRANSFER_ENCODING, ACCEPT).cookies(BlobAntiPatternObject.class.getCanonicalName(), BlobAntiPatternObject.MYGEOIPSTRING).sourceKey(key).apply((ByteBuffer) cursor.flip()));
-
-
-    //find the method to dispatch
-    HttpMethod method = HttpMethod.valueOf(state.methodProtocol());
+    HttpMethod method = null;
+    try {
+//find the method to dispatch
+      method = HttpMethod.valueOf(state.methodProtocol());
+    } catch (Exception e) {
+    }
 
     if (null == method) {
       ((SocketChannel) key.channel()).socket().close();//cancel();

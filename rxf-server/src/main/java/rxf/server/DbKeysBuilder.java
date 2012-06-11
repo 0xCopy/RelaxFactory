@@ -1,7 +1,6 @@
 package rxf.server;
 
 import javax.validation.ValidationException;
-import java.util.concurrent.SynchronousQueue;
 
 import rxf.server.DbKeys.etype;
 
@@ -14,7 +13,7 @@ public abstract class DbKeysBuilder<T> {
   protected static ThreadLocal<DbKeysBuilder> currentKeys = new InheritableThreadLocal<DbKeysBuilder>();
   protected final java.util.EnumMap<DbKeys.etype, Object> parms = new java.util.EnumMap<DbKeys.etype, Object>(DbKeys.etype.class);
 
-  protected abstract ActionBuilder<T> to(SynchronousQueue... clients);
+  protected abstract ActionBuilder<T> to(/*  defanged... almost useless until we move to complex sync.... SynchronousQueue... clients*/);
 
   public DbKeysBuilder() {
     currentKeys.set(this);

@@ -14,7 +14,6 @@ import java.util.regex.Pattern;
 import com.google.gson.*;
 import one.xio.*;
 import one.xio.AsioVisitor.Impl;
-import rxf.server.CouchDriver.ViewQueryBuilder;
 
 import static java.lang.Math.abs;
 import static java.nio.channels.SelectionKey.OP_ACCEPT;
@@ -22,10 +21,8 @@ import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static one.xio.HttpMethod.UTF8;
 import static one.xio.HttpMethod.wheresWaldo;
-import static rxf.server.CouchDriver.createDocBuilder;
 
 /**
  * <a href='http://www.antipatterns.com/briefing/sld024.htm'> Blob Anti Pattern </a>
@@ -321,25 +318,25 @@ public class BlobAntiPatternObject {
     HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, impl);
     return impl;
   }
-
-  /**
-   * @param json
-   * @return new _rev
-   */
-  public static CouchTx sendJson(String json, String... idver) throws Exception {
-    String take;
-    SocketChannel channel = null;
-    if (DEBUG_SENDJSON) System.err.println(arrToString(idver, json) + wheresWaldo());
-    try {
-      channel = createCouchConnection();
-      SynchronousQueue retVal = new SynchronousQueue();
-      HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, new SendJsonVisitor(json, retVal, idver));
-      take = (String) retVal.poll(3, SECONDS);
-    } finally {
-      recycleChannel(channel);
-    }
-    return GSON.fromJson(take, CouchTx.class);
-  }
+//
+//  /**
+//   * @param json
+//   * @return new _rev
+//   */
+//  public static CouchTx sendJson(String json, String... idver) throws Exception {
+//    String take;
+//    SocketChannel channel = null;
+//    if (DEBUG_SENDJSON) System.err.println(arrToString(idver, json) + wheresWaldo());
+//    try {
+//      channel = createCouchConnection();
+//      SynchronousQueue retVal = new SynchronousQueue();
+//      HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, new SendJsonVisitor(json, retVal, idver));
+//      take = (String) retVal.poll(3, SECONDS);
+//    } finally {
+//      recycleChannel(channel);
+//    }
+//    return GSON.fromJson(take, CouchTx.class);
+//  }
 
   public static Map fetchMapById(CouchLocator locator, String key) throws IOException, InterruptedException {
     SocketChannel channel = createCouchConnection();
@@ -558,6 +555,7 @@ public class BlobAntiPatternObject {
     return null;
   }
 
+/*
   static CouchTx setGenericDocumentProperty(String path, String key, String value) throws Exception {
     String ret;
     SocketChannel channel = null;
@@ -580,6 +578,7 @@ public class BlobAntiPatternObject {
       return sendJson(GSON.toJson(linkedHashMap1), path);
     }
   }
+*/
 
   public static String getGenericDocumentProperty(String path, String key) throws IOException {
     SocketChannel couchConnection = null;
@@ -636,66 +635,7 @@ public class BlobAntiPatternObject {
 
   //test
   public static void main(String... args) throws Exception {
-
-
     GeoIpService.startGeoIpService("geoip");
-
-
-    EXECUTOR_SERVICE.submit(new Callable<Object>() {
-
-
-      public Object call() throws IOException, InterruptedException {
-        String id;
-        {
-          CouchLocator<Visitor> roSessionLocator = Visitor.createLocator();
-          Visitor roSession = roSessionLocator.create(Visitor.class);
-          id = roSession.getId();
-          String s = GSON.toJson(roSession);
-          System.err.println("created: " + s);
-          {
-            roSessionLocator = Visitor.createLocator();
-            try {
-              CouchTx persist = roSessionLocator.persist(roSession);
-
-              id = persist.id();
-              s = GSON.toJson(persist);
-              System.err.println("persisted: " + s);
-            } catch (Exception ignored) {
-
-            }
-          }
-        }
-        {
-          String json = "{\"created\":\"" + new Date().toGMTString() + "\"}";
-          createDocBuilder createDocBuilder = new createDocBuilder();
-          CouchTx tx = createDocBuilder.db("rxf_visitor").docId("current").validjson(json).to().state(new Rfc822HeaderState()).fire().tx();
-
-          System.err.println("=================================" + tx);
-        }
-        {
-          ViewQueryBuilder getViewBuilder = new ViewQueryBuilder();
-          CouchResultSet rows = getViewBuilder.db("rxf_deal").view("_design/rxf__rxf_deal/_view/findByProduct?key=\"test\"").to().fire().rows();
-          System.err.println("==================================" + deepToString(rows));
-        }
-        {
-          CouchLocator<Visitor> roSessionLocator = Visitor.createLocator();
-
-          Visitor roSession = roSessionLocator.find(Visitor.class, id);
-          String s = GSON.toJson(roSession);
-          System.err.println("find: " + s);
-        }
-
-        {
-          SynchronousQueue returnTo = new SynchronousQueue();
-          SocketChannel couchConnection = createCouchConnection();
-          AsioVisitor asioVisitor = fetchHeadByPath("/geoip/current", couchConnection, returnTo);
-          System.err.println("head: " + returnTo.take());
-          recycleChannel(couchConnection);
-        }
-
-        return null;
-      }
-    });
     startServer(args);
   }
 
@@ -705,12 +645,16 @@ public class BlobAntiPatternObject {
     serverSocketChannel.socket().bind(new InetSocketAddress(8080));
     serverSocketChannel.configureBlocking(false);
     HttpMethod.enqueue(serverSocketChannel, OP_ACCEPT, topLevel);
+    /*
     serverSocketChannel = ServerSocketChannel.open();
     serverSocketChannel.socket().bind(new InetSocketAddress(8888));
     serverSocketChannel.configureBlocking(false);
     HttpMethod.enqueue(serverSocketChannel, OP_ACCEPT, topLevel);
-    SessionCouchAgent<Visitor> ro = new SessionCouchAgent<Visitor>(VISITOR_LOCATOR);
-    HttpMethod.enqueue(createCouchConnection(), OP_CONNECT | OP_WRITE, ro, ro.getFeedString());
+    */
+    /*
+         SessionCouchAgent<Visitor> ro = new SessionCouchAgent<Visitor>(VISITOR_LOCATOR);
+        HttpMethod.enqueue(createCouchConnection(), OP_CONNECT | OP_WRITE, ro, ro.getFeedString());
+    */
     HttpMethod.init(args, topLevel, 1000);
   }
 

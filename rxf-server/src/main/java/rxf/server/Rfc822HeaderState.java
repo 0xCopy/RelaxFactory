@@ -266,7 +266,7 @@ public class Rfc822HeaderState {
   }
 
   /**
-   * indicate whether or not we want to rewrite the cookies and push SetCookie to client.  if this is set, the contents of {@link #cookieStrings} will be written each as cookies during {@link #asResponseHeaders()}
+   * indicate whether or not we want to rewrite the cookies and push SetCookie to client.  if this is set, the contents of {@link #cookieStrings} will be written each as cookies during {@link #asResponseHeaderByteBuffer()}
    *
    * @param dirty
    * @return
@@ -328,7 +328,7 @@ public class Rfc822HeaderState {
 
   /**
    * holds the values parsed during {@link #apply(java.nio.ByteBuffer)} and holds the key-values created as headers in
-   * {@link #asRequestHeaders()} and {@link #asResponseHeaders()}
+   * {@link #asRequestHeaderByteBuffer()} and {@link #asResponseHeaderByteBuffer()}
    *
    * @return
    */
@@ -429,6 +429,29 @@ public class Rfc822HeaderState {
         '}';
   }
 
+
+  /**
+   * writes method, headersStrings, and cookieStrings to a {@link String } suitable for Response headers
+   * <p/>
+   * populates headers from {@link #headerStrings}
+   * <p/>
+   * if {@link #dirty} is set this will include SetCookie headers (plural) one for each of {@link #cookieStrings()}
+   *
+   * @return http headers for use with http 1.1
+   */
+  public String asResponseHeaderString() {
+    String protocol = /*methodProtocol() + */"HTTP/1.1 " + pathResCode() + " WHAT_THE_HELL_EVER\r\n";
+    for (Entry<String, String> stringStringEntry : headerStrings().entrySet()) {
+      protocol += stringStringEntry.getKey() + ": " + stringStringEntry.getValue() + "\r\n";
+    }
+    for (Entry<String, String> stringStringEntry : cookieStrings().entrySet()) {
+      protocol += CouchMetaDriver.SET_COOKIE + ": " + stringStringEntry.getKey() + "=" + stringStringEntry.getValue() + "\r\n";
+    }
+
+    protocol += "\r\n";
+    return protocol;
+  }
+
   /**
    * writes method, headersStrings, and cookieStrings to a {@link ByteBuffer} suitable for Response headers
    * <p/>
@@ -438,27 +461,19 @@ public class Rfc822HeaderState {
    *
    * @return http headers for use with http 1.1
    */
-  public ByteBuffer asResponseHeaders() {
-    String protocol = /*methodProtocol() + */"HTTP/1.1 " + pathResCode() + " OK\r\n";
-    for (Entry<String, String> stringStringEntry : headerStrings().entrySet()) {
-      protocol += stringStringEntry.getKey() + ": " + stringStringEntry.getValue() + "\r\n";
-    }
-    for (Entry<String, String> stringStringEntry : cookieStrings().entrySet()) {
-      protocol += CouchMetaDriver.SET_COOKIE + ": " + stringStringEntry.getKey() + "=" + stringStringEntry.getValue() + "\r\n";
-    }
-
-    protocol += "\r\n";
+  public ByteBuffer asResponseHeaderByteBuffer() {
+    String protocol = asResponseHeaderString();
     return ByteBuffer.wrap(protocol.getBytes(HttpMethod.UTF8));
   }
 
   /**
-   * writes method, headersStrings, and cookieStrings to a {@link ByteBuffer} suitable for RequestHeaders
+   * writes method, headersStrings, and cookieStrings to a {@link String} suitable for RequestHeaders
    * <p/>
    * populates headers from {@link #headerStrings}
    *
    * @return http headers for use with http 1.1
    */
-  public ByteBuffer asRequestHeaders() {
+  public String asRequestHeaderString() {
     String protocol = methodProtocol() + " " + pathResCode() + " HTTP/1.1\r\n";
     for (Entry<String, String> stringStringEntry : headerStrings().entrySet()) {
       protocol += stringStringEntry.getKey() + ": " + stringStringEntry.getValue() + "\r\n";
@@ -468,6 +483,18 @@ public class Rfc822HeaderState {
     }
 
     protocol += "\r\n";
+    return protocol;
+  }
+
+  /**
+   * writes method, headersStrings, and cookieStrings to a {@link ByteBuffer} suitable for RequestHeaders
+   * <p/>
+   * populates headers from {@link #headerStrings}
+   *
+   * @return http headers for use with http 1.1
+   */
+  public ByteBuffer asRequestHeaderByteBuffer() {
+    String protocol = asRequestHeaderString();
     return ByteBuffer.wrap(protocol.getBytes(HttpMethod.UTF8));
   }
 

@@ -76,7 +76,7 @@ class GwtRequestFactoryVisitor extends Impl {
           state./*cookieStrings(null).*/sourceKey().interestOps(OP_WRITE).attach(new Impl() {
             @Override
             public void onWrite(SelectionKey key) throws Exception {
-              ByteBuffer headersBuf = state.headerString(CONTENT_LENGTH, String.valueOf(payload.limit())).asResponseHeaders();
+              ByteBuffer headersBuf = state.headerString(CONTENT_LENGTH, String.valueOf(payload.limit())).asResponseHeaderByteBuffer();
               final SocketChannel channel = (SocketChannel) key.channel();
               channel.write((ByteBuffer) headersBuf);
               int write = channel.write((ByteBuffer) payload.rewind());
@@ -91,7 +91,6 @@ class GwtRequestFactoryVisitor extends Impl {
                   int write1 = channel.write(payload);
                   if (!payload.hasRemaining()) {
                     key.interestOps(OP_READ).attach(null);
-
                   }
 
                 }

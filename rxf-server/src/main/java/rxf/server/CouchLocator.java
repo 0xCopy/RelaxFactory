@@ -6,8 +6,7 @@ import java.util.concurrent.SynchronousQueue;
 
 import com.google.web.bindery.requestfactory.shared.Locator;
 import one.xio.HttpMethod;
-import rxf.server.CouchDriver.sendJsonBuilder;
-import rxf.server.CouchDriver.sendJsonBuilder.sendJsonTerminalBuilder;
+import rxf.server.CouchDriver.DocPersist;
 
 import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_WRITE;
@@ -103,16 +102,8 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
   public CouchTx persist(T domainObject) throws Exception {
     String pathPrefix = getPathPrefix();
     String id = getId(domainObject);
-    Object version = getVersion(domainObject);
 
-    /**
-     * no slash as char[0] will disconnect couchdb
-     * no slash at end of POST will fail to write entity?
-     *
-     */
-    String s = "/" + pathPrefix + (null != id ? "/" + (id + null != version ? "?rev=" + version : "") : "");
-    sendJsonTerminalBuilder fire = new sendJsonBuilder().validjson(GSON.toJson(domainObject)).opaque(pathPrefix).to().fire();
-    return fire.tx();
+    return DocPersist.<T>$().db(pathPrefix).validjson(GSON.toJson(domainObject)).to().fire().tx();
   }
 
   List<T> findAll() {

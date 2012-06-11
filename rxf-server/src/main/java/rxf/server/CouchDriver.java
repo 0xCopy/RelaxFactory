@@ -1,40 +1,43 @@
 package rxf.server;
 //generated
 
-import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.util.concurrent.*;
-
-import one.xio.MimeType;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 
 /**
  * generated drivers
  */
 public interface CouchDriver {
-  CouchTx createDb(String db, String validjson);
+  rxf.server.CouchTx DbCreate(java.lang.String db, java.lang.String validjson);
 
 
-  public class createDbBuilder<T> extends DbKeysBuilder<CouchTx> {
+  public class DbCreate<T> extends DbKeysBuilder<rxf.server.CouchTx> {
     private Rfc822HeaderState rfc822HeaderState;
 
+    private DbCreate() {
+    }
 
-    interface createDbTerminalBuilder extends TerminalBuilder<CouchTx> {
+    static public <T> DbCreate<T> $() {
+      return new DbCreate<T>();
+    }
+
+    public interface DbCreateTerminalBuilder extends TerminalBuilder<rxf.server.CouchTx> {
       CouchTx tx();
 
       void oneWay();
     }
 
-    public class createDbActionBuilder extends ActionBuilder<CouchTx> {
-      public createDbActionBuilder(SynchronousQueue/*<rxf.server.CouchTx>*/... synchronousQueues) {
-        super(synchronousQueues);
+    public class DbCreateActionBuilder extends ActionBuilder<rxf.server.CouchTx> {
+      public DbCreateActionBuilder( /*<rxf.server.CouchTx>*/) {
+        super(/*synchronousQueues*/);
       }
 
       @Override
-      public createDbTerminalBuilder fire() {
-        return new createDbTerminalBuilder() {
+      public DbCreateTerminalBuilder fire() {
+        return new DbCreateTerminalBuilder() {
           public CouchTx tx() {
             try {
-              return (CouchTx) CouchMetaDriver.createDb.visit();
+              return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.DbCreate.visit();
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -53,7 +56,7 @@ public interface CouchDriver {
 
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  CouchMetaDriver.createDb.visit(/*dbKeysBuilder,actionBuilder*/);
+                  rxf.server.CouchMetaDriver.DbCreate.visit(/*dbKeysBuilder,actionBuilder*/);
                 } catch (Exception e) {
                   e.printStackTrace();
                 }
@@ -64,62 +67,254 @@ public interface CouchDriver {
       }
 
       @Override
-      public createDbActionBuilder state(Rfc822HeaderState state) {
+      public DbCreateActionBuilder state(Rfc822HeaderState state) {
         return super.state(state);
       }
 
       @Override
-      public createDbActionBuilder key(SelectionKey key) {
+      public DbCreateActionBuilder key(java.nio.channels.SelectionKey key) {
         return super.key(key);
       }
     }
 
     @Override
-    public createDbActionBuilder to(SynchronousQueue/*<rxf.server.CouchTx>*/... dest) {
+    public DbCreateActionBuilder to( /*<rxf.server.CouchTx>*/) {
       if (parms.size() == parmsCount)
-        return new createDbActionBuilder(dest);
+        return new DbCreateActionBuilder(/*dest*/);
 
       throw new IllegalArgumentException("required parameters are: [db, validjson]");
     }
 
     static private final int parmsCount = 2;
 
-    public createDbBuilder db(String string) {
+    public DbCreate db(java.lang.String string) {
       parms.put(DbKeys.etype.db, string);
       return this;
     }
 
-    public createDbBuilder validjson(String string) {
+    public DbCreate validjson(java.lang.String string) {
       parms.put(DbKeys.etype.validjson, string);
       return this;
     }
 
   }
 
-  CouchTx createDoc(String db, String docId, String validjson);
+  java.lang.String DocFetch(java.lang.String db, java.lang.String docId);
 
 
-  public class createDocBuilder<T> extends DbKeysBuilder<CouchTx> {
+  public class DocFetch<T> extends DbKeysBuilder<java.lang.String> {
     private Rfc822HeaderState rfc822HeaderState;
 
-
-    interface createDocTerminalBuilder extends TerminalBuilder<CouchTx> {
-      CouchTx tx();
-
-      void oneWay();
+    private DocFetch() {
     }
 
-    public class createDocActionBuilder extends ActionBuilder<CouchTx> {
-      public createDocActionBuilder(SynchronousQueue/*<rxf.server.CouchTx>*/... synchronousQueues) {
-        super(synchronousQueues);
+    static public <T> DocFetch<T> $() {
+      return new DocFetch<T>();
+    }
+
+    public interface DocFetchTerminalBuilder extends TerminalBuilder<java.lang.String> {
+      java.lang.String pojo();
+
+      Future<java.lang.String> future();
+    }
+
+    public class DocFetchActionBuilder extends ActionBuilder<java.lang.String> {
+      public DocFetchActionBuilder( /*<java.lang.String>*/) {
+        super(/*synchronousQueues*/);
       }
 
       @Override
-      public createDocTerminalBuilder fire() {
-        return new createDocTerminalBuilder() {
+      public DocFetchTerminalBuilder fire() {
+        return new DocFetchTerminalBuilder() {
+          public java.lang.String pojo() {
+            try {
+              return (java.lang.String) rxf.server.CouchMetaDriver.DocFetch.visit();
+            } catch (Exception e) {
+              e.printStackTrace();
+            }
+            return null;
+          }
+
+          public Future<java.lang.String> future() {
+            try {
+              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<java.lang.String>() {
+
+
+                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
+                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
+
+                public java.lang.String call() throws Exception {
+
+                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+                  ActionBuilder.currentAction.set(actionBuilder);
+                  return (java.lang.String) rxf.server.CouchMetaDriver.DocFetch.visit(dbKeysBuilder, actionBuilder);
+                }
+              });
+            } catch (Exception e) {
+              e.printStackTrace();
+            }
+            return null;
+          }
+        };
+      }
+
+      @Override
+      public DocFetchActionBuilder state(Rfc822HeaderState state) {
+        return super.state(state);
+      }
+
+      @Override
+      public DocFetchActionBuilder key(java.nio.channels.SelectionKey key) {
+        return super.key(key);
+      }
+    }
+
+    @Override
+    public DocFetchActionBuilder to( /*<java.lang.String>*/) {
+      if (parms.size() == parmsCount)
+        return new DocFetchActionBuilder(/*dest*/);
+
+      throw new IllegalArgumentException("required parameters are: [db, docId]");
+    }
+
+    static private final int parmsCount = 2;
+
+    public DocFetch db(java.lang.String string) {
+      parms.put(DbKeys.etype.db, string);
+      return this;
+    }
+
+    public DocFetch docId(java.lang.String string) {
+      parms.put(DbKeys.etype.docId, string);
+      return this;
+    }
+
+  }
+
+  java.lang.String RevisionFetch(java.lang.String db, java.lang.String docId);
+
+
+  public class RevisionFetch<T> extends DbKeysBuilder<java.lang.String> {
+    private Rfc822HeaderState rfc822HeaderState;
+
+    private RevisionFetch() {
+    }
+
+    static public <T> RevisionFetch<T> $() {
+      return new RevisionFetch<T>();
+    }
+
+    public interface RevisionFetchTerminalBuilder extends TerminalBuilder<java.lang.String> {
+      CouchTx tx();
+
+      Future<java.lang.String> future();
+    }
+
+    public class RevisionFetchActionBuilder extends ActionBuilder<java.lang.String> {
+      public RevisionFetchActionBuilder( /*<java.lang.String>*/) {
+        super(/*synchronousQueues*/);
+      }
+
+      @Override
+      public RevisionFetchTerminalBuilder fire() {
+        return new RevisionFetchTerminalBuilder() {
           public CouchTx tx() {
             try {
-              return (CouchTx) CouchMetaDriver.createDoc.visit();
+              return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.RevisionFetch.visit();
+            } catch (Exception e) {
+              e.printStackTrace();
+            }
+            return null;
+          }
+
+          public Future<java.lang.String> future() {
+            try {
+              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<java.lang.String>() {
+
+
+                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
+                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
+
+                public java.lang.String call() throws Exception {
+
+                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+                  ActionBuilder.currentAction.set(actionBuilder);
+                  return (java.lang.String) rxf.server.CouchMetaDriver.RevisionFetch.visit(dbKeysBuilder, actionBuilder);
+                }
+              });
+            } catch (Exception e) {
+              e.printStackTrace();
+            }
+            return null;
+          }
+        };
+      }
+
+      @Override
+      public RevisionFetchActionBuilder state(Rfc822HeaderState state) {
+        return super.state(state);
+      }
+
+      @Override
+      public RevisionFetchActionBuilder key(java.nio.channels.SelectionKey key) {
+        return super.key(key);
+      }
+    }
+
+    @Override
+    public RevisionFetchActionBuilder to( /*<java.lang.String>*/) {
+      if (parms.size() == parmsCount)
+        return new RevisionFetchActionBuilder(/*dest*/);
+
+      throw new IllegalArgumentException("required parameters are: [db, docId]");
+    }
+
+    static private final int parmsCount = 2;
+
+    public RevisionFetch db(java.lang.String string) {
+      parms.put(DbKeys.etype.db, string);
+      return this;
+    }
+
+    public RevisionFetch docId(java.lang.String string) {
+      parms.put(DbKeys.etype.docId, string);
+      return this;
+    }
+
+  }
+
+  rxf.server.CouchTx DocPersist(java.lang.String db, java.lang.String validjson);
+
+
+  public class DocPersist<T> extends DbKeysBuilder<rxf.server.CouchTx> {
+    private Rfc822HeaderState rfc822HeaderState;
+
+    private DocPersist() {
+    }
+
+    static public <T> DocPersist<T> $() {
+      return new DocPersist<T>();
+    }
+
+    public interface DocPersistTerminalBuilder extends TerminalBuilder<rxf.server.CouchTx> {
+      CouchTx tx();
+
+      void oneWay();
+
+      Future<rxf.server.CouchTx> future();
+    }
+
+    public class DocPersistActionBuilder extends ActionBuilder<rxf.server.CouchTx> {
+      public DocPersistActionBuilder( /*<rxf.server.CouchTx>*/) {
+        super(/*synchronousQueues*/);
+      }
+
+      @Override
+      public DocPersistTerminalBuilder fire() {
+        return new DocPersistTerminalBuilder() {
+          public CouchTx tx() {
+            try {
+              return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.DocPersist.visit();
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -138,271 +333,7 @@ public interface CouchDriver {
 
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  CouchMetaDriver.createDoc.visit(/*dbKeysBuilder,actionBuilder*/);
-                } catch (Exception e) {
-                  e.printStackTrace();
-                }
-              }
-            });
-          }
-        };
-      }
-
-      @Override
-      public createDocActionBuilder state(Rfc822HeaderState state) {
-        return super.state(state);
-      }
-
-      @Override
-      public createDocActionBuilder key(SelectionKey key) {
-        return super.key(key);
-      }
-    }
-
-    @Override
-    public createDocActionBuilder to(SynchronousQueue/*<rxf.server.CouchTx>*/... dest) {
-      if (parms.size() == parmsCount)
-        return new createDocActionBuilder(dest);
-
-      throw new IllegalArgumentException("required parameters are: [db, docId, validjson]");
-    }
-
-    static private final int parmsCount = 3;
-
-    public createDocBuilder db(String string) {
-      parms.put(DbKeys.etype.db, string);
-      return this;
-    }
-
-    public createDocBuilder docId(String string) {
-      parms.put(DbKeys.etype.docId, string);
-      return this;
-    }
-
-    public createDocBuilder validjson(String string) {
-      parms.put(DbKeys.etype.validjson, string);
-      return this;
-    }
-
-  }
-
-  String getDoc(String db, String docId);
-
-
-  public class getDocBuilder<T> extends DbKeysBuilder<String> {
-    private Rfc822HeaderState rfc822HeaderState;
-
-
-    interface getDocTerminalBuilder extends TerminalBuilder<String> {
-      String pojo();
-
-      Future<String> future();
-    }
-
-    public class getDocActionBuilder extends ActionBuilder<String> {
-      public getDocActionBuilder(SynchronousQueue/*<java.lang.String>*/... synchronousQueues) {
-        super(synchronousQueues);
-      }
-
-      @Override
-      public getDocTerminalBuilder fire() {
-        return new getDocTerminalBuilder() {
-          public String pojo() {
-            try {
-              return (String) CouchMetaDriver.getDoc.visit();
-            } catch (Exception e) {
-              e.printStackTrace();
-            }
-            return null;
-          }
-
-          public Future<String> future() {
-            try {
-              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<String>() {
-
-
-                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
-                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
-
-                public String call() throws Exception {
-
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
-                  ActionBuilder.currentAction.set(actionBuilder);
-                  return (String) CouchMetaDriver.getDoc.visit(dbKeysBuilder, actionBuilder);
-                }
-              });
-            } catch (Exception e) {
-              e.printStackTrace();
-            }
-            return null;
-          }
-        };
-      }
-
-      @Override
-      public getDocActionBuilder state(Rfc822HeaderState state) {
-        return super.state(state);
-      }
-
-      @Override
-      public getDocActionBuilder key(SelectionKey key) {
-        return super.key(key);
-      }
-    }
-
-    @Override
-    public getDocActionBuilder to(SynchronousQueue/*<java.lang.String>*/... dest) {
-      if (parms.size() == parmsCount)
-        return new getDocActionBuilder(dest);
-
-      throw new IllegalArgumentException("required parameters are: [db, docId]");
-    }
-
-    static private final int parmsCount = 2;
-
-    public getDocBuilder db(String string) {
-      parms.put(DbKeys.etype.db, string);
-      return this;
-    }
-
-    public getDocBuilder docId(String string) {
-      parms.put(DbKeys.etype.docId, string);
-      return this;
-    }
-
-  }
-
-  String getRevision(String db, String docId);
-
-
-  public class getRevisionBuilder<T> extends DbKeysBuilder<String> {
-    private Rfc822HeaderState rfc822HeaderState;
-
-
-    interface getRevisionTerminalBuilder extends TerminalBuilder<String> {
-      CouchTx tx();
-
-      Future<String> future();
-    }
-
-    public class getRevisionActionBuilder extends ActionBuilder<String> {
-      public getRevisionActionBuilder(SynchronousQueue/*<java.lang.String>*/... synchronousQueues) {
-        super(synchronousQueues);
-      }
-
-      @Override
-      public getRevisionTerminalBuilder fire() {
-        return new getRevisionTerminalBuilder() {
-          public CouchTx tx() {
-            try {
-              return (CouchTx) CouchMetaDriver.getRevision.visit();
-            } catch (Exception e) {
-              e.printStackTrace();
-            }
-            return null;
-          }
-
-          public Future<String> future() {
-            try {
-              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<String>() {
-
-
-                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
-                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
-
-                public String call() throws Exception {
-
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
-                  ActionBuilder.currentAction.set(actionBuilder);
-                  return (String) CouchMetaDriver.getRevision.visit(dbKeysBuilder, actionBuilder);
-                }
-              });
-            } catch (Exception e) {
-              e.printStackTrace();
-            }
-            return null;
-          }
-        };
-      }
-
-      @Override
-      public getRevisionActionBuilder state(Rfc822HeaderState state) {
-        return super.state(state);
-      }
-
-      @Override
-      public getRevisionActionBuilder key(SelectionKey key) {
-        return super.key(key);
-      }
-    }
-
-    @Override
-    public getRevisionActionBuilder to(SynchronousQueue/*<java.lang.String>*/... dest) {
-      if (parms.size() == parmsCount)
-        return new getRevisionActionBuilder(dest);
-
-      throw new IllegalArgumentException("required parameters are: [db, docId]");
-    }
-
-    static private final int parmsCount = 2;
-
-    public getRevisionBuilder db(String string) {
-      parms.put(DbKeys.etype.db, string);
-      return this;
-    }
-
-    public getRevisionBuilder docId(String string) {
-      parms.put(DbKeys.etype.docId, string);
-      return this;
-    }
-
-  }
-
-  CouchTx updateDoc(String db, String docId, String rev, String validjson);
-
-
-  public class updateDocBuilder<T> extends DbKeysBuilder<CouchTx> {
-    private Rfc822HeaderState rfc822HeaderState;
-
-
-    interface updateDocTerminalBuilder extends TerminalBuilder<CouchTx> {
-      CouchTx tx();
-
-      void oneWay();
-
-      Future<CouchTx> future();
-    }
-
-    public class updateDocActionBuilder extends ActionBuilder<CouchTx> {
-      public updateDocActionBuilder(SynchronousQueue/*<rxf.server.CouchTx>*/... synchronousQueues) {
-        super(synchronousQueues);
-      }
-
-      @Override
-      public updateDocTerminalBuilder fire() {
-        return new updateDocTerminalBuilder() {
-          public CouchTx tx() {
-            try {
-              return (CouchTx) CouchMetaDriver.updateDoc.visit();
-            } catch (Exception e) {
-              e.printStackTrace();
-            }
-            return null;
-          }
-
-          public void oneWay() {
-            final DbKeysBuilder<Object> dbKeysBuilder = (DbKeysBuilder<Object>) DbKeysBuilder.get();
-            final ActionBuilder<Object> actionBuilder = (ActionBuilder<Object>) ActionBuilder.get();
-            dbKeysBuilder.validate();
-            BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
-
-              @Override
-              public void run() {
-                try {
-
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
-                  ActionBuilder.currentAction.set(actionBuilder);
-                  CouchMetaDriver.updateDoc.visit(/*dbKeysBuilder,actionBuilder*/);
+                  rxf.server.CouchMetaDriver.DocPersist.visit(/*dbKeysBuilder,actionBuilder*/);
                 } catch (Exception e) {
                   e.printStackTrace();
                 }
@@ -410,19 +341,19 @@ public interface CouchDriver {
             });
           }
 
-          public Future<CouchTx> future() {
+          public Future<rxf.server.CouchTx> future() {
             try {
-              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<CouchTx>() {
+              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<rxf.server.CouchTx>() {
 
 
                 final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
                 final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public CouchTx call() throws Exception {
+                public rxf.server.CouchTx call() throws Exception {
 
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  return (CouchTx) CouchMetaDriver.updateDoc.visit(dbKeysBuilder, actionBuilder);
+                  return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.DocPersist.visit(dbKeysBuilder, actionBuilder);
                 }
               });
             } catch (Exception e) {
@@ -434,70 +365,66 @@ public interface CouchDriver {
       }
 
       @Override
-      public updateDocActionBuilder state(Rfc822HeaderState state) {
+      public DocPersistActionBuilder state(Rfc822HeaderState state) {
         return super.state(state);
       }
 
       @Override
-      public updateDocActionBuilder key(SelectionKey key) {
+      public DocPersistActionBuilder key(java.nio.channels.SelectionKey key) {
         return super.key(key);
       }
     }
 
     @Override
-    public updateDocActionBuilder to(SynchronousQueue/*<rxf.server.CouchTx>*/... dest) {
+    public DocPersistActionBuilder to( /*<rxf.server.CouchTx>*/) {
       if (parms.size() == parmsCount)
-        return new updateDocActionBuilder(dest);
+        return new DocPersistActionBuilder(/*dest*/);
 
-      throw new IllegalArgumentException("required parameters are: [db, docId, rev, validjson]");
+      throw new IllegalArgumentException("required parameters are: [db, validjson]");
     }
 
-    static private final int parmsCount = 4;
+    static private final int parmsCount = 2;
 
-    public updateDocBuilder db(String string) {
+    public DocPersist db(java.lang.String string) {
       parms.put(DbKeys.etype.db, string);
       return this;
     }
 
-    public updateDocBuilder docId(String string) {
-      parms.put(DbKeys.etype.docId, string);
-      return this;
-    }
-
-    public updateDocBuilder rev(String string) {
-      parms.put(DbKeys.etype.rev, string);
-      return this;
-    }
-
-    public updateDocBuilder validjson(String string) {
+    public DocPersist validjson(java.lang.String string) {
       parms.put(DbKeys.etype.validjson, string);
       return this;
     }
 
   }
 
-  String getDesignDoc(String db, String designDocId);
+  java.lang.String DesignDocFetch(java.lang.String db, java.lang.String designDocId);
 
 
-  public class getDesignDocBuilder<T> extends DbKeysBuilder<String> {
+  public class DesignDocFetch<T> extends DbKeysBuilder<java.lang.String> {
     private Rfc822HeaderState rfc822HeaderState;
 
+    private DesignDocFetch() {
+    }
 
-    interface getDesignDocTerminalBuilder extends TerminalBuilder<String> {
+    static public <T> DesignDocFetch<T> $() {
+      return new DesignDocFetch<T>();
+    }
+
+    public interface DesignDocFetchTerminalBuilder extends TerminalBuilder<java.lang.String> {
       CouchTx tx();
     }
 
-    public class getDesignDocActionBuilder extends ActionBuilder<String> {
-      public getDesignDocActionBuilder(SynchronousQueue/*<java.lang.String>*/... synchronousQueues) {
-        super(synchronousQueues);
+    public class DesignDocFetchActionBuilder extends ActionBuilder<java.lang.String> {
+      public DesignDocFetchActionBuilder( /*<java.lang.String>*/) {
+        super(/*synchronousQueues*/);
       }
 
       @Override
-      public getDesignDocTerminalBuilder fire() {
-        return new getDesignDocTerminalBuilder() {
+      public DesignDocFetchTerminalBuilder fire() {
+        return new DesignDocFetchTerminalBuilder() {
           public CouchTx tx() {
             try {
-              return (CouchTx) CouchMetaDriver.getDesignDoc.visit();
+              return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.DesignDocFetch.visit();
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -507,62 +434,68 @@ public interface CouchDriver {
       }
 
       @Override
-      public getDesignDocActionBuilder state(Rfc822HeaderState state) {
+      public DesignDocFetchActionBuilder state(Rfc822HeaderState state) {
         return super.state(state);
       }
 
       @Override
-      public getDesignDocActionBuilder key(SelectionKey key) {
+      public DesignDocFetchActionBuilder key(java.nio.channels.SelectionKey key) {
         return super.key(key);
       }
     }
 
     @Override
-    public getDesignDocActionBuilder to(SynchronousQueue/*<java.lang.String>*/... dest) {
+    public DesignDocFetchActionBuilder to( /*<java.lang.String>*/) {
       if (parms.size() == parmsCount)
-        return new getDesignDocActionBuilder(dest);
+        return new DesignDocFetchActionBuilder(/*dest*/);
 
       throw new IllegalArgumentException("required parameters are: [db, designDocId]");
     }
 
     static private final int parmsCount = 2;
 
-    public getDesignDocBuilder db(String string) {
+    public DesignDocFetch db(java.lang.String string) {
       parms.put(DbKeys.etype.db, string);
       return this;
     }
 
-    public getDesignDocBuilder designDocId(String string) {
+    public DesignDocFetch designDocId(java.lang.String string) {
       parms.put(DbKeys.etype.designDocId, string);
       return this;
     }
 
   }
 
-  CouchTx DesignDoc(String db, String designDocId, String validjson);
+  rxf.server.CouchTx DesignDocPersist(java.lang.String db, java.lang.String designDocId, java.lang.String validjson);
 
 
-  public class DesignDocBuilder<T> extends DbKeysBuilder<CouchTx> {
+  public class DesignDocPersist<T> extends DbKeysBuilder<rxf.server.CouchTx> {
     private Rfc822HeaderState rfc822HeaderState;
 
+    private DesignDocPersist() {
+    }
 
-    interface DesignDocTerminalBuilder extends TerminalBuilder<CouchTx> {
+    static public <T> DesignDocPersist<T> $() {
+      return new DesignDocPersist<T>();
+    }
+
+    public interface DesignDocPersistTerminalBuilder extends TerminalBuilder<rxf.server.CouchTx> {
       CouchTx tx();
 
       void oneWay();
     }
 
-    public class DesignDocActionBuilder extends ActionBuilder<CouchTx> {
-      public DesignDocActionBuilder(SynchronousQueue/*<rxf.server.CouchTx>*/... synchronousQueues) {
-        super(synchronousQueues);
+    public class DesignDocPersistActionBuilder extends ActionBuilder<rxf.server.CouchTx> {
+      public DesignDocPersistActionBuilder( /*<rxf.server.CouchTx>*/) {
+        super(/*synchronousQueues*/);
       }
 
       @Override
-      public DesignDocTerminalBuilder fire() {
-        return new DesignDocTerminalBuilder() {
+      public DesignDocPersistTerminalBuilder fire() {
+        return new DesignDocPersistTerminalBuilder() {
           public CouchTx tx() {
             try {
-              return (CouchTx) CouchMetaDriver.DesignDoc.visit();
+              return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.DocPersist.visit();
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -581,7 +514,7 @@ public interface CouchDriver {
 
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  CouchMetaDriver.DesignDoc.visit(/*dbKeysBuilder,actionBuilder*/);
+                  rxf.server.CouchMetaDriver.DocPersist.visit(/*dbKeysBuilder,actionBuilder*/);
                 } catch (Exception e) {
                   e.printStackTrace();
                 }
@@ -592,89 +525,95 @@ public interface CouchDriver {
       }
 
       @Override
-      public DesignDocActionBuilder state(Rfc822HeaderState state) {
+      public DesignDocPersistActionBuilder state(Rfc822HeaderState state) {
         return super.state(state);
       }
 
       @Override
-      public DesignDocActionBuilder key(SelectionKey key) {
+      public DesignDocPersistActionBuilder key(java.nio.channels.SelectionKey key) {
         return super.key(key);
       }
     }
 
     @Override
-    public DesignDocActionBuilder to(SynchronousQueue/*<rxf.server.CouchTx>*/... dest) {
+    public DesignDocPersistActionBuilder to( /*<rxf.server.CouchTx>*/) {
       if (parms.size() == parmsCount)
-        return new DesignDocActionBuilder(dest);
+        return new DesignDocPersistActionBuilder(/*dest*/);
 
       throw new IllegalArgumentException("required parameters are: [db, designDocId, validjson]");
     }
 
     static private final int parmsCount = 3;
 
-    public DesignDocBuilder db(String string) {
+    public DesignDocPersist db(java.lang.String string) {
       parms.put(DbKeys.etype.db, string);
       return this;
     }
 
-    public DesignDocBuilder designDocId(String string) {
+    public DesignDocPersist designDocId(java.lang.String string) {
       parms.put(DbKeys.etype.designDocId, string);
       return this;
     }
 
-    public DesignDocBuilder validjson(String string) {
+    public DesignDocPersist validjson(java.lang.String string) {
       parms.put(DbKeys.etype.validjson, string);
       return this;
     }
 
   }
 
-  CouchResultSet ViewQuery(String db, String view);
+  rxf.server.CouchResultSet ViewFetch(java.lang.String db, java.lang.String view);
 
 
-  public class ViewQueryBuilder<T> extends DbKeysBuilder<CouchResultSet> {
+  public class ViewFetch<T> extends DbKeysBuilder<rxf.server.CouchResultSet> {
     private Rfc822HeaderState rfc822HeaderState;
 
+    private ViewFetch() {
+    }
 
-    interface ViewQueryTerminalBuilder extends TerminalBuilder<CouchResultSet> {
+    static public <T> ViewFetch<T> $() {
+      return new ViewFetch<T>();
+    }
+
+    public interface ViewFetchTerminalBuilder extends TerminalBuilder<rxf.server.CouchResultSet> {
       CouchResultSet/*<rxf.server.CouchResultSet>*/ rows();
 
-      Future<CouchResultSet> future();
+      Future<rxf.server.CouchResultSet> future();
 
       void continuousFeed();
 
     }
 
-    public class ViewQueryActionBuilder extends ActionBuilder<CouchResultSet> {
-      public ViewQueryActionBuilder(SynchronousQueue/*<rxf.server.CouchResultSet>*/... synchronousQueues) {
-        super(synchronousQueues);
+    public class ViewFetchActionBuilder extends ActionBuilder<rxf.server.CouchResultSet> {
+      public ViewFetchActionBuilder( /*<rxf.server.CouchResultSet>*/) {
+        super(/*synchronousQueues*/);
       }
 
       @Override
-      public ViewQueryTerminalBuilder fire() {
-        return new ViewQueryTerminalBuilder() {
+      public ViewFetchTerminalBuilder fire() {
+        return new ViewFetchTerminalBuilder() {
           public CouchResultSet/*<rxf.server.CouchResultSet>*/ rows() {
             try {
-              return (CouchResultSet/*<rxf.server.CouchResultSet>*/) BlobAntiPatternObject.GSON.fromJson((String) CouchMetaDriver.ViewQuery.visit(), CouchResultSet/*<rxf.server.CouchResultSet>*/.class);
+              return (CouchResultSet/*<rxf.server.CouchResultSet>*/) BlobAntiPatternObject.GSON.fromJson((String) rxf.server.CouchMetaDriver.ViewFetch.visit(), CouchResultSet/*<rxf.server.CouchResultSet>*/.class);
             } catch (Exception e) {
               e.printStackTrace();
             }
             return null;
           }
 
-          public Future<CouchResultSet> future() {
+          public Future<rxf.server.CouchResultSet> future() {
             try {
-              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<CouchResultSet>() {
+              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<rxf.server.CouchResultSet>() {
 
 
                 final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
                 final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public CouchResultSet call() throws Exception {
+                public rxf.server.CouchResultSet call() throws Exception {
 
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  return (CouchResultSet) CouchMetaDriver.ViewQuery.visit(dbKeysBuilder, actionBuilder);
+                  return (rxf.server.CouchResultSet) rxf.server.CouchMetaDriver.ViewFetch.visit(dbKeysBuilder, actionBuilder);
                 }
               });
             } catch (Exception e) {
@@ -690,69 +629,75 @@ public interface CouchDriver {
       }
 
       @Override
-      public ViewQueryActionBuilder state(Rfc822HeaderState state) {
+      public ViewFetchActionBuilder state(Rfc822HeaderState state) {
         return super.state(state);
       }
 
       @Override
-      public ViewQueryActionBuilder key(SelectionKey key) {
+      public ViewFetchActionBuilder key(java.nio.channels.SelectionKey key) {
         return super.key(key);
       }
     }
 
     @Override
-    public ViewQueryActionBuilder to(SynchronousQueue/*<rxf.server.CouchResultSet>*/... dest) {
+    public ViewFetchActionBuilder to( /*<rxf.server.CouchResultSet>*/) {
       if (parms.size() == parmsCount)
-        return new ViewQueryActionBuilder(dest);
+        return new ViewFetchActionBuilder(/*dest*/);
 
       throw new IllegalArgumentException("required parameters are: [db, view]");
     }
 
     static private final int parmsCount = 2;
 
-    public ViewQueryBuilder db(String string) {
+    public ViewFetch db(java.lang.String string) {
       parms.put(DbKeys.etype.db, string);
       return this;
     }
 
-    public ViewQueryBuilder view(String string) {
+    public ViewFetch view(java.lang.String string) {
       parms.put(DbKeys.etype.view, string);
       return this;
     }
 
   }
 
-  CouchTx sendJson(String opaque, String validjson);
+  rxf.server.CouchTx JsonSend(java.lang.String opaque, java.lang.String validjson);
 
 
-  public class sendJsonBuilder<T> extends DbKeysBuilder<CouchTx> {
+  public class JsonSend<T> extends DbKeysBuilder<rxf.server.CouchTx> {
     private Rfc822HeaderState rfc822HeaderState;
 
+    private JsonSend() {
+    }
 
-    interface sendJsonTerminalBuilder extends TerminalBuilder<CouchTx> {
+    static public <T> JsonSend<T> $() {
+      return new JsonSend<T>();
+    }
+
+    public interface JsonSendTerminalBuilder extends TerminalBuilder<rxf.server.CouchTx> {
       CouchTx tx();
 
       void oneWay();
 
       CouchResultSet/*<rxf.server.CouchTx>*/ rows();
 
-      Future<CouchTx> future();
+      Future<rxf.server.CouchTx> future();
 
       void continuousFeed();
 
     }
 
-    public class sendJsonActionBuilder extends ActionBuilder<CouchTx> {
-      public sendJsonActionBuilder(SynchronousQueue/*<rxf.server.CouchTx>*/... synchronousQueues) {
-        super(synchronousQueues);
+    public class JsonSendActionBuilder extends ActionBuilder<rxf.server.CouchTx> {
+      public JsonSendActionBuilder( /*<rxf.server.CouchTx>*/) {
+        super(/*synchronousQueues*/);
       }
 
       @Override
-      public sendJsonTerminalBuilder fire() {
-        return new sendJsonTerminalBuilder() {
+      public JsonSendTerminalBuilder fire() {
+        return new JsonSendTerminalBuilder() {
           public CouchTx tx() {
             try {
-              return (CouchTx) CouchMetaDriver.sendJson.visit();
+              return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.JsonSend.visit();
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -771,7 +716,7 @@ public interface CouchDriver {
 
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  CouchMetaDriver.sendJson.visit(/*dbKeysBuilder,actionBuilder*/);
+                  rxf.server.CouchMetaDriver.JsonSend.visit(/*dbKeysBuilder,actionBuilder*/);
                 } catch (Exception e) {
                   e.printStackTrace();
                 }
@@ -781,26 +726,26 @@ public interface CouchDriver {
 
           public CouchResultSet/*<rxf.server.CouchTx>*/ rows() {
             try {
-              return (CouchResultSet/*<rxf.server.CouchTx>*/) BlobAntiPatternObject.GSON.fromJson((String) CouchMetaDriver.sendJson.visit(), CouchResultSet/*<rxf.server.CouchTx>*/.class);
+              return (CouchResultSet/*<rxf.server.CouchTx>*/) BlobAntiPatternObject.GSON.fromJson((String) rxf.server.CouchMetaDriver.JsonSend.visit(), CouchResultSet/*<rxf.server.CouchTx>*/.class);
             } catch (Exception e) {
               e.printStackTrace();
             }
             return null;
           }
 
-          public Future<CouchTx> future() {
+          public Future<rxf.server.CouchTx> future() {
             try {
-              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<CouchTx>() {
+              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<rxf.server.CouchTx>() {
 
 
                 final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
                 final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public CouchTx call() throws Exception {
+                public rxf.server.CouchTx call() throws Exception {
 
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  return (CouchTx) CouchMetaDriver.sendJson.visit(dbKeysBuilder, actionBuilder);
+                  return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.JsonSend.visit(dbKeysBuilder, actionBuilder);
                 }
               });
             } catch (Exception e) {
@@ -816,83 +761,89 @@ public interface CouchDriver {
       }
 
       @Override
-      public sendJsonActionBuilder state(Rfc822HeaderState state) {
+      public JsonSendActionBuilder state(Rfc822HeaderState state) {
         return super.state(state);
       }
 
       @Override
-      public sendJsonActionBuilder key(SelectionKey key) {
+      public JsonSendActionBuilder key(java.nio.channels.SelectionKey key) {
         return super.key(key);
       }
     }
 
     @Override
-    public sendJsonActionBuilder to(SynchronousQueue/*<rxf.server.CouchTx>*/... dest) {
+    public JsonSendActionBuilder to( /*<rxf.server.CouchTx>*/) {
       if (parms.size() == parmsCount)
-        return new sendJsonActionBuilder(dest);
+        return new JsonSendActionBuilder(/*dest*/);
 
       throw new IllegalArgumentException("required parameters are: [opaque, validjson]");
     }
 
     static private final int parmsCount = 2;
 
-    public sendJsonBuilder opaque(String string) {
+    public JsonSend opaque(java.lang.String string) {
       parms.put(DbKeys.etype.opaque, string);
       return this;
     }
 
-    public sendJsonBuilder validjson(String string) {
+    public JsonSend validjson(java.lang.String string) {
       parms.put(DbKeys.etype.validjson, string);
       return this;
     }
 
   }
 
-  Rfc822HeaderState sendBlob(String opaque, MimeType mimetype, ByteBuffer blob);
+  rxf.server.Rfc822HeaderState BlobSend(java.lang.String opaque, one.xio.MimeType mimetype, java.nio.ByteBuffer blob);
 
 
-  public class sendBlobBuilder<T> extends DbKeysBuilder<Rfc822HeaderState> {
+  public class BlobSend<T> extends DbKeysBuilder<rxf.server.Rfc822HeaderState> {
     private Rfc822HeaderState rfc822HeaderState;
 
+    private BlobSend() {
+    }
 
-    interface sendBlobTerminalBuilder extends TerminalBuilder<Rfc822HeaderState> {
+    static public <T> BlobSend<T> $() {
+      return new BlobSend<T>();
+    }
+
+    public interface BlobSendTerminalBuilder extends TerminalBuilder<rxf.server.Rfc822HeaderState> {
       CouchTx tx();
 
-      Future<Rfc822HeaderState> future();
+      Future<rxf.server.Rfc822HeaderState> future();
 
       void oneWay();
     }
 
-    public class sendBlobActionBuilder extends ActionBuilder<Rfc822HeaderState> {
-      public sendBlobActionBuilder(SynchronousQueue/*<rxf.server.Rfc822HeaderState>*/... synchronousQueues) {
-        super(synchronousQueues);
+    public class BlobSendActionBuilder extends ActionBuilder<rxf.server.Rfc822HeaderState> {
+      public BlobSendActionBuilder( /*<rxf.server.Rfc822HeaderState>*/) {
+        super(/*synchronousQueues*/);
       }
 
       @Override
-      public sendBlobTerminalBuilder fire() {
-        return new sendBlobTerminalBuilder() {
+      public BlobSendTerminalBuilder fire() {
+        return new BlobSendTerminalBuilder() {
           public CouchTx tx() {
             try {
-              return (CouchTx) CouchMetaDriver.sendBlob.visit();
+              return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.BlobSend.visit();
             } catch (Exception e) {
               e.printStackTrace();
             }
             return null;
           }
 
-          public Future<Rfc822HeaderState> future() {
+          public Future<rxf.server.Rfc822HeaderState> future() {
             try {
-              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<Rfc822HeaderState>() {
+              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<rxf.server.Rfc822HeaderState>() {
 
 
                 final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
                 final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public Rfc822HeaderState call() throws Exception {
+                public rxf.server.Rfc822HeaderState call() throws Exception {
 
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  return (Rfc822HeaderState) CouchMetaDriver.sendBlob.visit(dbKeysBuilder, actionBuilder);
+                  return (rxf.server.Rfc822HeaderState) rxf.server.CouchMetaDriver.BlobSend.visit(dbKeysBuilder, actionBuilder);
                 }
               });
             } catch (Exception e) {
@@ -913,7 +864,7 @@ public interface CouchDriver {
 
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  CouchMetaDriver.sendBlob.visit(/*dbKeysBuilder,actionBuilder*/);
+                  rxf.server.CouchMetaDriver.BlobSend.visit(/*dbKeysBuilder,actionBuilder*/);
                 } catch (Exception e) {
                   e.printStackTrace();
                 }
@@ -924,37 +875,37 @@ public interface CouchDriver {
       }
 
       @Override
-      public sendBlobActionBuilder state(Rfc822HeaderState state) {
+      public BlobSendActionBuilder state(Rfc822HeaderState state) {
         return super.state(state);
       }
 
       @Override
-      public sendBlobActionBuilder key(SelectionKey key) {
+      public BlobSendActionBuilder key(java.nio.channels.SelectionKey key) {
         return super.key(key);
       }
     }
 
     @Override
-    public sendBlobActionBuilder to(SynchronousQueue/*<rxf.server.Rfc822HeaderState>*/... dest) {
+    public BlobSendActionBuilder to( /*<rxf.server.Rfc822HeaderState>*/) {
       if (parms.size() == parmsCount)
-        return new sendBlobActionBuilder(dest);
+        return new BlobSendActionBuilder(/*dest*/);
 
       throw new IllegalArgumentException("required parameters are: [opaque, mimetype, blob]");
     }
 
     static private final int parmsCount = 3;
 
-    public sendBlobBuilder opaque(String string) {
+    public BlobSend opaque(java.lang.String string) {
       parms.put(DbKeys.etype.opaque, string);
       return this;
     }
 
-    public sendBlobBuilder mimetype(MimeType mimetype) {
+    public BlobSend mimetype(one.xio.MimeType mimetype) {
       parms.put(DbKeys.etype.mimetype, mimetype);
       return this;
     }
 
-    public sendBlobBuilder blob(ByteBuffer bytebuffer) {
+    public BlobSend blob(java.nio.ByteBuffer bytebuffer) {
       parms.put(DbKeys.etype.blob, bytebuffer);
       return this;
     }

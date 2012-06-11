@@ -14,14 +14,12 @@ import one.xio.AsioVisitor;
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpMethod;
 import org.intellij.lang.annotations.Language;
-import rxf.server.CouchDriver.getRevisionBuilder;
 import rxf.server.DbKeys.etype;
 
 import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpMethod.UTF8;
-import static one.xio.HttpMethod.wheresWaldo;
 import static rxf.server.BlobAntiPatternObject.COOKIE;
 import static rxf.server.BlobAntiPatternObject.DEBUG_SENDJSON;
 import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
@@ -29,18 +27,15 @@ import static rxf.server.BlobAntiPatternObject.GSON;
 import static rxf.server.BlobAntiPatternObject.arrToString;
 import static rxf.server.BlobAntiPatternObject.createCouchConnection;
 import static rxf.server.BlobAntiPatternObject.deepToString;
-import static rxf.server.BlobAntiPatternObject.dequote;
 import static rxf.server.BlobAntiPatternObject.fetchJsonByPath;
 import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
 import static rxf.server.BlobAntiPatternObject.recycleChannel;
-import static rxf.server.BlobAntiPatternObject.sendJson;
 import static rxf.server.DbKeys.etype.blob;
 import static rxf.server.DbKeys.etype.db;
 import static rxf.server.DbKeys.etype.designDocId;
 import static rxf.server.DbKeys.etype.docId;
 import static rxf.server.DbKeys.etype.mimetype;
 import static rxf.server.DbKeys.etype.opaque;
-import static rxf.server.DbKeys.etype.rev;
 import static rxf.server.DbKeys.etype.validjson;
 import static rxf.server.DbKeys.etype.view;
 import static rxf.server.DbTerminal.continuousFeed;
@@ -66,29 +61,30 @@ import static rxf.server.DbTerminal.tx;
  */
 public enum CouchMetaDriver {
 
-  @DbTask({tx, oneWay}) @DbKeys({db, validjson})createDb {
+  @DbTask({tx, oneWay}) @DbKeys({db, validjson})DbCreate {
     @Override
     <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
-      return sendJson((String) dbKeysBuilder.parms().get(etype.validjson), (String) dbKeysBuilder.parms().get(etype.db));
+      final Object visit = JsonSend.visit(dbKeysBuilder, actionBuilder);
+      return visit;
     }
   },
-  @DbTask({tx, oneWay}) @DbKeys({db, docId, validjson})createDoc {
-    @Override
-    <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
-      EnumMap<etype, Object> parms = dbKeysBuilder.parms();
-      String json = (String) parms.get(etype.validjson);
-      String o = (String) parms.get(etype.db);
-      String o1 = (String) parms.get(etype.docId);
-      return sendJson(
-          json,
-          '/' + o + '/' + o1
-      );
-
-    }
-
-
-  },
-  @DbTask({pojo, future}) @DbResultUnit(String.class) @DbKeys({db, docId})getDoc {
+  //  @DbTask({tx, oneWay}) @DbKeys({db, docId, validjson})createDoc {
+//    @Override
+//    <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+//      EnumMap<etype, Object> parms = dbKeysBuilder.parms();
+//      String json = (String) parms.get(etype.validjson);
+//      String o = (String) parms.get(etype.db);
+//      String o1 = (String) parms.get(etype.docId);
+//      return sendJson(
+//          json,
+//          '/' + o + '/' + o1
+//      );
+//
+//    }
+//
+//
+//  },
+  @DbTask({pojo, future}) @DbResultUnit(String.class) @DbKeys({db, docId})DocFetch {
     @Override
     <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
       String path = idpath(dbKeysBuilder, etype.docId);
@@ -101,7 +97,7 @@ public enum CouchMetaDriver {
       return take;
     }
   },
-  @DbTask({tx, future}) @DbResultUnit(String.class) @DbKeys({db, docId})getRevision {
+  @DbTask({tx, future}) @DbResultUnit(String.class) @DbKeys({db, docId})RevisionFetch {
     @Override
     <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
       EnumMap<etype, Object> parms = dbKeysBuilder.parms();
@@ -116,7 +112,7 @@ public enum CouchMetaDriver {
             @Override
             public void onWrite(SelectionKey key) throws Exception {
               SocketChannel channel = (SocketChannel) key.channel();
-              int write = channel.write(state.asRequestHeaders());
+              int write = channel.write(state.asRequestHeaderByteBuffer());
               key.interestOps(OP_READ).selector().wakeup();
 
             }
@@ -160,19 +156,20 @@ public enum CouchMetaDriver {
       }).get();
     }
   },
-  @DbTask({tx, oneWay, future}) @DbKeys({db, docId, rev, validjson})updateDoc {
+  @DbTask({tx, oneWay, future}) @DbKeys({db, /*docId,*//* rev, */validjson})DocPersist {
     @Override
     <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
-
-      return sendJson(
-          (String) dbKeysBuilder.parms().get(etype.validjson),
-          (String) dbKeysBuilder.parms().get(etype.db),
-          (String) dbKeysBuilder.parms().get(etype.docId),
-          (String) dbKeysBuilder.parms().get(etype.rev));
-
+//
+//      return sendJson(
+//          (String) dbKeysBuilder.parms().get(etype.db),
+//          (String) dbKeysBuilder.parms().get(etype.validjson)
+////          (String) dbKeysBuilder.parms().get(etype.docId),
+////          (String) dbKeysBuilder.parms().get(etype.rev)
+//      );
+      return JsonSend.visit(dbKeysBuilder, actionBuilder);
     }
   },
-  @DbTask({tx}) @DbResultUnit(String.class) @DbKeys({db, designDocId})getDesignDoc {
+  @DbTask({tx}) @DbResultUnit(String.class) @DbKeys({db, designDocId})DesignDocFetch {
     @Override
     <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
       String path = idpath(dbKeysBuilder, etype.designDocId);
@@ -185,105 +182,7 @@ public enum CouchMetaDriver {
       return take;
     }
   },
-  @DbTask({tx, oneWay}) @DbKeys({db, designDocId, validjson})DesignDoc {
-    AtomicReference<CouchTx> payload = new AtomicReference<CouchTx>();
-
-    @Override
-    <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
-      final String json = (String) dbKeysBuilder.parms().get(etype.validjson);
-      final byte[] bytes = json.getBytes(UTF8);
-
-      String db = (String) dbKeysBuilder.parms().get(etype.db);
-      String docId = (String) dbKeysBuilder.parms().get(etype.designDocId);
-
-      String rev = null;
-      final Rfc822HeaderState state1 = new Rfc822HeaderState();
-      CouchTx tx = new getRevisionBuilder().db(db).docId(docId).to().state(state1).fire().tx();
-      if (tx != null && tx.ok() && tx.rev() != null) rev = tx.rev();
-      final StringBuilder path = new StringBuilder().append("/").append(db).append("/").append(docId);
-      if (null != rev)
-        path.append("?rev=" + dequote(rev));
-      final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
-
-      final Rfc822HeaderState state = actionBuilder.state();
-      HttpMethod.enqueue(createCouchConnection(), OP_WRITE | OP_CONNECT, new Impl() {
-
-        public ByteBuffer cursor;
-
-        @Override
-        public void onWrite(SelectionKey key) throws Exception {
-          final SocketChannel channel = (SocketChannel) key.channel();
-          state.methodProtocol("PUT").pathResCode(path.toString());
-          state.headerStrings().put(CONTENT_LENGTH, String.valueOf(json.length()));
-          int write = channel.write(state.asRequestHeaders());
-          key.selector().wakeup();
-          key.attach(new Impl() {
-            @Override
-            public void onWrite(SelectionKey key) throws Exception {
-              int write = channel.write(ByteBuffer.wrap(bytes));
-              key.interestOps(OP_READ).selector().wakeup();
-            }
-
-            @Override
-            public void onRead(SelectionKey key) throws Exception {
-              ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
-              int read = channel.read(dst);
-              if (-1 == read) {
-                System.err.println("unexpected bad stuff " + wheresWaldo());
-                recycleChannel(channel);
-                cyclicBarrier.reset();
-              } else {
-                String s3 = state.pathResCode();
-                Rfc822HeaderState apply = state.headers(COOKIE, ETAG, CONTENT_LENGTH).apply((ByteBuffer) dst.flip());
-                if (!apply.pathResCode().startsWith("20")) {
-                  cyclicBarrier.reset();
-                  channel.close();
-                  throw new Error("!!! unexpected bad stuff: " + deepToString(s3, UTF8.decode((ByteBuffer) dst.rewind()), apply));
-                } else {
-
-
-                  String s = state.headerString(CONTENT_LENGTH);
-                  long remaining = Long.parseLong(s);
-
-                  final ByteBuffer cursor = ByteBuffer.allocateDirect((int) remaining).put(dst);
-                  if (!cursor.hasRemaining()) {
-                    deliver();
-                  }
-                  key.attach(new Impl() {
-                    @Override
-                    public void onRead(SelectionKey key) throws Exception {
-                      if (!cursor.hasRemaining()) {
-                        deliver();
-                      }
-                    }
-                  });
-                }
-              }
-
-            }
-
-            private void deliver() {
-              EXECUTOR_SERVICE.submit(new Runnable() {
-                public void run() {
-                  try {
-                    cyclicBarrier.await();//>>>>
-                  } catch (Throwable e) {   //  V
-                    e.printStackTrace();    //  V
-                  } finally {               //  V
-                    recycleChannel(channel);  // V
-                  }                          // V
-                }                           // V
-              });                           // V
-            }                               // V
-          });                               // V
-        }                                   // V
-        //                                     V
-      });                                   // V
-      cyclicBarrier.await(3, DEBUG_SENDJSON ? TimeUnit.DAYS : TimeUnit.SECONDS);
-      return payload.get();
-    }
-  },
-  @DbTask({rows, future, continuousFeed}) @DbResultUnit(CouchResultSet.class) @DbKeys({db, view})ViewQuery {
+  @DbTask({rows, future, continuousFeed}) @DbResultUnit(CouchResultSet.class) @DbKeys({db, view})ViewFetch {
     @Override
     <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
       SelectionKey key = actionBuilder.key();
@@ -348,7 +247,7 @@ public enum CouchMetaDriver {
       return poll1;
     }
   },
-  @DbTask({tx, oneWay, rows, future, continuousFeed}) @DbKeys({opaque, validjson})sendJson {
+  @DbTask({tx, oneWay, rows, future, continuousFeed}) @DbKeys({opaque, validjson})JsonSend {
     @Override
     <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
       final AtomicReference<CouchTx> payload = new AtomicReference<CouchTx>();
@@ -364,7 +263,7 @@ public enum CouchMetaDriver {
           .headerString(CONTENT_LENGTH, String.valueOf(outbound.length))
           .headerString(ACCEPT, APPLICATION_JSON)
           .headerString(CONTENT_TYPE, APPLICATION_JSON)
-          .asRequestHeaders();
+          .asRequestHeaderByteBuffer();
       if (DEBUG_SENDJSON) System.err.println(deepToString(opaque, validjson, UTF8.decode(header.duplicate()), state));
       final SocketChannel channel = createCouchConnection();
       HttpMethod.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
@@ -429,7 +328,7 @@ public enum CouchMetaDriver {
       return couchTx;
     }
   },
-  @DbTask({tx, future, oneWay}) @DbResultUnit(Rfc822HeaderState.class) @DbKeys({opaque, mimetype, blob})sendBlob {};
+  @DbTask({tx, future, oneWay}) @DbResultUnit(Rfc822HeaderState.class) @DbKeys({opaque, mimetype, blob})BlobSend {};
   private static final String APPLICATION_JSON = "application/json";
   public static final String ETAG = "ETag";
   public static final String CONTENT_LENGTH = "Content-Length";
@@ -482,13 +381,14 @@ public enum CouchMetaDriver {
       } catch (Exception e) {
       }
       String cn = rtype.getCanonicalName();
-      @Language("JAVA") String s2 = " \npublic class _ename_Builder<T> extends DbKeysBuilder<" +
-          cn + "> {\n  private Rfc822HeaderState rfc822HeaderState;\n\n" +
-          "\n  interface _ename_TerminalBuilder extends TerminalBuilder<" +
+      @Language("JAVA") String s2 = " \n\npublic cla" +
+          "ss _ename_<T> extends DbKeysBuilder<" +
+          cn + "> {\n  private Rfc822HeaderState rfc822HeaderState;\n\n  private _ename_() {\n  }\n\n  static public  <T>_ename_<T> $() {\n    return new _ename_<T>();\n  }" +
+          "\n\n  public interface _ename_TerminalBuilder extends TerminalBuilder<" +
           cn + "> {\n    " + IFACE_FIRE_TARGETS + "\n  }\n\n  public class _ename_ActionBuilder extends ActionBuilder<" +
-          cn + "> {\n    public _ename_ActionBuilder(SynchronousQueue/*<" +
-          cn + ">*/... synchronousQueues) {\n      super(synchronousQueues);\n    }\n\n    @Override\n    public _ename_TerminalBuilder fire() {\n      return new _ename_TerminalBuilder() {\n        " + BAKED_IN_FIRE + "\n      };\n    }\n\n    @Override\n    public _ename_ActionBuilder state(Rfc822HeaderState state) {\n      return super.state(state);\n    }\n\n    @Override\n    public _ename_ActionBuilder key(java.nio.channels.SelectionKey key) {\n      return super.key(key);\n    }\n  }\n\n  @Override\n  public _ename_ActionBuilder to(SynchronousQueue/*<" +
-          cn + ">*/... dest) {\n    if (parms.size() == parmsCount)\n      return new _ename_ActionBuilder(dest);\n\n    throw new IllegalArgumentException(\"required parameters are: " + arrToString(parms) + "\");\n  }\n  " +
+          cn + "> {\n    public _ename_ActionBuilder( /*<" +
+          cn + ">*/ ) {\n      super(/*synchronousQueues*/);\n    }\n\n    @Override\n    public _ename_TerminalBuilder fire() {\n      return new _ename_TerminalBuilder() {\n        " + BAKED_IN_FIRE + "\n      };\n    }\n\n    @Override\n    public _ename_ActionBuilder state(Rfc822HeaderState state) {\n      return super.state(state);\n    }\n\n    @Override\n    public _ename_ActionBuilder key(java.nio.channels.SelectionKey key) {\n      return super.key(key);\n    }\n  }\n\n  @Override\n  public _ename_ActionBuilder to( /*<" +
+          cn + ">*/ ) {\n    if (parms.size() == parmsCount)\n      return new _ename_ActionBuilder(/*dest*/);\n\n    throw new IllegalArgumentException(\"required parameters are: " + arrToString(parms) + "\");\n  }\n  " +
           XXXXXXXXXXXXXXMETHODS + "\n" +
           "}\n";
       s = s2;
@@ -498,7 +398,7 @@ public enum CouchMetaDriver {
         etype etype = parms[i];
         String name = etype.name();
         Class<? extends Object> clazz = etype.clazz;
-        @Language("JAVA") String y = "public _ename_Builder _name_(_clazz_ _sclazz_){parms.put(DbKeys.etype." + etype.name() + ",_sclazz_);return this;}\n";
+        @Language("JAVA") String y = "public _ename_  _name_(_clazz_ _sclazz_){parms.put(DbKeys.etype." + etype.name() + ",_sclazz_);return this;}\n";
         s1 += y.replace("_name_", etype.name()).replace("_clazz_", clazz.getCanonicalName()).replace("_sclazz_", clazz.getSimpleName().toLowerCase()).replace("_ename_", name());
       }
       {
