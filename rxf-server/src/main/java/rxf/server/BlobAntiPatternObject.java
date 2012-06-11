@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 import com.google.gson.*;
 import one.xio.*;
 import one.xio.AsioVisitor.Impl;
+import rxf.server.CouchDriver.ViewQueryBuilder;
 
 import static java.lang.Math.abs;
 import static java.nio.channels.SelectionKey.OP_ACCEPT;
@@ -25,7 +26,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static one.xio.HttpMethod.UTF8;
 import static one.xio.HttpMethod.wheresWaldo;
 import static rxf.server.CouchDriver.createDocBuilder;
-import static rxf.server.CouchDriver.getViewBuilder;
 
 /**
  * <a href='http://www.antipatterns.com/briefing/sld024.htm'> Blob Anti Pattern </a>
@@ -673,7 +673,7 @@ public class BlobAntiPatternObject {
           System.err.println("=================================" + tx);
         }
         {
-          getViewBuilder getViewBuilder = new getViewBuilder();
+          ViewQueryBuilder getViewBuilder = new ViewQueryBuilder();
           CouchResultSet rows = getViewBuilder.db("rxf_deal").view("_design/rxf__rxf_deal/_view/findByProduct?key=\"test\"").to().fire().rows();
           System.err.println("==================================" + deepToString(rows));
         }

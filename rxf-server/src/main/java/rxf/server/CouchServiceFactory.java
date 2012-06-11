@@ -8,7 +8,7 @@ import java.util.concurrent.*;
 
 import com.google.gson.JsonObject;
 import rxf.server.CouchDriver.DesignDocBuilder;
-import rxf.server.CouchDriver.getViewBuilder;
+import rxf.server.CouchDriver.ViewQueryBuilder;
 import rxf.server.CouchResultSet.tuple;
 import rxf.server.CouchService.View;
 
@@ -99,7 +99,7 @@ public class CouchServiceFactory {
           String name = method.getName();
           Class<?> entityType1 = CouchServiceHandler.this.entityType;
           if (viewMethods.containsKey(name)) {
-            CouchResultSet rows = new getViewBuilder<CouchService>().db(pathPrefix).view(String.format(viewMethods.get(name), args)).to().fire().rows();
+            CouchResultSet rows = new ViewQueryBuilder().db(pathPrefix).view(String.format(viewMethods.get(name), args)).to().fire().rows();
             Class<?> entityType11 = entityType1;
             ArrayList ar = new ArrayList();
             for (Object row : rows.rows) {
