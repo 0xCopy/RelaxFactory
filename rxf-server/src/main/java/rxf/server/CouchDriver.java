@@ -629,14 +629,14 @@ public interface CouchDriver {
 
   }
 
-  CouchResultSet getView(String db, String view);
+  CouchResultSet ViewQuery(String db, String view);
 
 
-  public class getViewBuilder<T> extends DbKeysBuilder<CouchResultSet> {
+  public class ViewQueryBuilder<T> extends DbKeysBuilder<CouchResultSet> {
     private Rfc822HeaderState rfc822HeaderState;
 
 
-    interface getViewTerminalBuilder extends TerminalBuilder<CouchResultSet> {
+    interface ViewQueryTerminalBuilder extends TerminalBuilder<CouchResultSet> {
       CouchResultSet/*<rxf.server.CouchResultSet>*/ rows();
 
       Future<CouchResultSet> future();
@@ -645,17 +645,17 @@ public interface CouchDriver {
 
     }
 
-    public class getViewActionBuilder extends ActionBuilder<CouchResultSet> {
-      public getViewActionBuilder(SynchronousQueue/*<rxf.server.CouchResultSet>*/... synchronousQueues) {
+    public class ViewQueryActionBuilder extends ActionBuilder<CouchResultSet> {
+      public ViewQueryActionBuilder(SynchronousQueue/*<rxf.server.CouchResultSet>*/... synchronousQueues) {
         super(synchronousQueues);
       }
 
       @Override
-      public getViewTerminalBuilder fire() {
-        return new getViewTerminalBuilder() {
+      public ViewQueryTerminalBuilder fire() {
+        return new ViewQueryTerminalBuilder() {
           public CouchResultSet/*<rxf.server.CouchResultSet>*/ rows() {
             try {
-              return (CouchResultSet/*<rxf.server.CouchResultSet>*/) BlobAntiPatternObject.GSON.fromJson((String) CouchMetaDriver.getView.visit(), CouchResultSet/*<rxf.server.CouchResultSet>*/.class);
+              return (CouchResultSet/*<rxf.server.CouchResultSet>*/) BlobAntiPatternObject.GSON.fromJson((String) CouchMetaDriver.ViewQuery.visit(), CouchResultSet/*<rxf.server.CouchResultSet>*/.class);
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -674,7 +674,7 @@ public interface CouchDriver {
 
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  return (CouchResultSet) CouchMetaDriver.getView.visit(dbKeysBuilder, actionBuilder);
+                  return (CouchResultSet) CouchMetaDriver.ViewQuery.visit(dbKeysBuilder, actionBuilder);
                 }
               });
             } catch (Exception e) {
@@ -690,32 +690,32 @@ public interface CouchDriver {
       }
 
       @Override
-      public getViewActionBuilder state(Rfc822HeaderState state) {
+      public ViewQueryActionBuilder state(Rfc822HeaderState state) {
         return super.state(state);
       }
 
       @Override
-      public getViewActionBuilder key(SelectionKey key) {
+      public ViewQueryActionBuilder key(SelectionKey key) {
         return super.key(key);
       }
     }
 
     @Override
-    public getViewActionBuilder to(SynchronousQueue/*<rxf.server.CouchResultSet>*/... dest) {
+    public ViewQueryActionBuilder to(SynchronousQueue/*<rxf.server.CouchResultSet>*/... dest) {
       if (parms.size() == parmsCount)
-        return new getViewActionBuilder(dest);
+        return new ViewQueryActionBuilder(dest);
 
       throw new IllegalArgumentException("required parameters are: [db, view]");
     }
 
     static private final int parmsCount = 2;
 
-    public getViewBuilder db(String string) {
+    public ViewQueryBuilder db(String string) {
       parms.put(DbKeys.etype.db, string);
       return this;
     }
 
-    public getViewBuilder view(String string) {
+    public ViewQueryBuilder view(String string) {
       parms.put(DbKeys.etype.view, string);
       return this;
     }

@@ -283,7 +283,7 @@ public enum CouchMetaDriver {
       return payload.get();
     }
   },
-  @DbTask({rows, future, continuousFeed}) @DbResultUnit(CouchResultSet.class) @DbKeys({db, view})getView {
+  @DbTask({rows, future, continuousFeed}) @DbResultUnit(CouchResultSet.class) @DbKeys({db, view})ViewQuery {
     @Override
     <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
       SelectionKey key = actionBuilder.key();
@@ -294,7 +294,7 @@ public enum CouchMetaDriver {
         couchConnection = null == key || key.channel().isOpen() ? createCouchConnection() : (SocketChannel) key.channel();
 
         String idpath = idpath(dbKeysBuilder, etype.view);
-        final String format = MessageFormat.format("GET " + idpath + " HTTP/1.1\r\n\r\n", idpath.trim()).replace("//", "/");
+        final String format = MessageFormat.format("GET " + idpath + " HTTP/1.1\r\nAccept: application/json\r\n\r\n", idpath.trim()).replace("//", "/");
         final SocketChannel cc = couchConnection;
         HttpMethod.enqueue(couchConnection, OP_WRITE | OP_CONNECT, new Impl() {
           @Override
@@ -333,8 +333,6 @@ public enum CouchMetaDriver {
 
               }
             });
-
-
           }
         });
 
