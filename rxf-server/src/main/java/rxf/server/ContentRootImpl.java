@@ -25,7 +25,7 @@ import static rxf.server.CouchMetaDriver.CONTENT_TYPE;
  * Date: 6/4/12
  * Time: 1:42 AM
  */
-class ContentRootImpl extends Impl {
+public class ContentRootImpl extends Impl {
 
   private String rootPath;
   private File absolutePath;
@@ -51,15 +51,12 @@ class ContentRootImpl extends Impl {
     String path = state.get().pathResCode();
     String fname = null;
     try {
-      rootPath = ".";
-//      System.err.println("attempting "+path);
+//      rootPath = ".";
 
-      System.err.println("### " + BlobAntiPatternObject.deepToString(path, Pattern.compile("[\\?#]").split(absolutePath.getAbsolutePath() + '/' + path, 2)));
+      //      System.err.println("### " + BlobAntiPatternObject.deepToString(path, Pattern.compile("[\\?#]").split(absolutePath.getAbsolutePath() + '/' + path, 2)));
 
       fname = URLDecoder.decode((Pattern.compile("[\\?#]").split(absolutePath.getAbsolutePath() + '/' + path, 2)[0]).replace("//", "/").replace("../", "./"), UTF8.name());
 
-//      fname = URLDecoder.decode(MessageFormat.format("{0}/{1}", absolutePath, path.split("[#[:\\?:]]", 1)[0])
-//          .replace("//", "/").replace("../", "./"), UTF8.name());
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();  //todo: verify for a purpose
     }

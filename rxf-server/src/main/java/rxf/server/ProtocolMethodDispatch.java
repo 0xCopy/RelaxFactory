@@ -3,8 +3,7 @@ package rxf.server;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
-import java.util.EnumMap;
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -14,6 +13,7 @@ import one.xio.HttpMethod;
 
 import static java.nio.channels.SelectionKey.OP_READ;
 import static one.xio.HttpMethod.GET;
+import static one.xio.HttpMethod.POST;
 import static rxf.server.CouchMetaDriver.ACCEPT;
 import static rxf.server.CouchMetaDriver.CONTENT_ENCODING;
 import static rxf.server.CouchMetaDriver.CONTENT_LENGTH;
@@ -22,32 +22,61 @@ import static rxf.server.CouchMetaDriver.ETAG;
 import static rxf.server.CouchMetaDriver.TRANSFER_ENCODING;
 
 /**
- * a POST interception wrapper for http protocol cracking
+ * this class holds a protocol namespace to dispatch requests
+ * <p/>
+ * {@link  #NAMESPACE } is a  map of http methods each containing an ordered map of regexes tested in order of
+ * map insertion.
+ * <p/>
+ * <p/>
+ * <p/>
  * User: jim
  * Date: 4/18/12
  * Time: 12:37 PM
  */
 public class ProtocolMethodDispatch extends Impl {
-  /**
-   * this is set, and hopefully helps with cookies and session details, but is possibly redundant with other means of
-   * headerstate access.
-   */
-  public static ThreadLocal<Rfc822HeaderState> RFState = new ThreadLocal<Rfc822HeaderState>();
-  public static final EnumMap<HttpMethod, LinkedHashMap<Pattern, Impl>> NAMESPACE = new EnumMap<HttpMethod, LinkedHashMap<Pattern, Impl>>(HttpMethod.class) {
-    {
-      put(HttpMethod.POST, new LinkedHashMap<Pattern, Impl>() {{
-        put(Pattern.compile("^/gwtRequest"), new GwtRequestFactoryVisitor());
-      }});
 
-      final Pattern passthroughExpr = Pattern.compile("^/i(/.*)$");
-      put(GET, new LinkedHashMap<Pattern, Impl>() {
-        {
-          put(passthroughExpr, new HttpProxyImpl(passthroughExpr));
-          put(Pattern.compile(".*"), new ContentRootImpl(System.getProperty("rxf.server.content.root", "./")));
-        }
-      });
-    }
-  };
+  public static ThreadLocal<Rfc822HeaderState> RFState = new ThreadLocal<Rfc822HeaderState>();
+  public static final Map<HttpMethod, Map<Pattern, Impl>> NAMESPACE = new EnumMap<HttpMethod, Map<Pattern, Impl>>(HttpMethod.class);
+
+  /**
+   * the PUT protocol handlers, only static for the sake of javadocs
+   */
+  static Map<Pattern, Impl> PUTmap = new LinkedHashMap<Pattern, Impl>(),
+      GETmap = new LinkedHashMap<Pattern, Impl>();
+
+  /**
+   *
+   */
+  public static final String RXF_SERVER_CONTENT_ROOT = "rxf.server.content.root";
+
+  static {
+    NAMESPACE.put(POST, PUTmap);
+    NAMESPACE.put(GET, GETmap);
+
+    /**
+     * for gwt requestfactory done via POST.
+     *
+     * TODO: rf GET from query parameters
+     */
+    PUTmap.put(Pattern.compile("^/gwtRequest"), new GwtRequestFactoryVisitor());
+
+
+    /**
+     * any url begining with /i is a proxied request to couchdb but only permits image/* and text/*
+     */
+
+    Pattern passthroughExpr = Pattern.compile("^/i(/.*)$");
+    final HttpProxyImpl theCouchImagePassthru = new HttpProxyImpl(passthroughExpr);
+    GETmap.put(passthroughExpr, theCouchImagePassthru);
+
+    /**
+     * general purpose httpd static content server that recognizes .gz and other compression suffixes when convenient
+     *
+     * any random config mechanism with a default will suffice here to define the content root.
+     */
+    GETmap.put(Pattern.compile(".*"), new ContentRootImpl(System.getProperty(RXF_SERVER_CONTENT_ROOT, "./")));
+  }
+
 
   @Override
   public void onAccept(SelectionKey key) throws IOException {

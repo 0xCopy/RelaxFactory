@@ -598,7 +598,7 @@ public class BlobAntiPatternObject {
     return path;
   }
 
-  public static EnumMap<HttpMethod, LinkedHashMap<Pattern, Impl>> getNamespace() {
+  public static EnumMap<HttpMethod, Map<Pattern, Impl>> getNamespace() {
     return ProtocolMethodDispatch.NAMESPACE;
   }
 
