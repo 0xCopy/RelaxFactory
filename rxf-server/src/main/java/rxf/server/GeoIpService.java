@@ -8,6 +8,7 @@ import java.nio.channels.*;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import one.xio.*;
 import org.apache.commons.compress.archivers.ArchiveEntry;
@@ -16,6 +17,8 @@ import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.tidy.Tidy;
+import rxf.server.CouchDriver.BlobSend;
+import rxf.server.CouchDriver.DocPersist;
 
 import static java.lang.Math.abs;
 import static java.nio.channels.SelectionKey.OP_CONNECT;
@@ -27,11 +30,10 @@ import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 import static rxf.server.BlobAntiPatternObject.GSON;
 import static rxf.server.BlobAntiPatternObject.ISO88591;
 import static rxf.server.BlobAntiPatternObject.createCouchConnection;
-import static rxf.server.BlobAntiPatternObject.fetchJsonByPath;
-import static rxf.server.BlobAntiPatternObject.inferRevision;
+import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
 import static rxf.server.BlobAntiPatternObject.moveCaretToDoubleEol;
-import static rxf.server.BlobAntiPatternObject.recycleChannel;
 import static rxf.server.BlobAntiPatternObject.sortableInetAddress;
+import static rxf.server.CouchMetaDriver.CONTENT_LENGTH;
 
 //import java.util.concurrent.ConcurrentSkipListMap;
 
@@ -63,144 +65,91 @@ public class GeoIpService {
   public static void createGeoIpIndex() throws IOException, XPathExpressionException, ExecutionException, InterruptedException {
     String href = scrapeMaxMindUrl();
     System.err.println("grabbing " + href + wheresWaldo());
-    final long l = System.currentTimeMillis();
-    final ByteArrayOutputStream archiveBuffer = downloadMaxMindBinaryTarXz(href);
-    final long l1 = System.currentTimeMillis() - l;
-    final int size = archiveBuffer.size();
-    final int i = size / MEG;
-    final double v = l1 / 1000.;
+    long l = System.currentTimeMillis();
+    ByteArrayOutputStream archiveBuffer = downloadMaxMindBinaryTarXz(href);
+    long l1 = System.currentTimeMillis() - l;
+    int size = archiveBuffer.size();
+    int i = size / MEG;
+    double v = l1 / 1000.;
     System.err.println(MessageFormat.format("download complete in {0} archive size: {1,number,#.##}Mb @{2,number,#.##} Mb/s", v, i / MEG, i / v));
     Triple<Integer[], ByteBuffer, ByteBuffer> indexIndexLocTrip = buildGeoIpFirstPass(archiveBuffer);
-    final Pair<ByteBuffer, ByteBuffer> indexLocPair = buildGeoIpSecondPass(indexIndexLocTrip);
-
-    Callable<Map> callable = new Callable<Map>() {
-      public Map call() throws Exception {
-        Map m = null;
-        SocketChannel couchConnection = BlobAntiPatternObject.createCouchConnection();
-        try {
-          SynchronousQueue retVal = new SynchronousQueue();
-          fetchJsonByPath(couchConnection, retVal, GEOIP_ROOTNODE);
-
-          m = GSON.fromJson((String) retVal.take(), Map.class);
-          if (2 == m.size() && m.containsKey("responseCode")) {
-            Map<String, Date> map = new HashMap<String, Date>();
-            //noinspection unchecked
-            map.put("created", new Date());
-            HttpMethod.enqueue(couchConnection, OP_WRITE, new SendJsonPOST(GSON.toJson(map).trim(), retVal, GEOIP_ROOTNODE));
-            String json = (String) retVal.poll(3, TimeUnit.SECONDS);
+    Pair<ByteBuffer, ByteBuffer> indexLocPair = buildGeoIpSecondPass(indexIndexLocTrip);
 
 
-            m = GSON.fromJson(json, Map.class);
+    CouchTx tx = DocPersist.$().db("geoip").validjson(GSON.toJson(new HashMap() {{
+      put("_id", "current");
+    }})).to().fire().tx();
+    System.err.println("### geo tx1: "+tx);
 
-          }
-        } finally {
-          recycleChannel(couchConnection);
-        }
-        return m;
+    tx = BlobSend.$()
+        .db("geo")
+        .docId("current")
+        .opaque(GEOIP_CURRENT_LOCATIONS_CSV)
+        .mimetype("text/csv; charset=" + BlobAntiPatternObject.ISO88591.name())
+        .blob((ByteBuffer) indexLocPair.getB().duplicate().rewind())
+        .to().fire().tx();
 
-      }
-    };
-    final Map map = EXECUTOR_SERVICE.submit(callable).get();
+    System.err.println("### geo tx2: "+tx);
+
+//    final SynchronousQueue retVal = new SynchronousQueue();
+//    SocketChannel couchConnection;
+//    {
+//      couchConnection = createCouchConnection();
+//      HttpMethod.enqueue(couchConnection, OP_CONNECT | OP_WRITE,
+//          new AsioVisitor.Impl() {
+//
+//
+//            @Override
+//            public void onWrite(SelectionKey key) throws Exception {
+//
+//              String ctype = "text/csv; charset=" + BlobAntiPatternObject.ISO88591.name();
+//
+//
+//              ByteBuffer d2 = (ByteBuffer) indexLocPair.getB().duplicate().rewind();
+//
+//              String fn = GEOIP_CURRENT_LOCATIONS_CSV;
+//              int limit = d2.limit();
+//              String push = getBlobPutString(fn, limit, ctype, inferRevision(map));
+//              System.err.println("pushing: " + push);
+//
+//              putFile(key, d2, push, retVal);
+//            }
+//          };
+
+//
+////    String take = (String) retVal.poll(3, TimeUnit.SECONDS);
+//    final CouchTx couchTx = GSON.fromJson(take, CouchTx.class);
+//    {
+//      couchConnection = createCouchConnection();
+//      HttpMethod.enqueue(couchConnection, OP_CONNECT | OP_WRITE,
+//          new AsioVisitor.Impl() {
+//
+//
+//            @Override
+//            public void onWrite(SelectionKey key) throws Exception {
+
+//              ByteBuffer d2 = (ByteBuffer) indexLocPair.getA().duplicate().rewind();
+//              String fn = GEOIP_CURRENT_INDEX;
+//              int limit = d2.limit();
+//              String ctype = "application/octet-stream";
+//              String push = getBlobPutString(fn, limit, ctype, couchTx.rev());
+//              System.err.println("pushing: " + push);
+//
+//              putFile(key, d2, push, retVal);
+//            }
+//          });
+//    }
+//    take = (String) retVal.poll(3, TimeUnit.SECONDS);
+    tx = BlobSend.$()
+         .db("geo")
+         .docId("current")
+         .opaque(GEOIP_CURRENT_INDEX)
+         .mimetype("application/octet-stream")
+         .blob((ByteBuffer) indexLocPair.getA().duplicate().rewind())
+         .to().fire().tx();
 
 
-    final SynchronousQueue retVal = new SynchronousQueue();
-    SocketChannel couchConnection;
-    {
-      couchConnection = createCouchConnection();
-      HttpMethod.enqueue(couchConnection, OP_CONNECT | OP_WRITE,
-          new AsioVisitor.Impl() {
-
-
-            @Override
-            public void onWrite(SelectionKey key) throws Exception {
-
-              String ctype = "text/csv; charset=" + BlobAntiPatternObject.ISO88591.name();
-
-
-              ByteBuffer d2 = (ByteBuffer) indexLocPair.getB().duplicate().rewind();
-
-              String fn = GEOIP_CURRENT_LOCATIONS_CSV;
-              int limit = d2.limit();
-              String push = getBlobPutString(fn, limit, ctype, inferRevision(map));
-              System.err.println("pushing: " + push);
-              putFile(key, d2, push, retVal);
-            }
-          });
-    }
-    String take = (String) retVal.poll(3, TimeUnit.SECONDS);
-    final CouchTx couchTx = GSON.fromJson(take, CouchTx.class);
-    {
-      couchConnection = createCouchConnection();
-      HttpMethod.enqueue(couchConnection, OP_CONNECT | OP_WRITE,
-          new AsioVisitor.Impl() {
-
-
-            @Override
-            public void onWrite(SelectionKey key) throws Exception {
-
-              ByteBuffer d2 = (ByteBuffer) indexLocPair.getA().duplicate().rewind();
-              String fn = GEOIP_CURRENT_INDEX;
-              int limit = d2.limit();
-              String ctype = "application/octet-stream";
-              String push = getBlobPutString(fn, limit, ctype, couchTx.rev());
-              System.err.println("pushing: " + push);
-
-              putFile(key, d2, push, retVal);
-            }
-          });
-    }
-    take = (String) retVal.poll(3, TimeUnit.SECONDS);
-  }
-
-  static void putFile(SelectionKey key, final ByteBuffer d2, String push, final SynchronousQueue synchronousQueue) throws IOException {
-    final SocketChannel channel = (SocketChannel) key.channel();
-
-    int write = (channel).write(UTF8.encode(push));
-    key.selector().wakeup();
-    key.interestOps(OP_READ);
-    key.attach(new AsioVisitor.Impl() {
-      @Override
-      public void onRead(SelectionKey key) throws Exception {
-        SelectableChannel channel1 = key.channel();
-        ByteBuffer dst = ByteBuffer.allocateDirect(BlobAntiPatternObject.getReceiveBufferSize());
-        int read = ((SocketChannel) channel1).read(dst);
-        System.err.println("Expected 100-continue.  Got(" + read + "): " + UTF8.decode((ByteBuffer) dst.flip()).toString().trim());
-        key.selector().wakeup();
-        key.interestOps(OP_WRITE);
-        key.attach(new Impl() {
-          @Override
-          public void onWrite(final SelectionKey key) {
-            try {
-              int write = channel.write(d2);
-            } catch (Throwable e) {
-              key.selector().wakeup();
-              key.interestOps(OP_READ);
-              e.printStackTrace();  //todo: verify for a purpose
-            }
-            if (!d2.hasRemaining()) {
-              Callable<Map> callable = new Callable<Map>() {
-                public Map call() throws Exception {
-                  key.attach(BlobAntiPatternObject.createJsonResponseReader(synchronousQueue));
-                  key.selector().wakeup();
-                  key.interestOps(OP_READ);
-
-                  return null;
-                }
-              };
-              EXECUTOR_SERVICE.submit(callable);
-            }
-          }
-
-        });
-      }
-    });
-  }
-
-  public static String getBlobPutString(String fn, int limit, String ctype, String revision) {
-    return new StringBuilder().append("PUT ").append(fn).append("?rev=").append(revision)
-        .append(" HTTP/1.1\r\nContent-Length: ").append(limit)
-        .append("\r\nContent-Type: ").append(ctype)
-        .append("\r\nExpect: 100-continue\r\nAccept: */*\r\n\r\n").toString();
+    System.err.println("### geo tx3: "+tx);
   }
 
   static Pair<ByteBuffer, ByteBuffer> buildGeoIpSecondPass(Triple<Integer[], ByteBuffer, ByteBuffer> triple) throws UnknownHostException {
@@ -394,10 +343,12 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
    *
    */
   static void startGeoIpService(final String dbinstance) throws IOException, XPathExpressionException, InterruptedException {
-    final SynchronousQueue retVal = new SynchronousQueue();
+//    final SynchronousQueue retVal = new SynchronousQueue();
     SocketChannel connection = BlobAntiPatternObject.createCouchConnection();
-
+    final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
     HttpMethod.enqueue(connection, OP_CONNECT | OP_WRITE, new AsioVisitor.Impl() {
+      final public AtomicReference<String> payload =new AtomicReference<String>();
+
       public void onRead(final SelectionKey key) throws IOException, InterruptedException {
         final AsioVisitor parent = this;
         final SocketChannel channel = (SocketChannel) key.channel();
@@ -432,16 +383,34 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
                 } catch (IOException e) {
                   e.printStackTrace();  //todo: verify for a purpose
                 }
-                key.attach(BlobAntiPatternObject.createJsonResponseReader(retVal));
+//                key.attach(BlobAntiPatternObject.createJsonResponseReader(retVal));
                 key.selector().wakeup();
-                key.interestOps(OP_READ);
+                key.interestOps(OP_READ).attach(new Impl(){
+                  @Override
+                  public void onRead(SelectionKey key) throws Exception {
+                    final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
+                    int read1 = channel.read(dst);
+                    Rfc822HeaderState state = new Rfc822HeaderState().headers(CONTENT_LENGTH);
+                    state.apply((ByteBuffer) dst.flip());
+
+                    EXECUTOR_SERVICE.submit( new Callable<Object>() {
+                      public Object call() throws Exception {
+                        cyclicBarrier.await();
+                        payload.set(UTF8.decode(dst.slice()).toString().trim());
+                        return null;
+                      }
+                    });
+                  }
+                });
               }
             });
 
             Callable<Object> callable = new Callable<Object>() {
               public Object call() throws Exception {
 
-                String take = (String) retVal.poll(3, TimeUnit.SECONDS);
+
+                String take = payload.get();
+                cyclicBarrier.await(3, TimeUnit.SECONDS);
                 key.attach(this);
                 System.err.println("rootnode: " + take);
                 Map map = GSON.fromJson(take, Map.class);

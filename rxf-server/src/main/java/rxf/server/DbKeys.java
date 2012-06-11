@@ -30,7 +30,7 @@ public @interface DbKeys {
         final String t = (String) data[0];
         return t.toString().length() > 0 && !t.startsWith("\"") && !t.endsWith("\"");
       }
-    }, designDocId, view, validjson, mimetype {{
+    }, designDocId, view, validjson, mimetype ,mimetypeHardcore {{
       clazz = MimeType.class;
     }}, blob {{
       clazz = ByteBuffer.class;

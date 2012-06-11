@@ -1,18 +1,13 @@
 package rxf.server;
 
-import java.nio.channels.SocketChannel;
 import java.util.List;
-import java.util.concurrent.SynchronousQueue;
 
 import com.google.web.bindery.requestfactory.shared.Locator;
 import one.xio.HttpMethod;
+import rxf.server.CouchDriver.DocFetch;
 import rxf.server.CouchDriver.DocPersist;
 
-import static java.nio.channels.SelectionKey.OP_CONNECT;
-import static java.nio.channels.SelectionKey.OP_WRITE;
 import static rxf.server.BlobAntiPatternObject.GSON;
-import static rxf.server.BlobAntiPatternObject.createCouchConnection;
-import static rxf.server.BlobAntiPatternObject.recycleChannel;
 
 /**
  * User: jim
@@ -56,24 +51,9 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
 
   @Override
   public T find(Class<? extends T> clazz, String id) {
+    final String pojo = DocFetch.<T>$().db(getPathPrefix()).docId(id).to().fire().pojo() ;
 
-    String s = null;
-    try {
-      SocketChannel channel = createCouchConnection();
-      String take;
-      try {
-        SynchronousQueue retVal = new SynchronousQueue();
-        HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, BlobAntiPatternObject.fetchJsonByPath(channel, retVal, getPathPrefix() + '/' + id));
-        take = (String) retVal.poll(2, java.util.concurrent.TimeUnit.SECONDS);
-      } finally {
-        recycleChannel(channel);
-      }
-      s = take;
-    } catch (Exception ignored) {
-
-    }
-
-    return GSON.fromJson(s, getDomainType());
+    return GSON.fromJson(pojo, getDomainType());
   }
 
   /**

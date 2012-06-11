@@ -1,5 +1,6 @@
 package rxf.server;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -10,9 +11,10 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-import one.xio.AsioVisitor;
+import com.google.gson.reflect.TypeToken;
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpMethod;
+import one.xio.MimeType;
 import org.intellij.lang.annotations.Language;
 import rxf.server.DbKeys.etype;
 
@@ -20,6 +22,7 @@ import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpMethod.UTF8;
+import static one.xio.HttpMethod.enqueue;
 import static rxf.server.BlobAntiPatternObject.COOKIE;
 import static rxf.server.BlobAntiPatternObject.DEBUG_SENDJSON;
 import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
@@ -27,7 +30,6 @@ import static rxf.server.BlobAntiPatternObject.GSON;
 import static rxf.server.BlobAntiPatternObject.arrToString;
 import static rxf.server.BlobAntiPatternObject.createCouchConnection;
 import static rxf.server.BlobAntiPatternObject.deepToString;
-import static rxf.server.BlobAntiPatternObject.fetchJsonByPath;
 import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
 import static rxf.server.BlobAntiPatternObject.recycleChannel;
 import static rxf.server.DbKeys.etype.blob;
@@ -64,7 +66,7 @@ public enum CouchMetaDriver {
   @DbTask({tx, oneWay}) @DbKeys({db, validjson})DbCreate {
     @Override
     <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
-      final Object visit = JsonSend.visit(dbKeysBuilder, actionBuilder);
+      Object visit = JsonSend.visit(dbKeysBuilder, actionBuilder);
       return visit;
     }
   },
@@ -85,16 +87,70 @@ public enum CouchMetaDriver {
 //
 //  },
   @DbTask({pojo, future}) @DbResultUnit(String.class) @DbKeys({db, docId})DocFetch {
+    public AtomicReference<Object> payload = new AtomicReference<Object>();
+
     @Override
     <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
-      String path = idpath(dbKeysBuilder, etype.docId);
-      SocketChannel couchConnection = createCouchConnection();
-      SynchronousQueue<Object> returnTo1 = ActionBuilder.get().sync();
-      SynchronousQueue returnTo = returnTo1;
-      AsioVisitor asioVisitor = fetchJsonByPath(couchConnection, returnTo, path);
-      T take = (T) returnTo.poll(3, TimeUnit.SECONDS);
-      recycleChannel(couchConnection);
-      return take;
+
+      EnumMap<etype, Object> parms = dbKeysBuilder.parms();
+      String db = (String) parms.get(etype.db);
+      String id = (String) parms.get(etype.docId);
+      final Rfc822HeaderState state = actionBuilder.state().headers(CONTENT_LENGTH).methodProtocol("GET").pathResCode("/" + db + (null == id ? "" : ("/" + id.trim())));
+
+      final SocketChannel channel = createCouchConnection();
+      final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
+      enqueue(channel, OP_CONNECT | OP_WRITE, new Impl() {
+        public ByteBuffer cursor;
+
+        @Override
+        public void onWrite(SelectionKey key) throws Exception {
+          int write = channel.write(state.asRequestHeaderByteBuffer());
+          key.interestOps(OP_READ).selector().wakeup();
+        }
+
+        @Override
+        public void onRead(SelectionKey key) throws Exception {
+          if (null != cursor) {
+            int read = channel.read(cursor);
+            if (-1 == read) {
+              channel.socket().close();
+            }
+            if (!cursor.hasRemaining()) {
+              deliver();
+            }
+
+          }
+          ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
+          int read = channel.read(dst);
+          String s = state.apply((ByteBuffer) dst.flip()).pathResCode();
+          if (s.startsWith("20")) {
+            int remaining = Integer.parseInt(state.headerString(CONTENT_LENGTH));
+            if (remaining == dst.remaining()) {
+              cursor = dst.slice();
+              deliver();
+            }
+            cursor = ByteBuffer.allocate(remaining).put(dst);
+          }
+        }
+
+        private void deliver() {
+          payload.set(GSON.fromJson(UTF8.decode((ByteBuffer) cursor.rewind()).toString(), new TypeToken<T>() {
+          }.getType()));
+          EXECUTOR_SERVICE.submit(new Runnable() {
+            @Override
+            public void run() {
+
+              try {
+                cyclicBarrier.await();
+              } catch (Throwable e) {
+                e.printStackTrace();  //todo: verify for a purpose
+              }
+            }
+          });
+        }
+      });
+      int await = cyclicBarrier.await(3, TimeUnit.SECONDS);
+      return payload.get();
     }
   },
   @DbTask({tx, future}) @DbResultUnit(String.class) @DbKeys({db, docId})RevisionFetch {
@@ -102,7 +158,8 @@ public enum CouchMetaDriver {
     <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
       EnumMap<etype, Object> parms = dbKeysBuilder.parms();
 
-      final String pathRescode = "/" + parms.get(db) + "/" + parms.get(etype.docId);
+      Object id = parms.get(etype.docId);
+      final String pathRescode = "/" + parms.get(db) + ((id != null) ? "/" + id : "");
       final Rfc822HeaderState state = actionBuilder.state().headers(ETAG).methodProtocol("HEAD").pathResCode(pathRescode);
       return EXECUTOR_SERVICE.submit(new Callable<Object>() {
         public Object call() throws Exception {
@@ -172,14 +229,8 @@ public enum CouchMetaDriver {
   @DbTask({tx}) @DbResultUnit(String.class) @DbKeys({db, designDocId})DesignDocFetch {
     @Override
     <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
-      String path = idpath(dbKeysBuilder, etype.designDocId);
-      SocketChannel couchConnection = createCouchConnection();
-      SynchronousQueue<Object> returnTo1 = ActionBuilder.get().sync();
-      SynchronousQueue returnTo = returnTo1;
-      AsioVisitor asioVisitor = fetchJsonByPath(couchConnection, returnTo, path);
-      T take = (T) returnTo.poll(3, TimeUnit.SECONDS);
-      recycleChannel(couchConnection);
-      return take;
+      dbKeysBuilder.parms().put(etype.docId, dbKeysBuilder.parms().remove(etype.designDocId));
+      return DocFetch.visit(dbKeysBuilder, actionBuilder);
     }
   },
   @DbTask({rows, future, continuousFeed}) @DbResultUnit(CouchResultSet.class) @DbKeys({db, view})ViewFetch {
@@ -328,7 +379,92 @@ public enum CouchMetaDriver {
       return couchTx;
     }
   },
-  @DbTask({tx, future, oneWay}) @DbResultUnit(Rfc822HeaderState.class) @DbKeys({opaque, mimetype, blob})BlobSend {};
+  @DbTask({tx, future, oneWay}) @DbResultUnit(Rfc822HeaderState.class) @DbKeys({db, docId, opaque, mimetype, blob})BlobSend {
+    @Override
+    <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+       final AtomicReference<String> payload = new AtomicReference<String>();
+      final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
+      final EnumMap<etype, Object> parms = dbKeysBuilder.parms();
+      CouchTx visit = (CouchTx) RevisionFetch.visit(dbKeysBuilder, actionBuilder);
+      String rev = visit == null ? null : visit.rev();
+
+      final ByteBuffer byteBuffer = actionBuilder.state().methodProtocol("PUT").pathResCode("/" + parms.get(db) + '/' + parms.get(etype.docId) + '/' + parms.get(etype.opaque) + rev == null ? "" : ("?rev=" + rev))
+          .headerStrings(new TreeMap<String, String>() {{
+            put("Expect", "100-continue");
+            put(CONTENT_TYPE, ((MimeType) parms.get(etype.mimetype)).contentType);
+            put(ACCEPT, "*/*");
+          }}).asRequestHeaderByteBuffer();
+
+
+      final SocketChannel channel = createCouchConnection();
+      HttpMethod.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
+        public ByteBuffer cursor;
+
+        @Override
+        public void onWrite(SelectionKey key) throws Exception {
+          if (null != cursor) {
+            int write = channel.write(cursor);
+            if (-1 == write || !cursor.hasRemaining()) {
+              key.interestOps(OP_READ).selector().wakeup();
+              cyclicBarrier.reset();
+              key.attach(new Impl() {
+                @Override
+                public void onRead(final SelectionKey key) throws Exception {
+
+                  final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
+                  int read = channel.read(dst);
+                  actionBuilder.state().apply((ByteBuffer) dst.flip());
+                  System.err.println(deepToString(this, parms, actionBuilder));
+                  EXECUTOR_SERVICE.submit(new Runnable() {
+                    @Override
+                    public void run() {
+                      try {
+                        payload.set(UTF8.decode(dst.slice()).toString()); //ignoring content-length here..  not actually sane.
+                        cyclicBarrier.await();
+                        recycleChannel(channel);
+                      } catch (Throwable e) {
+                        try {
+                          channel.socket().close();
+                        } catch (IOException e1) {
+
+                        }
+                        e.printStackTrace();  //todo: verify for a purpose
+                      }
+
+                    }
+                  })                          ;
+
+                }
+              });
+            }
+
+          }
+          int write = channel.write((ByteBuffer) byteBuffer.rewind());
+          key.interestOps(OP_READ).selector().wakeup();
+        }
+
+        @Override
+        public void onRead(SelectionKey key) throws Exception {
+
+          ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
+          int read = channel.read(dst);
+          String continueString = actionBuilder.state().apply((ByteBuffer) dst.flip()).pathResCode();
+
+          if (continueString.startsWith("100")) {
+            cursor = (ByteBuffer) parms.get(etype.blob);
+            key.interestOps(OP_WRITE).selector().wakeup();
+          }
+
+
+        }
+      });
+      cyclicBarrier.await(6, TimeUnit.MINUTES);
+      return payload;
+    }
+
+
+
+  };
   private static final String APPLICATION_JSON = "application/json";
   public static final String ETAG = "ETag";
   public static final String CONTENT_LENGTH = "Content-Length";
