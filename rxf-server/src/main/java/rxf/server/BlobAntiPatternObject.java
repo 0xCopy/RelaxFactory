@@ -28,6 +28,8 @@ import static rxf.server.CouchDriver.createDocBuilder;
 import static rxf.server.CouchDriver.getViewBuilder;
 
 /**
+ * <a href='http://www.antipatterns.com/briefing/sld024.htm'> Blob Anti Pattern </a>
+ * used here as a pattern to centralize the antipatterns
  * User: jim
  * Date: 4/17/12
  * Time: 11:55 PM

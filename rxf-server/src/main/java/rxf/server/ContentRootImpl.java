@@ -76,10 +76,10 @@ class ContentRootImpl extends Impl {
           for (CompressionTypes compType : CompressionTypes.values()) {
             if (accepts.contains(compType.name())) {
               File file1 = new File(finalFname + "." + compType.suffix);
-              if (file1.isFile()) {
+              if (file1.isFile() && file1.canRead()) {
                 file[0] = file1;
                 System.err.println("sending compressed archive: " + file1.getAbsolutePath());
-                ceString = MessageFormat.format("Content-Encoding: {0}\r\n", compType.name());
+                ceString = ("Content-Encoding: " + compType.name() + "\r\n");
                 break;
               }
             }
@@ -87,7 +87,7 @@ class ContentRootImpl extends Impl {
         }
         boolean send200 = false;
         try {
-          send200 = file[0].canRead();
+          send200 = file[0].canRead() && file[0].isFile();
         } finally {
 
         }
