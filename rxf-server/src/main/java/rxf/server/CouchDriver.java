@@ -60,12 +60,12 @@ rxf.server.CouchMetaDriver.DbCreate.visit(/*dbKeysBuilder,actionBuilder*/);
 
     @Override
     public DbCreateActionBuilder state(Rfc822HeaderState state) {
-      return super.state(state);
+      return (DbCreateActionBuilder) super.state(state);
     }
 
     @Override
     public DbCreateActionBuilder key(java.nio.channels.SelectionKey key) {
-      return super.key(key);
+      return (DbCreateActionBuilder) super.key(key);
     }
   }
 
@@ -131,12 +131,12 @@ public java.lang.String call()throws Exception{
 
     @Override
     public DocFetchActionBuilder state(Rfc822HeaderState state) {
-      return super.state(state);
+      return (DocFetchActionBuilder) super.state(state);
     }
 
     @Override
     public DocFetchActionBuilder key(java.nio.channels.SelectionKey key) {
-      return super.key(key);
+      return (DocFetchActionBuilder) super.key(key);
     }
   }
 
@@ -201,12 +201,12 @@ public java.lang.String call()throws Exception{
 
     @Override
     public RevisionFetchActionBuilder state(Rfc822HeaderState state) {
-      return super.state(state);
+      return (RevisionFetchActionBuilder) super.state(state);
     }
 
     @Override
     public RevisionFetchActionBuilder key(java.nio.channels.SelectionKey key) {
-      return super.key(key);
+      return (RevisionFetchActionBuilder) super.key(key);
     }
   }
 
@@ -288,12 +288,12 @@ public rxf.server.CouchTx call()throws Exception{
 
     @Override
     public DocPersistActionBuilder state(Rfc822HeaderState state) {
-      return super.state(state);
+      return (DocPersistActionBuilder) super.state(state);
     }
 
     @Override
     public DocPersistActionBuilder key(java.nio.channels.SelectionKey key) {
-      return super.key(key);
+      return (DocPersistActionBuilder) super.key(key);
     }
   }
 
@@ -346,12 +346,12 @@ public class DesignDocFetch<T> extends DbKeysBuilder<java.lang.String> {
 
     @Override
     public DesignDocFetchActionBuilder state(Rfc822HeaderState state) {
-      return super.state(state);
+      return (DesignDocFetchActionBuilder) super.state(state);
     }
 
     @Override
     public DesignDocFetchActionBuilder key(java.nio.channels.SelectionKey key) {
-      return super.key(key);
+      return (DesignDocFetchActionBuilder) super.key(key);
     }
   }
 
@@ -419,12 +419,12 @@ public rxf.server.CouchResultSet call()throws Exception{
 
     @Override
     public ViewFetchActionBuilder state(Rfc822HeaderState state) {
-      return super.state(state);
+      return (ViewFetchActionBuilder) super.state(state);
     }
 
     @Override
     public ViewFetchActionBuilder key(java.nio.channels.SelectionKey key) {
-      return super.key(key);
+      return (ViewFetchActionBuilder) super.key(key);
     }
   }
 
@@ -513,12 +513,12 @@ public rxf.server.CouchTx call()throws Exception{
 
     @Override
     public JsonSendActionBuilder state(Rfc822HeaderState state) {
-      return super.state(state);
+      return (JsonSendActionBuilder) super.state(state);
     }
 
     @Override
     public JsonSendActionBuilder key(java.nio.channels.SelectionKey key) {
-      return super.key(key);
+      return (JsonSendActionBuilder) super.key(key);
     }
   }
 
@@ -600,12 +600,12 @@ rxf.server.CouchMetaDriver.BlobSend.visit(/*dbKeysBuilder,actionBuilder*/);
 
     @Override
     public BlobSendActionBuilder state(Rfc822HeaderState state) {
-      return super.state(state);
+      return (BlobSendActionBuilder) super.state(state);
     }
 
     @Override
     public BlobSendActionBuilder key(java.nio.channels.SelectionKey key) {
-      return super.key(key);
+      return (BlobSendActionBuilder) super.key(key);
     }
   }
 

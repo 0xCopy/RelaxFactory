@@ -13,7 +13,7 @@ public abstract class ActionBuilder<T> {
 
   private Rfc822HeaderState state;
   private SelectionKey key;
-  protected static ThreadLocal<ActionBuilder> currentAction = new InheritableThreadLocal<ActionBuilder>();
+  protected static ThreadLocal<ActionBuilder<?>> currentAction = new InheritableThreadLocal<ActionBuilder<?>>();
   private SynchronousQueue[] synchronousQueues;
 
   public ActionBuilder(SynchronousQueue... synchronousQueues) {
@@ -46,27 +46,27 @@ public abstract class ActionBuilder<T> {
     return this.key;
   }
 
-  abstract protected <B extends TerminalBuilder<T>> B fire() throws Exception;
+  abstract protected TerminalBuilder<T> fire() throws Exception;
 
 
-  protected <B extends ActionBuilder<T>> B state(Rfc822HeaderState state) {
+  protected ActionBuilder<T> state(Rfc822HeaderState state) {
     this.state = state;
-    return (B) this;
+    return this;
   }
 
 
-  protected <B extends ActionBuilder<T>> B key(SelectionKey key) {
+  protected ActionBuilder<T> key(SelectionKey key) {
     this.key = key;
 
-    return (B) this;
+    return this;
   }
 
-  public static <T, B extends ActionBuilder<T>> B get() {
-    return (B) currentAction.get();
+  public static <T> ActionBuilder<T> get() {
+    return (ActionBuilder<T>) currentAction.get();
   }
 
-  public <B extends ActionBuilder<T>> B sync(SynchronousQueue... ts) {
+  public ActionBuilder<T> sync(SynchronousQueue... ts) {
     this.synchronousQueues = ts;
-    return (B) this;
+    return this;
   }
 }
