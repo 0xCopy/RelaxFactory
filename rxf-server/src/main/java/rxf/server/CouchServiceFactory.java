@@ -124,12 +124,11 @@ public class CouchServiceFactory {
 
           String name = method.getName();
           if (viewMethods.containsKey(name)) {
-            // where is the db defined? is it now part of the view method? and what of the design doc?
-            CouchResultSet<E> rows = CouchDriver.ViewFetch.<E>$()/*.db(pathPrefix, entityType)*/.view(String.format(viewMethods.get(name), args)).to().fire().rows();
+            // where is the design doc defined? part of the view?
+            CouchResultSet<E> rows = CouchDriver.ViewFetch.<E>$().db(pathPrefix, entityType).view(String.format(viewMethods.get(name), args)).to().fire().rows();
             ArrayList<E> ar = new ArrayList<E>();
             for (tuple<E> row : rows.rows) {
-              Object value = ((tuple<E>) row).value;
-              ar.add(GSON.fromJson(GSON.toJson(value), entityType));
+              ar.add(row.value);
             }
             return ar;
           }

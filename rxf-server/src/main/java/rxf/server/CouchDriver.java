@@ -1,6 +1,8 @@
 
 package rxf.server;
 //generated
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
@@ -374,6 +376,7 @@ rxf.server.CouchResultSet ViewFetch( java.lang.String db, java.lang.String view 
 
 public class ViewFetch<T> extends DbKeysBuilder<rxf.server.CouchResultSet<T>> {
   private Rfc822HeaderState rfc822HeaderState;
+  private Class<T> type;
 
   private ViewFetch() {
   }
@@ -398,7 +401,7 @@ public class ViewFetch<T> extends DbKeysBuilder<rxf.server.CouchResultSet<T>> {
          public CouchResultSet<T> rows(){ 
 try {
   //TODO ParameterizedType for GSON
-        return (CouchResultSet<T>)  BlobAntiPatternObject.GSON.fromJson( (String)rxf.server.CouchMetaDriver.ViewFetch.visit(),CouchResultSet/*<rxf.server.CouchResultSet>*/.class);
+        return (CouchResultSet<T>)  BlobAntiPatternObject.GSON.fromJson( (String)rxf.server.CouchMetaDriver.ViewFetch.visit(),createResultSetType());
       } catch (Exception e) {
         e.printStackTrace();    
       }         
@@ -415,6 +418,22 @@ public rxf.server.CouchResultSet<T> call()throws Exception{
                     DbKeysBuilder.currentKeys.set(dbKeysBuilder);  
  ActionBuilder.currentAction.set(actionBuilder);  return(rxf.server.CouchResultSet)rxf.server.CouchMetaDriver.ViewFetch.visit(dbKeysBuilder,actionBuilder);}});
 }catch(Exception e){e.printStackTrace();}return null;} public  void continuousFeed(){throw new AbstractMethodError();} 
+        private Type createResultSetType() {
+          return new ParameterizedType() {
+            @Override
+            public Type getRawType() {
+              return CouchResultSet.class;
+            }
+            @Override
+            public Type getOwnerType() {
+              return null;
+            }
+            @Override
+            public Type[] getActualTypeArguments() {
+              return new Type[] {type};
+            }
+          };
+        }
       };
     }
 
@@ -438,7 +457,7 @@ public rxf.server.CouchResultSet<T> call()throws Exception{
   }
   
 static private final int parmsCount=2;
-public ViewFetch<T>  db(java.lang.String string){parms.put(DbKeys.etype.db,string);return this;}
+public ViewFetch<T>  db(java.lang.String string, Class<T> clazz){parms.put(DbKeys.etype.db,string);this.type = clazz; return this;}
 public ViewFetch<T>  view(java.lang.String string){parms.put(DbKeys.etype.view,string);return this;}
 
 }
