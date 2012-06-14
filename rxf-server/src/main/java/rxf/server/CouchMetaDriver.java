@@ -269,7 +269,7 @@ public enum CouchMetaDriver {
       }).get();
     }
   },
-  @DbTask({tx, oneWay, future}) @DbKeys({db, /*docId,*//* rev, */validjson})DocPersist {
+  @DbTask({tx, oneWay, future}) @DbKeys({db, docId,/* rev, */validjson})DocPersist {
     @Override
     <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
 //
@@ -279,6 +279,17 @@ public enum CouchMetaDriver {
 ////          (String) dbKeysBuilder.parms().get(etype.docId),
 ////          (String) dbKeysBuilder.parms().get(etype.rev)
 //      );
+      String db = (String) dbKeysBuilder.parms().get(etype.db);
+      String docId = (String) dbKeysBuilder.parms().get(etype.docId);
+      String rev = (String) dbKeysBuilder.parms().get(etype.rev);
+      StringBuilder sb = new StringBuilder(db);
+      if (docId != null) {
+        sb.append("/").append(docId);
+      }
+      if (rev != null) {
+        sb.append("?rev=").append(rev);
+      }
+      dbKeysBuilder.parms().put(etype.opaque, sb.toString());
       return JsonSend.visit(dbKeysBuilder, actionBuilder);
     }
   },
@@ -401,7 +412,7 @@ public enum CouchMetaDriver {
               System.err.println(deepToString(state.pathResCode(), state, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
             }
 
-            int remaining = Integer.parseInt(state.apply(cursor).headerString(CONTENT_LENGTH));
+            int remaining = Integer.parseInt(state.headerString(CONTENT_LENGTH));
 
             if (remaining == cursor.remaining()) {
               deliver();

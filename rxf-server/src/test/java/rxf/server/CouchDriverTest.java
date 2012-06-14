@@ -1,7 +1,6 @@
 package rxf.server;
 
 import java.io.IOException;
-import java.nio.channels.Selector;
 
 import junit.framework.TestCase;
 import one.xio.AsioVisitor;
@@ -33,9 +32,18 @@ public class CouchDriverTest extends TestCase {
   }
 
   public void testCreateDb() throws IOException {
+    //this can fail with a 415 error if the db already exists - should have some setup that deletes dbs if they exist
     CouchTx tx = CouchDriver.DbCreate.$().db("test_somedb").to().fire().tx();
     assertNotNull(tx);
     assertTrue(tx.ok());
+    assertNull(tx.getError());
+  }
+  
+  public void testCreateDoc() {
+    CouchTx tx = CouchDriver.DocPersist.$().db("test_somedb").validjson("{}").to().fire().tx();
+    assertNotNull(tx);
+    assertTrue(tx.ok());
+    assertNotNull(tx.getId());
     assertNull(tx.getError());
   }
 }
