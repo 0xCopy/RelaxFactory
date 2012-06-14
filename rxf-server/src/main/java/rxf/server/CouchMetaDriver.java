@@ -86,12 +86,13 @@ public enum CouchMetaDriver {
             cursor = ByteBuffer.allocateDirect(getReceiveBufferSize());
             int read = channel.read(cursor);
             state.headerStrings().clear();
+            state.headers(CONTENT_LENGTH);
             state.apply((ByteBuffer) cursor.flip());
             if (BlobAntiPatternObject.DEBUG_SENDJSON) {
               System.err.println(deepToString(state.pathResCode(), state, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
             }
 
-            int remaining = Integer.parseInt(state.apply(cursor).headerString(CONTENT_LENGTH));
+            int remaining = Integer.parseInt(state.headerString(CONTENT_LENGTH));
 
             if (remaining == cursor.remaining()) {
               deliver();
@@ -107,7 +108,7 @@ public enum CouchMetaDriver {
           }
         }
         private void deliver() {
-          payload.set(GSON.fromJson(UTF8.decode((ByteBuffer) cursor.rewind()).toString(), CouchTx.class));
+          payload.set(GSON.fromJson(UTF8.decode((ByteBuffer) cursor).toString(), CouchTx.class));
           EXECUTOR_SERVICE.submit(new Runnable() {
             @Override
             public void run() {
@@ -121,7 +122,7 @@ public enum CouchMetaDriver {
           });
         }
       });
-      int await = cyclicBarrier.await();
+      int await = cyclicBarrier.await(3, TimeUnit.SECONDS);
       return payload.get();
     }
   },

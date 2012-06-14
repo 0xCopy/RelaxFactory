@@ -33,10 +33,9 @@ public class CouchDriverTest extends TestCase {
   }
 
   public void testCreateDb() throws IOException {
-    CouchTx tx = CouchDriver.DbCreate.$().db("test_somedb").validjson("").to().fire().tx();
+    CouchTx tx = CouchDriver.DbCreate.$().db("test_somedb").to().fire().tx();
     assertNotNull(tx);
     assertTrue(tx.ok());
-    assertNotNull(tx.getId());
     assertNull(tx.getError());
   }
 }

@@ -78,12 +78,11 @@ public interface CouchDriver{CouchTx DbCreate( String db, String validjson );
       if (parms.size() == parmsCount)
         return new DbCreateActionBuilder(/*dest*/);
   
-      throw new IllegalArgumentException("required parameters are: [db, validjson]");
+      throw new IllegalArgumentException("required parameters are: [db]");
     }
   
-    static private final int parmsCount=2;
+    static private final int parmsCount=1;
     public DbCreate  db(String string){parms.put(DbKeys.etype.db,string);return this;}
-    public DbCreate  validjson(String string){parms.put(DbKeys.etype.validjson,string);return this;}
   
   }
   String DocFetch( String db, String docId );
