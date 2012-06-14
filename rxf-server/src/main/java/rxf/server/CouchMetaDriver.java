@@ -476,7 +476,7 @@ public enum CouchMetaDriver {
   static final String SET_COOKIE = "Set-Cookie";
 
   static <T> String idpath(DbKeysBuilder<T> dbKeysBuilder, etype etype) {
-    String db = (String) dbKeysBuilder.parms().get(etype.db);
+    String db = (String) dbKeysBuilder.parms().get(DbKeys.etype.db);
     String id = (String) dbKeysBuilder.parms().get(etype);
     return '/' + db + '/' + id;
   }
