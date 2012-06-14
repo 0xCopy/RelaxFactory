@@ -11,14 +11,14 @@ public interface CouchDriver{rxf.server.CouchTx DbCreate( java.lang.String db, j
 
  
 
-public class DbCreate<T> extends DbKeysBuilder<rxf.server.CouchTx> {
+public class DbCreate extends DbKeysBuilder<rxf.server.CouchTx> {
   private Rfc822HeaderState rfc822HeaderState;
 
   private DbCreate() {
   }
 
-  static public  <T>DbCreate<T> $() {
-    return new DbCreate<T>();
+  static public DbCreate $() {
+    return new DbCreate();
   }
 
   public interface DbCreateTerminalBuilder extends TerminalBuilder<rxf.server.CouchTx> {
@@ -86,14 +86,14 @@ java.lang.String DocFetch( java.lang.String db, java.lang.String docId );
 
  
 
-public class DocFetch<T> extends DbKeysBuilder<java.lang.String> {
+public class DocFetch extends DbKeysBuilder<java.lang.String> {
   private Rfc822HeaderState rfc822HeaderState;
 
   private DocFetch() {
   }
 
-  static public  <T>DocFetch<T> $() {
-    return new DocFetch<T>();
+  static public DocFetch $() {
+    return new DocFetch();
   }
 
   public interface DocFetchTerminalBuilder extends TerminalBuilder<java.lang.String> {
@@ -157,14 +157,14 @@ java.lang.String RevisionFetch( java.lang.String db, java.lang.String docId );
 
  
 
-public class RevisionFetch<T> extends DbKeysBuilder<java.lang.String> {
+public class RevisionFetch extends DbKeysBuilder<java.lang.String> {
   private Rfc822HeaderState rfc822HeaderState;
 
   private RevisionFetch() {
   }
 
-  static public  <T>RevisionFetch<T> $() {
-    return new RevisionFetch<T>();
+  static public RevisionFetch $() {
+    return new RevisionFetch();
   }
 
   public interface RevisionFetchTerminalBuilder extends TerminalBuilder<java.lang.String> {
@@ -227,14 +227,14 @@ rxf.server.CouchTx DocPersist( java.lang.String db, java.lang.String validjson )
 
  
 
-public class DocPersist<T> extends DbKeysBuilder<rxf.server.CouchTx> {
+public class DocPersist extends DbKeysBuilder<rxf.server.CouchTx> {
   private Rfc822HeaderState rfc822HeaderState;
 
   private DocPersist() {
   }
 
-  static public  <T>DocPersist<T> $() {
-    return new DocPersist<T>();
+  static public DocPersist $() {
+    return new DocPersist();
   }
 
   public interface DocPersistTerminalBuilder extends TerminalBuilder<rxf.server.CouchTx> {
@@ -314,14 +314,14 @@ java.lang.String DesignDocFetch( java.lang.String db, java.lang.String designDoc
 
  
 
-public class DesignDocFetch<T> extends DbKeysBuilder<java.lang.String> {
+public class DesignDocFetch extends DbKeysBuilder<java.lang.String> {
   private Rfc822HeaderState rfc822HeaderState;
 
   private DesignDocFetch() {
   }
 
-  static public  <T>DesignDocFetch<T> $() {
-    return new DesignDocFetch<T>();
+  static public DesignDocFetch $() {
+    return new DesignDocFetch();
   }
 
   public interface DesignDocFetchTerminalBuilder extends TerminalBuilder<java.lang.String> {
@@ -372,44 +372,45 @@ rxf.server.CouchResultSet ViewFetch( java.lang.String db, java.lang.String view 
 
  
 
-public class ViewFetch<T> extends DbKeysBuilder<rxf.server.CouchResultSet> {
+public class ViewFetch<T> extends DbKeysBuilder<rxf.server.CouchResultSet<T>> {
   private Rfc822HeaderState rfc822HeaderState;
 
   private ViewFetch() {
   }
 
-  static public  <T>ViewFetch<T> $() {
+  static public <T> ViewFetch<T> $() {
     return new ViewFetch<T>();
   }
 
-  public interface ViewFetchTerminalBuilder extends TerminalBuilder<rxf.server.CouchResultSet> {
-    CouchResultSet/*<rxf.server.CouchResultSet>*/ rows();Future<rxf.server.CouchResultSet>future(); void continuousFeed();
+  public interface ViewFetchTerminalBuilder<T> extends TerminalBuilder<rxf.server.CouchResultSet<T>> {
+    CouchResultSet<T> rows();Future<rxf.server.CouchResultSet<T>>future(); void continuousFeed();
 
   }
 
-  public class ViewFetchActionBuilder extends ActionBuilder<rxf.server.CouchResultSet> {
+  public class ViewFetchActionBuilder extends ActionBuilder<rxf.server.CouchResultSet<T>> {
     public ViewFetchActionBuilder( /*<rxf.server.CouchResultSet>*/ ) {
       super(/*synchronousQueues*/);
     }
 
     @Override
-    public ViewFetchTerminalBuilder fire() {
-      return new ViewFetchTerminalBuilder() {
-         public CouchResultSet/*<rxf.server.CouchResultSet>*/ rows(){ 
+    public ViewFetchTerminalBuilder<T> fire() {
+      return new ViewFetchTerminalBuilder<T>() {
+         public CouchResultSet<T> rows(){ 
 try {
-        return (CouchResultSet/*<rxf.server.CouchResultSet>*/)  BlobAntiPatternObject.GSON.fromJson( (String)rxf.server.CouchMetaDriver.ViewFetch.visit(),CouchResultSet/*<rxf.server.CouchResultSet>*/.class);
+  //TODO ParameterizedType for GSON
+        return (CouchResultSet<T>)  BlobAntiPatternObject.GSON.fromJson( (String)rxf.server.CouchMetaDriver.ViewFetch.visit(),CouchResultSet/*<rxf.server.CouchResultSet>*/.class);
       } catch (Exception e) {
         e.printStackTrace();    
       }         
-return null ;}public Future<rxf.server.CouchResultSet>future(){
+return null ;}public Future<rxf.server.CouchResultSet<T>>future(){
     try{
-    BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<rxf.server.CouchResultSet>(){
+    BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<rxf.server.CouchResultSet<T>>(){
 
 
   final  DbKeysBuilder dbKeysBuilder=(DbKeysBuilder )DbKeysBuilder.get();
 final ActionBuilder actionBuilder=(ActionBuilder )ActionBuilder.get();
 
-public rxf.server.CouchResultSet call()throws Exception{ 
+public rxf.server.CouchResultSet<T> call()throws Exception{ 
         
                     DbKeysBuilder.currentKeys.set(dbKeysBuilder);  
  ActionBuilder.currentAction.set(actionBuilder);  return(rxf.server.CouchResultSet)rxf.server.CouchMetaDriver.ViewFetch.visit(dbKeysBuilder,actionBuilder);}});
@@ -445,14 +446,14 @@ rxf.server.CouchTx JsonSend( java.lang.String opaque, java.lang.String validjson
 
  
 
-public class JsonSend<T> extends DbKeysBuilder<rxf.server.CouchTx> {
+public class JsonSend extends DbKeysBuilder<rxf.server.CouchTx> {
   private Rfc822HeaderState rfc822HeaderState;
 
   private JsonSend() {
   }
 
-  static public  <T>JsonSend<T> $() {
-    return new JsonSend<T>();
+  static public JsonSend $() {
+    return new JsonSend();
   }
 
   public interface JsonSendTerminalBuilder extends TerminalBuilder<rxf.server.CouchTx> {
@@ -539,14 +540,14 @@ rxf.server.Rfc822HeaderState BlobSend( java.lang.String db, java.lang.String doc
 
  
 
-public class BlobSend<T> extends DbKeysBuilder<rxf.server.Rfc822HeaderState> {
+public class BlobSend extends DbKeysBuilder<rxf.server.Rfc822HeaderState> {
   private Rfc822HeaderState rfc822HeaderState;
 
   private BlobSend() {
   }
 
-  static public  <T>BlobSend<T> $() {
-    return new BlobSend<T>();
+  static public BlobSend $() {
+    return new BlobSend();
   }
 
   public interface BlobSendTerminalBuilder extends TerminalBuilder<rxf.server.Rfc822HeaderState> {
