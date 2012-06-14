@@ -44,7 +44,7 @@ public class BlobAntiPatternObject {
   public static final String COOKIE = "Cookie";
   public static InetAddress LOOPBACK = null;
 
-  public static final boolean DEBUG_SENDJSON = System.getenv().containsKey("DEBUG_SENDJSON");
+  public static boolean DEBUG_SENDJSON = System.getenv().containsKey("DEBUG_SENDJSON");
 
   static {
     try {

@@ -63,11 +63,66 @@ import static rxf.server.DbTerminal.tx;
  */
 public enum CouchMetaDriver {
 
-  @DbTask({tx, oneWay}) @DbKeys({db, validjson})DbCreate {
+  @DbTask({tx, oneWay}) @DbKeys({db})DbCreate {
     @Override
     <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
-      Object visit = JsonSend.visit(dbKeysBuilder, actionBuilder);
-      return visit;
+      final AtomicReference<CouchTx> payload = new AtomicReference<CouchTx>();
+      final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
+      final Rfc822HeaderState state = actionBuilder.state();
+      final ByteBuffer header = state.methodProtocol("PUT").pathResCode("/" + dbKeysBuilder.parms().get(etype.db))
+          .headerString("Content-Length", "0")
+          .asRequestHeaderByteBuffer();
+      final SocketChannel channel = createCouchConnection();
+      HttpMethod.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
+        ByteBuffer cursor = null;
+        @Override
+        public void onWrite(SelectionKey key) throws Exception {
+          int write = channel.write((ByteBuffer) header);
+          key.interestOps(OP_READ).selector().wakeup();
+        }
+        @Override
+        public void onRead(SelectionKey key) throws Exception {
+          if (cursor == null) {
+            cursor = ByteBuffer.allocateDirect(getReceiveBufferSize());
+            int read = channel.read(cursor);
+            state.headerStrings().clear();
+            state.apply((ByteBuffer) cursor.flip());
+            if (BlobAntiPatternObject.DEBUG_SENDJSON) {
+              System.err.println(deepToString(state.pathResCode(), state, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
+            }
+
+            int remaining = Integer.parseInt(state.apply(cursor).headerString(CONTENT_LENGTH));
+
+            if (remaining == cursor.remaining()) {
+              deliver();
+            } else {
+              cursor = ByteBuffer.allocate(remaining).put(cursor);
+            }
+          } else {
+            int read = channel.read(cursor);
+            if (!cursor.hasRemaining()) {
+              cursor.flip();
+              deliver();
+            }
+          }
+        }
+        private void deliver() {
+          payload.set(GSON.fromJson(UTF8.decode((ByteBuffer) cursor.rewind()).toString(), CouchTx.class));
+          EXECUTOR_SERVICE.submit(new Runnable() {
+            @Override
+            public void run() {
+
+              try {
+                cyclicBarrier.await();
+              } catch (Throwable e) {
+                e.printStackTrace();  //todo: verify for a purpose
+              }
+            }
+          });
+        }
+      });
+      int await = cyclicBarrier.await();
+      return payload.get();
     }
   },
   //  @DbTask({tx, oneWay}) @DbKeys({db, docId, validjson})createDoc {
