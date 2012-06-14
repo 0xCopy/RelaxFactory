@@ -438,8 +438,8 @@ public rxf.server.CouchResultSet<T> call()throws Exception{
   }
   
 static private final int parmsCount=2;
-public ViewFetch  db(java.lang.String string){parms.put(DbKeys.etype.db,string);return this;}
-public ViewFetch  view(java.lang.String string){parms.put(DbKeys.etype.view,string);return this;}
+public ViewFetch<T>  db(java.lang.String string){parms.put(DbKeys.etype.db,string);return this;}
+public ViewFetch<T>  view(java.lang.String string){parms.put(DbKeys.etype.view,string);return this;}
 
 }
 rxf.server.CouchTx JsonSend( java.lang.String opaque, java.lang.String validjson );
