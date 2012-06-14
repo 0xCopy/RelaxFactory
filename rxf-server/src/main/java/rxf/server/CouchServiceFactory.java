@@ -15,6 +15,11 @@ import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 import static rxf.server.BlobAntiPatternObject.GSON;
 import static rxf.server.CouchMetaDriver.ETAG;
 
+/**
+ * Creates CouchService instances by translating {@literal @}View annotations into CouchDB design documents
+ * and invoking them when the methods are called.
+ *
+ */
 public class CouchServiceFactory {
   public static <S extends CouchService<?>> S get(Class<S> clazz) throws IOException, TimeoutException, InterruptedException {
     InvocationHandler handler = new CouchServiceHandler(clazz);
@@ -23,9 +28,9 @@ public class CouchServiceFactory {
   }
 
   /**
-   * Actual generated instance for each proxy. This is designed to play nice with RequestFactory
+   * Actual generated instance for each proxy. This is designed to play nice with RequestFactory 
    * and javascript (in the couch views) so uniqueness is by method _name_, not full signature.
-   *
+   * 
    * @author colin
    */
   private static class CouchServiceHandler implements InvocationHandler {
