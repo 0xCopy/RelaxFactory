@@ -1,23 +1,5 @@
 package rxf.server;
 
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.SocketChannel;
-import java.text.MessageFormat;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReference;
-
-import com.google.gson.reflect.TypeToken;
-import one.xio.AsioVisitor.Impl;
-import one.xio.HttpMethod;
-import one.xio.MimeType;
-import org.intellij.lang.annotations.Language;
-import rxf.server.DbKeys.etype;
-
 import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
@@ -40,12 +22,45 @@ import static rxf.server.DbKeys.etype.mimetype;
 import static rxf.server.DbKeys.etype.opaque;
 import static rxf.server.DbKeys.etype.validjson;
 import static rxf.server.DbKeys.etype.view;
+import static rxf.server.DbKeys.etype.type;
 import static rxf.server.DbTerminal.continuousFeed;
 import static rxf.server.DbTerminal.future;
 import static rxf.server.DbTerminal.oneWay;
 import static rxf.server.DbTerminal.pojo;
 import static rxf.server.DbTerminal.rows;
 import static rxf.server.DbTerminal.tx;
+
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.GenericDeclaration;
+import java.lang.reflect.TypeVariable;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.SocketChannel;
+import java.text.MessageFormat;
+import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+
+import one.xio.AsioVisitor.Impl;
+import one.xio.HttpMethod;
+import one.xio.MimeType;
+
+import org.intellij.lang.annotations.Language;
+
+import rxf.server.DbKeys.etype;
+
+import com.google.gson.reflect.TypeToken;
 
 
 /**
@@ -233,7 +248,7 @@ public enum CouchMetaDriver {
       return DocFetch.visit(dbKeysBuilder, actionBuilder);
     }
   },
-  @DbTask({rows, future, continuousFeed}) @DbResultUnit(CouchResultSet.class) @DbKeys({db, view})ViewFetch {
+  @DbTask({rows, future, continuousFeed}) @DbResultUnit(CouchResultSet.class) @DbKeys(value={db, view}, optional = type)ViewFetch {
     @Override
     <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
       SelectionKey key = actionBuilder.key();
@@ -298,7 +313,7 @@ public enum CouchMetaDriver {
       return poll1;
     }
   },
-  @DbTask({tx, oneWay, rows, future, continuousFeed}) @DbKeys({opaque, validjson})JsonSend {
+  @DbTask({tx, oneWay, rows, future, continuousFeed}) @DbKeys(value = {opaque, validjson}, optional = type)JsonSend {
     @Override
     <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
       final AtomicReference<CouchTx> payload = new AtomicReference<CouchTx>();
@@ -511,31 +526,46 @@ public enum CouchMetaDriver {
       CouchMetaDriver couchDriver = CouchMetaDriver.valueOf(field.getName());
 
       etype[] parms = field.getAnnotation(DbKeys.class).value();
-      Class rtype = CouchTx.class;
+      etype[] optionalParams = field.getAnnotation(DbKeys.class).optional();
+      Class<?> rtype = CouchTx.class;
       try {
         rtype = field.getAnnotation(DbResultUnit.class).value();
       } catch (Exception e) {
       }
-      String cn = rtype.getCanonicalName();
+      String rtypeTypeParams = "";
+      String rtypeBounds = "";
+      if (rtype.getTypeParameters().length != 0) {
+        StringBuilder params = new StringBuilder("<");
+        StringBuilder bounds = new StringBuilder("<");
+        for (TypeVariable<? extends GenericDeclaration> param : rtype.getTypeParameters()) {
+          params.append(param.getName()).append(",");
+          bounds.append(param.getName()).append(" extends ").append(((Class<?>)param.getBounds()[0]).getName()).append(",");
+        }
+        params.deleteCharAt(params.length() - 1).append(">");
+        bounds.deleteCharAt(bounds.length() - 1).append(">");
+        rtypeTypeParams = params.toString();
+        rtypeBounds = bounds.toString();
+      }
+      String fqsn = rtype.getCanonicalName();
+      String pfqsn = fqsn + rtypeTypeParams;
       @Language("JAVA") String s2 = " \n\npublic cla" +
-          "ss _ename_<T> extends DbKeysBuilder<" +
-          cn + "> {\n  private Rfc822HeaderState rfc822HeaderState;\n\n  private _ename_() {\n  }\n\n  static public  <T>_ename_<T> $() {\n    return new _ename_<T>();\n  }" +
-          "\n\n  public interface _ename_TerminalBuilder extends TerminalBuilder<" +
-          cn + "> {\n    " + IFACE_FIRE_TARGETS + "\n  }\n\n  public class _ename_ActionBuilder extends ActionBuilder<" +
-          cn + "> {\n    public _ename_ActionBuilder( /*<" +
-          cn + ">*/ ) {\n      super(/*synchronousQueues*/);\n    }\n\n    @Override\n    public _ename_TerminalBuilder fire() {\n      return new _ename_TerminalBuilder() {\n        " + BAKED_IN_FIRE + "\n      };\n    }\n\n    @Override\n    public _ename_ActionBuilder state(Rfc822HeaderState state) {\n      return super.state(state);\n    }\n\n    @Override\n    public _ename_ActionBuilder key(java.nio.channels.SelectionKey key) {\n      return super.key(key);\n    }\n  }\n\n  @Override\n  public _ename_ActionBuilder to( /*<" +
-          cn + ">*/ ) {\n    if (parms.size() == parmsCount)\n      return new _ename_ActionBuilder(/*dest*/);\n\n    throw new IllegalArgumentException(\"required parameters are: " + arrToString(parms) + "\");\n  }\n  " +
+          "ss _ename_"+rtypeTypeParams+" extends DbKeysBuilder<" +
+          pfqsn + "> {\n  private _ename_() {\n  }\n\n  static public "+rtypeBounds+" _ename_"+rtypeTypeParams+" $() {\n    return new _ename_"+rtypeTypeParams+"();\n  }" +
+          "\n\n  public interface _ename_TerminalBuilder"+rtypeTypeParams+" extends TerminalBuilder<" +
+          pfqsn + "> {\n    " + IFACE_FIRE_TARGETS + "\n  }\n\n  public class _ename_ActionBuilder extends ActionBuilder<" +
+          pfqsn + "> {\n    public _ename_ActionBuilder( /*<" +
+          pfqsn + ">*/ ) {\n      super(/*synchronousQueues*/);\n    }\n\n    @Override\n    public _ename_TerminalBuilder"+rtypeTypeParams+" fire() {\n      return new _ename_TerminalBuilder"+rtypeTypeParams+"() {\n        " + BAKED_IN_FIRE + "\n      };\n    }\n\n    @Override\n    public _ename_ActionBuilder state(Rfc822HeaderState state) {\n      return (_ename_ActionBuilder)super.state(state);\n    }\n\n    @Override\n    public _ename_ActionBuilder key(java.nio.channels.SelectionKey key) {\n      return (_ename_ActionBuilder)super.key(key);\n    }\n  }\n\n  @Override\n  public _ename_ActionBuilder to( /*<" +
+          pfqsn + ">*/ ) {\n    if (parms.size() <= parmsCount)\n      return new _ename_ActionBuilder(/*dest*/);\n\n    throw new IllegalArgumentException(\"required parameters are: " + arrToString(parms) + "\");\n  }\n  " +
           XXXXXXXXXXXXXXMETHODS + "\n" +
           "}\n";
       s = s2;
       int vl = parms.length;
       String s1 = "\nstatic private final int parmsCount=" + XDEADBEEF_2 + ";\n";
-      for (int i = 0; i < vl; i++) {
-        etype etype = parms[i];
-        String name = etype.name();
-        Class<? extends Object> clazz = etype.clazz;
-        @Language("JAVA") String y = "public _ename_  _name_(_clazz_ _sclazz_){parms.put(DbKeys.etype." + etype.name() + ",_sclazz_);return this;}\n";
-        s1 += y.replace("_name_", etype.name()).replace("_clazz_", clazz.getCanonicalName()).replace("_sclazz_", clazz.getSimpleName().toLowerCase()).replace("_ename_", name());
+      for (etype etype : parms) {
+        s1 = writeParameterSetter(rtypeTypeParams, s1, etype, etype.clazz);
+      }
+      for (etype etype : optionalParams) {
+        s1 = writeParameterSetter(rtypeTypeParams, s1, etype, etype.clazz);
       }
       {
 
@@ -544,8 +574,8 @@ public enum CouchMetaDriver {
           DbTerminal[] terminals = annotation.value();
           String t = "", iface = "";
           for (DbTerminal terminal : terminals) {
-            iface += terminal.builder(couchDriver, parms, rtype, false);
-            t += terminal.builder(couchDriver, parms, rtype, true);
+            iface += terminal.builder(couchDriver, parms, pfqsn, false);
+            t += terminal.builder(couchDriver, parms, pfqsn, true);
 
           }
           s = s.replace(BAKED_IN_FIRE, t).replace(IFACE_FIRE_TARGETS, iface);
@@ -555,6 +585,14 @@ public enum CouchMetaDriver {
       s = s.replace(XXXXXXXXXXXXXXMETHODS, s1).replace("_ename_", name()).replace(XDEADBEEF_2, String.valueOf(vl));
     }
     return s;
+  }
+
+
+  private String writeParameterSetter(String rtypeTypeParams, String s1, etype etype,
+      Class<?> clazz) {
+    @Language("JAVA") String y = "public _ename_"+rtypeTypeParams+"  _name_(_clazz_ _sclazz_){parms.put(DbKeys.etype." + etype.name() + ",_sclazz_);return this;}\n";
+    s1 += y.replace("_name_", etype.name()).replace("_clazz_", clazz.getCanonicalName()).replace("_sclazz_", clazz.getSimpleName().toLowerCase() + "Param").replace("_ename_", name());
+    return s1;
   }
 
   public static void main(String... args) throws NoSuchFieldException {
