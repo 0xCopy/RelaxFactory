@@ -40,7 +40,7 @@ import static rxf.server.BlobAntiPatternObject.moveCaretToDoubleEol;
  */
 public class Rfc822HeaderState {
   public boolean dirty;
-  public String[] headers = {};
+  public Set<String> headers = new HashSet<String>();
   private String[] cookies = {};
   /**
    * the source route froom the active socket.
@@ -94,7 +94,7 @@ public class Rfc822HeaderState {
    */
   public Rfc822HeaderState(String... headers) {
 
-    this.headers = headers;
+    this.headers.addAll(Arrays.asList(headers));
   }
 
   /**
@@ -222,7 +222,7 @@ public class Rfc822HeaderState {
     pathRescode = UTF8.decode((ByteBuffer) slice.flip()).toString().trim();
     headerBuf = null;
     boolean wantsCookies = 0 < cookies().length;
-    boolean wantsHeaders = wantsCookies || 0 < headers.length;
+    boolean wantsHeaders = wantsCookies || 0 < headers.size();
     headerBuf = (ByteBuffer) moveCaretToDoubleEol(cursor).duplicate().flip();
     headerStrings = null;
     cookieStrings = null;
@@ -253,7 +253,7 @@ public class Rfc822HeaderState {
    * @see #apply(java.nio.ByteBuffer)
    */
   public Rfc822HeaderState headers(String... headers) {
-    this.headers = headers;
+    this.headers.addAll(Arrays.asList(headers));
     return this;
   }
 
@@ -281,7 +281,7 @@ public class Rfc822HeaderState {
    * @see #headers
    */
 
-  public String[] headers() {
+  public Set<String> headers() {
     return headers;
   }
 

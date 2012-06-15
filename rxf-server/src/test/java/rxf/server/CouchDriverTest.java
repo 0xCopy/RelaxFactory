@@ -125,16 +125,32 @@ public class CouchDriverTest {
 
     designDoc = GSON.toJson(obj);
     CouchTx tx = CouchDriver.JsonSend.$().opaque("test_somedb/_design/sample").validjson(designDoc).to().fire().tx();
-    
+
     assertNotNull(tx);
     assertTrue(tx.ok());
     assertFalse(obj.get("_rev").equals(tx.getRev()));
     assertEquals(obj.get("_id"), tx.id());
-    
+
     CouchResultSet<Map<String, String>> data = CouchDriver.ViewFetch.<Map<String, String>>$().db("test_somedb").type(Map.class).view("_design/sample/_view/foo?key=\"d\"").to().fire().rows();
     assertNotNull(data);
     assertEquals(1, data.rows.size());
     assertEquals("b", data.rows.get(0).value.get("name"));
+  }
+
+  @Test
+  public void testDeleteDesignDoc() {
+    Rfc822HeaderState state = new Rfc822HeaderState("ETag");
+    String designDoc = CouchDriver.DesignDocFetch.$().db("test_somedb").designDocId("_design/sample").to().state(state).fire().pojo();
+    String rev = state.headerString("ETag");
+    assertNotNull(rev);
+    rev = rev.substring(1, rev.length() - 1);
+    CouchTx tx = CouchDriver.DocDelete.$().db("test_somedb").docId("_design/sample").rev(rev).to().fire().tx();
+    assertNotNull(tx);
+    assertTrue(tx.ok());
+    assertNull(tx.error());
+
+    designDoc = CouchDriver.DesignDocFetch.$().db("test_somedb").designDocId("_design/sample").to().fire().pojo();
+    assertNull(designDoc);
   }
 
   @Test

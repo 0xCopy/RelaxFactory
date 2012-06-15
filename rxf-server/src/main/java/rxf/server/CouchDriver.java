@@ -378,6 +378,92 @@ public DocPersist  docId(java.lang.String stringParam){parms.put(DbKeys.etype.do
 public DocPersist  rev(java.lang.String stringParam){parms.put(DbKeys.etype.rev,stringParam);return this;}
 
 }
+rxf.server.CouchTx DocDelete( java.lang.String db, java.lang.String docId, java.lang.String rev );
+
+ 
+
+public class DocDelete extends DbKeysBuilder<rxf.server.CouchTx> {
+  private DocDelete() {
+  }
+
+  static public  DocDelete $() {
+    return new DocDelete();
+  }
+
+  public interface DocDeleteTerminalBuilder extends TerminalBuilder<rxf.server.CouchTx> {
+     CouchTx tx();void oneWay();Future<rxf.server.CouchTx>future();
+  }
+
+  public class DocDeleteActionBuilder extends ActionBuilder<rxf.server.CouchTx> {
+    public DocDeleteActionBuilder( /*<rxf.server.CouchTx>*/ ) {
+      super(/*synchronousQueues*/);
+    }
+
+    @Override
+    public DocDeleteTerminalBuilder fire() {
+      return new DocDeleteTerminalBuilder() {
+         public  CouchTx tx(){try {
+        return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.DocDelete.visit();
+      } catch (Exception e) {
+        e.printStackTrace();   
+      } return null;} public void oneWay(){
+    final DbKeysBuilder<Object>dbKeysBuilder=(DbKeysBuilder<Object>)DbKeysBuilder.get();
+ final ActionBuilder<Object>actionBuilder=(ActionBuilder<Object>)ActionBuilder.get();
+dbKeysBuilder.validate();
+ BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable(){
+ 
+@Override
+public void run(){
+    try{
+
+      DbKeysBuilder.currentKeys.set(dbKeysBuilder);   
+      ActionBuilder.currentAction.set(actionBuilder); 
+rxf.server.CouchMetaDriver.DocDelete.visit(/*dbKeysBuilder,actionBuilder*/);
+}catch(Exception e){
+    e.printStackTrace();}
+    }
+    });
+}public Future<rxf.server.CouchTx>future(){
+    try{
+    BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<rxf.server.CouchTx>(){
+
+
+  final  DbKeysBuilder dbKeysBuilder=(DbKeysBuilder )DbKeysBuilder.get();
+final ActionBuilder actionBuilder=(ActionBuilder )ActionBuilder.get();
+
+public rxf.server.CouchTx call()throws Exception{ 
+        
+                    DbKeysBuilder.currentKeys.set(dbKeysBuilder);  
+ ActionBuilder.currentAction.set(actionBuilder);  return(rxf.server.CouchTx)rxf.server.CouchMetaDriver.DocDelete.visit(dbKeysBuilder,actionBuilder);}});
+}catch(Exception e){e.printStackTrace();}return null;}
+      };
+    }
+
+    @Override
+    public DocDeleteActionBuilder state(Rfc822HeaderState state) {
+      return (DocDeleteActionBuilder)super.state(state);
+    }
+
+    @Override
+    public DocDeleteActionBuilder key(java.nio.channels.SelectionKey key) {
+      return (DocDeleteActionBuilder)super.key(key);
+    }
+  }
+
+  @Override
+  public DocDeleteActionBuilder to( /*<rxf.server.CouchTx>*/ ) {
+    if (parms.size() >= parmsCount)
+      return new DocDeleteActionBuilder(/*dest*/);
+
+    throw new IllegalArgumentException("required parameters are: [db, docId, rev]");
+  }
+  
+static private final int parmsCount=3;
+public DocDelete  db(java.lang.String stringParam){parms.put(DbKeys.etype.db,stringParam);return this;}
+public DocDelete  docId(java.lang.String stringParam){parms.put(DbKeys.etype.docId,stringParam);return this;}
+public DocDelete  rev(java.lang.String stringParam){parms.put(DbKeys.etype.rev,stringParam);return this;}
+
+}
 java.lang.String DesignDocFetch( java.lang.String db, java.lang.String designDocId );
 
  
