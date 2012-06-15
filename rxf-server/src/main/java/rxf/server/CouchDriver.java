@@ -72,7 +72,7 @@ rxf.server.CouchMetaDriver.DbCreate.visit(/*dbKeysBuilder,actionBuilder*/);
 
   @Override
   public DbCreateActionBuilder to( /*<rxf.server.CouchTx>*/ ) {
-    if (parms.size() <= parmsCount)
+    if (parms.size() >= parmsCount)
       return new DbCreateActionBuilder(/*dest*/);
 
     throw new IllegalArgumentException("required parameters are: [db]");
@@ -144,7 +144,7 @@ rxf.server.CouchMetaDriver.DbDelete.visit(/*dbKeysBuilder,actionBuilder*/);
 
   @Override
   public DbDeleteActionBuilder to( /*<rxf.server.CouchTx>*/ ) {
-    if (parms.size() <= parmsCount)
+    if (parms.size() >= parmsCount)
       return new DbDeleteActionBuilder(/*dest*/);
 
     throw new IllegalArgumentException("required parameters are: [db]");
@@ -212,7 +212,7 @@ public java.lang.String call()throws Exception{
 
   @Override
   public DocFetchActionBuilder to( /*<java.lang.String>*/ ) {
-    if (parms.size() <= parmsCount)
+    if (parms.size() >= parmsCount)
       return new DocFetchActionBuilder(/*dest*/);
 
     throw new IllegalArgumentException("required parameters are: [db, docId]");
@@ -280,7 +280,7 @@ public java.lang.String call()throws Exception{
 
   @Override
   public RevisionFetchActionBuilder to( /*<java.lang.String>*/ ) {
-    if (parms.size() <= parmsCount)
+    if (parms.size() >= parmsCount)
       return new RevisionFetchActionBuilder(/*dest*/);
 
     throw new IllegalArgumentException("required parameters are: [db, docId]");
@@ -291,7 +291,7 @@ public RevisionFetch  db(java.lang.String stringParam){parms.put(DbKeys.etype.db
 public RevisionFetch  docId(java.lang.String stringParam){parms.put(DbKeys.etype.docId,stringParam);return this;}
 
 }
-rxf.server.CouchTx DocPersist( java.lang.String db, java.lang.String docId, java.lang.String validjson );
+rxf.server.CouchTx DocPersist( java.lang.String db, java.lang.String validjson );
 
  
 
@@ -365,16 +365,17 @@ public rxf.server.CouchTx call()throws Exception{
 
   @Override
   public DocPersistActionBuilder to( /*<rxf.server.CouchTx>*/ ) {
-    if (parms.size() <= parmsCount)
+    if (parms.size() >= parmsCount)
       return new DocPersistActionBuilder(/*dest*/);
 
-    throw new IllegalArgumentException("required parameters are: [db, docId, validjson]");
+    throw new IllegalArgumentException("required parameters are: [db, validjson]");
   }
   
-static private final int parmsCount=3;
+static private final int parmsCount=2;
 public DocPersist  db(java.lang.String stringParam){parms.put(DbKeys.etype.db,stringParam);return this;}
-public DocPersist  docId(java.lang.String stringParam){parms.put(DbKeys.etype.docId,stringParam);return this;}
 public DocPersist  validjson(java.lang.String stringParam){parms.put(DbKeys.etype.validjson,stringParam);return this;}
+public DocPersist  docId(java.lang.String stringParam){parms.put(DbKeys.etype.docId,stringParam);return this;}
+public DocPersist  rev(java.lang.String stringParam){parms.put(DbKeys.etype.rev,stringParam);return this;}
 
 }
 java.lang.String DesignDocFetch( java.lang.String db, java.lang.String designDocId );
@@ -422,7 +423,7 @@ public class DesignDocFetch extends DbKeysBuilder<java.lang.String> {
 
   @Override
   public DesignDocFetchActionBuilder to( /*<java.lang.String>*/ ) {
-    if (parms.size() <= parmsCount)
+    if (parms.size() >= parmsCount)
       return new DesignDocFetchActionBuilder(/*dest*/);
 
     throw new IllegalArgumentException("required parameters are: [db, designDocId]");
@@ -493,7 +494,7 @@ public rxf.server.CouchResultSet<T> call()throws Exception{
 
   @Override
   public ViewFetchActionBuilder to( /*<rxf.server.CouchResultSet<T>>*/ ) {
-    if (parms.size() <= parmsCount)
+    if (parms.size() >= parmsCount)
       return new ViewFetchActionBuilder(/*dest*/);
 
     throw new IllegalArgumentException("required parameters are: [db, view]");
@@ -586,7 +587,7 @@ public rxf.server.CouchTx call()throws Exception{
 
   @Override
   public JsonSendActionBuilder to( /*<rxf.server.CouchTx>*/ ) {
-    if (parms.size() <= parmsCount)
+    if (parms.size() >= parmsCount)
       return new JsonSendActionBuilder(/*dest*/);
 
     throw new IllegalArgumentException("required parameters are: [opaque, validjson]");
@@ -672,7 +673,7 @@ rxf.server.CouchMetaDriver.BlobSend.visit(/*dbKeysBuilder,actionBuilder*/);
 
   @Override
   public BlobSendActionBuilder to( /*<rxf.server.Rfc822HeaderState>*/ ) {
-    if (parms.size() <= parmsCount)
+    if (parms.size() >= parmsCount)
       return new BlobSendActionBuilder(/*dest*/);
 
     throw new IllegalArgumentException("required parameters are: [db, docId, opaque, mimetype, blob]");

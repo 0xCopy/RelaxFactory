@@ -23,6 +23,7 @@ import static rxf.server.DbKeys.etype.opaque;
 import static rxf.server.DbKeys.etype.validjson;
 import static rxf.server.DbKeys.etype.view;
 import static rxf.server.DbKeys.etype.type;
+import static rxf.server.DbKeys.etype.rev;
 import static rxf.server.DbTerminal.continuousFeed;
 import static rxf.server.DbTerminal.future;
 import static rxf.server.DbTerminal.oneWay;
@@ -342,7 +343,7 @@ public enum CouchMetaDriver {
       }).get();
     }
   },
-  @DbTask({tx, oneWay, future}) @DbKeys({db, docId,/* rev, */validjson})DocPersist {
+  @DbTask({tx, oneWay, future}) @DbKeys(value={db, validjson}, optional={docId, rev})DocPersist {
     @Override
     <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
 //
@@ -680,7 +681,7 @@ public enum CouchMetaDriver {
           pfqsn + "> {\n    " + IFACE_FIRE_TARGETS + "\n  }\n\n  public class _ename_ActionBuilder extends ActionBuilder<" +
           pfqsn + "> {\n    public _ename_ActionBuilder( /*<" +
           pfqsn + ">*/ ) {\n      super(/*synchronousQueues*/);\n    }\n\n    @Override\n    public _ename_TerminalBuilder"+rtypeTypeParams+" fire() {\n      return new _ename_TerminalBuilder"+rtypeTypeParams+"() {\n        " + BAKED_IN_FIRE + "\n      };\n    }\n\n    @Override\n    public _ename_ActionBuilder state(Rfc822HeaderState state) {\n      return (_ename_ActionBuilder)super.state(state);\n    }\n\n    @Override\n    public _ename_ActionBuilder key(java.nio.channels.SelectionKey key) {\n      return (_ename_ActionBuilder)super.key(key);\n    }\n  }\n\n  @Override\n  public _ename_ActionBuilder to( /*<" +
-          pfqsn + ">*/ ) {\n    if (parms.size() <= parmsCount)\n      return new _ename_ActionBuilder(/*dest*/);\n\n    throw new IllegalArgumentException(\"required parameters are: " + arrToString(parms) + "\");\n  }\n  " +
+          pfqsn + ">*/ ) {\n    if (parms.size() >= parmsCount)\n      return new _ename_ActionBuilder(/*dest*/);\n\n    throw new IllegalArgumentException(\"required parameters are: " + arrToString(parms) + "\");\n  }\n  " +
           XXXXXXXXXXXXXXMETHODS + "\n" +
           "}\n";
       s = s2;
