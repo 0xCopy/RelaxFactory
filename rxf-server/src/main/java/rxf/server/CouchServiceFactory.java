@@ -125,7 +125,7 @@ public class CouchServiceFactory {
           String name = method.getName();
           if (viewMethods.containsKey(name)) {
             // where is the design doc defined? part of the view?
-            CouchResultSet<E> rows = CouchDriver.ViewFetch.<E>$().db(pathPrefix, entityType).view(String.format(viewMethods.get(name), args)).to().fire().rows();
+            CouchResultSet<E> rows = CouchDriver.ViewFetch.<E>$().db(pathPrefix).type(entityType).view(String.format(viewMethods.get(name), args)).to().fire().rows();
             ArrayList<E> ar = new ArrayList<E>();
             for (tuple<E> row : rows.rows) {
               ar.add(row.value);

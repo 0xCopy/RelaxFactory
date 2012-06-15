@@ -34,6 +34,8 @@ public @interface DbKeys {
       clazz = MimeType.class;
     }}, blob {{
       clazz = ByteBuffer.class;
+    }}, type {{
+      clazz = Class.class;
     }};
 
     <T> boolean validate(T... data) {
@@ -45,6 +47,7 @@ public @interface DbKeys {
 
 
   etype[] value();
+  etype[] optional() default {};
 //
 //
 //  public static abstract class ReturnAction<T> {
