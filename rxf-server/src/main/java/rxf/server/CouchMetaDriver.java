@@ -60,9 +60,6 @@ import org.intellij.lang.annotations.Language;
 
 import rxf.server.DbKeys.etype;
 
-import com.google.gson.reflect.TypeToken;
-
-
 /**
  * confers traits on an oo platform...
  * <p/>
@@ -205,8 +202,7 @@ public enum CouchMetaDriver {
         }
 
         private void deliver() {
-          payload.set(GSON.fromJson(UTF8.decode((ByteBuffer) cursor.rewind()).toString(), new TypeToken<T>() {
-          }.getType()));
+          payload.set(UTF8.decode((ByteBuffer) cursor.rewind()).toString());
           EXECUTOR_SERVICE.submit(new Runnable() {
             @Override
             public void run() {
