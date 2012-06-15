@@ -1,5 +1,6 @@
 package rxf.server;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -79,6 +80,35 @@ public class CouchDriverTest {
     data = GSON.toJson(obj);
     CouchTx updateTx = CouchDriver.DocPersist.$().db("test_somedb").validjson(data).to().fire().tx();
     assertNotNull(updateTx);
+  }
+
+  @Test
+  public void testCreateDesignDoc() {
+    String doc = "{" +
+        "  \"_id\" : \"_design/sample\"," +
+        "  \"views\" : {" +
+        "    \"foo\" : {" +
+        "      \"map\" : \"function(doc){ emit(doc.name, doc); }\"" +
+        "    }" +
+        "  }" +
+        "}";
+    CouchTx tx = CouchDriver.JsonSend.$().opaque("test_somedb/_design/sample").validjson(doc).to().fire().tx();
+    assertNotNull(tx);
+    assertTrue(tx.ok());
+    assertEquals(tx.id(), "_design/sample");
+  }
+
+  @Test
+  public void testRunDesignDocView() {
+    // sample data
+    CouchDriver.DocPersist.$().db("test_somedb").validjson("{\"name\":\"a\"}").to().fire().tx();
+    CouchDriver.DocPersist.$().db("test_somedb").validjson("{\"name\":\"b\"}").to().fire().tx();
+
+    //running view
+    CouchResultSet<Map<String, String>> data = CouchDriver.ViewFetch.<Map<String, String>>$().db("test_somedb").type(Map.class).view("_design/sample/_view/foo?key=\"a\"").to().fire().rows();
+    assertNotNull(data);
+    assertEquals(1, data.rows.size());
+    assertEquals("a", data.rows.get(0).value.get("name"));
   }
 
   @Test
