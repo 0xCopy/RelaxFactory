@@ -28,6 +28,7 @@ public class CouchDriverTest extends TestCase {
   protected void tearDown() throws Exception {
     super.tearDown();
     HttpMethod.killswitch = false;
+    HttpMethod.getSelector().close();
     Thread.sleep(4000);//more than 3 seconds, standard timeout
   }
 
@@ -45,5 +46,13 @@ public class CouchDriverTest extends TestCase {
     assertTrue(tx.ok());
     assertNotNull(tx.getId());
     assertNull(tx.getError());
+  }
+  
+  public void testUpdateDoc() {
+    CouchTx tx = CouchDriver.DocPersist.$().db("test_somedb").validjson("{}").to().fire().tx();
+
+    String id = tx.id();
+    CouchTx updateTx = CouchDriver.DocPersist.$().db("test_somedb").validjson("{\"abc\":123}").to().fire().tx();
+    
   }
 }
