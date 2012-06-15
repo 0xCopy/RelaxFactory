@@ -94,8 +94,9 @@ public class CouchServiceFactory {
             }
             design.add("views", views);
             Rfc822HeaderState etag1 = new Rfc822HeaderState(ETAG);
-            CouchTx tx = CouchDriver.DesignDocFetch.$().db(pathPrefix).designDocId(id).to().state(etag1).fire().tx();
-            if (null != tx && Boolean.TRUE.equals(tx.ok())) {
+            String doc = CouchDriver.DesignDocFetch.$().db(pathPrefix).designDocId(id).to().state(etag1).fire().pojo();
+            
+            if (doc != null) {
               //updating a doc, with a db but no rev or id? 
               CouchDriver.DocPersist.$().db(pathPrefix)/*.id(id).rev(tx.rev())*/.validjson(design.toString()).to().fire().oneWay();
             } else {

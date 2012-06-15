@@ -367,7 +367,7 @@ public enum CouchMetaDriver {
       return JsonSend.visit(dbKeysBuilder, actionBuilder);
     }
   },
-  @DbTask({tx}) @DbResultUnit(String.class) @DbKeys({db, designDocId})DesignDocFetch {
+  @DbTask({pojo, future}) @DbResultUnit(String.class) @DbKeys({db, designDocId})DesignDocFetch {
     @Override
     <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
       dbKeysBuilder.parms().put(etype.docId, dbKeysBuilder.parms().remove(etype.designDocId));

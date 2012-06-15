@@ -391,7 +391,7 @@ public class DesignDocFetch extends DbKeysBuilder<java.lang.String> {
   }
 
   public interface DesignDocFetchTerminalBuilder extends TerminalBuilder<java.lang.String> {
-     CouchTx tx();
+    java.lang.String pojo();Future<java.lang.String>future();
   }
 
   public class DesignDocFetchActionBuilder extends ActionBuilder<java.lang.String> {
@@ -402,11 +402,24 @@ public class DesignDocFetch extends DbKeysBuilder<java.lang.String> {
     @Override
     public DesignDocFetchTerminalBuilder fire() {
       return new DesignDocFetchTerminalBuilder() {
-         public  CouchTx tx(){try {
-        return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.DesignDocFetch.visit();
+         public java.lang.String pojo(){ 
+try {
+        return (java.lang.String) rxf.server.CouchMetaDriver.DesignDocFetch.visit();
       } catch (Exception e) {
         e.printStackTrace();   
-      } return null;} 
+      }         return null;} public Future<java.lang.String>future(){
+    try{
+    BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<java.lang.String>(){
+
+
+  final  DbKeysBuilder dbKeysBuilder=(DbKeysBuilder )DbKeysBuilder.get();
+final ActionBuilder actionBuilder=(ActionBuilder )ActionBuilder.get();
+
+public java.lang.String call()throws Exception{ 
+        
+                    DbKeysBuilder.currentKeys.set(dbKeysBuilder);  
+ ActionBuilder.currentAction.set(actionBuilder);  return(java.lang.String)rxf.server.CouchMetaDriver.DesignDocFetch.visit(dbKeysBuilder,actionBuilder);}});
+}catch(Exception e){e.printStackTrace();}return null;}
       };
     }
 

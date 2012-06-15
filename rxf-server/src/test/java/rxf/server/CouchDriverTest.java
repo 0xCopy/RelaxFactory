@@ -2,6 +2,7 @@ package rxf.server;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static rxf.server.BlobAntiPatternObject.GSON;
@@ -92,6 +93,7 @@ public class CouchDriverTest {
         "    }" +
         "  }" +
         "}";
+    //TODO inconsistent with DesignDocFetch
     CouchTx tx = CouchDriver.JsonSend.$().opaque("test_somedb/_design/sample").validjson(doc).to().fire().tx();
     assertNotNull(tx);
     assertTrue(tx.ok());
@@ -101,14 +103,38 @@ public class CouchDriverTest {
   @Test
   public void testRunDesignDocView() {
     // sample data
-    CouchDriver.DocPersist.$().db("test_somedb").validjson("{\"name\":\"a\"}").to().fire().tx();
-    CouchDriver.DocPersist.$().db("test_somedb").validjson("{\"name\":\"b\"}").to().fire().tx();
+    CouchDriver.DocPersist.$().db("test_somedb").validjson("{\"name\":\"a\",\"brand\":\"c\"}").to().fire().tx();
+    CouchDriver.DocPersist.$().db("test_somedb").validjson("{\"name\":\"b\",\"brand\":\"d\"}").to().fire().tx();
 
     //running view
     CouchResultSet<Map<String, String>> data = CouchDriver.ViewFetch.<Map<String, String>>$().db("test_somedb").type(Map.class).view("_design/sample/_view/foo?key=\"a\"").to().fire().rows();
     assertNotNull(data);
     assertEquals(1, data.rows.size());
     assertEquals("a", data.rows.get(0).value.get("name"));
+  }
+
+  @Test
+  public void testUpdateDesignDocView() {
+    //TODO no consistent way to write designdoc
+    String designDoc = CouchDriver.DesignDocFetch.$().db("test_somedb").designDocId("_design/sample").to().fire().pojo();
+    assertNotNull(designDoc);
+    Map<String, Object> obj = GSON.<Map<String, Object>>fromJson(designDoc, Map.class);
+
+    Map<String, String> foo = (Map<String, String>) ((Map<String, Object>) obj.get("views")).get("foo");
+    foo.put("map", "function(doc){ emit(doc.brand, doc); }");
+
+    designDoc = GSON.toJson(obj);
+    CouchTx tx = CouchDriver.JsonSend.$().opaque("test_somedb/_design/sample").validjson(designDoc).to().fire().tx();
+    
+    assertNotNull(tx);
+    assertTrue(tx.ok());
+    assertFalse(obj.get("_rev").equals(tx.getRev()));
+    assertEquals(obj.get("_id"), tx.id());
+    
+    CouchResultSet<Map<String, String>> data = CouchDriver.ViewFetch.<Map<String, String>>$().db("test_somedb").type(Map.class).view("_design/sample/_view/foo?key=\"d\"").to().fire().rows();
+    assertNotNull(data);
+    assertEquals(1, data.rows.size());
+    assertEquals("b", data.rows.get(0).value.get("name"));
   }
 
   @Test
