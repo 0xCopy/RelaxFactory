@@ -138,6 +138,68 @@ public enum CouchMetaDriver {
       return payload.get();
     }
   },
+  @DbTask({tx, oneWay}) @DbKeys({db}) DbDelete {
+    @Override
+    <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
+      final AtomicReference<CouchTx> payload = new AtomicReference<CouchTx>();
+      final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
+      final Rfc822HeaderState state = actionBuilder.state();
+      final ByteBuffer header = state.methodProtocol("DELETE").pathResCode("/" + dbKeysBuilder.parms().get(etype.db))
+          .headerString("Content-Length", "0")
+          .asRequestHeaderByteBuffer();
+      final SocketChannel channel = createCouchConnection();
+      HttpMethod.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
+        ByteBuffer cursor = null;
+        @Override
+        public void onWrite(SelectionKey key) throws Exception {
+          int write = channel.write((ByteBuffer) header);
+          key.interestOps(OP_READ).selector().wakeup();
+        }
+        @Override
+        public void onRead(SelectionKey key) throws Exception {
+          if (cursor == null) {
+            cursor = ByteBuffer.allocateDirect(getReceiveBufferSize());
+            int read = channel.read(cursor);
+            state.headerStrings().clear();
+            state.headers(CONTENT_LENGTH);
+            state.apply((ByteBuffer) cursor.flip());
+            if (BlobAntiPatternObject.DEBUG_SENDJSON) {
+              System.err.println(deepToString(state.pathResCode(), state, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
+            }
+
+            int remaining = Integer.parseInt(state.headerString(CONTENT_LENGTH));
+
+            if (remaining == cursor.remaining()) {
+              deliver();
+            } else {
+              cursor = ByteBuffer.allocate(remaining).put(cursor);
+            }
+          } else {
+            int read = channel.read(cursor);
+            if (!cursor.hasRemaining()) {
+              cursor.flip();
+              deliver();
+            }
+          }
+        }
+        private void deliver() {
+          payload.set(GSON.fromJson(UTF8.decode((ByteBuffer) cursor).toString(), CouchTx.class));
+          EXECUTOR_SERVICE.submit(new Runnable() {
+            @Override
+            public void run() {
+              try {
+                cyclicBarrier.await();
+              } catch (Throwable e) {
+                e.printStackTrace();  //todo: verify for a purpose
+              }
+            }
+          });
+        }
+      });
+      int await = cyclicBarrier.await(3, TimeUnit.SECONDS);
+      return payload.get();
+    }
+  },
   //  @DbTask({tx, oneWay}) @DbKeys({db, docId, validjson})createDoc {
 //    @Override
 //    <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {

@@ -1,19 +1,28 @@
 package rxf.server;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static rxf.server.BlobAntiPatternObject.GSON;
 
 import java.io.IOException;
 import java.util.Map;
 
-import junit.framework.TestCase;
 import one.xio.AsioVisitor;
 import one.xio.HttpMethod;
 
-public class CouchDriverTest extends TestCase {
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+/**
+ * Tests out the db, cleaning up after itself. These must be run in order to work correctly and clean up.
+ *
+ */
+public class CouchDriverTest {
+
+  @Before
+  public void setUp() throws Exception {
     BlobAntiPatternObject.DEBUG_SENDJSON = true;
     HttpMethod.killswitch = false;
     new Thread() {
@@ -26,23 +35,24 @@ public class CouchDriverTest extends TestCase {
       }
     }.start();
   }
-  
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
+
+  @After
+  public void tearDown() throws Exception {
     HttpMethod.killswitch = false;
     HttpMethod.getSelector().close();
-    Thread.sleep(4000);//more than 3 seconds, standard timeout
+    //Thread.sleep(4000);//more than 3 seconds, standard timeout
   }
 
+  @Test
   public void testCreateDb() throws IOException {
     //this can fail with a 415 error if the db already exists - should have some setup that deletes dbs if they exist
     CouchTx tx = CouchDriver.DbCreate.$().db("test_somedb").to().fire().tx();
     assertNotNull(tx);
-//    assertTrue(tx.ok());
-//    assertNull(tx.getError());
+    assertTrue(tx.ok());
+    assertNull(tx.getError());
   }
-  
+
+  @Test
   public void testCreateDoc() {
     CouchTx tx = CouchDriver.DocPersist.$().db("test_somedb").validjson("{}").to().fire().tx();
     assertNotNull(tx);
@@ -51,12 +61,15 @@ public class CouchDriverTest extends TestCase {
     assertNull(tx.getError());
   }
 
+  @Test
   public void testFetchDoc() {
     CouchTx tx = CouchDriver.DocPersist.$().db("test_somedb").validjson("{\"created\":true}").to().fire().tx();
-    
+
     String data = CouchDriver.DocFetch.$().db("test_somedb").docId(tx.id()).to().fire().pojo();
     assertTrue(data.contains("created"));
   }
+
+  @Test
   public void testUpdateDoc() {
     CouchTx tx = CouchDriver.DocPersist.$().db("test_somedb").validjson("{}").to().fire().tx();
 
@@ -66,5 +79,13 @@ public class CouchDriverTest extends TestCase {
     data = GSON.toJson(obj);
     CouchTx updateTx = CouchDriver.DocPersist.$().db("test_somedb").validjson(data).to().fire().tx();
     assertNotNull(updateTx);
+  }
+
+  @Test
+  public void testDeleteDb() {
+    CouchTx tx = CouchDriver.DbDelete.$().db("test_somedb").to().fire().tx();
+    assertNotNull(tx);
+    assertTrue(tx.ok());
+    assertNull(tx.getError());
   }
 }

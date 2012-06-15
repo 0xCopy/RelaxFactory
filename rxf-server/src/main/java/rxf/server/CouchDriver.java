@@ -82,6 +82,78 @@ static private final int parmsCount=1;
 public DbCreate  db(java.lang.String stringParam){parms.put(DbKeys.etype.db,stringParam);return this;}
 
 }
+rxf.server.CouchTx DbDelete( java.lang.String db );
+
+ 
+
+public class DbDelete extends DbKeysBuilder<rxf.server.CouchTx> {
+  private DbDelete() {
+  }
+
+  static public  DbDelete $() {
+    return new DbDelete();
+  }
+
+  public interface DbDeleteTerminalBuilder extends TerminalBuilder<rxf.server.CouchTx> {
+     CouchTx tx();void oneWay();
+  }
+
+  public class DbDeleteActionBuilder extends ActionBuilder<rxf.server.CouchTx> {
+    public DbDeleteActionBuilder( /*<rxf.server.CouchTx>*/ ) {
+      super(/*synchronousQueues*/);
+    }
+
+    @Override
+    public DbDeleteTerminalBuilder fire() {
+      return new DbDeleteTerminalBuilder() {
+         public  CouchTx tx(){try {
+        return (rxf.server.CouchTx) rxf.server.CouchMetaDriver.DbDelete.visit();
+      } catch (Exception e) {
+        e.printStackTrace();   
+      } return null;} public void oneWay(){
+    final DbKeysBuilder<Object>dbKeysBuilder=(DbKeysBuilder<Object>)DbKeysBuilder.get();
+ final ActionBuilder<Object>actionBuilder=(ActionBuilder<Object>)ActionBuilder.get();
+dbKeysBuilder.validate();
+ BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable(){
+ 
+@Override
+public void run(){
+    try{
+
+      DbKeysBuilder.currentKeys.set(dbKeysBuilder);   
+      ActionBuilder.currentAction.set(actionBuilder); 
+rxf.server.CouchMetaDriver.DbDelete.visit(/*dbKeysBuilder,actionBuilder*/);
+}catch(Exception e){
+    e.printStackTrace();}
+    }
+    });
+}
+      };
+    }
+
+    @Override
+    public DbDeleteActionBuilder state(Rfc822HeaderState state) {
+      return (DbDeleteActionBuilder)super.state(state);
+    }
+
+    @Override
+    public DbDeleteActionBuilder key(java.nio.channels.SelectionKey key) {
+      return (DbDeleteActionBuilder)super.key(key);
+    }
+  }
+
+  @Override
+  public DbDeleteActionBuilder to( /*<rxf.server.CouchTx>*/ ) {
+    if (parms.size() <= parmsCount)
+      return new DbDeleteActionBuilder(/*dest*/);
+
+    throw new IllegalArgumentException("required parameters are: [db]");
+  }
+  
+static private final int parmsCount=1;
+public DbDelete  db(java.lang.String stringParam){parms.put(DbKeys.etype.db,stringParam);return this;}
+
+}
 java.lang.String DocFetch( java.lang.String db, java.lang.String docId );
 
  
