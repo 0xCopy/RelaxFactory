@@ -78,6 +78,13 @@ public class Rfc822HeaderState {
    * user is responsible for populating this on outbound headers
    */
   private String pathRescode;
+  
+  /**
+   * Dual purpose HTTP protocol header token found on the first line of a request/response in the third position.
+   * <p/>
+   * Contains either the protocol (request) or a status line message (response)
+   */
+  private String protocolStatus;
   /**
    * passed in on 0.0.0.0 dispatch to tie the header state to an nio object, to provide a socketchannel handle, and to lookup up the incoming source route
    */
@@ -213,13 +220,20 @@ public class Rfc822HeaderState {
   public Rfc822HeaderState apply(ByteBuffer cursor) {
     if (!cursor.hasRemaining()) cursor.flip();
     int anchor = cursor.position();
-    ByteBuffer slice1 = cursor.duplicate().slice();
-    while (slice1.hasRemaining() && ' ' != slice1.get()) ;
-    methodProtocol = UTF8.decode((ByteBuffer) slice1.flip()).toString().trim();
+    ByteBuffer slice = cursor.duplicate().slice();
+    while (slice.hasRemaining() && ' ' != slice.get()) ;
+    methodProtocol = UTF8.decode((ByteBuffer) slice.flip()).toString().trim();
+    
     while (cursor.hasRemaining() && ' ' != cursor.get()) ; //method/proto
-    ByteBuffer slice = cursor.slice();
+    slice = cursor.slice();
     while (slice.hasRemaining() && ' ' != slice.get()) ;
     pathRescode = UTF8.decode((ByteBuffer) slice.flip()).toString().trim();
+    
+    while (cursor.hasRemaining() && ' ' != cursor.get());
+    slice = cursor.slice();
+    while (slice.hasRemaining() && '\n' != slice.get());
+    protocolStatus = UTF8.decode((ByteBuffer) slice.flip()).toString().trim();
+    
     headerBuf = null;
     boolean wantsCookies = 0 < cookies().length;
     boolean wantsHeaders = wantsCookies || 0 < headers.length;
@@ -419,6 +433,23 @@ public class Rfc822HeaderState {
     this.pathRescode = pathRescode;
     return this;
   }
+  
+  /**
+   * Dual purpose HTTP protocol header token found on the first line of a request/response in the third position.
+   * <p />
+   * Contains either the protocol (request) or a status line message (response)
+   */
+  public String protocolStatus() {
+    return protocolStatus;
+  }
+  
+  /**
+   * @see Rfc822HeaderState#protocolStatus()
+   */
+  public Rfc822HeaderState protocolStatus(String protocolStatus) {
+    this.protocolStatus = protocolStatus;
+    return this;
+  }
 
   /**
    * hard to explain what this does. very complicated.
@@ -437,6 +468,7 @@ public class Rfc822HeaderState {
         ", cookieStrings=" + cookieStrings +
         ", methodProtocol='" + methodProtocol + '\'' +
         ", pathResCode='" + pathRescode + '\'' +
+        ", protocolStatus='" + protocolStatus + '\'' +
         '}';
   }
 
@@ -451,7 +483,7 @@ public class Rfc822HeaderState {
    * @return http headers for use with http 1.1
    */
   public String asResponseHeaderString() {
-    String protocol = /*methodProtocol() + */"HTTP/1.1 " + pathResCode() + " WHAT_THE_HELL_EVER\r\n";
+    String protocol = methodProtocol() + " " + pathResCode() + " " + protocolStatus() + "\r\n";
     for (Entry<String, String> stringStringEntry : headerStrings().entrySet()) {
       protocol += stringStringEntry.getKey() + ": " + stringStringEntry.getValue() + "\r\n";
     }
@@ -485,7 +517,7 @@ public class Rfc822HeaderState {
    * @return http headers for use with http 1.1
    */
   public String asRequestHeaderString() {
-    String protocol = methodProtocol() + " " + pathResCode() + " HTTP/1.1\r\n";
+    String protocol = methodProtocol() + " " + pathResCode() + " " + protocolStatus() + "\r\n";
     for (Entry<String, String> stringStringEntry : headerStrings().entrySet()) {
       protocol += stringStringEntry.getKey() + ": " + stringStringEntry.getValue() + "\r\n";
     }

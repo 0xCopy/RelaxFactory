@@ -109,7 +109,8 @@ public class ContentRootImpl extends Impl {
               .headerString(CONTENT_TYPE, (null == mimeType ? MimeType.bin : mimeType).contentType)
               .headerString(CONTENT_LENGTH, String.valueOf(length))
               .pathResCode("200")
-              /*  .methodProtocol("HTTP/1.1")*/;
+              .methodProtocol("HTTP/1.1")
+              .protocolStatus("OK");
           if (null != ceString)
             responseHeader.headerString(CONTENT_ENCODING, ceString);
           ByteBuffer response = responseHeader.asResponseHeaderByteBuffer();

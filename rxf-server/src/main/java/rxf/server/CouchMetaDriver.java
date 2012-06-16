@@ -83,6 +83,7 @@ public enum CouchMetaDriver {
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
       final Rfc822HeaderState state = actionBuilder.state();
       final ByteBuffer header = state.methodProtocol("PUT").pathResCode("/" + dbKeysBuilder.parms().get(etype.db))
+          .protocolStatus("HTTP/1.1")
           .headerString("Content-Length", "0")
           .asRequestHeaderByteBuffer();
       final SocketChannel channel = createCouchConnection();
@@ -146,6 +147,7 @@ public enum CouchMetaDriver {
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
       final Rfc822HeaderState state = actionBuilder.state();
       final ByteBuffer header = state.methodProtocol("DELETE").pathResCode("/" + dbKeysBuilder.parms().get(etype.db))
+          .protocolStatus("HTTP/1.1")
           .headerString("Content-Length", "0")
           .asRequestHeaderByteBuffer();
       final SocketChannel channel = createCouchConnection();
@@ -227,7 +229,7 @@ public enum CouchMetaDriver {
       String db = (String) parms.get(etype.db);
       String id = (String) parms.get(etype.docId);
       final Rfc822HeaderState state = actionBuilder.state().headers(CONTENT_LENGTH).methodProtocol("GET").pathResCode("/" + db + (null == id ? "" : ("/" + id.trim())));
-
+      state.protocolStatus("HTTP/1.1");
       final SocketChannel channel = createCouchConnection();
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
       enqueue(channel, OP_CONNECT | OP_WRITE, new Impl() {
@@ -301,6 +303,7 @@ public enum CouchMetaDriver {
       Object id = parms.get(etype.docId);
       final String pathRescode = "/" + parms.get(db) + ((id != null) ? "/" + id : "");
       final Rfc822HeaderState state = actionBuilder.state().headers(ETAG).methodProtocol("HEAD").pathResCode(pathRescode);
+      state.protocolStatus("HTTP/1.1");
       return EXECUTOR_SERVICE.submit(new Callable<Object>() {
         public Object call() throws Exception {
           final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
@@ -384,6 +387,7 @@ public enum CouchMetaDriver {
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
       final Rfc822HeaderState state = actionBuilder.state();
       final ByteBuffer header = state.methodProtocol("DELETE").pathResCode("/" + dbKeysBuilder.parms().get(db) + "/" + dbKeysBuilder.parms().get(docId) + "?rev=" + dbKeysBuilder.parms().get(rev))
+          .protocolStatus("HTTP/1.1")
           .headerString("Content-Length", "0")
           .asRequestHeaderByteBuffer();
       final SocketChannel channel = createCouchConnection();
@@ -524,6 +528,7 @@ public enum CouchMetaDriver {
       final ByteBuffer header = state.headers(ETAG, CONTENT_LENGTH, CONTENT_ENCODING)
           .methodProtocol(lastSlashIndex < opaque.lastIndexOf('?') || lastSlashIndex != opaque.indexOf('/') ? "PUT" : "POST")//works with or without _id [Version]set.
           .pathResCode(opaque)
+          .protocolStatus("HTTP/1.1")
           .headerString(CONTENT_LENGTH, String.valueOf(outbound.length))
           .headerString(ACCEPT, APPLICATION_JSON)
           .headerString(CONTENT_TYPE, APPLICATION_JSON)
@@ -601,7 +606,9 @@ public enum CouchMetaDriver {
       CouchTx visit = (CouchTx) RevisionFetch.visit(dbKeysBuilder, actionBuilder);
       String rev = visit == null ? null : visit.rev();
 
-      final ByteBuffer byteBuffer = actionBuilder.state().methodProtocol("PUT").pathResCode("/" + parms.get(db) + '/' + parms.get(etype.docId) + '/' + parms.get(etype.opaque) + rev == null ? "" : ("?rev=" + rev))
+      final ByteBuffer byteBuffer = actionBuilder.state().methodProtocol("PUT")
+          .pathResCode("/" + parms.get(db) + '/' + parms.get(etype.docId) + '/' + parms.get(etype.opaque) + rev == null ? "" : ("?rev=" + rev))
+          .protocolStatus("HTTP/1.1")
           .headerStrings(new TreeMap<String, String>() {{
             put("Expect", "100-continue");
             put(CONTENT_TYPE, ((MimeType) parms.get(etype.mimetype)).contentType);
