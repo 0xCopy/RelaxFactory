@@ -40,7 +40,7 @@ import static rxf.server.BlobAntiPatternObject.moveCaretToDoubleEol;
  */
 public class Rfc822HeaderState {
   public boolean dirty;
-  public Set<String> headers = new HashSet<String>();
+  public String[] headers;
   private String[] cookies = {};
   /**
    * the source route froom the active socket.
@@ -94,7 +94,7 @@ public class Rfc822HeaderState {
    */
   public Rfc822HeaderState(String... headers) {
 
-    this.headers.addAll(Arrays.asList(headers));
+    this.headers = headers;
   }
 
   /**
@@ -222,7 +222,7 @@ public class Rfc822HeaderState {
     pathRescode = UTF8.decode((ByteBuffer) slice.flip()).toString().trim();
     headerBuf = null;
     boolean wantsCookies = 0 < cookies().length;
-    boolean wantsHeaders = wantsCookies || 0 < headers.size();
+    boolean wantsHeaders = wantsCookies || 0 < headers.length;
     headerBuf = (ByteBuffer) moveCaretToDoubleEol(cursor).duplicate().flip();
     headerStrings = null;
     cookieStrings = null;
@@ -239,8 +239,16 @@ public class Rfc822HeaderState {
     return this;
   }
 
+  public Rfc822HeaderState headers(String header) {
+    String[] temp = new String[headers.length + 1];
+    System.arraycopy(this.headers, 0, temp, 0, this.headers.length);
+    temp[this.headers.length] = header;
+    this.headers = temp;
+    return this;
+  }
+  
   /**
-   * declares the list of header keys this parser is interested in mapping to strings.
+   * Appends to the list of header keys this parser is interested in mapping to strings.
    * <p/>
    * these headers are mapped at cardinality<=1 when  {@link #apply(java.nio.ByteBuffer)}  }is called.
    * <p/>
@@ -253,7 +261,10 @@ public class Rfc822HeaderState {
    * @see #apply(java.nio.ByteBuffer)
    */
   public Rfc822HeaderState headers(String... headers) {
-    this.headers.addAll(Arrays.asList(headers));
+    String[] temp = new String[headers.length + this.headers.length];
+    System.arraycopy(this.headers, 0, temp, 0, this.headers.length);
+    System.arraycopy(headers, 0, temp, this.headers.length, headers.length);
+    this.headers = temp;
     return this;
   }
 
@@ -281,7 +292,7 @@ public class Rfc822HeaderState {
    * @see #headers
    */
 
-  public Set<String> headers() {
+  public String[] headers() {
     return headers;
   }
 
