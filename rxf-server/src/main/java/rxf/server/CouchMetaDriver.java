@@ -274,6 +274,7 @@ public enum CouchMetaDriver {
           } else {
             payload.set(null);
           }
+          recycleChannel(channel);
           EXECUTOR_SERVICE.submit(new Runnable() {
             @Override
             public void run() {
