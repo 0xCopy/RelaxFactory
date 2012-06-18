@@ -32,7 +32,7 @@ public class CouchDriverTest {
         AsioVisitor topLevel = new ProtocolMethodDispatch();
         try {
           HttpMethod.init(new String[]{}, topLevel, 1000);
-        } catch (IOException e) {
+        } catch (Exception e) {
         }
       }
     }.start();
@@ -40,9 +40,11 @@ public class CouchDriverTest {
 
   @After
   public void tearDown() throws Exception {
-    HttpMethod.killswitch = false;
-    HttpMethod.getSelector().close();
-    //Thread.sleep(4000);//more than 3 seconds, standard timeout
+    try {
+      HttpMethod.killswitch = false;
+      HttpMethod.getSelector().close();
+      Thread.sleep(4000);//more than 3 seconds, standard timeout
+    } catch (Exception ignore) {}
   }
 
   @Test
