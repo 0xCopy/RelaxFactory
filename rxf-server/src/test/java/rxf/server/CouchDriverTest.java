@@ -1,14 +1,16 @@
 package rxf.server;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static rxf.server.BlobAntiPatternObject.GSON;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import one.xio.AsioVisitor;
 import one.xio.HttpMethod;
@@ -23,11 +25,14 @@ import org.junit.Test;
  */
 public class CouchDriverTest {
 
+  private ScheduledExecutorService exec;
+
   @Before
   public void setUp() throws Exception {
     BlobAntiPatternObject.DEBUG_SENDJSON = true;
     HttpMethod.killswitch = false;
-    new Thread() {
+    exec = Executors.newSingleThreadScheduledExecutor();
+    exec.submit(new Runnable() {
       public void run() {
         AsioVisitor topLevel = new ProtocolMethodDispatch();
         try {
@@ -35,7 +40,7 @@ public class CouchDriverTest {
         } catch (Exception e) {
         }
       }
-    }.start();
+    });
   }
 
   @After
@@ -43,7 +48,9 @@ public class CouchDriverTest {
     try {
       HttpMethod.killswitch = false;
       HttpMethod.getSelector().close();
-      Thread.sleep(4000);//more than 3 seconds, standard timeout
+      HttpMethod.broke = null;
+      exec.shutdown();
+      //Thread.sleep(4000);//more than 3 seconds, standard timeout
     } catch (Exception ignore) {}
   }
 
@@ -79,6 +86,11 @@ public class CouchDriverTest {
 
     String data = CouchDriver.DocFetch.$().db("test_somedb").docId(tx.id()).to().fire().pojo();
     assertTrue(data.contains("created"));
+  }
+  
+  //@Test
+  public void testFetchGiantDoc() {
+    
   }
 
   @Test
