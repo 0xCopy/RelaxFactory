@@ -222,10 +222,10 @@ public enum CouchMetaDriver {
 //
 //  },
   @DbTask({pojo, future}) @DbResultUnit(String.class) @DbKeys({db, docId})DocFetch {
-    public AtomicReference<Object> payload = new AtomicReference<Object>();
 
     @Override
     <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+      final AtomicReference<Object> payload = new AtomicReference<Object>();
 
       EnumMap<etype, Object> parms = dbKeysBuilder.parms();
       String db = (String) parms.get(etype.db);
@@ -250,9 +250,10 @@ public enum CouchMetaDriver {
             if (-1 == read) {
               channel.socket().close();
             }
-//            if (!cursor.hasRemaining()) {
-//              deliver();
-//            }
+            if (!cursor.hasRemaining()) {
+              System.err.println("*********" + UTF8.decode((ByteBuffer) cursor.duplicate().rewind()));
+              deliver();
+            }
 
           }
           ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
@@ -263,19 +264,18 @@ public enum CouchMetaDriver {
             if (remaining == dst.remaining()) {
               cursor = dst.slice();
               deliver();
+              return;
             }
             cursor = ByteBuffer.allocate(remaining).put(dst);
           } else {//error
-            deliver();
+            cyclicBarrier.reset();
           }
         }
 
         private void deliver() {
-          if (cursor != null) {
-            payload.set(UTF8.decode((ByteBuffer) cursor.rewind()).toString());
-          } else {
-            payload.set(null);
-          }
+          assert cursor != null;
+          payload.set(UTF8.decode((ByteBuffer) cursor.rewind()).toString());
+          
           recycleChannel(channel);
           EXECUTOR_SERVICE.submit(new Runnable() {
             @Override
@@ -290,11 +290,16 @@ public enum CouchMetaDriver {
           });
         }
       });
+      try {
       if (BlobAntiPatternObject.DEBUG_SENDJSON) {
         cyclicBarrier.await();
       } else {
         cyclicBarrier.await(3, TimeUnit.SECONDS);
       }
+      } catch (BrokenBarrierException ex) {
+        // non-200 error code
+      }
+      
       return payload.get();
     }
   },
