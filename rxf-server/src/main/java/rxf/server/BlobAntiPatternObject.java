@@ -146,13 +146,12 @@ public class BlobAntiPatternObject {
   }
 
   public static void recycleChannel(SocketChannel channel) {
-    try {
-      channel.register(HttpMethod.getSelector(), OP_READ, null);
-      lazyQueue.add(channel);
-      System.err.println("--- recycling" + wheresWaldo());
-    } catch (Exception ignored) {
-    }
-
+try {
+  channel.close();
+} catch (IOException e) {
+  // TODO Auto-generated catch block
+  e.printStackTrace();
+}
   }
 
 
