@@ -123,6 +123,7 @@ public enum CouchMetaDriver {
         }
         private void deliver() {
           payload.set(GSON.fromJson(UTF8.decode((ByteBuffer) cursor).toString(), CouchTx.class));
+          recycleChannel(channel);
           EXECUTOR_SERVICE.submit(new Runnable() {
             @Override
             public void run() {
@@ -186,6 +187,7 @@ public enum CouchMetaDriver {
           }
         }
         private void deliver() {
+          recycleChannel(channel);
           payload.set(GSON.fromJson(UTF8.decode((ByteBuffer) cursor).toString(), CouchTx.class));
           EXECUTOR_SERVICE.submit(new Runnable() {
             @Override
@@ -248,9 +250,9 @@ public enum CouchMetaDriver {
             if (-1 == read) {
               channel.socket().close();
             }
-            if (!cursor.hasRemaining()) {
-              deliver();
-            }
+//            if (!cursor.hasRemaining()) {
+//              deliver();
+//            }
 
           }
           ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
@@ -428,6 +430,7 @@ public enum CouchMetaDriver {
         }
         private void deliver() {
           payload.set(GSON.fromJson(UTF8.decode((ByteBuffer) cursor).toString(), CouchTx.class));
+          recycleChannel(channel);
           EXECUTOR_SERVICE.submit(new Runnable() {
             @Override
             public void run() {
@@ -490,8 +493,9 @@ public enum CouchMetaDriver {
                     public void run() {
                       try {
                         System.err.println("view fetch error: " + deepToString(state, UTF8.decode(dst.slice())));
-                        actionBuilder.sync().put(UTF8.decode(dst.slice()));
+                        actionBuilder.sync().put(UTF8.decode(dst.slice()).toString());
                         cc.close();
+                        recycleChannel(cc);
                       } catch (Throwable e) {
                         e.printStackTrace();  //todo: verify for a purpose
                       }
@@ -510,7 +514,6 @@ public enum CouchMetaDriver {
       } catch (Exception e) {
         e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
       } finally {
-        recycleChannel(couchConnection);
       }
 
       return poll1;
