@@ -64,6 +64,14 @@ public class CouchDriverTest {
     assertNotNull(tx.getId());
     assertNull(tx.getError());
   }
+  
+  @Test
+  public void testCreateDocWithoutDb() {
+    CouchTx tx = CouchDriver.DocPersist.$().db("dne_dne").validjson("{}").to().fire().tx();
+    assertNotNull(tx);
+    assertFalse(tx.ok());
+    assertNotNull(tx.getError());
+  }
 
   @Test
   public void testFetchDoc() {
