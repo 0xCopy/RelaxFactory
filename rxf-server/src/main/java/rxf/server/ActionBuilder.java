@@ -49,13 +49,13 @@ public abstract class ActionBuilder<T> {
   abstract protected TerminalBuilder<T> fire() throws Exception;
 
 
-  protected ActionBuilder<T> state(Rfc822HeaderState state) {
+  public ActionBuilder<T> state(Rfc822HeaderState state) {
     this.state = state;
     return this;
   }
 
 
-  protected ActionBuilder<T> key(SelectionKey key) {
+  public ActionBuilder<T> key(SelectionKey key) {
     this.key = key;
 
     return this;

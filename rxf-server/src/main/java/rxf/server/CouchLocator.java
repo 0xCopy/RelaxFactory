@@ -4,8 +4,8 @@ import java.util.List;
 
 import com.google.web.bindery.requestfactory.shared.Locator;
 import one.xio.HttpMethod;
-import rxf.server.CouchDriver.DocFetch;
-import rxf.server.CouchDriver.DocPersist;
+import rxf.server.gen.CouchDriver.DocFetch;
+import rxf.server.gen.CouchDriver.DocPersist;
 
 import static rxf.server.BlobAntiPatternObject.GSON;
 
@@ -51,7 +51,7 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
 
   @Override
   public T find(Class<? extends T> clazz, String id) {
-    final String pojo = DocFetch.$().db(getPathPrefix()).docId(id).to().fire().pojo() ;
+    final String pojo = DocFetch.$().db(getPathPrefix()).docId(id).to().fire().pojo();
 
     return GSON.fromJson(pojo, getDomainType());
   }

@@ -13,14 +13,14 @@ import one.xio.AsioVisitor.Impl;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpMethod.UTF8;
-import static rxf.server.CouchMetaDriver.CONTENT_LENGTH;
+import static rxf.server.driver.CouchMetaDriver.CONTENT_LENGTH;
 
 /**
  * User: jim
  * Date: 6/3/12
  * Time: 7:42 PM
  */
-class GwtRequestFactoryVisitor extends Impl {
+public class GwtRequestFactoryVisitor extends Impl {
   public static final SimpleRequestProcessor SIMPLE_REQUEST_PROCESSOR = new SimpleRequestProcessor(ServiceLayer.create());
 
   @Override

@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 
 import one.xio.HttpHeaders;
 import one.xio.HttpMethod;
+import rxf.server.driver.CouchMetaDriver;
 
 import static one.xio.HttpMethod.UTF8;
 import static rxf.server.BlobAntiPatternObject.COOKIE;
@@ -78,7 +79,7 @@ public class Rfc822HeaderState {
    * user is responsible for populating this on outbound headers
    */
   private String pathRescode;
-  
+
   /**
    * Dual purpose HTTP protocol header token found on the first line of a request/response in the third position.
    * <p/>
@@ -212,7 +213,7 @@ public class Rfc822HeaderState {
    * <p/>
    * setting cookies for a response header is possible by setting {@link #dirty } to true and setting  {@link #cookieStrings} map values.
    * <p/>
-   * currently this is  done inside of {@link ProtocolMethodDispatch } surrounding {@link com.google.web.bindery.requestfactory.server.SimpleRequestProcessor#process(String)}
+   * currently this is  done inside of {@link rxf.server.web.inf.ProtocolMethodDispatch } surrounding {@link com.google.web.bindery.requestfactory.server.SimpleRequestProcessor#process(String)}
    *
    * @param cursor
    * @return this
@@ -223,17 +224,17 @@ public class Rfc822HeaderState {
     ByteBuffer slice = cursor.duplicate().slice();
     while (slice.hasRemaining() && ' ' != slice.get()) ;
     methodProtocol = UTF8.decode((ByteBuffer) slice.flip()).toString().trim();
-    
+
     while (cursor.hasRemaining() && ' ' != cursor.get()) ; //method/proto
     slice = cursor.slice();
     while (slice.hasRemaining() && ' ' != slice.get()) ;
     pathRescode = UTF8.decode((ByteBuffer) slice.flip()).toString().trim();
-    
-    while (cursor.hasRemaining() && ' ' != cursor.get());
+
+    while (cursor.hasRemaining() && ' ' != cursor.get()) ;
     slice = cursor.slice();
-    while (slice.hasRemaining() && '\n' != slice.get());
+    while (slice.hasRemaining() && '\n' != slice.get()) ;
     protocolStatus = UTF8.decode((ByteBuffer) slice.flip()).toString().trim();
-    
+
     headerBuf = null;
     boolean wantsCookies = 0 < cookies().length;
     boolean wantsHeaders = wantsCookies || 0 < headers.length;
@@ -260,7 +261,7 @@ public class Rfc822HeaderState {
     this.headers = temp;
     return this;
   }
-  
+
   /**
    * Appends to the list of header keys this parser is interested in mapping to strings.
    * <p/>
@@ -433,16 +434,16 @@ public class Rfc822HeaderState {
     this.pathRescode = pathRescode;
     return this;
   }
-  
+
   /**
    * Dual purpose HTTP protocol header token found on the first line of a request/response in the third position.
-   * <p />
+   * <p/>
    * Contains either the protocol (request) or a status line message (response)
    */
   public String protocolStatus() {
     return protocolStatus;
   }
-  
+
   /**
    * @see Rfc822HeaderState#protocolStatus()
    */

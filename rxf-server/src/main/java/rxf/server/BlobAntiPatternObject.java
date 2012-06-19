@@ -15,10 +15,10 @@ import com.google.gson.*;
 import one.xio.AsioVisitor;
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpMethod;
+import rxf.server.web.inf.ProtocolMethodDispatch;
 
 import static java.lang.Math.abs;
 import static java.nio.channels.SelectionKey.OP_ACCEPT;
-import static java.nio.channels.SelectionKey.OP_READ;
 import static one.xio.HttpMethod.wheresWaldo;
 
 /**
@@ -44,6 +44,8 @@ public class BlobAntiPatternObject {
   public static final String COOKIE = "Cookie";
   public static InetAddress LOOPBACK = null;
 
+  private static final TimeUnit defaultCollectorTimeUnit = TimeUnit.SECONDS;
+
   public static boolean DEBUG_SENDJSON = System.getenv().containsKey("DEBUG_SENDJSON");
 
   static {
@@ -62,7 +64,6 @@ public class BlobAntiPatternObject {
       e.printStackTrace();
     }
   }
-
 
 
   public static final BlockingDeque<SocketChannel> couchDq = new LinkedBlockingDeque<SocketChannel>(5);static {
@@ -95,7 +96,6 @@ public class BlobAntiPatternObject {
   }
 
 
-
   public static long sortableInetAddress(InetAddress inet4Address) {
     byte[] address = inet4Address.getAddress();
     long compare = 0;
@@ -110,7 +110,7 @@ public class BlobAntiPatternObject {
     while (!HttpMethod.killswitch) {
 
       try {
-        SocketChannel take = couchDq.poll(3, TimeUnit.SECONDS);
+        SocketChannel take = couchDq.poll(3, BlobAntiPatternObject.getDefaultCollectorTimeUnit());
         if (take.isOpen()) {
           System.err.println("+++ createCouch" + wheresWaldo());
           return take;
@@ -146,12 +146,12 @@ public class BlobAntiPatternObject {
   }
 
   public static void recycleChannel(SocketChannel channel) {
-try {
-  channel.close();
-} catch (IOException e) {
-  // TODO Auto-generated catch block
-  e.printStackTrace();
-}
+    try {
+      channel.close();
+    } catch (IOException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
   }
 
 
@@ -232,4 +232,7 @@ try {
     HttpMethod.init(args, topLevel, 1000);
   }
 
+  public static TimeUnit getDefaultCollectorTimeUnit() {
+    return DEBUG_SENDJSON ? TimeUnit.HOURS : defaultCollectorTimeUnit;
+  }
 }

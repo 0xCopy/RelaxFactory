@@ -1,5 +1,8 @@
 package rxf.server;
 
+import rxf.server.an.DbKeys;
+import rxf.server.driver.CouchMetaDriver;
+
 public enum DbTerminal {
   /**
    * results are squashed.
@@ -7,7 +10,10 @@ public enum DbTerminal {
   oneWay {
     @Override
     public String builder(final CouchMetaDriver couchDriver, DbKeys.etype[] parms, String unit, boolean implementation) {
-      return (implementation ? "public " : "") + "void " + name() + "()" + (implementation ? "{\n    final DbKeysBuilder<Object>dbKeysBuilder=(DbKeysBuilder<Object>)DbKeysBuilder.get();\n final ActionBuilder<Object>actionBuilder=(ActionBuilder<Object>)ActionBuilder.get();\ndbKeysBuilder.validate();\n BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable(){\n \n@Override\npublic void run(){\n" + "    try{\n\n      DbKeysBuilder.currentKeys.set(dbKeysBuilder);   \n      ActionBuilder.currentAction.set(actionBuilder); \nrxf.server.CouchMetaDriver." + couchDriver + ".visit(/*dbKeysBuilder,actionBuilder*/);\n}catch(Exception e){\n    e.printStackTrace();}\n    }\n    });\n}" : ";");
+      return (implementation ? "public " : "") + "void " + name() + "()" + (implementation ? "{\n    final DbKeysBuilder<Object>dbKeysBuilder=(DbKeysBuilder<Object>)DbKeysBuilder.get();\n" +
+          "final ActionBuilder<Object>actionBuilder=(ActionBuilder<Object>)ActionBuilder.get();" +
+          "\ndbKeysBuilder.validate();\n BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable(){" +
+          "@Override\npublic void run(){\n" + "    try{\n\n      DbKeysBuilder.currentKeys.set(dbKeysBuilder);   \n      ActionBuilder.currentAction.set(actionBuilder); \nrxf.server.driver.CouchMetaDriver." + couchDriver + ".visit(/*dbKeysBuilder,actionBuilder*/);\n}catch(Exception e){\n    e.printStackTrace();}\n    }\n    });\n}" : ";");
     }
   },
   /**
@@ -19,8 +25,13 @@ public enum DbTerminal {
       int typeParamsStart = unit.indexOf('<');
       String fqsn = typeParamsStart == -1 ? unit : unit.substring(0, typeParamsStart);
 
-      return (implementation ? " public " : "") + unit + " " + name() + "()" + (implementation ? "{ \ntry {\n        return (" + unit + ") " +
-          " BlobAntiPatternObject.GSON.fromJson( (String)rxf.server.CouchMetaDriver." + couchDriver + ".visit(),new java.lang.reflect.ParameterizedType() {public java.lang.reflect.Type getRawType() {return "+fqsn+".class;}public java.lang.reflect.Type getOwnerType() {return null;}public java.lang.reflect.Type[] getActualTypeArguments() {return new java.lang.reflect.Type[]{(Class)parms().get(DbKeys.etype.type)};}});\n      } catch (Exception e) {\n        e.printStackTrace();    \n      }         \nreturn null ;}" : ";");
+      final String cmdName = "rxf.server.driver.CouchMetaDriver." + couchDriver;
+      final String s = "{\n    try{\n    return(" + unit + ")" +
+          "BlobAntiPatternObject.GSON.fromJson((String)" +
+          cmdName
+          + ".visit(),\n    new java.lang.reflect.ParameterizedType(){\npublic java.lang.reflect.Type getRawType(){\n    return " + fqsn + ".class;}\npublic java.lang.reflect.Type getOwnerType(){\n    return null;}\npublic java.lang.reflect.Type[]getActualTypeArguments(){\n    return new java.lang.reflect.Type[]{" +
+          couchDriver.name() + "   .this.<Class>get( DbKeys.etype.type)};}});\n}catch(Exception e){\n    e.printStackTrace();\n}\n    return null;}";
+      return (implementation ? "public " : "") + unit + " " + name() + "()" + (implementation ? s : ";");
     }
   },
   /**
@@ -36,7 +47,7 @@ public enum DbTerminal {
               "try {\n" +
               "        return (" +
               unit +
-              ") rxf.server.CouchMetaDriver." + couchDriver +
+              ") rxf.server.driver.CouchMetaDriver." + couchDriver +
               ".visit();\n" +
               "      } catch (Exception e) {\n" +
               "        e.printStackTrace();   \n" +
@@ -54,7 +65,7 @@ public enum DbTerminal {
           "{try {\n" +
               "        return (" +
               CouchTx.class.getCanonicalName() +
-              ") rxf.server.CouchMetaDriver." + couchDriver +
+              ") rxf.server.driver.CouchMetaDriver." + couchDriver +
               ".visit();\n" +
               "      } catch (Exception e) {\n" +
               "        e.printStackTrace();   \n" +
@@ -79,7 +90,7 @@ public enum DbTerminal {
                   unit + " call()throws Exception{ \n        \n" +
                   "                    DbKeysBuilder.currentKeys.set(dbKeysBuilder);  \n" +
                   " ActionBuilder.currentAction.set(actionBuilder);  " +
-                  "return(" + unit + ")rxf.server.CouchMetaDriver." + couchDriver +
+                  "return(" + unit + ")rxf.server.driver.CouchMetaDriver." + couchDriver +
                   ".visit(dbKeysBuilder,actionBuilder);}});\n}catch(Exception e){e.printStackTrace();}return null;}" : ";");
     }
   },

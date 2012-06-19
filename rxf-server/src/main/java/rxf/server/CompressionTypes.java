@@ -5,7 +5,7 @@ package rxf.server;
  * Date: 4/30/12
  * Time: 12:18 AM
  */
-enum CompressionTypes {
+public enum CompressionTypes {
   gzip("gz"), bzip2("bz2"), xz;
   public String suffix;
 

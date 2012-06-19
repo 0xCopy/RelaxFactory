@@ -1,20 +1,24 @@
 package rxf.server;
 
-import static junit.framework.Assert.*;
-
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 import one.xio.AsioVisitor;
 import one.xio.HttpMethod;
+import org.junit.*;
+import rxf.server.gen.CouchDriver;
+import rxf.server.web.inf.ProtocolMethodDispatch;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertNull;
+import static junit.framework.Assert.assertTrue;
 
 public class CouchServiceFactoryTest {
   private static ScheduledExecutorService exec;
+
   @BeforeClass
   public static void setUp() throws Exception {
     BlobAntiPatternObject.DEBUG_SENDJSON = true;
@@ -38,14 +42,16 @@ public class CouchServiceFactoryTest {
     try {
       HttpMethod.killswitch = false;
       HttpMethod.getSelector().close();
-      HttpMethod.broke = null;
+//      HttpMethod.broke = null;
       exec.shutdown();
       //Thread.sleep(4000);//more than 3 seconds, standard timeout
-    } catch (Exception ignore) {}
+    } catch (Exception ignore) {
+    }
   }
 
 
   private static final String DB = "rxf_csftest";
+
   public static class CSFTest {
     private String _id, _rev;
 
@@ -96,7 +102,7 @@ public class CouchServiceFactoryTest {
   }
 
   public interface SimpleCouchService extends CouchService<CSFTest> {
-    @View(map="function(doc){emit(doc.brand, doc); }")
+    @View(map = "function(doc){emit(doc.brand, doc); }")
     List<CSFTest> getItemsWithBrand(@Key String brand);
   }
 
@@ -116,7 +122,7 @@ public class CouchServiceFactoryTest {
     assertNotNull(results);
     assertEquals(1, results.size());
     assertEquals("something", results.get(0).brand);
-    
+
     List<CSFTest> noResults = service.getItemsWithBrand("a");
     assertNotNull(noResults);
     assertEquals(0, noResults.size());

@@ -17,8 +17,8 @@ import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.tidy.Tidy;
-import rxf.server.CouchDriver.BlobSend;
-import rxf.server.CouchDriver.DocPersist;
+import rxf.server.gen.CouchDriver.BlobSend;
+import rxf.server.gen.CouchDriver.DocPersist;
 
 import static java.lang.Math.abs;
 import static java.nio.channels.SelectionKey.OP_CONNECT;
@@ -33,7 +33,7 @@ import static rxf.server.BlobAntiPatternObject.createCouchConnection;
 import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
 import static rxf.server.BlobAntiPatternObject.moveCaretToDoubleEol;
 import static rxf.server.BlobAntiPatternObject.sortableInetAddress;
-import static rxf.server.CouchMetaDriver.CONTENT_LENGTH;
+import static rxf.server.driver.CouchMetaDriver.CONTENT_LENGTH;
 
 //import java.util.concurrent.ConcurrentSkipListMap;
 
@@ -79,7 +79,7 @@ public class GeoIpService {
     CouchTx tx = DocPersist.$().db("geoip").validjson(GSON.toJson(new HashMap() {{
       put("_id", "current");
     }})).to().fire().tx();
-    System.err.println("### geo tx1: "+tx);
+    System.err.println("### geo tx1: " + tx);
 
     tx = BlobSend.$()
         .db("geo")
@@ -89,7 +89,7 @@ public class GeoIpService {
         .blob((ByteBuffer) indexLocPair.getB().duplicate().rewind())
         .to().fire().tx();
 
-    System.err.println("### geo tx2: "+tx);
+    System.err.println("### geo tx2: " + tx);
 
 //    final SynchronousQueue retVal = new SynchronousQueue();
 //    SocketChannel couchConnection;
@@ -117,7 +117,7 @@ public class GeoIpService {
 //          };
 
 //
-////    String take = (String) retVal.poll(3, TimeUnit.SECONDS);
+////    String take = (String) retVal.poll(3, rxf.server.BlobAntiPatternObject.defaultCollectorTimeUnit);
 //    final CouchTx couchTx = GSON.fromJson(take, CouchTx.class);
 //    {
 //      couchConnection = createCouchConnection();
@@ -139,17 +139,17 @@ public class GeoIpService {
 //            }
 //          });
 //    }
-//    take = (String) retVal.poll(3, TimeUnit.SECONDS);
+//    take = (String) retVal.poll(3, rxf.server.BlobAntiPatternObject.defaultCollectorTimeUnit);
     tx = BlobSend.$()
-         .db("geo")
-         .docId("current")
-         .opaque(GEOIP_CURRENT_INDEX)
-         .mimetype("application/octet-stream")
-         .blob((ByteBuffer) indexLocPair.getA().duplicate().rewind())
-         .to().fire().tx();
+        .db("geo")
+        .docId("current")
+        .opaque(GEOIP_CURRENT_INDEX)
+        .mimetype("application/octet-stream")
+        .blob((ByteBuffer) indexLocPair.getA().duplicate().rewind())
+        .to().fire().tx();
 
 
-    System.err.println("### geo tx3: "+tx);
+    System.err.println("### geo tx3: " + tx);
   }
 
   static Pair<ByteBuffer, ByteBuffer> buildGeoIpSecondPass(Triple<Integer[], ByteBuffer, ByteBuffer> triple) throws UnknownHostException {
@@ -347,7 +347,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
     SocketChannel connection = BlobAntiPatternObject.createCouchConnection();
     final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
     HttpMethod.enqueue(connection, OP_CONNECT | OP_WRITE, new AsioVisitor.Impl() {
-      final public AtomicReference<String> payload =new AtomicReference<String>();
+      final public AtomicReference<String> payload = new AtomicReference<String>();
 
       public void onRead(final SelectionKey key) throws IOException, InterruptedException {
         final AsioVisitor parent = this;
@@ -385,7 +385,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
                 }
 //                key.attach(BlobAntiPatternObject.createJsonResponseReader(retVal));
                 key.selector().wakeup();
-                key.interestOps(OP_READ).attach(new Impl(){
+                key.interestOps(OP_READ).attach(new Impl() {
                   @Override
                   public void onRead(SelectionKey key) throws Exception {
                     final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
@@ -393,7 +393,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
                     Rfc822HeaderState state = new Rfc822HeaderState().headers(CONTENT_LENGTH);
                     state.apply((ByteBuffer) dst.flip());
 
-                    EXECUTOR_SERVICE.submit( new Callable<Object>() {
+                    EXECUTOR_SERVICE.submit(new Callable<Object>() {
                       public Object call() throws Exception {
                         cyclicBarrier.await();
                         payload.set(UTF8.decode(dst.slice()).toString().trim());
@@ -410,7 +410,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
 
 
                 String take = payload.get();
-                cyclicBarrier.await(3, TimeUnit.SECONDS);
+                cyclicBarrier.await(3, rxf.server.BlobAntiPatternObject.getDefaultCollectorTimeUnit());
                 key.attach(this);
                 System.err.println("rootnode: " + take);
                 Map map = GSON.fromJson(take, Map.class);
@@ -467,7 +467,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
                 Callable<MappedByteBuffer> callable = new Callable<MappedByteBuffer>() {
 
                   public MappedByteBuffer call() throws Exception {
-                    return retVal.poll(2, java.util.concurrent.TimeUnit.SECONDS);  //todo: verify for a purpose
+                    return retVal.poll(2, rxf.server.BlobAntiPatternObject.getDefaultCollectorTimeUnit());  //todo: verify for a purpose
                   }
                 };
 

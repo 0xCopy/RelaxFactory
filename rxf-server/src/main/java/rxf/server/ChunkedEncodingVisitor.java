@@ -18,7 +18,7 @@ import static rxf.server.BlobAntiPatternObject.recycleChannel;
  * Date: 5/30/12
  * Time: 7:09 PM
  */
-class ChunkedEncodingVisitor extends AsioVisitor.Impl {
+public class ChunkedEncodingVisitor extends AsioVisitor.Impl {
   ByteBuffer cursor;
 
   private Impl prev;

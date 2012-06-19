@@ -10,19 +10,20 @@ import java.util.regex.Pattern;
 
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpMethod;
+import rxf.server.web.inf.ProtocolMethodDispatch;
 
 import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpMethod.UTF8;
-import static rxf.server.CouchMetaDriver.CONTENT_LENGTH;
+import static rxf.server.driver.CouchMetaDriver.CONTENT_LENGTH;
 
 /**
  * User: jim
  * Date: 6/4/12
  * Time: 1:40 AM
  */
-class HttpProxyImpl extends Impl {
+public class HttpProxyImpl extends Impl {
   private final Pattern passthroughExpr;
 
   public HttpProxyImpl(Pattern passthroughExpr) {

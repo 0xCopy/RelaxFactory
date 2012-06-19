@@ -1,4 +1,4 @@
-package rxf.server;
+package rxf.server.an;
 
 import java.lang.annotation.*;
 import java.nio.ByteBuffer;
@@ -26,11 +26,11 @@ public @interface DbKeys {
        * @return
        */
       @Override
-      <T> boolean validate(T... data) {
+      public <T> boolean validate(T... data) {
         final String t = (String) data[0];
         return t.toString().length() > 0 && !t.startsWith("\"") && !t.endsWith("\"");
       }
-    }, designDocId, view, validjson, mimetype ,mimetypeHardcore {{
+    }, designDocId, view, validjson, mimetype, mimetypeEnum {{
       clazz = MimeType.class;
     }}, blob {{
       clazz = ByteBuffer.class;
@@ -38,26 +38,16 @@ public @interface DbKeys {
       clazz = Class.class;
     }};
 
-    <T> boolean validate(T... data) {
+    public <T> boolean validate(T... data) {
       return true;
     }
 
-    Class clazz = String.class;
+    public Class clazz = String.class;
   }
 
 
   etype[] value();
+
   etype[] optional() default {};
-//
-//
-//  public static abstract class ReturnAction<T> {
-//
-//    static ThreadLocal<ReturnAction> currentResults = new ThreadLocal<ReturnAction>();
-//
-//    public ReturnAction() {
-//      currentResults.set(this);
-//    }
-//  }
-//
 }
 

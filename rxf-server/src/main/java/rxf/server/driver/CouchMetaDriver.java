@@ -1,4 +1,23 @@
-package rxf.server;
+package rxf.server.driver;
+
+import java.io.IOException;
+import java.lang.reflect.*;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.SocketChannel;
+import java.text.MessageFormat;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
+
+import one.xio.AsioVisitor.Impl;
+import one.xio.HttpMethod;
+import one.xio.MimeType;
+import org.intellij.lang.annotations.Language;
+import rxf.server.*;
+import rxf.server.an.*;
+import rxf.server.an.DbKeys.etype;
 
 import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
@@ -14,52 +33,22 @@ import static rxf.server.BlobAntiPatternObject.createCouchConnection;
 import static rxf.server.BlobAntiPatternObject.deepToString;
 import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
 import static rxf.server.BlobAntiPatternObject.recycleChannel;
-import static rxf.server.DbKeys.etype.blob;
-import static rxf.server.DbKeys.etype.db;
-import static rxf.server.DbKeys.etype.designDocId;
-import static rxf.server.DbKeys.etype.docId;
-import static rxf.server.DbKeys.etype.mimetype;
-import static rxf.server.DbKeys.etype.opaque;
-import static rxf.server.DbKeys.etype.validjson;
-import static rxf.server.DbKeys.etype.view;
-import static rxf.server.DbKeys.etype.type;
-import static rxf.server.DbKeys.etype.rev;
 import static rxf.server.DbTerminal.continuousFeed;
 import static rxf.server.DbTerminal.future;
 import static rxf.server.DbTerminal.oneWay;
 import static rxf.server.DbTerminal.pojo;
 import static rxf.server.DbTerminal.rows;
 import static rxf.server.DbTerminal.tx;
-
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.GenericDeclaration;
-import java.lang.reflect.TypeVariable;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.SocketChannel;
-import java.text.MessageFormat;
-import java.util.Arrays;
-import java.util.EnumMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-
-import one.xio.AsioVisitor.Impl;
-import one.xio.HttpMethod;
-import one.xio.MimeType;
-
-import org.intellij.lang.annotations.Language;
-
-import rxf.server.DbKeys.etype;
+import static rxf.server.an.DbKeys.etype.blob;
+import static rxf.server.an.DbKeys.etype.db;
+import static rxf.server.an.DbKeys.etype.designDocId;
+import static rxf.server.an.DbKeys.etype.docId;
+import static rxf.server.an.DbKeys.etype.mimetype;
+import static rxf.server.an.DbKeys.etype.opaque;
+import static rxf.server.an.DbKeys.etype.rev;
+import static rxf.server.an.DbKeys.etype.type;
+import static rxf.server.an.DbKeys.etype.validjson;
+import static rxf.server.an.DbKeys.etype.view;
 
 /**
  * confers traits on an oo platform...
@@ -78,22 +67,24 @@ public enum CouchMetaDriver {
 
   @DbTask({tx, oneWay}) @DbKeys({db})DbCreate {
     @Override
-    <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+    public <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
       final AtomicReference<CouchTx> payload = new AtomicReference<CouchTx>();
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
       final Rfc822HeaderState state = actionBuilder.state();
-      final ByteBuffer header = state.methodProtocol("PUT").pathResCode("/" + dbKeysBuilder.parms().get(etype.db))
+      final ByteBuffer header = state.methodProtocol("PUT").pathResCode("/" + dbKeysBuilder.get(etype.db))
           .protocolStatus("HTTP/1.1")
           .headerString("Content-Length", "0")
           .asRequestHeaderByteBuffer();
       final SocketChannel channel = createCouchConnection();
       HttpMethod.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
         ByteBuffer cursor = null;
+
         @Override
         public void onWrite(SelectionKey key) throws Exception {
           int write = channel.write((ByteBuffer) header);
           key.interestOps(OP_READ).selector().wakeup();
         }
+
         @Override
         public void onRead(SelectionKey key) throws Exception {
           if (cursor == null) {
@@ -121,6 +112,7 @@ public enum CouchMetaDriver {
             }
           }
         }
+
         private void deliver() {
           payload.set(GSON.fromJson(UTF8.decode((ByteBuffer) cursor).toString(), CouchTx.class));
           recycleChannel(channel);
@@ -137,28 +129,30 @@ public enum CouchMetaDriver {
           });
         }
       });
-      int await = cyclicBarrier.await(3, TimeUnit.SECONDS);
+      int await = cyclicBarrier.await(3, BlobAntiPatternObject.getDefaultCollectorTimeUnit());
       return payload.get();
     }
   },
-  @DbTask({tx, oneWay}) @DbKeys({db}) DbDelete {
+  @DbTask({tx, oneWay}) @DbKeys({db})DbDelete {
     @Override
-    <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
+    public <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
       final AtomicReference<CouchTx> payload = new AtomicReference<CouchTx>();
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
       final Rfc822HeaderState state = actionBuilder.state();
-      final ByteBuffer header = state.methodProtocol("DELETE").pathResCode("/" + dbKeysBuilder.parms().get(etype.db))
+      final ByteBuffer header = state.methodProtocol("DELETE").pathResCode("/" + dbKeysBuilder.get(etype.db))
           .protocolStatus("HTTP/1.1")
           .headerString("Content-Length", "0")
           .asRequestHeaderByteBuffer();
       final SocketChannel channel = createCouchConnection();
       HttpMethod.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
         ByteBuffer cursor = null;
+
         @Override
         public void onWrite(SelectionKey key) throws Exception {
           int write = channel.write((ByteBuffer) header);
           key.interestOps(OP_READ).selector().wakeup();
         }
+
         @Override
         public void onRead(SelectionKey key) throws Exception {
           if (cursor == null) {
@@ -186,6 +180,7 @@ public enum CouchMetaDriver {
             }
           }
         }
+
         private void deliver() {
           recycleChannel(channel);
           payload.set(GSON.fromJson(UTF8.decode((ByteBuffer) cursor).toString(), CouchTx.class));
@@ -201,35 +196,18 @@ public enum CouchMetaDriver {
           });
         }
       });
-      int await = cyclicBarrier.await(3, TimeUnit.SECONDS);
+      int await = cyclicBarrier.await(3, BlobAntiPatternObject.getDefaultCollectorTimeUnit());
       return payload.get();
     }
   },
-  //  @DbTask({tx, oneWay}) @DbKeys({db, docId, validjson})createDoc {
-//    @Override
-//    <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
-//      EnumMap<etype, Object> parms = dbKeysBuilder.parms();
-//      String json = (String) parms.get(etype.validjson);
-//      String o = (String) parms.get(etype.db);
-//      String o1 = (String) parms.get(etype.docId);
-//      return sendJson(
-//          json,
-//          '/' + o + '/' + o1
-//      );
-//
-//    }
-//
-//
-//  },
   @DbTask({pojo, future}) @DbResultUnit(String.class) @DbKeys({db, docId})DocFetch {
-
     @Override
-    <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+    public <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
       final AtomicReference<Object> payload = new AtomicReference<Object>();
 
-      EnumMap<etype, Object> parms = dbKeysBuilder.parms();
-      String db = (String) parms.get(etype.db);
-      String id = (String) parms.get(etype.docId);
+//      EnumMap<etype, Object> parms = dbKeysBuilder.parms();
+      String db = (String) dbKeysBuilder.get(etype.db);
+      String id = (String) dbKeysBuilder.get(etype.docId);
       final Rfc822HeaderState state = actionBuilder.state().headers(CONTENT_LENGTH).methodProtocol("GET").pathResCode("/" + db + (null == id ? "" : ("/" + id.trim())));
       state.protocolStatus("HTTP/1.1");
       final SocketChannel channel = createCouchConnection();
@@ -275,7 +253,7 @@ public enum CouchMetaDriver {
         private void deliver() {
           assert cursor != null;
           payload.set(UTF8.decode((ByteBuffer) cursor.rewind()).toString());
-          
+
           recycleChannel(channel);
           EXECUTOR_SERVICE.submit(new Runnable() {
             @Override
@@ -291,25 +269,25 @@ public enum CouchMetaDriver {
         }
       });
       try {
-      if (BlobAntiPatternObject.DEBUG_SENDJSON) {
-        cyclicBarrier.await();
-      } else {
-        cyclicBarrier.await(3, TimeUnit.SECONDS);
-      }
+        if (BlobAntiPatternObject.DEBUG_SENDJSON) {
+          cyclicBarrier.await();
+        } else {
+          cyclicBarrier.await(3, BlobAntiPatternObject.getDefaultCollectorTimeUnit());
+        }
       } catch (BrokenBarrierException ex) {
         // non-200 error code
       }
-      
+
       return payload.get();
     }
   },
   @DbTask({tx, future}) @DbResultUnit(String.class) @DbKeys({db, docId})RevisionFetch {
     @Override
-    <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
-      EnumMap<etype, Object> parms = dbKeysBuilder.parms();
+    public <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+//      EnumMap<etype, Object> parms = dbKeysBuilder.parms();
 
-      Object id = parms.get(etype.docId);
-      final String pathRescode = "/" + parms.get(db) + ((id != null) ? "/" + id : "");
+      Object id = dbKeysBuilder.get(etype.docId);
+      final String pathRescode = "/" + dbKeysBuilder.get(db) + ((id != null) ? "/" + id : "");
       final Rfc822HeaderState state = actionBuilder.state().headers(ETAG).methodProtocol("HEAD").pathResCode(pathRescode);
       state.protocolStatus("HTTP/1.1");
       return EXECUTOR_SERVICE.submit(new Callable<Object>() {
@@ -350,7 +328,7 @@ public enum CouchMetaDriver {
           });
           if (BlobAntiPatternObject.DEBUG_SENDJSON) cyclicBarrier.await();
           else
-            cyclicBarrier.await(3, TimeUnit.SECONDS);
+            cyclicBarrier.await(3, BlobAntiPatternObject.getDefaultCollectorTimeUnit());
           Map<String, String> headerStrings = state.getHeaderStrings();
 
           CouchTx ctx = new CouchTx().id(pathRescode);
@@ -364,19 +342,13 @@ public enum CouchMetaDriver {
       }).get();
     }
   },
-  @DbTask({tx, oneWay, future}) @DbKeys(value={db, validjson}, optional={docId, rev})DocPersist {
+  @DbTask({tx, oneWay, future}) @DbKeys(value = {db, validjson}, optional = {docId, rev})DocPersist {
     @Override
-    <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
-//
-//      return sendJson(
-//          (String) dbKeysBuilder.parms().get(etype.db),
-//          (String) dbKeysBuilder.parms().get(etype.validjson)
-////          (String) dbKeysBuilder.parms().get(etype.docId),
-////          (String) dbKeysBuilder.parms().get(etype.rev)
-//      );
-      String db = (String) dbKeysBuilder.parms().get(etype.db);
-      String docId = (String) dbKeysBuilder.parms().get(etype.docId);
-      String rev = (String) dbKeysBuilder.parms().get(etype.rev);
+    public <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
+
+      String db = (String) dbKeysBuilder.get(etype.db);
+      String docId = (String) dbKeysBuilder.get(etype.docId);
+      String rev = (String) dbKeysBuilder.get(etype.rev);
       StringBuilder sb = new StringBuilder(db);
       if (docId != null) {
         sb.append("/").append(docId);
@@ -384,28 +356,30 @@ public enum CouchMetaDriver {
       if (rev != null) {
         sb.append("?rev=").append(rev);
       }
-      dbKeysBuilder.parms().put(etype.opaque, sb.toString());
+      dbKeysBuilder.put(etype.opaque, sb.toString());
       return JsonSend.visit(dbKeysBuilder, actionBuilder);
     }
   },
-  @DbTask({tx, oneWay, future}) @DbKeys(value={db, docId, rev}) DocDelete {
+  @DbTask({tx, oneWay, future}) @DbKeys(value = {db, docId, rev})DocDelete {
     @Override
-    <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
+    public <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
       final AtomicReference<CouchTx> payload = new AtomicReference<CouchTx>();
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
       final Rfc822HeaderState state = actionBuilder.state();
-      final ByteBuffer header = state.methodProtocol("DELETE").pathResCode("/" + dbKeysBuilder.parms().get(db) + "/" + dbKeysBuilder.parms().get(docId) + "?rev=" + dbKeysBuilder.parms().get(rev))
+      final ByteBuffer header = state.methodProtocol("DELETE").pathResCode("/" + dbKeysBuilder.get(db) + "/" + dbKeysBuilder.get(docId) + "?rev=" + dbKeysBuilder.get(rev))
           .protocolStatus("HTTP/1.1")
           .headerString("Content-Length", "0")
           .asRequestHeaderByteBuffer();
       final SocketChannel channel = createCouchConnection();
       HttpMethod.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
         ByteBuffer cursor = null;
+
         @Override
         public void onWrite(SelectionKey key) throws Exception {
           int write = channel.write((ByteBuffer) header);
           key.interestOps(OP_READ).selector().wakeup();
         }
+
         @Override
         public void onRead(SelectionKey key) throws Exception {
           if (cursor == null) {
@@ -433,6 +407,7 @@ public enum CouchMetaDriver {
             }
           }
         }
+
         private void deliver() {
           payload.set(GSON.fromJson(UTF8.decode((ByteBuffer) cursor).toString(), CouchTx.class));
           recycleChannel(channel);
@@ -448,20 +423,20 @@ public enum CouchMetaDriver {
           });
         }
       });
-      int await = cyclicBarrier.await(3, TimeUnit.SECONDS);
+      int await = cyclicBarrier.await(3, BlobAntiPatternObject.getDefaultCollectorTimeUnit());
       return payload.get();
     }
   },
-  @DbTask({pojo, future}) @DbResultUnit(String.class) @DbKeys({db, designDocId}) DesignDocFetch {
+  @DbTask({pojo, future}) @DbResultUnit(String.class) @DbKeys({db, designDocId})DesignDocFetch {
     @Override
-    <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
-      dbKeysBuilder.parms().put(etype.docId, dbKeysBuilder.parms().remove(etype.designDocId));
+    public <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+      dbKeysBuilder.put(etype.docId, dbKeysBuilder.remove(etype.designDocId));
       return DocFetch.visit(dbKeysBuilder, actionBuilder);
     }
   },
-  @DbTask({rows, future, continuousFeed}) @DbResultUnit(CouchResultSet.class) @DbKeys(value={db, view}, optional = type)ViewFetch {
+  @DbTask({rows, future, continuousFeed}) @DbResultUnit(CouchResultSet.class) @DbKeys(value = {db, view}, optional = type)ViewFetch {
     @Override
-    <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+    public <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
       SelectionKey key = actionBuilder.key();
       SocketChannel couchConnection = null;
       Object poll = null;
@@ -513,7 +488,7 @@ public enum CouchMetaDriver {
           }
         });
 
-        poll1 = (T) actionBuilder.sync().poll(3, TimeUnit.SECONDS);
+        poll1 = (T) actionBuilder.sync().poll(3, BlobAntiPatternObject.getDefaultCollectorTimeUnit());
         System.err.println("view res: " + deepToString(poll1, actionBuilder));
 
       } catch (Exception e) {
@@ -526,11 +501,11 @@ public enum CouchMetaDriver {
   },
   @DbTask({tx, oneWay, rows, future, continuousFeed}) @DbKeys(value = {opaque, validjson}, optional = type)JsonSend {
     @Override
-    <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+    public <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
       final AtomicReference<CouchTx> payload = new AtomicReference<CouchTx>();
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
-      String opaque = '/' + ((String) dbKeysBuilder.parms().get(etype.opaque)).replace("//", "/");
-      String validjson = (String) dbKeysBuilder.parms().get(etype.validjson);
+      String opaque = '/' + ((String) dbKeysBuilder.get(etype.opaque)).replace("//", "/");
+      String validjson = (String) dbKeysBuilder.get(etype.validjson);
       int lastSlashIndex = opaque.lastIndexOf('/');
       final byte[] outbound = validjson.getBytes(UTF8);
       final Rfc822HeaderState state = actionBuilder.state();
@@ -597,9 +572,9 @@ public enum CouchMetaDriver {
         }
       });
       if (DEBUG_SENDJSON) {
-        cyclicBarrier.await(/*3, TimeUnit.SECONDS*/);
+        cyclicBarrier.await(/*3, rxf.server.BlobAntiPatternObject.defaultCollectorTimeUnit*/);
       } else {
-        cyclicBarrier.await(3, TimeUnit.SECONDS);
+        cyclicBarrier.await(3, BlobAntiPatternObject.getDefaultCollectorTimeUnit());
       }
 
       CouchTx couchTx = payload.get();
@@ -608,19 +583,18 @@ public enum CouchMetaDriver {
   },
   @DbTask({tx, future, oneWay}) @DbResultUnit(Rfc822HeaderState.class) @DbKeys({db, docId, opaque, mimetype, blob})BlobSend {
     @Override
-    <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
-       final AtomicReference<String> payload = new AtomicReference<String>();
+    public <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+      final AtomicReference<String> payload = new AtomicReference<String>();
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
-      final EnumMap<etype, Object> parms = dbKeysBuilder.parms();
       CouchTx visit = (CouchTx) RevisionFetch.visit(dbKeysBuilder, actionBuilder);
       String rev = visit == null ? null : visit.rev();
 
       final ByteBuffer byteBuffer = actionBuilder.state().methodProtocol("PUT")
-          .pathResCode("/" + parms.get(db) + '/' + parms.get(etype.docId) + '/' + parms.get(etype.opaque) + rev == null ? "" : ("?rev=" + rev))
+          .pathResCode("/" + dbKeysBuilder.get(db) + '/' + dbKeysBuilder.get(etype.docId) + '/' + dbKeysBuilder.get(etype.opaque) + rev == null ? "" : ("?rev=" + rev))
           .protocolStatus("HTTP/1.1")
           .headerStrings(new TreeMap<String, String>() {{
             put("Expect", "100-continue");
-            put(CONTENT_TYPE, ((MimeType) parms.get(etype.mimetype)).contentType);
+            put(CONTENT_TYPE, ((MimeType) dbKeysBuilder.get(etype.mimetype)).contentType);
             put(ACCEPT, "*/*");
           }}).asRequestHeaderByteBuffer();
 
@@ -643,7 +617,7 @@ public enum CouchMetaDriver {
                   final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
                   int read = channel.read(dst);
                   actionBuilder.state().apply((ByteBuffer) dst.flip());
-                  System.err.println(deepToString(this, parms, actionBuilder));
+                  System.err.println(deepToString(this, dbKeysBuilder, actionBuilder));
                   EXECUTOR_SERVICE.submit(new Runnable() {
                     @Override
                     public void run() {
@@ -661,7 +635,7 @@ public enum CouchMetaDriver {
                       }
 
                     }
-                  })                          ;
+                  });
 
                 }
               });
@@ -680,7 +654,7 @@ public enum CouchMetaDriver {
           String continueString = actionBuilder.state().apply((ByteBuffer) dst.flip()).pathResCode();
 
           if (continueString.startsWith("100")) {
-            cursor = (ByteBuffer) parms.get(etype.blob);
+            cursor = (ByteBuffer) dbKeysBuilder.get(etype.blob);
             key.interestOps(OP_WRITE).selector().wakeup();
           }
 
@@ -692,7 +666,6 @@ public enum CouchMetaDriver {
     }
 
 
-
   };
   private static final String APPLICATION_JSON = "application/json";
   public static final String ETAG = "ETag";
@@ -702,16 +675,16 @@ public enum CouchMetaDriver {
   public static final String ACCEPT = "Accept";
   public static final String ACCEPT_ENCODING = "Accept-Encoding";
   public static final String TRANSFER_ENCODING = "Transfer-Encoding";
-  static final String SET_COOKIE = "Set-Cookie";
+  public static final String SET_COOKIE = "Set-Cookie";
 
   static <T> String idpath(DbKeysBuilder<T> dbKeysBuilder, etype etype) {
-    String db = (String) dbKeysBuilder.parms().get(DbKeys.etype.db);
-    String id = (String) dbKeysBuilder.parms().get(etype);
+    String db = (String) dbKeysBuilder.get(DbKeys.etype.db);
+    String id = (String) dbKeysBuilder.get(etype);
     return '/' + db + '/' + id;
   }
 
 
-  <T> Object visit() throws Exception {
+  public <T> Object visit() throws Exception {
     DbKeysBuilder<T> dbKeysBuilder = (DbKeysBuilder<T>) DbKeysBuilder.get();
     ActionBuilder<T> actionBuilder = (ActionBuilder<T>) ActionBuilder.get();
 
@@ -720,15 +693,16 @@ public enum CouchMetaDriver {
     throw new Error("validation error");
   }
 
-  /*abstract */<T> Object visit(DbKeysBuilder<T> dbKeysBuilder,
-                                ActionBuilder<T> actionBuilder) throws Exception {
+  /*abstract */
+  public <T> Object visit(DbKeysBuilder<T> dbKeysBuilder,
+                          ActionBuilder<T> actionBuilder) throws Exception {
     throw new AbstractMethodError();
   }
 
-  public static final String XDEADBEEF_2 = "-0xdeadbeef.2";
-  public static final String XXXXXXXXXXXXXXMETHODS = "/*XXXXXXXXXXXXXXMETHODS*/";
+  public static final String PCOUNT = "-0xdeadbeef.2";
+  public static final String GENERATED_METHODS = "/*XXXXXXXXXXXXXXMETHODS*/";
   public static final String IFACE_FIRE_TARGETS = "/*FIRE_IFACE*/";
-  public static final String BAKED_IN_FIRE = "/*BAKED_IN_FIRE*/";
+  public static final String FIRE_METHODS = "/*BAKED_IN_FIRE*/";
 
 
   public <T> String builder() throws NoSuchFieldException {
@@ -753,7 +727,7 @@ public enum CouchMetaDriver {
         StringBuilder bounds = new StringBuilder("<");
         for (TypeVariable<? extends GenericDeclaration> param : rtype.getTypeParameters()) {
           params.append(param.getName()).append(",");
-          bounds.append(param.getName()).append(" extends ").append(((Class<?>)param.getBounds()[0]).getName()).append(",");
+          bounds.append(param.getName()).append(" extends ").append(((Class<?>) param.getBounds()[0]).getName()).append(",");
         }
         params.deleteCharAt(params.length() - 1).append(">");
         bounds.deleteCharAt(bounds.length() - 1).append(">");
@@ -762,19 +736,30 @@ public enum CouchMetaDriver {
       }
       String fqsn = rtype.getCanonicalName();
       String pfqsn = fqsn + rtypeTypeParams;
-      @Language("JAVA") String s2 = " \n\npublic cla" +
-          "ss _ename_"+rtypeTypeParams+" extends DbKeysBuilder<" +
-          pfqsn + "> {\n  private _ename_() {\n  }\n\n  static public "+rtypeBounds+" _ename_"+rtypeTypeParams+" $() {\n    return new _ename_"+rtypeTypeParams+"();\n  }" +
-          "\n\n  public interface _ename_TerminalBuilder"+rtypeTypeParams+" extends TerminalBuilder<" +
-          pfqsn + "> {\n    " + IFACE_FIRE_TARGETS + "\n  }\n\n  public class _ename_ActionBuilder extends ActionBuilder<" +
-          pfqsn + "> {\n    public _ename_ActionBuilder( /*<" +
-          pfqsn + ">*/ ) {\n      super(/*synchronousQueues*/);\n    }\n\n    @Override\n    public _ename_TerminalBuilder"+rtypeTypeParams+" fire() {\n      return new _ename_TerminalBuilder"+rtypeTypeParams+"() {\n        " + BAKED_IN_FIRE + "\n      };\n    }\n\n    @Override\n    public _ename_ActionBuilder state(Rfc822HeaderState state) {\n      return (_ename_ActionBuilder)super.state(state);\n    }\n\n    @Override\n    public _ename_ActionBuilder key(java.nio.channels.SelectionKey key) {\n      return (_ename_ActionBuilder)super.key(key);\n    }\n  }\n\n  @Override\n  public _ename_ActionBuilder to( /*<" +
-          pfqsn + ">*/ ) {\n    if (parms.size() >= parmsCount)\n      return new _ename_ActionBuilder(/*dest*/);\n\n    throw new IllegalArgumentException(\"required parameters are: " + arrToString(parms) + "\");\n  }\n  " +
-          XXXXXXXXXXXXXXMETHODS + "\n" +
-          "}\n";
+      @Language("JAVA") String s2 = "public class _ename_" +
+          rtypeTypeParams + " extends DbKeysBuilder<" +
+          pfqsn + "> {\n  private _ename_() {\n  }\n\n  static public " +
+          rtypeBounds + " _ename_" +
+          rtypeTypeParams + "\n\n  $() {\n    return new _ename_" + rtypeTypeParams + "();\n  }\n\n" +
+          "  public interface _ename_TerminalBuilder" + rtypeTypeParams + " extends TerminalBuilder<" +
+          pfqsn + "> {    " +
+          IFACE_FIRE_TARGETS + "\n  }\n\n  public class _ename_ActionBuilder extends ActionBuilder<" +
+          pfqsn + "> {\n    public _ename_ActionBuilder() {\n      super();\n    }\n\n    @Override\n    public _ename_TerminalBuilder" +
+          rtypeTypeParams + " fire() {\n      return new _ename_TerminalBuilder" +
+          rtypeTypeParams + "() {        " +
+          FIRE_METHODS + "\n      };\n    }\n\n    @Override\n    " +
+          "public _ename_ActionBuilder state(Rfc822HeaderState state) {\n      " +
+          "return (_ename_ActionBuilder) super.state(state);\n    " +
+          "}\n\n    @Override\n    public _ename_ActionBuilder key(java.nio.channels.SelectionKey key) " +
+          "{\n      return (_ename_ActionBuilder) super.key(key);\n    }\n  }\n\n  @Override\n  public _ename_ActionBuilder to() " +
+          "{\n    if (parms.size() >= parmsCount) return new _ename_ActionBuilder();\n    " +
+          "throw new IllegalArgumentException(\"required parameters are: " +
+          arrToString(parms) + "\");\n  }  " +
+          GENERATED_METHODS + "\n" +
+          "}";
       s = s2;
       int vl = parms.length;
-      String s1 = "\nstatic private final int parmsCount=" + XDEADBEEF_2 + ";\n";
+      String s1 = "\nstatic private final int parmsCount=" + PCOUNT + ";\n";
       for (etype etype : parms) {
         s1 = writeParameterSetter(rtypeTypeParams, s1, etype, etype.clazz);
       }
@@ -792,19 +777,19 @@ public enum CouchMetaDriver {
             t += terminal.builder(couchDriver, parms, pfqsn, true);
 
           }
-          s = s.replace(BAKED_IN_FIRE, t).replace(IFACE_FIRE_TARGETS, iface);
+          s = s.replace(FIRE_METHODS, t).replace(IFACE_FIRE_TARGETS, iface);
         }
       }
 
-      s = s.replace(XXXXXXXXXXXXXXMETHODS, s1).replace("_ename_", name()).replace(XDEADBEEF_2, String.valueOf(vl));
+      s = s.replace(GENERATED_METHODS, s1).replace("_ename_", name()).replace(PCOUNT, String.valueOf(vl));
     }
     return s;
   }
 
 
   private String writeParameterSetter(String rtypeTypeParams, String s1, etype etype,
-      Class<?> clazz) {
-    @Language("JAVA") String y = "public _ename_"+rtypeTypeParams+"  _name_(_clazz_ _sclazz_){parms.put(DbKeys.etype." + etype.name() + ",_sclazz_);return this;}\n";
+                                      Class<?> clazz) {
+    @Language("JAVA") String y = "public _ename_" + rtypeTypeParams + "  _name_(_clazz_ _sclazz_){parms.put(DbKeys.etype." + etype.name() + ",_sclazz_);return this;}\n";
     s1 += y.replace("_name_", etype.name()).replace("_clazz_", clazz.getCanonicalName()).replace("_sclazz_", clazz.getSimpleName().toLowerCase() + "Param").replace("_ename_", name());
     return s1;
   }
@@ -812,7 +797,7 @@ public enum CouchMetaDriver {
   public static void main(String... args) throws NoSuchFieldException {
     Field[] fields = CouchMetaDriver.class.getFields();
     @Language("JAVA")
-    String s = "package rxf.server;\n//generated\nimport java.util.concurrent.*;\nimport java.util.*;\nimport static rxf.server.DbKeys.*;\nimport static rxf.server.DbKeys.etype.*;\nimport static rxf.server.CouchMetaDriver.*;\nimport java.util.*;\n\n/**\n * generated drivers\n */\npublic interface CouchDriver{";
+    String s = "package rxf.server.gen;\n//generated\n  \nimport java.lang.reflect.ParameterizedType;\nimport java.lang.reflect.Type;\nimport java.nio.ByteBuffer;\nimport java.nio.channels.SelectionKey;\nimport java.util.concurrent.Callable;\nimport java.util.concurrent.Future;\n\nimport rxf.server.*;\nimport rxf.server.an.*;\nimport rxf.server.driver.*;\n/**\n * generated drivers\n */\npublic interface CouchDriver{";
     for (Field field : fields)
       if (field.getType().isAssignableFrom(CouchMetaDriver.class)) {
         CouchMetaDriver couchDriver = CouchMetaDriver.valueOf(field.getName());
@@ -840,7 +825,6 @@ public enum CouchMetaDriver {
     System.out.println(s);
   }
 
-  public static ThreadLocal<SynchronousQueue[]> currentSync = new ThreadLocal<SynchronousQueue[]>();
 
 }
 

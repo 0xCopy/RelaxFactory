@@ -1,4 +1,4 @@
-package rxf.server;
+package rxf.server.web.inf;
 
 import java.io.*;
 import java.net.URLDecoder;
@@ -9,16 +9,17 @@ import java.util.regex.Pattern;
 
 import one.xio.AsioVisitor.Impl;
 import one.xio.MimeType;
+import rxf.server.*;
 
 import static java.lang.Math.min;
 import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpMethod.UTF8;
-import static rxf.server.CouchMetaDriver.ACCEPT_ENCODING;
-import static rxf.server.CouchMetaDriver.CONTENT_ENCODING;
-import static rxf.server.CouchMetaDriver.CONTENT_LENGTH;
-import static rxf.server.CouchMetaDriver.CONTENT_TYPE;
+import static rxf.server.driver.CouchMetaDriver.ACCEPT_ENCODING;
+import static rxf.server.driver.CouchMetaDriver.CONTENT_ENCODING;
+import static rxf.server.driver.CouchMetaDriver.CONTENT_LENGTH;
+import static rxf.server.driver.CouchMetaDriver.CONTENT_TYPE;
 
 /**
  * User: jim

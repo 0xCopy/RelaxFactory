@@ -1,4 +1,4 @@
-package rxf.server;
+package rxf.server.web.inf;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -10,16 +10,17 @@ import java.util.regex.Pattern;
 
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpMethod;
+import rxf.server.*;
 
 import static java.nio.channels.SelectionKey.OP_READ;
 import static one.xio.HttpMethod.GET;
 import static one.xio.HttpMethod.POST;
-import static rxf.server.CouchMetaDriver.ACCEPT;
-import static rxf.server.CouchMetaDriver.CONTENT_ENCODING;
-import static rxf.server.CouchMetaDriver.CONTENT_LENGTH;
-import static rxf.server.CouchMetaDriver.CONTENT_TYPE;
-import static rxf.server.CouchMetaDriver.ETAG;
-import static rxf.server.CouchMetaDriver.TRANSFER_ENCODING;
+import static rxf.server.driver.CouchMetaDriver.ACCEPT;
+import static rxf.server.driver.CouchMetaDriver.CONTENT_ENCODING;
+import static rxf.server.driver.CouchMetaDriver.CONTENT_LENGTH;
+import static rxf.server.driver.CouchMetaDriver.CONTENT_TYPE;
+import static rxf.server.driver.CouchMetaDriver.ETAG;
+import static rxf.server.driver.CouchMetaDriver.TRANSFER_ENCODING;
 
 /**
  * this class holds a protocol namespace to dispatch requests
