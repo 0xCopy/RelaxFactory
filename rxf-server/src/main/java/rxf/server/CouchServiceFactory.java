@@ -140,8 +140,7 @@ public class CouchServiceFactory {
         //persist or find by key
         if ("persist".equals(method.getName())) {
           //again, no point, see above with DocPersist
-          
-          return null;
+          return CouchDriver.DocPersist.$().db(pathPrefix).validjson(GSON.toJson(args[0])).to().fire().tx();
         } else {
           assert "find".equals(method.getName());
           String doc = CouchDriver.DocFetch.$().db(pathPrefix).docId((String)args[0]).to().fire().pojo();
