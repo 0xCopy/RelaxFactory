@@ -2,6 +2,7 @@ package rxf.server;
 
 import static junit.framework.Assert.*;
 
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -92,5 +93,32 @@ public class CouchServiceFactoryTest {
     CSFTest obj2 = service.find(tx.id());
     assertEquals("Best", obj2.brand);
     assertEquals("Sample", obj2.model);
+  }
+
+  public interface SimpleCouchService extends CouchService<CSFTest> {
+    @View(map="function(doc){emit(doc.brand, doc); }")
+    List<CSFTest> getItemsWithBrand(@Key String brand);
+  }
+
+  @Test
+  public void testSimpleViewMethod() throws Exception {
+    SimpleCouchService service = CouchServiceFactory.get(SimpleCouchService.class);
+
+    CSFTest a = new CSFTest();
+    a.brand = "something";
+    CSFTest b = new CSFTest();
+    b.brand = "else";
+
+    service.persist(a);
+    service.persist(b);
+
+    List<CSFTest> results = service.getItemsWithBrand("something");
+    assertNotNull(results);
+    assertEquals(1, results.size());
+    assertEquals("something", results.get(0).brand);
+    
+    List<CSFTest> noResults = service.getItemsWithBrand("a");
+    assertNotNull(noResults);
+    assertEquals(0, noResults.size());
   }
 }

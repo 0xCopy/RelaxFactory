@@ -67,7 +67,7 @@ public class CouchServiceFactory {
             design.addProperty("language", "javascript");
             String orgName = "rxf_";
             pathPrefix = orgName + entityType.getSimpleName().toLowerCase();
-            id = "_design/" + orgName + "_" + pathPrefix;
+            id = "_design/" + serviceInterface.getName().toLowerCase();
             String viewPath = "/" + pathPrefix + "/" + id;
             design.addProperty("_id", id);
 
@@ -102,7 +102,8 @@ public class CouchServiceFactory {
             } else {
               // this is nonsense, designdocs must be given an ID when created (via PUT) - we probably need a distinct
               // DesignDocPersist type
-              CouchDriver.DocPersist.$().db(pathPrefix)/*.designDocId(id)*/.validjson(design.toString()).to().fire().oneWay();
+              CouchTx tx = CouchDriver.DocPersist.$().db(pathPrefix)/*.designDocId(id)*/.validjson(design.toString()).to().fire().tx();
+              System.out.println(tx);
             }
 
           } catch (Exception e) {
@@ -127,11 +128,13 @@ public class CouchServiceFactory {
           if (viewMethods.containsKey(name)) {
             // where is the design doc defined? part of the view?
             CouchResultSet<E> rows = CouchDriver.ViewFetch.<E>$().db(pathPrefix).type(entityType).view(String.format(viewMethods.get(name), args)).to().fire().rows();
-            ArrayList<E> ar = new ArrayList<E>();
-            for (tuple<E> row : rows.rows) {
-              ar.add(row.value);
+            if (rows != null && rows.rows != null) {
+              ArrayList<E> ar = new ArrayList<E>();
+              for (tuple<E> row : rows.rows) {
+                ar.add(row.value);
+              }
+              return ar;
             }
-            return ar;
           }
           return null;
         }
