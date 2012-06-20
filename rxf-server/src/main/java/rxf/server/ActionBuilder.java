@@ -21,9 +21,7 @@ public abstract class ActionBuilder<T> {
     currentAction.set(this);
   }
 
-  public SynchronousQueue sync() {
-    return (0 >= this.synchronousQueues.length ? (synchronousQueues = many(new SynchronousQueue())) : synchronousQueues)[0];
-  }
+
 
   private SynchronousQueue[] many(SynchronousQueue... ts) {
     return ts;

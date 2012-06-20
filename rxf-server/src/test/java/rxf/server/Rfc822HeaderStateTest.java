@@ -12,17 +12,17 @@ public class Rfc822HeaderStateTest {
   @Test
   public void testAppendHeadersOne() {
     Rfc822HeaderState state = new Rfc822HeaderState("One");
-    assertEquals(1, state.headers.length);
+    assertEquals(1, state.headerInterest.length);
     state.headers("Two");
-    assertEquals(2, state.headers.length);
+    assertEquals(2, state.headerInterest.length);
     assertArrayEquals(new String[]{"One", "Two"}, state.headers());
   }
   @Test
   public void testAppendHeadersMany() {
     Rfc822HeaderState state = new Rfc822HeaderState("One");
-    assertEquals(1, state.headers.length);
-    state.headers("Two", "Three");
-    assertEquals(3, state.headers.length);
+    assertEquals(1, state.headerInterest.length);
+    state.headerInterest("Two", "Three");
+    assertEquals(3, state.headerInterest.length);
     assertArrayEquals(new String[]{"One", "Two", "Three"}, state.headers());
   }
   

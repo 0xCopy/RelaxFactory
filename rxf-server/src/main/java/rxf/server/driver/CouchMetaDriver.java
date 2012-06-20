@@ -6,7 +6,6 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
-import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -24,13 +23,13 @@ import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpMethod.UTF8;
 import static one.xio.HttpMethod.enqueue;
-import static rxf.server.BlobAntiPatternObject.COOKIE;
 import static rxf.server.BlobAntiPatternObject.DEBUG_SENDJSON;
 import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 import static rxf.server.BlobAntiPatternObject.GSON;
 import static rxf.server.BlobAntiPatternObject.arrToString;
 import static rxf.server.BlobAntiPatternObject.createCouchConnection;
 import static rxf.server.BlobAntiPatternObject.deepToString;
+import static rxf.server.BlobAntiPatternObject.getDefaultCollectorTimeUnit;
 import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
 import static rxf.server.BlobAntiPatternObject.recycleChannel;
 import static rxf.server.DbTerminal.continuousFeed;
@@ -121,14 +120,14 @@ public enum CouchMetaDriver {
             public void run() {
 
               try {
-                cyclicBarrier.await();
-              } catch (Throwable e) {
-                e.printStackTrace();  //todo: verify for a purpose
-              }
-            }
-          });
-        }
-      });
+                cyclicBarrier.await();                //V
+              } catch (Throwable e) {                 //V
+                e.printStackTrace();                  //V
+              }                                       //V
+            }                                         //V
+          });                                         //V
+        }                                             //V
+      });                                             //V
       int await = cyclicBarrier.await(3, BlobAntiPatternObject.getDefaultCollectorTimeUnit());
       return payload.get();
     }
@@ -188,14 +187,14 @@ public enum CouchMetaDriver {
             @Override
             public void run() {
               try {
-                cyclicBarrier.await();
-              } catch (Throwable e) {
-                e.printStackTrace();  //todo: verify for a purpose
-              }
-            }
-          });
-        }
-      });
+                cyclicBarrier.await();              //V
+              } catch (Throwable e) {               //V
+                e.printStackTrace();                //V
+              }                                     //V
+            }                                       //V
+          });                                       //V
+        }                                           //V
+      });                                           //V
       int await = cyclicBarrier.await(3, BlobAntiPatternObject.getDefaultCollectorTimeUnit());
       return payload.get();
     }
@@ -260,18 +259,18 @@ public enum CouchMetaDriver {
             public void run() {
 
               try {
-                cyclicBarrier.await();
-              } catch (Throwable e) {
-                e.printStackTrace();  //todo: verify for a purpose
-              }
-            }
-          });
-        }
-      });
-      try {
-        if (BlobAntiPatternObject.DEBUG_SENDJSON) {
-          cyclicBarrier.await();
-        } else {
+                cyclicBarrier.await();                     //V
+              } catch (Throwable e) {                      //V
+                e.printStackTrace();                       //V
+              }                                            //V
+            }                                              //V
+          });                                              //V
+        }                                                  //V
+      });                                                  //V
+      try {                                                //V
+        if (BlobAntiPatternObject.DEBUG_SENDJSON) {        //V
+          cyclicBarrier.await();                           //V
+        } else {                                           //V
           cyclicBarrier.await(3, BlobAntiPatternObject.getDefaultCollectorTimeUnit());
         }
       } catch (BrokenBarrierException ex) {
@@ -314,21 +313,19 @@ public enum CouchMetaDriver {
                         ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
                         int read = channel.read(dst);
                         state.apply((ByteBuffer) dst.flip());
-                        cyclicBarrier.await(/*10, TimeUnit.MILLISECONDS*/);
-                      } catch (Exception e) {
-                        e.printStackTrace();
-                      } finally {
-                        recycleChannel(channel);
-
-                      }
-                    }
-                  });
-            }
-
-          });
-          if (BlobAntiPatternObject.DEBUG_SENDJSON) cyclicBarrier.await();
-          else
-            cyclicBarrier.await(3, BlobAntiPatternObject.getDefaultCollectorTimeUnit());
+                        cyclicBarrier.await(/*10, TimeUnit.MILLISECONDS*/);  //V
+                      } catch (Exception e) {                                //V
+                        e.printStackTrace();                                 //V
+                      } finally {                                            //V
+                        recycleChannel(channel);                             //V
+                        //V
+                      }                                                      //V
+                    }                                                        //V
+                  });                                                        //V
+            }                                                                //V
+            //V
+          });                                                                //V
+          cyclicBarrier.await(3, BlobAntiPatternObject.getDefaultCollectorTimeUnit());
           Map<String, String> headerStrings = state.getHeaderStrings();
 
           CouchTx ctx = new CouchTx().id(pathRescode);
@@ -352,9 +349,9 @@ public enum CouchMetaDriver {
       StringBuilder sb = new StringBuilder(db);
       if (docId != null) {
         sb.append("/").append(docId);
-      }
-      if (rev != null) {
-        sb.append("?rev=").append(rev);
+        if (rev != null) {
+          sb.append("?rev=").append(rev);
+        }
       }
       dbKeysBuilder.put(etype.opaque, sb.toString());
       return JsonSend.visit(dbKeysBuilder, actionBuilder);
@@ -415,14 +412,14 @@ public enum CouchMetaDriver {
             @Override
             public void run() {
               try {
-                cyclicBarrier.await();
-              } catch (Throwable e) {
-                e.printStackTrace();  //todo: verify for a purpose
-              }
-            }
-          });
-        }
-      });
+                cyclicBarrier.await();                                    //V
+              } catch (Throwable e) {                                     //V
+                e.printStackTrace();                                      //V
+              }                                                           //V
+            }                                                             //V
+          });                                                             //V
+        }                                                                 //V
+      });                                                                 //V
       int await = cyclicBarrier.await(3, BlobAntiPatternObject.getDefaultCollectorTimeUnit());
       return payload.get();
     }
@@ -437,66 +434,60 @@ public enum CouchMetaDriver {
   @DbTask({rows, future, continuousFeed}) @DbResultUnit(CouchResultSet.class) @DbKeys(value = {db, view}, optional = type)ViewFetch {
     @Override
     public <T> Object visit(DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
-      SelectionKey key = actionBuilder.key();
-      SocketChannel couchConnection = null;
-      Object poll = null;
-      T poll1 = null;
-      try {
-        couchConnection = null == key || key.channel().isOpen() ? createCouchConnection() : (SocketChannel) key.channel();
+      AtomicReference<CouchTx> payload = new AtomicReference<CouchTx>();
+      final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
+      final String db = '/' + ((String) dbKeysBuilder.get(etype.db)).replace("//", "/");
+      final String view = (String) dbKeysBuilder.get(etype.view);
+      Class aClass = dbKeysBuilder.get(etype.type);
+      Class type = aClass == null ? String.class : aClass;
+      final SocketChannel channel = createCouchConnection();
+      HttpMethod.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
+        @Override
+        public void onWrite(SelectionKey key) throws Exception {
+          ByteBuffer reqHdrs = actionBuilder.state().headerInterest(ETAG, TRANSFER_ENCODING, CONTENT_LENGTH).pathResCode(('/' + db + '/' + view).replace("//", "/")).protocolStatus("GET").asRequestHeaderByteBuffer();
+          int wrote = channel.write(reqHdrs);
+        }
 
-        String idpath = idpath(dbKeysBuilder, etype.view);
-        final String format = MessageFormat.format("GET " + idpath + " HTTP/1.1\r\nAccept: application/json\r\n\r\n", idpath.trim()).replace("//", "/");
-        final SocketChannel cc = couchConnection;
-        HttpMethod.enqueue(couchConnection, OP_WRITE | OP_CONNECT, new Impl() {
-          @Override
-          public void onWrite(SelectionKey key) throws Exception {
-            actionBuilder.key(key);
-            byte[] bytes = format.getBytes();
-            int write = cc.write(ByteBuffer.wrap(bytes));
-            key.interestOps(OP_READ).attach(new Impl() {
-              @Override
-              public void onRead(SelectionKey key) throws Exception {
-                final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
-                int read = cc.read(dst);
-                final Rfc822HeaderState state = new Rfc822HeaderState(COOKIE, ETAG, CONTENT_LENGTH, TRANSFER_ENCODING).apply((ByteBuffer) dst.flip());
-                actionBuilder.state(state);
+        ByteBuffer cursor;
 
-
-                if (state.getHeaderStrings().containsKey(TRANSFER_ENCODING)) {
-                  //noinspection unchecked
-                  ChunkedEncodingVisitor ob = new ChunkedEncodingVisitor(dst, getReceiveBufferSize(), actionBuilder.sync());
-                  key.attach(ob);
-                  ob.onRead(key);
-                } else {
-                  actionBuilder.key(null);
-                  EXECUTOR_SERVICE.submit(new Runnable() {
-                    public void run() {
-                      try {
-                        System.err.println("view fetch error: " + deepToString(state, UTF8.decode(dst.slice())));
-                        actionBuilder.sync().put(UTF8.decode(dst.slice()).toString());
-                        cc.close();
-                        recycleChannel(cc);
-                      } catch (Throwable e) {
-                        e.printStackTrace();  //todo: verify for a purpose
-                      }
-                    }
-                  });
-                }
-
-              }
-            });
+        @Override
+        public void onRead(SelectionKey key) throws Exception {
+          if (cursor == null) {
+            ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
+            int read = channel.read(dst);
+            Rfc822HeaderState state = actionBuilder.state();
+            if (!state.apply((ByteBuffer) dst.flip()).pathResCode().equals("200")) {
+              cyclicBarrier.reset();
+            }
+            cursor = dst.slice();
+          } else {
+            channel.read(cursor);
           }
-        });
+          Impl prev = this;
+          final ByteBuffer slice = (ByteBuffer) cursor.rewind();
+          while (slice.get() != '\n') ;
+          if (!slice.hasRemaining())  {
+          //recvbuffer starvation
+            //rewind the slice and reque with a shiny new recvbuffer
 
-        poll1 = (T) actionBuilder.sync().poll(3, BlobAntiPatternObject.getDefaultCollectorTimeUnit());
-        System.err.println("view res: " + deepToString(poll1, actionBuilder));
+            cursor = ByteBuffer.allocateDirect(getReceiveBufferSize()).put((ByteBuffer) slice.rewind());
+            key.selector().wakeup();
+            return;
+          }
 
-      } catch (Exception e) {
-        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-      } finally {
-      }
+          Long.parseLong(UTF8.decode((ByteBuffer) slice.flip()).toString().trim());
+          key.selector().wakeup();
+          key.attach(new Impl() {
+            @Override
+            public void onRead(SelectionKey key)   {
 
-      return poll1;
+            }
+          });
+        }
+      });
+
+             //mid-rewrite, early checkin.
+      return null;
     }
   },
   @DbTask({tx, oneWay, rows, future, continuousFeed}) @DbKeys(value = {opaque, validjson}, optional = type)JsonSend {
@@ -509,7 +500,7 @@ public enum CouchMetaDriver {
       int lastSlashIndex = opaque.lastIndexOf('/');
       final byte[] outbound = validjson.getBytes(UTF8);
       final Rfc822HeaderState state = actionBuilder.state();
-      final ByteBuffer header = state.headers(ETAG, CONTENT_LENGTH, CONTENT_ENCODING)
+      final ByteBuffer header = state.headerInterest(ETAG, CONTENT_LENGTH, CONTENT_ENCODING)
           .methodProtocol(lastSlashIndex < opaque.lastIndexOf('?') || lastSlashIndex != opaque.indexOf('/') ? "PUT" : "POST")//works with or without _id [Version]set.
           .pathResCode(opaque)
           .protocolStatus("HTTP/1.1")
@@ -566,16 +557,12 @@ public enum CouchMetaDriver {
         void deliver() throws BrokenBarrierException, InterruptedException {
           CharBuffer decode = UTF8.decode(cursor);
           String json = decode.toString();
-          payload.set(GSON.fromJson(json, CouchTx.class));
-          int await = cyclicBarrier.await();
-          recycleChannel(channel);
-        }
-      });
-      if (DEBUG_SENDJSON) {
-        cyclicBarrier.await(/*3, rxf.server.BlobAntiPatternObject.defaultCollectorTimeUnit*/);
-      } else {
-        cyclicBarrier.await(3, BlobAntiPatternObject.getDefaultCollectorTimeUnit());
-      }
+          payload.set(GSON.fromJson(json, CouchTx.class));   //V
+          int await = cyclicBarrier.await();                 //V
+          recycleChannel(channel);                           //V
+        }                                                    //V
+      });                                                    //V
+      cyclicBarrier.await(3, BlobAntiPatternObject.getDefaultCollectorTimeUnit());
 
       CouchTx couchTx = payload.get();
       return couchTx;
@@ -604,6 +591,21 @@ public enum CouchMetaDriver {
         public ByteBuffer cursor;
 
         @Override
+        public void onRead(SelectionKey key) throws Exception {
+
+          ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
+          int read = channel.read(dst);
+          String continueString = actionBuilder.state().apply((ByteBuffer) dst.flip()).pathResCode();
+
+          if (continueString.startsWith("100")) {
+            cursor = (ByteBuffer) dbKeysBuilder.get(etype.blob);
+            key.interestOps(OP_WRITE).selector().wakeup();
+          }
+
+
+        }
+
+        @Override
         public void onWrite(SelectionKey key) throws Exception {
           if (null != cursor) {
             int write = channel.write(cursor);
@@ -622,46 +624,27 @@ public enum CouchMetaDriver {
                     @Override
                     public void run() {
                       try {
-                        payload.set(UTF8.decode(dst.slice()).toString()); //ignoring content-length here..  not actually sane.
-                        cyclicBarrier.await();
-                        recycleChannel(channel);
-                      } catch (Throwable e) {
-                        try {
-                          channel.socket().close();
-                        } catch (IOException e1) {
-
-                        }
-                        e.printStackTrace();  //todo: verify for a purpose
-                      }
-
-                    }
-                  });
-
-                }
-              });
-            }
-
-          }
-          int write = channel.write((ByteBuffer) byteBuffer.rewind());
-          key.interestOps(OP_READ).selector().wakeup();
-        }
-
-        @Override
-        public void onRead(SelectionKey key) throws Exception {
-
-          ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
-          int read = channel.read(dst);
-          String continueString = actionBuilder.state().apply((ByteBuffer) dst.flip()).pathResCode();
-
-          if (continueString.startsWith("100")) {
-            cursor = (ByteBuffer) dbKeysBuilder.get(etype.blob);
-            key.interestOps(OP_WRITE).selector().wakeup();
-          }
-
-
-        }
-      });
-      cyclicBarrier.await(6, TimeUnit.MINUTES);
+                        payload.set(UTF8.decode(dst.slice()).toString()); //todo: ignoring content-length here..  not actually sane.  testcase with getReceiveBufersize()=64 needed
+                        cyclicBarrier.await();                              //V
+                        recycleChannel(channel);                            //V
+                      } catch (Throwable e) {                               //V
+                        try {                                               //V
+                          channel.socket().close();                         //V
+                        } catch (IOException e1) {                          //V
+                        }                                                   //V
+                        e.printStackTrace();                                //V
+                      }                                                     //V
+                    }                                                       //V
+                  });                                                       //V
+                }                                                           //V
+              });                                                           //V
+            }                                                               //V
+          }                                                                 //V
+          int write = channel.write((ByteBuffer) byteBuffer.rewind());      //V
+          key.interestOps(OP_READ).selector().wakeup();                     //V
+        }                                                                   //V
+      });                                                                   //V
+      cyclicBarrier.await(3, getDefaultCollectorTimeUnit());                //V
       return payload;
     }
 

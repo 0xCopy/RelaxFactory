@@ -77,7 +77,7 @@ public class ContentRootImpl extends Impl {
         String accepts = state.get().headerString(ACCEPT_ENCODING);
         String ceString = null;
         if (null != accepts) {
-//              String accepts = UTF8.decode((ByteBuffer) headers.clear().limit(ints[1]).position(ints[0])).toString().trim();
+//              String accepts = UTF8.decode((ByteBuffer) headerInterest.clear().limit(ints[1]).position(ints[0])).toString().trim();
           for (CompressionTypes compType : CompressionTypes.values()) {
             if (accepts.contains(compType.name())) {
               File file1 = new File(finalFname + "." + compType.suffix);

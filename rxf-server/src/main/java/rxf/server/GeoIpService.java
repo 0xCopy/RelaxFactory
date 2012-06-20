@@ -221,7 +221,7 @@ public class GeoIpService {
   }
 
   /**
-   * this installs the csv headers on geo lookups for 127.0.0.1
+   * this installs the csv headerInterest on geo lookups for 127.0.0.1
    */
   public static void installLocalhostDeveloperGeoIp() throws UnknownHostException {
     long key = sortableInetAddress(Inet4Address.getByAddress(new byte[]{(byte) 127, (byte) 0, (byte) 0, (byte) 1}));
@@ -231,7 +231,7 @@ public class GeoIpService {
     while (',' != locationMMBuf.get()) ;//skip to first comma in header line
     geoipMap.put(key, locationMMBuf.position());
 
-    System.err.println("geoip headers: " + mapAddressLookup(BlobAntiPatternObject.LOOPBACK));
+    System.err.println("geoip headerInterest: " + mapAddressLookup(BlobAntiPatternObject.LOOPBACK));
   }
 
   public static void runGeoIpLookupBenchMark(ByteBuffer loc, long[] l1, int[] l2, final ByteBuffer ix) throws UnknownHostException {
@@ -395,22 +395,21 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
 
                     EXECUTOR_SERVICE.submit(new Callable<Object>() {
                       public Object call() throws Exception {
-                        cyclicBarrier.await();
-                        payload.set(UTF8.decode(dst.slice()).toString().trim());
-                        return null;
-                      }
-                    });
-                  }
-                });
-              }
-            });
-
-            Callable<Object> callable = new Callable<Object>() {
-              public Object call() throws Exception {
-
-
-                String take = payload.get();
-                cyclicBarrier.await(3, rxf.server.BlobAntiPatternObject.getDefaultCollectorTimeUnit());
+                        cyclicBarrier.await();//  ------------------------------>    //V
+                        payload.set(UTF8.decode(dst.slice()).toString().trim());     //V
+                        return null;                                                 //V
+                      }                                                              //V
+                    });                                                              //V
+                  }                                                                  //V
+                });                                                                  //V
+              }                                                                      //V
+            });                                                                      //V
+            Callable<Object> callable = new Callable<Object>() {       //              V
+              public Object call() throws Exception {                  //            //V
+                //                                                                   //V
+                //                                                                   //V
+                String take = payload.get();//                                         V
+                cyclicBarrier.await(3,  BlobAntiPatternObject.getDefaultCollectorTimeUnit());
                 key.attach(this);
                 System.err.println("rootnode: " + take);
                 Map map = GSON.fromJson(take, Map.class);
@@ -672,7 +671,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
           while (locBuf.get() != '\n') ;//copyright
           while (locBuf.get() != ',') ; //start with country
           geoIpHeaderOffset = locBuf.position();
-          while (locBuf.get() != '\n') ;//headers
+          while (locBuf.get() != '\n') ;//headerInterest
 
           while (locBuf.hasRemaining()) {
             while (locBuf.hasRemaining() && ',' != locBuf.get()) ;
@@ -698,7 +697,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
           //  tc: 1016 (ms) lc: 1874805
 
           while (blockBuf.get() != '\n') ;//copyright
-          while (blockBuf.get() != '\n') ;//headers
+          while (blockBuf.get() != '\n') ;//headerInterest
           long l1 = System.currentTimeMillis();
           while (blockBuf.hasRemaining()) {
             tBuf.clear().position(blockBuf.position() + 1);
