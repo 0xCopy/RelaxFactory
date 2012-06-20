@@ -7,6 +7,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import one.xio.HttpHeaders;
 import one.xio.HttpMethod;
@@ -24,13 +25,13 @@ import static rxf.server.BlobAntiPatternObject.moveCaretToDoubleEol;
  * much of what is in {@link BlobAntiPatternObject} can
  * be teased into this class peicemeal.
  * <p/>
- * since java string parsing can be expensive and headerInterest
+ * since java string parsing can be expensive and addHeaderInterest
  * can be numerous this class is designed to parse only
  * what is necessary or typical and enable slower dynamic
  * grep operations to suit against a captured
  * {@link ByteBuffer} as needed (still cheap)
  * <p/>
- * preload headerInterest and cookies, send response
+ * preload addHeaderInterest and cookies, send response
  * and request initial onRead for .apply()
  * <p/>
  * <p/>
@@ -67,7 +68,7 @@ public class Rfc822HeaderState {
    * <p/>
    * contains either the method (request) or a the "HTTP/1.1" string (the protocol) on responses.
    * <p/>
-   * user is responsible for populating this on outbound headerInterest
+   * user is responsible for populating this on outbound addHeaderInterest
    */
   private String methodProtocol;
 
@@ -76,7 +77,7 @@ public class Rfc822HeaderState {
    * <p/>
    * contains either the path (request) or a the numeric result code on responses.
    * <p/>
-   * user is responsible for populating this on outbound headerInterest
+   * user is responsible for populating this on outbound addHeaderInterest
    */
   private String pathRescode;
 
@@ -136,13 +137,13 @@ public class Rfc822HeaderState {
   /**
    * header values which are pre-parsed during {@link #apply(java.nio.ByteBuffer)}.
    * <p/>
-   * headerInterest in the request/response not so named in this list will be passed over.
+   * addHeaderInterest in the request/response not so named in this list will be passed over.
    * <p/>
    * the value of a header appearing more than once is unspecified.
    * <p/>
-   * multiple occuring headerInterest require {@link #getHeadersNamed(String)}
+   * multiple occuring addHeaderInterest require {@link #getHeadersNamed(String)}
    *
-   * @return the parsed values designated by the {@link #headerInterest} list of keys.  headerInterest present in {@link #headerInterest}
+   * @return the parsed values designated by the {@link #headerInterest} list of keys.  addHeaderInterest present in {@link #headerInterest}
    *         not appearing in the {@link ByteBuffer} input will not be in this map.
    */
   public Map<String, String> getHeaderStrings() {
@@ -150,7 +151,7 @@ public class Rfc822HeaderState {
   }
 
   /**
-   * this is agrep of the full header state to find one or more headerInterest of a given name.
+   * this is agrep of the full header state to find one or more addHeaderInterest of a given name.
    * <p/>
    * todo: regex?
    *
@@ -158,7 +159,7 @@ public class Rfc822HeaderState {
    * @return a list of values
    */
   List<String> getHeadersNamed(String header) {
-    final ByteBuffer byteBuffer = headerBuf();
+    ByteBuffer byteBuffer = headerBuf();
     List<String> ret;
     if (byteBuffer != null) {
       String decode = UTF8.decode((ByteBuffer) byteBuffer.rewind()).toString();
@@ -207,7 +208,7 @@ public class Rfc822HeaderState {
   /**
    * direction-agnostic RFC822 header state is mapped from a ByteBuffer with tolerance for HTTP method and results in the first line.
    * <p/>
-   * {@link #headerInterest } contains a list of headerInterest that will be converted to a {@link Map} and available via {@link rxf.server.Rfc822HeaderState#getHeaderStrings()}
+   * {@link #headerInterest } contains a list of addHeaderInterest that will be converted to a {@link Map} and available via {@link rxf.server.Rfc822HeaderState#getHeaderStrings()}
    * <p/>
    * {@link #cookies } contains a list of cookies from which to parse from Cookie header into {@link #cookieStrings}
    * <p/>
@@ -254,32 +255,38 @@ public class Rfc822HeaderState {
     return this;
   }
 
-  public Rfc822HeaderState headers(String header) {
-    String[] temp = new String[headerInterest.length + 1];
-    System.arraycopy(this.headerInterest, 0, temp, 0, this.headerInterest.length);
-    temp[this.headerInterest.length] = header;
-    this.headerInterest = temp;
+  public Rfc822HeaderState headerInterest(String... replaceInterest) {
+    headerInterest = replaceInterest;
     return this;
   }
 
   /**
-   * Appends to the list of header keys this parser is interested in mapping to strings.
+   * Appends to the Set of header keys this parser is interested in mapping to strings.
    * <p/>
-   * these headerInterest are mapped at cardinality<=1 when  {@link #apply(java.nio.ByteBuffer)}  }is called.
+   * these addHeaderInterest are mapped at cardinality<=1 when  {@link #apply(java.nio.ByteBuffer)}  }is called.
    * <p/>
-   * for cardinality=>1  headerInterest {@link #getHeadersNamed(String)} is a pure grep over the entire ByteBuffer.
+   * for cardinality=>1  addHeaderInterest {@link #getHeadersNamed(String)} is a pure grep over the entire ByteBuffer.
    * <p/>
    *
-   * @param headers
+   * @param newInterest
    * @return
    * @see #getHeadersNamed(String)
    * @see #apply(java.nio.ByteBuffer)
    */
-  public Rfc822HeaderState headerInterest(String... headers) {
-    String[] temp = new String[headers.length + this.headerInterest.length];
-    System.arraycopy(this.headerInterest, 0, temp, 0, this.headerInterest.length);
-    System.arraycopy(headers, 0, temp, this.headerInterest.length, headers.length);
-    this.headerInterest = temp;
+  public Rfc822HeaderState addHeaderInterest(String... newInterest) {
+
+
+    //adds a few more instructions than the blind append but does what was desired
+    Set<String> theCow = new CopyOnWriteArraySet<String>(Arrays.<String>asList(headerInterest));
+    theCow.addAll(Arrays.asList(newInterest));
+    String[] strings = (String[]) theCow.toArray(new String[theCow.size()]);
+    Arrays.sort(strings);
+    headerInterest = strings;
+
+//    String[] temp = new String[headers.length + this.addHeaderInterest.length];
+//    System.arraycopy(this.addHeaderInterest, 0, temp, 0, this.addHeaderInterest.length);
+//    System.arraycopy(headers, 0, temp, this.addHeaderInterest.length, headers.length);
+//    this.addHeaderInterest = temp;
     return this;
   }
 
@@ -353,7 +360,7 @@ public class Rfc822HeaderState {
   }
 
   /**
-   * holds the values parsed during {@link #apply(java.nio.ByteBuffer)} and holds the key-values created as headerInterest in
+   * holds the values parsed during {@link #apply(java.nio.ByteBuffer)} and holds the key-values created as addHeaderInterest in
    * {@link #asRequestHeaderByteBuffer()} and {@link #asResponseHeaderByteBuffer()}
    *
    * @return
@@ -416,7 +423,7 @@ public class Rfc822HeaderState {
   /**
    * dual purpose HTTP protocol header token found on the first line of a request/response in the second position
    * contains either the path (request) or a the numeric result code on responses.
-   * user is responsible for populating this on outbound headerInterest
+   * user is responsible for populating this on outbound addHeaderInterest
    *
    * @return
    * @see #pathRescode
@@ -461,7 +468,7 @@ public class Rfc822HeaderState {
   public String toString() {
     return "Rfc822HeaderState{" +
         "dirty=" + dirty +
-        ", headerInterest=" + (null == headerInterest ? null : Arrays.asList(headerInterest)) +
+        ", addHeaderInterest=" + (null == headerInterest ? null : Arrays.asList(headerInterest)) +
         ", cookies=" + (null == cookies ? null : Arrays.asList(cookies)) +
         ", sourceRoute=" + sourceRoute +
         ", headerBuf=" + headerBuf +
@@ -475,13 +482,13 @@ public class Rfc822HeaderState {
 
 
   /**
-   * writes method, headersStrings, and cookieStrings to a {@link String } suitable for Response headerInterest
+   * writes method, headersStrings, and cookieStrings to a {@link String } suitable for Response addHeaderInterest
    * <p/>
-   * populates headerInterest from {@link #headerStrings}
+   * populates addHeaderInterest from {@link #headerStrings}
    * <p/>
-   * if {@link #dirty} is set this will include SetCookie headerInterest (plural) one for each of {@link #cookieStrings()}
+   * if {@link #dirty} is set this will include SetCookie addHeaderInterest (plural) one for each of {@link #cookieStrings()}
    *
-   * @return http headerInterest for use with http 1.1
+   * @return http addHeaderInterest for use with http 1.1
    */
   public String asResponseHeaderString() {
     String protocol = methodProtocol() + " " + pathResCode() + " " + protocolStatus() + "\r\n";
@@ -497,13 +504,13 @@ public class Rfc822HeaderState {
   }
 
   /**
-   * writes method, headersStrings, and cookieStrings to a {@link ByteBuffer} suitable for Response headerInterest
+   * writes method, headersStrings, and cookieStrings to a {@link ByteBuffer} suitable for Response addHeaderInterest
    * <p/>
-   * populates headerInterest from {@link #headerStrings}
+   * populates addHeaderInterest from {@link #headerStrings}
    * <p/>
-   * if {@link #dirty} is set this will include SetCookie headerInterest (plural) one for each of {@link #cookieStrings()}
+   * if {@link #dirty} is set this will include SetCookie addHeaderInterest (plural) one for each of {@link #cookieStrings()}
    *
-   * @return http headerInterest for use with http 1.1
+   * @return http addHeaderInterest for use with http 1.1
    */
   public ByteBuffer asResponseHeaderByteBuffer() {
     String protocol = asResponseHeaderString();
@@ -513,9 +520,9 @@ public class Rfc822HeaderState {
   /**
    * writes method, headersStrings, and cookieStrings to a {@link String} suitable for RequestHeaders
    * <p/>
-   * populates headerInterest from {@link #headerStrings}
+   * populates addHeaderInterest from {@link #headerStrings}
    *
-   * @return http headerInterest for use with http 1.1
+   * @return http addHeaderInterest for use with http 1.1
    */
   public String asRequestHeaderString() {
     String protocol = methodProtocol() + " " + pathResCode() + " " + protocolStatus() + "\r\n";
@@ -533,9 +540,9 @@ public class Rfc822HeaderState {
   /**
    * writes method, headersStrings, and cookieStrings to a {@link ByteBuffer} suitable for RequestHeaders
    * <p/>
-   * populates headerInterest from {@link #headerStrings}
+   * populates addHeaderInterest from {@link #headerStrings}
    *
-   * @return http headerInterest for use with http 1.1
+   * @return http addHeaderInterest for use with http 1.1
    */
   public ByteBuffer asRequestHeaderByteBuffer() {
     String protocol = asRequestHeaderString();
@@ -559,7 +566,7 @@ public class Rfc822HeaderState {
    * @return same string without quotes
    */
   public String dequotedHeader(String headerKey) {
-    final String s = headerString(headerKey);
+    String s = headerString(headerKey);
     return BlobAntiPatternObject.dequote(s);
   }
 

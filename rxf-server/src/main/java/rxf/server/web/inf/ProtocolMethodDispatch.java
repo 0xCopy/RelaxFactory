@@ -111,7 +111,7 @@ public class ProtocolMethodDispatch extends Impl {
       ((SocketChannel) key.channel()).socket().close();//cancel();
       return;
     }
-    //break down the incoming headerInterest.
+    //break down the incoming addHeaderInterest.
     Rfc822HeaderState state;
 
     RFState.set(state = new Rfc822HeaderState(CONTENT_LENGTH, CONTENT_TYPE, CONTENT_ENCODING, ETAG, TRANSFER_ENCODING, ACCEPT).cookies(BlobAntiPatternObject.class.getCanonicalName(), BlobAntiPatternObject.MYGEOIPSTRING).sourceKey(key).apply((ByteBuffer) cursor.flip()));

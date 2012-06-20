@@ -221,7 +221,7 @@ public class GeoIpService {
   }
 
   /**
-   * this installs the csv headerInterest on geo lookups for 127.0.0.1
+   * this installs the csv addHeaderInterest on geo lookups for 127.0.0.1
    */
   public static void installLocalhostDeveloperGeoIp() throws UnknownHostException {
     long key = sortableInetAddress(Inet4Address.getByAddress(new byte[]{(byte) 127, (byte) 0, (byte) 0, (byte) 1}));
@@ -231,7 +231,7 @@ public class GeoIpService {
     while (',' != locationMMBuf.get()) ;//skip to first comma in header line
     geoipMap.put(key, locationMMBuf.position());
 
-    System.err.println("geoip headerInterest: " + mapAddressLookup(BlobAntiPatternObject.LOOPBACK));
+    System.err.println("geoip addHeaderInterest: " + mapAddressLookup(BlobAntiPatternObject.LOOPBACK));
   }
 
   public static void runGeoIpLookupBenchMark(ByteBuffer loc, long[] l1, int[] l2, final ByteBuffer ix) throws UnknownHostException {
@@ -390,7 +390,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
                   public void onRead(SelectionKey key) throws Exception {
                     final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
                     int read1 = channel.read(dst);
-                    Rfc822HeaderState state = new Rfc822HeaderState().headers(CONTENT_LENGTH);
+                    Rfc822HeaderState state = new Rfc822HeaderState().addHeaderInterest(CONTENT_LENGTH);
                     state.apply((ByteBuffer) dst.flip());
 
                     EXECUTOR_SERVICE.submit(new Callable<Object>() {
@@ -409,7 +409,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
                 //                                                                   //V
                 //                                                                   //V
                 String take = payload.get();//                                         V
-                cyclicBarrier.await(3,  BlobAntiPatternObject.getDefaultCollectorTimeUnit());
+                cyclicBarrier.await(3, BlobAntiPatternObject.getDefaultCollectorTimeUnit());
                 key.attach(this);
                 System.err.println("rootnode: " + take);
                 Map map = GSON.fromJson(take, Map.class);
@@ -671,7 +671,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
           while (locBuf.get() != '\n') ;//copyright
           while (locBuf.get() != ',') ; //start with country
           geoIpHeaderOffset = locBuf.position();
-          while (locBuf.get() != '\n') ;//headerInterest
+          while (locBuf.get() != '\n') ;//addHeaderInterest
 
           while (locBuf.hasRemaining()) {
             while (locBuf.hasRemaining() && ',' != locBuf.get()) ;
@@ -697,7 +697,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
           //  tc: 1016 (ms) lc: 1874805
 
           while (blockBuf.get() != '\n') ;//copyright
-          while (blockBuf.get() != '\n') ;//headerInterest
+          while (blockBuf.get() != '\n') ;//addHeaderInterest
           long l1 = System.currentTimeMillis();
           while (blockBuf.hasRemaining()) {
             tBuf.clear().position(blockBuf.position() + 1);
