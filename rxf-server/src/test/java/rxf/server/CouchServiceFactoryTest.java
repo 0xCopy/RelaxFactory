@@ -18,9 +18,18 @@ import static junit.framework.Assert.assertTrue;
 
 public class CouchServiceFactoryTest {
   private static ScheduledExecutorService exec;
-
+static                                        boolean first=true;
   @BeforeClass
   public static void setUp() throws Exception {
+    try {
+      if(first) {first=false;
+        tearDown();
+      }
+    } catch (Exception e) {
+      e.printStackTrace();  //todo: verify for a purpose
+    } finally {
+    }
+
     BlobAntiPatternObject.DEBUG_SENDJSON = true;
     HttpMethod.killswitch = false;
     exec = Executors.newSingleThreadScheduledExecutor();
@@ -40,7 +49,7 @@ public class CouchServiceFactoryTest {
   public static void tearDown() throws Exception {
     CouchDriver.DbDelete.$().db(DB).to().fire().tx();
     try {
-      HttpMethod.killswitch = false;
+      HttpMethod.killswitch = true;
       HttpMethod.getSelector().close();
 //      HttpMethod.broke = null;
       exec.shutdown();

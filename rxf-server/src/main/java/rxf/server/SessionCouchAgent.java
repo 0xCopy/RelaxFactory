@@ -10,7 +10,7 @@ import java.util.LinkedHashMap;
 public class SessionCouchAgent<T> extends CouchChangesClient {
 
   public SessionCouchAgent(CouchLocator<T> locator) {
-    feedname = (locator).getPathPrefix();
+    feedname = locator.getEntityName();
   }
 
   @Override
