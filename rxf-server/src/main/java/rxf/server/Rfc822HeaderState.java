@@ -82,8 +82,14 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
       return (T) protocolStatus(protocolStatus);
     }
 
+    /**
+     * convenience method ^2 -- sets rescode and status captions from same enum
+     *
+     * @param httpStatus
+     * @return
+     */
     public T status(HttpStatus httpStatus) {
-      return (T) protocolStatus(httpStatus.caption);
+      return (T) protocolStatus(httpStatus.caption).resCode(httpStatus);
     }
 
     @Override
