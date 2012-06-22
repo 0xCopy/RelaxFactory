@@ -3,15 +3,15 @@ package rxf.server;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.*;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-import one.xio.HttpHeaders;
-import one.xio.HttpMethod;
+import com.google.web.bindery.requestfactory.server.SimpleRequestProcessor;
+import one.xio.*;
 import rxf.server.driver.CouchMetaDriver;
+import rxf.server.web.inf.ProtocolMethodDispatch;
 
 import static one.xio.HttpMethod.UTF8;
 import static rxf.server.BlobAntiPatternObject.COOKIE;
@@ -70,12 +70,20 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
       return (T) pathResCode(pathRescode);
     }
 
+    public T resCode(HttpStatus pathRescode) {
+      return (T) pathResCode(pathRescode.name().substring(1));
+    }
+
     public String status() {
       return super.protocolStatus();
     }
 
     public T status(String protocolStatus) {
       return (T) protocolStatus(protocolStatus);
+    }
+
+    public T status(HttpStatus httpStatus) {
+      return (T) protocolStatus(httpStatus.caption);
     }
 
     @Override
@@ -212,11 +220,11 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
    */
   private ByteBuffer headerBuf;
   /**
-   * parsed valued post-{@link #apply(java.nio.ByteBuffer)}
+   * parsed valued post-{@link #apply(ByteBuffer)}
    */
   private Map<String, String> headerStrings;
   /**
-   * parsed cookie values post-{@link #apply(java.nio.ByteBuffer)}
+   * parsed cookie values post-{@link #apply(ByteBuffer)}
    */
   public Map<String, String> cookieStrings;
   /**
@@ -260,7 +268,7 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
   /**
    * default ctor populates {@link #headerInterest}
    *
-   * @param headerInterest keys placed in     {@link #headerInterest} which will be parsed on {@link #apply(java.nio.ByteBuffer)}
+   * @param headerInterest keys placed in     {@link #headerInterest} which will be parsed on {@link #apply(ByteBuffer)}
    */
   public Rfc822HeaderState(String... headerInterest) {
 
@@ -286,9 +294,9 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
   /**
    * the actual {@link ByteBuffer} associated with the state.
    * <p/>
-   * this buffer must start at position 0 in most cases requiring {@link   java.nio.channels.ReadableByteChannel#read(java.nio.ByteBuffer)}
+   * this buffer must start at position 0 in most cases requiring {@link   ReadableByteChannel#read(ByteBuffer)}
    *
-   * @return what is sent to {@link #apply(java.nio.ByteBuffer)}
+   * @return what is sent to {@link #apply(ByteBuffer)}
    */
 
   public ByteBuffer headerBuf() {
@@ -296,7 +304,7 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
   }
 
   /**
-   * header values which are pre-parsed during {@link #apply(java.nio.ByteBuffer)}.
+   * header values which are pre-parsed during {@link #apply(ByteBuffer)}.
    * <p/>
    * addHeaderInterest in the HttpRequest/HttpResponse not so named in this list will be passed over.
    * <p/>
@@ -369,13 +377,13 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
   /**
    * direction-agnostic RFC822 header state is mapped from a ByteBuffer with tolerance for HTTP method and results in the first line.
    * <p/>
-   * {@link #headerInterest } contains a list of addHeaderInterest that will be converted to a {@link Map} and available via {@link rxf.server.Rfc822HeaderState#getHeaderStrings()}
+   * {@link #headerInterest } contains a list of addHeaderInterest that will be converted to a {@link Map} and available via {@link Rfc822HeaderState#getHeaderStrings()}
    * <p/>
    * {@link #cookies } contains a list of cookies from which to parse from Cookie header into {@link #cookieStrings}
    * <p/>
    * setting cookies for a HttpResponse header is possible by setting {@link #dirty } to true and setting  {@link #cookieStrings} map values.
    * <p/>
-   * currently this is  done inside of {@link rxf.server.web.inf.ProtocolMethodDispatch } surrounding {@link com.google.web.bindery.requestfactory.server.SimpleRequestProcessor#process(String)}
+   * currently this is  done inside of {@link ProtocolMethodDispatch } surrounding {@link SimpleRequestProcessor#process(String)}
    *
    * @param cursor
    * @return this
@@ -424,7 +432,7 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
   /**
    * Appends to the Set of header keys this parser is interested in mapping to strings.
    * <p/>
-   * these addHeaderInterest are mapped at cardinality<=1 when  {@link #apply(java.nio.ByteBuffer)}  }is called.
+   * these addHeaderInterest are mapped at cardinality<=1 when  {@link #apply(ByteBuffer)}  }is called.
    * <p/>
    * for cardinality=>1  addHeaderInterest {@link #getHeadersNamed(String)} is a pure grep over the entire ByteBuffer.
    * <p/>
@@ -432,7 +440,7 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
    * @param newInterest
    * @return
    * @see #getHeadersNamed(String)
-   * @see #apply(java.nio.ByteBuffer)
+   * @see #apply(ByteBuffer)
    */
   public T addHeaderInterest(String... newInterest) {
 
@@ -496,7 +504,7 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
   }
 
   /**
-   * this holds an inet address which may be inferred diuring {@link #sourceKey(java.nio.channels.SelectionKey)} as well as directly
+   * this holds an inet address which may be inferred diuring {@link #sourceKey(SelectionKey)} as well as directly
    *
    * @param sourceRoute an internet ipv4 address
    * @return self
@@ -507,9 +515,9 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
   }
 
   /**
-   * this is what has been sent to {@link #apply(java.nio.ByteBuffer)}.
+   * this is what has been sent to {@link #apply(ByteBuffer)}.
    * <p/>
-   * care must be taken to avoid {@link java.nio.ByteBuffer#compact()} during the handling of
+   * care must be taken to avoid {@link ByteBuffer#compact()} during the handling of
    * the dst/cursor found in AsioVisitor code if this is sent in without a clean ByteBuffer.
    *
    * @param headerBuf an immutable  {@link  ByteBuffer}
@@ -521,7 +529,7 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
   }
 
   /**
-   * holds the values parsed during {@link #apply(java.nio.ByteBuffer)} and holds the key-values created as addHeaderInterest in
+   * holds the values parsed during {@link #apply(ByteBuffer)} and holds the key-values created as addHeaderInterest in
    * {@link #asRequestHeaderByteBuffer()} and {@link #asResponseHeaderByteBuffer()}
    *
    * @return
@@ -713,7 +721,7 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
   /**
    * utliity shortcut method to get the parsed value from the {@link #headerStrings} map
    *
-   * @param headerKey name of a header presumed to be parsed during {@link #apply(java.nio.ByteBuffer)}
+   * @param headerKey name of a header presumed to be parsed during {@link #apply(ByteBuffer)}
    * @return the parsed value from the {@link #headerStrings} map
    */
   public String headerString(String headerKey) {
