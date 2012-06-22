@@ -9,16 +9,58 @@ import rxf.server.gen.CouchDriver.DocPersist;
 
 import static rxf.server.BlobAntiPatternObject.GSON;
 
-/**
- * User: jim
- * Date: 5/10/12
- * Time: 7:37 AM
- */
 public abstract class CouchLocator<T> extends Locator<T, String> {
 
-  private String orgname = "rxf_";//default
+  public enum ns {
+    orgname {
+      @Override
+      void setMe(CouchLocator cl, String ns) {
+        cl.setOrgname(ns);
 
-  public String getPathPrefix() {
+      }
+    }, entityName {
+      @Override
+      void setMe(CouchLocator cl, String ns) {
+        cl.setEntityName(ns);
+      }
+    };
+
+    abstract void setMe(CouchLocator cl, String ns);
+  }
+
+  /**
+   * User: jim
+   * Date: 5/10/12
+   * Time: 7:37 AM
+   */
+
+
+  private String entityName;
+
+  public void setEntityName(String entityName) {
+    this.entityName = entityName;
+  }
+
+  //threadlocals dont help much.  rf is dispatched to new threads in a seperate executor.
+  private String orgname = null;
+
+  public CouchLocator(String... nse) {
+    for (int i = 0; i < nse.length; i++) {
+      ns.values()[i].setMe(this,
+          nse[i]);
+
+    }
+  }
+
+  private static String getDefaultOrgName() {
+    return System.getenv("RXF_ORGNAME") == null ? System.getProperty(CouchLocator.class.getCanonicalName().toLowerCase() + ".orgname", "rxf_") : System.getenv("RXF_ORGNAME").toLowerCase().trim();
+  }
+
+  public String getEntityName() {
+    return entityName == null ? getDefaultEntityName() : entityName;
+  }
+
+  private String getDefaultEntityName() {
     return getOrgname() + getDomainType().getSimpleName().toLowerCase();
   }
 
@@ -51,7 +93,7 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
 
   @Override
   public T find(Class<? extends T> clazz, String id) {
-    final String pojo = DocFetch.$().db(getPathPrefix()).docId(id).to().fire().pojo();
+    final String pojo = DocFetch.$().db(getEntityName()).docId(id).to().fire().pojo();
 
     return GSON.fromJson(pojo, getDomainType());
   }
@@ -76,11 +118,11 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
   abstract public Object getVersion(T domainObject);
 
   public String getOrgname() {
-    return orgname;
+    return null == orgname ? getDefaultOrgName() : orgname;
   }
 
   public CouchTx persist(T domainObject) throws Exception {
-    String pathPrefix = getPathPrefix();
+    String pathPrefix = getEntityName();
     String id = getId(domainObject);
 
     return DocPersist.$().db(pathPrefix).validjson(GSON.toJson(domainObject)).to().fire().tx();
@@ -102,5 +144,9 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
    */
   String searchAsync(String queryParm) {
     return null;  //To change body of created methods use File | Settings | File Templates.
+  }
+
+  public void setOrgname(String orgname) {
+    this.orgname = orgname;
   }
 }
