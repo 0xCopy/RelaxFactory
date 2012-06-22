@@ -9,11 +9,11 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import one.xio.AsioVisitor.Impl;
-import one.xio.HttpMethod;
 import org.intellij.lang.annotations.Language;
 import rxf.server.*;
-import rxf.server.an.*;
+import rxf.server.an.DbKeys;
 import rxf.server.an.DbKeys.etype;
+import rxf.server.an.DbTask;
 
 import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
@@ -65,12 +65,12 @@ public enum CouchMetaDriver {
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
       final Rfc822HeaderState state = actionBuilder.state();
-      final ByteBuffer header = state.methodProtocol("PUT").pathResCode("/" + dbKeysBuilder.get(etype.db))
+      final ByteBuffer header = state.methodProtocol("PUT").pathResCode("/" + dbKeysBuilder.get(db))
           .protocolStatus("HTTP/1.1")
           .headerString("Content-Length", "0")
           .asRequestHeaderByteBuffer();
       final SocketChannel channel = createCouchConnection();
-      HttpMethod.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
+      enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
         ByteBuffer cursor = null;
 
         @Override
@@ -87,7 +87,7 @@ public enum CouchMetaDriver {
             state.headerStrings().clear();
             state.addHeaderInterest(CONTENT_LENGTH);
             state.apply((ByteBuffer) cursor.flip());
-            if (BlobAntiPatternObject.DEBUG_SENDJSON) {
+            if (DEBUG_SENDJSON) {
               System.err.println(deepToString(state.pathResCode(), state, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
             }
 
@@ -123,7 +123,7 @@ public enum CouchMetaDriver {
           });                                         //V
         }                                             //V
       });                                             //V
-      int await = cyclicBarrier.await(3L, BlobAntiPatternObject.getDefaultCollectorTimeUnit());
+      int await = cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
       return payload.get();
     }
   },
@@ -133,12 +133,12 @@ public enum CouchMetaDriver {
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
       final Rfc822HeaderState state = actionBuilder.state();
-      final ByteBuffer header = state.methodProtocol("DELETE").pathResCode("/" + dbKeysBuilder.get(etype.db))
+      final ByteBuffer header = state.methodProtocol("DELETE").pathResCode("/" + dbKeysBuilder.get(db))
           .protocolStatus("HTTP/1.1")
           .headerString("Content-Length", "0")
           .asRequestHeaderByteBuffer();
       final SocketChannel channel = createCouchConnection();
-      HttpMethod.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
+      enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
         ByteBuffer cursor = null;
 
         @Override
@@ -155,7 +155,7 @@ public enum CouchMetaDriver {
             state.headerStrings().clear();
             state.addHeaderInterest(CONTENT_LENGTH);
             state.apply((ByteBuffer) cursor.flip());
-            if (BlobAntiPatternObject.DEBUG_SENDJSON) {
+            if (DEBUG_SENDJSON) {
               System.err.println(deepToString(state.pathResCode(), state, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
             }
 
@@ -190,19 +190,19 @@ public enum CouchMetaDriver {
           });                                       //V
         }                                           //V
       });                                           //V
-      int await = cyclicBarrier.await(3L, BlobAntiPatternObject.getDefaultCollectorTimeUnit());
+      int await = cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
       return payload.get();
     }
   },
 
-  @DbTask({pojo, future,json}) /*@DbResultUnit(String.class)*/ @DbKeys({db, docId})DocFetch {
+  @DbTask({pojo, future, json}) /*@DbResultUnit(String.class)*/ @DbKeys({db, docId})DocFetch {
     @Override
     public <T> ByteBuffer visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
 
 //      EnumMap<etype, Object> parms = dbKeysBuilder.parms();
       String db = (String) dbKeysBuilder.get(etype.db);
-      String id = (String) dbKeysBuilder.get(etype.docId);
+      String id = (String) dbKeysBuilder.get(docId);
       final Rfc822HeaderState state = actionBuilder.state().addHeaderInterest(CONTENT_LENGTH).methodProtocol("GET").pathResCode("/" + db + (null == id ? "" : "/" + id.trim()));
       state.protocolStatus("HTTP/1.1");
       final SocketChannel channel = createCouchConnection();
@@ -264,7 +264,7 @@ public enum CouchMetaDriver {
         }                                                  //V
       });                                                  //V
       try {                                                //V
-          cyclicBarrier.await(3L, BlobAntiPatternObject.getDefaultCollectorTimeUnit());
+        cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
       } catch (BrokenBarrierException ex) {
         // non-200 error code
       }
@@ -272,12 +272,12 @@ public enum CouchMetaDriver {
       return payload.get();
     }
   },
-  @DbTask({ json, future})/* @DbResultUnit(String.class)*/ @DbKeys({db, docId})RevisionFetch {
+  @DbTask({json, future})/* @DbResultUnit(String.class)*/ @DbKeys({db, docId})RevisionFetch {
     @Override
     public <T> ByteBuffer visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
 //      EnumMap<etype, Object> parms = dbKeysBuilder.parms();
 
-      Object id = dbKeysBuilder.get(etype.docId);
+      Object id = dbKeysBuilder.get(docId);
       final String pathRescode = "/" + dbKeysBuilder.get(db) + (null != id ? "/" + id : "");
       final Rfc822HeaderState state = actionBuilder.state().headerInterest(ETAG).methodProtocol("HEAD").pathResCode(pathRescode);
       state.protocolStatus("HTTP/1.1");
@@ -285,7 +285,7 @@ public enum CouchMetaDriver {
         public ByteBuffer call() throws Exception {
           final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
 
-          HttpMethod.enqueue(createCouchConnection(), OP_WRITE | OP_CONNECT, new Impl() {
+          enqueue(createCouchConnection(), OP_WRITE | OP_CONNECT, new Impl() {
             @Override
             public void onWrite(SelectionKey key) throws Exception {
               SocketChannel channel = (SocketChannel) key.channel();
@@ -317,7 +317,7 @@ public enum CouchMetaDriver {
             }                                                                //V
             //V
           });                                                                //V
-          cyclicBarrier.await(3L, BlobAntiPatternObject.getDefaultCollectorTimeUnit());
+          cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
           Map<String, String> headerStrings = state.getHeaderStrings();
 
           /*
@@ -325,7 +325,8 @@ public enum CouchMetaDriver {
 
           if (null == headerStrings || !headerStrings.containsKey(ETAG))
             return ctx.error(state.pathResCode()).reason(state.methodProtocol());
-          */String rev1 = state.dequotedHeader(ETAG);
+          */
+          String rev1 = state.dequotedHeader(ETAG);
           return /*ctx.ok(true).rev*/ByteBuffer.wrap(rev1.getBytes());
 
         }
@@ -346,7 +347,7 @@ public enum CouchMetaDriver {
           sb.append("?rev=").append(rev);
         }
       }
-      dbKeysBuilder.put(etype.opaque, sb.toString());
+      dbKeysBuilder.put(opaque, sb.toString());
       return JsonSend.visit(dbKeysBuilder, actionBuilder);
     }
   },
@@ -361,7 +362,7 @@ public enum CouchMetaDriver {
           .headerString("Content-Length", "0")
           .asRequestHeaderByteBuffer();
       final SocketChannel channel = createCouchConnection();
-      HttpMethod.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
+      enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
         ByteBuffer cursor = null;
 
         @Override
@@ -378,7 +379,7 @@ public enum CouchMetaDriver {
             state.headerStrings().clear();
             state.addHeaderInterest(CONTENT_LENGTH);
             state.apply((ByteBuffer) cursor.flip());
-            if (BlobAntiPatternObject.DEBUG_SENDJSON) {
+            if (DEBUG_SENDJSON) {
               System.err.println(deepToString(state.pathResCode(), state, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
             }
 
@@ -413,14 +414,14 @@ public enum CouchMetaDriver {
           });                                                             //V
         }                                                                 //V
       });                                                                 //V
-      int await = cyclicBarrier.await(3L, BlobAntiPatternObject.getDefaultCollectorTimeUnit());
+      int await = cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
       return payload.get();
     }
   },
-  @DbTask({pojo, future,json})/* @DbResultUnit(String.class)*/ @DbKeys({db, designDocId})DesignDocFetch {
+  @DbTask({pojo, future, json})/* @DbResultUnit(String.class)*/ @DbKeys({db, designDocId})DesignDocFetch {
     @Override
     public <T> ByteBuffer visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
-      dbKeysBuilder.put(etype.docId, dbKeysBuilder.remove(etype.designDocId));
+      dbKeysBuilder.put(docId, dbKeysBuilder.remove(designDocId));
       return DocFetch.visit(dbKeysBuilder, actionBuilder);
     }
   },
@@ -432,7 +433,7 @@ public enum CouchMetaDriver {
       final String db = '/' + ((String) dbKeysBuilder.get(etype.db)).replace("//", "/");
       Class<T> type = dbKeysBuilder.get(etype.type);
       final SocketChannel channel = createCouchConnection();
-      HttpMethod.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
+      enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
         ByteBuffer cursor;
         List<ByteBuffer> list = new ArrayList<ByteBuffer>();
         final Impl prev = this;
@@ -444,7 +445,7 @@ public enum CouchMetaDriver {
               actionBuilder.state()
                   .headerInterest(ETAG, TRANSFER_ENCODING, CONTENT_LENGTH)
                   .methodProtocol("GET")
-                  .pathResCode(('/' + db + '/' + dbKeysBuilder.get(etype.view)).replace("//", "/"))
+                  .pathResCode(('/' + db + '/' + dbKeysBuilder.get(view)).replace("//", "/"))
                   .protocolStatus("HTTP/1.1")
                   .asRequestHeaderByteBuffer();
           int wrote = channel.write(buffer);
@@ -577,7 +578,7 @@ public enum CouchMetaDriver {
           .asRequestHeaderByteBuffer();
       if (DEBUG_SENDJSON) System.err.println(deepToString(opaque, validjson, UTF8.decode(header.duplicate()), state));
       final SocketChannel channel = createCouchConnection();
-      HttpMethod.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
+      enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
         ByteBuffer cursor = null;
 
         @Override
@@ -601,7 +602,7 @@ public enum CouchMetaDriver {
             int read = channel.read(cursor);
             state.headerStrings().clear();
             state.apply((ByteBuffer) cursor.flip());
-            if (BlobAntiPatternObject.DEBUG_SENDJSON) {
+            if (DEBUG_SENDJSON) {
               System.err.println(deepToString(state.pathResCode(), state, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
             }
 
@@ -627,7 +628,7 @@ public enum CouchMetaDriver {
           recycleChannel(channel);                           //V
         }                                                    //V
       });                                                    //V
-      cyclicBarrier.await(3L, BlobAntiPatternObject.getDefaultCollectorTimeUnit());
+      cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
 
       return payload.get();
     }
@@ -716,7 +717,7 @@ public enum CouchMetaDriver {
 //
 //
 //  }
-;
+  ;
   private static final String APPLICATION_JSON = "application/json";
   public static final String ETAG = "ETag";
   public static final String CONTENT_LENGTH = "Content-Length";
@@ -791,11 +792,11 @@ public enum CouchMetaDriver {
             } else {
               s0 += ',';
               s1 += ',';
-        }
+            }
             ;
             s0 += bounds[0];
             s1 += classTypeVariable.getName();
-      }
+          }
 
         }
         if (!first) {

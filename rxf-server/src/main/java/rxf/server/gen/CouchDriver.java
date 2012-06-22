@@ -48,7 +48,7 @@ public interface CouchDriver {
         return new DbCreateTerminalBuilder() {
           public CouchTx tx() {
             try {
-              return BlobAntiPatternObject.GSON.fromJson(String.valueOf(CouchMetaDriver.DbCreate.visit()), CouchTx.class);
+              return BlobAntiPatternObject.GSON.fromJson(HttpMethod.UTF8.decode(CouchMetaDriver.DbCreate.visit()).toString(), CouchTx.class);
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -130,7 +130,7 @@ public interface CouchDriver {
         return new DbDeleteTerminalBuilder() {
           public CouchTx tx() {
             try {
-              return BlobAntiPatternObject.GSON.fromJson(String.valueOf(CouchMetaDriver.DbDelete.visit()), CouchTx.class);
+              return BlobAntiPatternObject.GSON.fromJson(HttpMethod.UTF8.decode(CouchMetaDriver.DbDelete.visit()).toString(), CouchTx.class);
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -399,7 +399,7 @@ public interface CouchDriver {
         return new DocPersistTerminalBuilder() {
           public CouchTx tx() {
             try {
-              return BlobAntiPatternObject.GSON.fromJson(String.valueOf(CouchMetaDriver.DocPersist.visit()), CouchTx.class);
+              return BlobAntiPatternObject.GSON.fromJson(HttpMethod.UTF8.decode(CouchMetaDriver.DocPersist.visit()).toString(), CouchTx.class);
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -517,7 +517,7 @@ public interface CouchDriver {
         return new DocDeleteTerminalBuilder() {
           public CouchTx tx() {
             try {
-              return BlobAntiPatternObject.GSON.fromJson(String.valueOf(CouchMetaDriver.DocDelete.visit()), CouchTx.class);
+              return BlobAntiPatternObject.GSON.fromJson(HttpMethod.UTF8.decode(CouchMetaDriver.DocDelete.visit()).toString(), CouchTx.class);
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -847,7 +847,7 @@ public interface CouchDriver {
         return new JsonSendTerminalBuilder() {
           public CouchTx tx() {
             try {
-              return BlobAntiPatternObject.GSON.fromJson(String.valueOf(CouchMetaDriver.JsonSend.visit()), CouchTx.class);
+              return BlobAntiPatternObject.GSON.fromJson(HttpMethod.UTF8.decode(CouchMetaDriver.JsonSend.visit()).toString(), CouchTx.class);
             } catch (Exception e) {
               e.printStackTrace();
             }

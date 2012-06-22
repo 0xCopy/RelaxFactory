@@ -88,9 +88,8 @@ public enum DbTerminal {
     public String builder(CouchMetaDriver couchDriver, etype[] parms, boolean implementation) {
       return (implementation ? " public " : "") + " CouchTx tx()" + (implementation ?
           "{try {\n" +
-              "        return (CouchTx)rxf.server.BlobAntiPatternObject.GSON.fromJson(String.valueOf(" +
-              " rxf.server.driver.CouchMetaDriver." + couchDriver +
-              ".visit()),CouchTx.class);\n" +
+              "        return (CouchTx)rxf.server.BlobAntiPatternObject.GSON.fromJson(one.xio.HttpMethod.UTF8.decode(" +
+              " rxf.server.driver.CouchMetaDriver." + couchDriver + ".visit()).toString(),CouchTx.class);\n" +
               "      } catch (Exception e) {\n" +
               "        e.printStackTrace();   \n" +
               "      } return null;} " : ";");
