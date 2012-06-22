@@ -24,7 +24,7 @@ import static rxf.server.BlobAntiPatternObject.GSON;
  */
 public class CouchDriverTest {
 
-  public static final String SOMEDB = "test_somedb_"+ System.currentTimeMillis() ;   //ordered names of testdbs for failure postmortem....
+  public static final String SOMEDB = "test_somedb_" + System.currentTimeMillis();   //ordered names of testdbs for failure postmortem....
   private ScheduledExecutorService exec;
 
   @Before
@@ -67,7 +67,7 @@ public class CouchDriverTest {
   }
 
   @Test
-  public void testDrivers()   {
+  public void testDrivers() {
     try {
       {//this can fail with a 415 error if the db already exists - should have some setup that deletes dbs if they exist
         final CouchTx tx = DbCreate.$().db(SOMEDB).to().fire().tx();
@@ -91,13 +91,13 @@ public class CouchDriverTest {
       {
         CouchTx tx = DocPersist.$().db(SOMEDB).validjson("{\"created\":true}").to().fire().tx();
 
-        String data = DocFetch.$().db(SOMEDB).docId(tx.id()).to().fire().pojo();
+        String data = DocFetch.$().db(SOMEDB).docId(tx.id()).to().fire().json();
         assertTrue(data.contains("created"));
       }
       {
         CouchTx tx = DocPersist.$().db(SOMEDB).validjson("{}").to().fire().tx();
 
-        String data = DocFetch.$().db(SOMEDB).docId(tx.id()).to().fire().pojo();
+        String data = DocFetch.$().db(SOMEDB).docId(tx.id()).to().fire().json();
         Map<String, Object> obj = GSON.<Map<String, Object>>fromJson(data, Map.class);
         obj.put("abc", "123");
         data = GSON.toJson(obj);
@@ -114,7 +114,7 @@ public class CouchDriverTest {
             "  }" +
             "}";
         //TODO inconsistent with DesignDocFetch
-        CouchTx tx = JsonSend.$().opaque(SOMEDB+
+        CouchTx tx = JsonSend.$().opaque(SOMEDB +
             "/_design/sample").validjson(doc).to().fire().tx();
         assertNotNull(tx);
         assertTrue(tx.ok());
@@ -126,14 +126,14 @@ public class CouchDriverTest {
         DocPersist.$().db(SOMEDB).validjson("{\"name\":\"b\",\"brand\":\"d\"}").to().fire().tx();
 
         //running view
-        CouchResultSet<Map<String, String>> data = ViewFetch. $().db(SOMEDB).type(Map.class).view("_design/sample/_view/foo?key=\"a\"").to().fire().rows();
+        CouchResultSet<Map<String, String>> data = ViewFetch.$().db(SOMEDB).type(Map.class).view("_design/sample/_view/foo?key=\"a\"").to().fire().rows();
         assertNotNull(data);
         assertEquals(1, data.rows.size());
         assertEquals("a", data.rows.get(0).value.get("name"));
       }
       {
         //TODO no consistent way to write designdoc
-        String designDoc = DesignDocFetch.$().db(SOMEDB).designDocId("_design/sample").to().fire().pojo();
+        String designDoc = DesignDocFetch.$().db(SOMEDB).designDocId("_design/sample").to().fire().json();
         assertNotNull(designDoc);
         Map<String, Object> obj = GSON.<Map<String, Object>>fromJson(designDoc, Map.class);
 
@@ -141,7 +141,7 @@ public class CouchDriverTest {
         foo.put("map", "function(doc){ emit(doc.brand, doc); }");
 
         designDoc = GSON.toJson(obj);
-        CouchTx tx = JsonSend.$().opaque(SOMEDB+
+        CouchTx tx = JsonSend.$().opaque(SOMEDB +
             "/_design/sample").validjson(designDoc).to().fire().tx();
 
         assertNotNull(tx);
@@ -149,14 +149,14 @@ public class CouchDriverTest {
         assertFalse(obj.get("_rev").equals(tx.getRev()));
         assertEquals(obj.get("_id"), tx.id());
 
-        CouchResultSet<Map<String, String>> data = ViewFetch. $().db(SOMEDB).type(Map.class).view("_design/sample/_view/foo?key=\"d\"").to().fire().rows();
+        CouchResultSet<Map<String, String>> data = ViewFetch.$().db(SOMEDB).type(Map.class).view("_design/sample/_view/foo?key=\"d\"").to().fire().rows();
         assertNotNull(data);
         assertEquals(1, data.rows.size());
         assertEquals("b", data.rows.get(0).value.get("name"));
       }
       {
         Rfc822HeaderState state = new Rfc822HeaderState("ETag");
-        String designDoc = DesignDocFetch.$().db(SOMEDB).designDocId("_design/sample").to().state(state).fire().pojo();
+        String designDoc = DesignDocFetch.$().db(SOMEDB).designDocId("_design/sample").to().state(state).fire().json();
         String rev = state.headerString("ETag");
         assertNotNull(rev);
         rev = rev.substring(1, rev.length() - 1);
@@ -165,7 +165,7 @@ public class CouchDriverTest {
         assertTrue(tx.ok());
         assertNull(tx.error());
 
-        designDoc = DesignDocFetch.$().db(SOMEDB).designDocId("_design/sample").to().fire().pojo();
+        designDoc = DesignDocFetch.$().db(SOMEDB).designDocId("_design/sample").to().fire().json();
         assertNull(designDoc);
       }
       {
@@ -177,7 +177,7 @@ public class CouchDriverTest {
     } catch (JsonSyntaxException e) {
       e.printStackTrace();
       fail();
-    }        finally {
+    } finally {
 
     }
   }

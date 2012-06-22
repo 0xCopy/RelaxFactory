@@ -1,6 +1,7 @@
 package rxf.server;
 
 import java.nio.ByteBuffer;
+import java.util.EnumSet;
 
 import org.intellij.lang.annotations.Language;
 import rxf.server.an.DbKeys.etype;
@@ -25,16 +26,34 @@ public enum DbTerminal {
   rows {
     @Override
     public String builder(CouchMetaDriver couchDriver, etype[] parms, boolean implementation) {
-      String unit= ByteBuffer.class.getCanonicalName();int typeParamsStart = "ByteBuffer".indexOf('<');
-      String fqsn = typeParamsStart == -1 ? unit : unit.substring(0, typeParamsStart);
 
-      final String cmdName = "rxf.server.driver.CouchMetaDriver." + couchDriver;
-      final String s = "{\n    try{\n    return(" + unit + ")" +
-          "BlobAntiPatternObject.GSON.fromJson(one.xio.HttpMethod.UTF8.decode(" +
-          cmdName
-          + ".visit()).toString(),\n    new java.lang.reflect.ParameterizedType(){\npublic java.lang.reflect.Type getRawType(){\n    return " + fqsn + ".class;}\npublic java.lang.reflect.Type getOwnerType(){\n    return null;}\npublic java.lang.reflect.Type[]getActualTypeArguments(){\n    return new java.lang.reflect.Type[]{" +
-          couchDriver.name() + "   .this.<Class>get( DbKeys.etype.type)};}});\n}catch(Exception e){\n    e.printStackTrace();\n}\n    return null;}";
-      return (implementation ? "public " : "") + unit + " " + name() + "()" + (implementation ? s : ";");
+
+      String visitor = "rxf.server.driver.CouchMetaDriver." + couchDriver;
+      String cmdName = couchDriver.name();
+      @Language("JAVA") String s = "{\n" +
+          "            try {\n" +
+          "              return    BlobAntiPatternObject.GSON.fromJson(one.xio.HttpMethod.UTF8.decode(" +
+          visitor + ".visit()).toString(),\n" +
+          "                  new ParameterizedType() {\n" +
+          "                    public Type getRawType() {\n" +
+          "                      return CouchResultSet.class;\n" +
+          "                    }\n" +
+          "\n" +
+          "                    public Type getOwnerType() {\n" +
+          "                      return null;\n" +
+          "                    }\n" +
+          "\n" +
+          "                    public Type[] getActualTypeArguments() {\n" +
+          "                      return new Type[]{" +
+          cmdName + ".this.<Class>get(DbKeys.etype.type)};\n" +
+          "                    }\n" +
+          "                  });\n" +
+          "            } catch (Exception e) {\n" +
+          "              e.printStackTrace();\n" +
+          "            }\n" +
+          "            return null;\n" +
+          "          }";
+      return (implementation ? "public " : "") + CouchResultSet.class.getCanonicalName() + " " + name() + "()" + (implementation ? s : ";");
     }
   },
   /**
@@ -43,6 +62,9 @@ public enum DbTerminal {
   pojo {
     @Override
     public String builder(CouchMetaDriver couchDriver, etype[] parms, boolean implementation) {
+      EnumSet<etype> of = EnumSet.of(parms[0], parms);
+      assert of.contains(etype.type);
+
       return (implementation ? " public " : "") +
           ByteBuffer.class.getCanonicalName() +
           " " + name() + "()" + (implementation ?

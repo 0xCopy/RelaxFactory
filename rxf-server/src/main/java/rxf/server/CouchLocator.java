@@ -93,9 +93,7 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
 
   @Override
   public T find(Class<? extends T> clazz, String id) {
-    final String pojo = DocFetch.$().db(getEntityName()).docId(id).to().fire().pojo();
-
-    return GSON.fromJson(pojo, getDomainType());
+    return GSON.fromJson(DocFetch.$().db(getEntityName()).docId(id).to().fire().json(), getDomainType());
   }
 
   /**

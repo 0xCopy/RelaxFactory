@@ -17,7 +17,6 @@ import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.tidy.Tidy;
-import rxf.server.gen.CouchDriver.BlobSend;
 import rxf.server.gen.CouchDriver.DocPersist;
 
 import static java.lang.Math.abs;
@@ -81,15 +80,17 @@ public class GeoIpService {
     }})).to().fire().tx();
     System.err.println("### geo tx1: " + tx);
 
-    tx = BlobSend.$()
-        .db("geo")
-        .docId("current")
-        .opaque(GEOIP_CURRENT_LOCATIONS_CSV)
-        .mimetype("text/csv; charset=" + BlobAntiPatternObject.ISO88591.name())
-        .blob((ByteBuffer) indexLocPair.getB().duplicate().rewind())
-        .to().fire().tx();
+    // new code!
 
-    System.err.println("### geo tx2: " + tx);
+//    tx = BlobSend.$()
+//        .db("geo")
+//        .docId("current")
+//        .opaque(GEOIP_CURRENT_LOCATIONS_CSV)
+//        .mimetype("text/csv; charset=" + BlobAntiPatternObject.ISO88591.name())
+//        .blob((ByteBuffer) indexLocPair.getB().duplicate().rewind())
+//        .to().fire().tx();
+//
+//    System.err.println("### geo tx2: " + tx);
 
 //    final SynchronousQueue retVal = new SynchronousQueue();
 //    SocketChannel couchConnection;
@@ -140,13 +141,16 @@ public class GeoIpService {
 //          });
 //    }
 //    take = (String) retVal.poll(3, rxf.server.BlobAntiPatternObject.defaultCollectorTimeUnit);
-    tx = BlobSend.$()
-        .db("geo")
-        .docId("current")
-        .opaque(GEOIP_CURRENT_INDEX)
-        .mimetype("application/octet-stream")
-        .blob((ByteBuffer) indexLocPair.getA().duplicate().rewind())
-        .to().fire().tx();
+
+//new code!
+
+//    tx = BlobSend.$()
+//        .db("geo")
+//        .docId("current")
+//        .opaque(GEOIP_CURRENT_INDEX)
+//        .mimetype("application/octet-stream")
+//        .blob((ByteBuffer) indexLocPair.getA().duplicate().rewind())
+//        .to().fire().tx();
 
 
     System.err.println("### geo tx3: " + tx);

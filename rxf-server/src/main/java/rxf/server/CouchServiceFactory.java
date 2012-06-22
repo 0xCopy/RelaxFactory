@@ -3,11 +3,11 @@ package rxf.server;
 import java.io.IOException;
 import java.lang.reflect.*;
 import java.nio.channels.ClosedChannelException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.*;
 
 import com.google.gson.JsonObject;
-import rxf.server.CouchResultSet.tuple;
 import rxf.server.CouchService.View;
 import rxf.server.gen.CouchDriver;
 
@@ -84,7 +84,7 @@ public class CouchServiceFactory {
             }
             design.add("views", views);
             Rfc822HeaderState etag1 = new Rfc822HeaderState(ETAG);
-            String doc = CouchDriver.DesignDocFetch.$().db(pathPrefix).designDocId(id).to().state(etag1).fire().pojo();
+            String doc = CouchDriver.DesignDocFetch.$().db(pathPrefix).designDocId(id).to().state(etag1).fire().json();
 
             if (doc != null) {
               //updating a doc, with a db but no rev or id? 
@@ -115,9 +115,10 @@ public class CouchServiceFactory {
           public Object call() throws Exception {
 
             String name = method.getName();
-            if (viewMethods.containsKey(name)) {
+            /*       dont forget to uncomment this after new CouchResult gen
+     if (viewMethods.containsKey(name)) {
               // where is the design doc defined? part of the view?
-              CouchResultSet<E> rows = CouchDriver.ViewFetch.<E>$().db(pathPrefix).type(entityType).view(String.format(viewMethods.get(name), args)).to().fire().rows();
+              final ByteBuffer rows = ViewFetch.$().db(pathPrefix).type(entityType).view(String.format(viewMethods.get(name), args)).to().fire().rows();
               if (rows != null && rows.rows != null) {
                 ArrayList<E> ar = new ArrayList<E>();
                 for (tuple<E> row : rows.rows) {
@@ -125,21 +126,20 @@ public class CouchServiceFactory {
                 }
                 return ar;
               }
-            }
+            }*/
             return null;
           }
         }).get();
       } else {
         //persist or find by key
-        if("persist".equals(method.getName()))
-        {
+        if ("persist".equals(method.getName())) {
           //again, no point, see above with DocPersist
           return CouchDriver.DocPersist.$().db(pathPrefix).validjson(GSON.toJson(args[0])).to().fire().tx();
-        }else{
-        assert
-        "find".equals(method.getName());
-        String doc = CouchDriver.DocFetch.$().db(pathPrefix).docId((String) args[0]).to().fire().pojo();
-        return GSON.fromJson(doc, entityType);
+        } else {
+          assert
+              "find".equals(method.getName());
+          String doc = CouchDriver.DocFetch.$().db(pathPrefix).docId((String) args[0]).to().fire().json();
+          return GSON.fromJson(doc, entityType);
         }
       }
     }
