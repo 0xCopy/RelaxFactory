@@ -1,6 +1,9 @@
 package rxf.server;
 
-import rxf.server.an.DbKeys;
+import java.nio.ByteBuffer;
+
+import org.intellij.lang.annotations.Language;
+import rxf.server.an.DbKeys.etype;
 import rxf.server.driver.CouchMetaDriver;
 
 public enum DbTerminal {
@@ -9,7 +12,7 @@ public enum DbTerminal {
    */
   oneWay {
     @Override
-    public String builder(final CouchMetaDriver couchDriver, DbKeys.etype[] parms, String unit, boolean implementation) {
+    public String builder(CouchMetaDriver couchDriver, etype[] parms, boolean implementation) {
       return (implementation ? "public " : "") + "void " + name() + "()" + (implementation ? "{\n    final DbKeysBuilder<Object>dbKeysBuilder=(DbKeysBuilder<Object>)DbKeysBuilder.get();\n" +
           "final ActionBuilder<Object>actionBuilder=(ActionBuilder<Object>)ActionBuilder.get();" +
           "\ndbKeysBuilder.validate();\n BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable(){" +
@@ -21,15 +24,15 @@ public enum DbTerminal {
    */
   rows {
     @Override
-    public String builder(CouchMetaDriver couchDriver, DbKeys.etype[] parms, String unit, boolean implementation) {
-      int typeParamsStart = unit.indexOf('<');
+    public String builder(CouchMetaDriver couchDriver, etype[] parms, boolean implementation) {
+      String unit= ByteBuffer.class.getCanonicalName();int typeParamsStart = "ByteBuffer".indexOf('<');
       String fqsn = typeParamsStart == -1 ? unit : unit.substring(0, typeParamsStart);
 
       final String cmdName = "rxf.server.driver.CouchMetaDriver." + couchDriver;
       final String s = "{\n    try{\n    return(" + unit + ")" +
-          "BlobAntiPatternObject.GSON.fromJson((String)" +
+          "BlobAntiPatternObject.GSON.fromJson(one.xio.HttpMethod.UTF8.decode(" +
           cmdName
-          + ".visit(),\n    new java.lang.reflect.ParameterizedType(){\npublic java.lang.reflect.Type getRawType(){\n    return " + fqsn + ".class;}\npublic java.lang.reflect.Type getOwnerType(){\n    return null;}\npublic java.lang.reflect.Type[]getActualTypeArguments(){\n    return new java.lang.reflect.Type[]{" +
+          + ".visit()).toString(),\n    new java.lang.reflect.ParameterizedType(){\npublic java.lang.reflect.Type getRawType(){\n    return " + fqsn + ".class;}\npublic java.lang.reflect.Type getOwnerType(){\n    return null;}\npublic java.lang.reflect.Type[]getActualTypeArguments(){\n    return new java.lang.reflect.Type[]{" +
           couchDriver.name() + "   .this.<Class>get( DbKeys.etype.type)};}});\n}catch(Exception e){\n    e.printStackTrace();\n}\n    return null;}";
       return (implementation ? "public " : "") + unit + " " + name() + "()" + (implementation ? s : ";");
     }
@@ -39,14 +42,14 @@ public enum DbTerminal {
    */
   pojo {
     @Override
-    public String builder(CouchMetaDriver couchDriver, DbKeys.etype[] parms, String unit, boolean implementation) {
+    public String builder(CouchMetaDriver couchDriver, etype[] parms, boolean implementation) {
       return (implementation ? " public " : "") +
-          unit +
+          ByteBuffer.class.getCanonicalName() +
           " " + name() + "()" + (implementation ?
           "{ \n" +
               "try {\n" +
               "        return (" +
-              unit +
+              ByteBuffer.class.getCanonicalName() +
               ") rxf.server.driver.CouchMetaDriver." + couchDriver +
               ".visit();\n" +
               "      } catch (Exception e) {\n" +
@@ -60,13 +63,12 @@ public enum DbTerminal {
    */
   tx {
     @Override
-    public String builder(CouchMetaDriver couchDriver, DbKeys.etype[] parms, String unit, boolean implementation) {
+    public String builder(CouchMetaDriver couchDriver, etype[] parms, boolean implementation) {
       return (implementation ? " public " : "") + " CouchTx tx()" + (implementation ?
           "{try {\n" +
-              "        return (" +
-              CouchTx.class.getCanonicalName() +
-              ") rxf.server.driver.CouchMetaDriver." + couchDriver +
-              ".visit();\n" +
+              "        return (CouchTx)rxf.server.BlobAntiPatternObject.GSON.fromJson(String.valueOf(" +
+              " rxf.server.driver.CouchMetaDriver." + couchDriver +
+              ".visit()),CouchTx.class);\n" +
               "      } catch (Exception e) {\n" +
               "        e.printStackTrace();   \n" +
               "      } return null;} " : ";");
@@ -78,20 +80,19 @@ public enum DbTerminal {
   future {
     @Override
 
-    public String builder(final CouchMetaDriver couchDriver, DbKeys.etype[] parms, final String unit, boolean implementation) {
+    public String builder(CouchMetaDriver couchDriver, etype[] parms, boolean implementation) {
       return
-          (implementation ? "public " : "") + "Future<" + unit +
-              ">future()" +
-              (implementation ? "{\n    try{\n    BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<" + unit +
-                  ">(){\n\n\n  final  DbKeysBuilder dbKeysBuilder=(DbKeysBuilder )DbKeysBuilder.get();\n" +
-                  "final ActionBuilder actionBuilder=(ActionBuilder )ActionBuilder.get();\n\n"
+          (implementation ? "public " : "") + "Future<ByteBuffer>future()" +
+              (implementation ? "{\n    try{\n    BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>(){\nfinal DbKeysBuilder dbKeysBuilder=(DbKeysBuilder)DbKeysBuilder.get();\n" +
+                  "final ActionBuilder actionBuilder=(ActionBuilder)ActionBuilder.get();\n"
                   +
-                  "public " +
-                  unit + " call()throws Exception{ \n        \n" +
-                  "                    DbKeysBuilder.currentKeys.set(dbKeysBuilder);  \n" +
-                  " ActionBuilder.currentAction.set(actionBuilder);  " +
-                  "return(" + unit + ")rxf.server.driver.CouchMetaDriver." + couchDriver +
-                  ".visit(dbKeysBuilder,actionBuilder);}});\n}catch(Exception e){e.printStackTrace();}return null;}" : ";");
+                  "public " + ByteBuffer.class.getCanonicalName() + " call() throws Exception{" +
+                  "    DbKeysBuilder.currentKeys.set(dbKeysBuilder);" +
+                  "\nActionBuilder.currentAction.set(actionBuilder);\n" +
+                  "return(" + ByteBuffer.class.getCanonicalName() + ")rxf.server.driver.CouchMetaDriver." + couchDriver + ".visit(dbKeysBuilder,actionBuilder);\n}" +
+                  "\n    }" +
+                  "\n    );" +
+                  "\n} catch(Exception e){\n    e.printStackTrace();\n}\n    return null;\n}" : ";");
     }
   },
   /**
@@ -99,13 +100,19 @@ public enum DbTerminal {
    */
   continuousFeed {
     @Override
-    public String builder(CouchMetaDriver couchDriver, DbKeys.etype[] parms, String unit, boolean implementation) {
+    public String builder(CouchMetaDriver couchDriver, etype[] parms, boolean implementation) {
       return (implementation ? " public " : "") + " void " + name() + "()" + (implementation ? ("{" + BIG_EMPTY_PLACE + "} ") : ";\n");
+    }
+  }, json {
+    @Override
+    public String builder(CouchMetaDriver couchDriver, etype[] parms, boolean implementation) {
+      @Language("JAVA") String s = "{try{\n    return one.xio.HttpMethod.UTF8.decode(avoidStarvation(CouchMetaDriver." +
+          "" + couchDriver + ".visit())).toString();\n}catch(Exception e){\n    e.printStackTrace();  \n}\n    return null;\n}";
+      return (implementation ? " public " : "") + " String  json()" + (implementation ?
+          s : ";");
     }
   };
   public static final String BIG_EMPTY_PLACE = "throw new AbstractMethodError();";
 
-  public abstract String builder(CouchMetaDriver couchDriver, DbKeys.etype[] parms, String unit, boolean implementation);
-
-
+  public abstract String builder(CouchMetaDriver couchDriver, etype[] parms, boolean implementation);
 };

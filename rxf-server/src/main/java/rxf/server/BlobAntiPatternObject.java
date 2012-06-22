@@ -235,4 +235,10 @@ public class BlobAntiPatternObject {
   public static TimeUnit getDefaultCollectorTimeUnit() {
     return DEBUG_SENDJSON ? TimeUnit.HOURS : defaultCollectorTimeUnit;
   }
+
+  static public
+ByteBuffer avoidStarvation(ByteBuffer buf) {
+if (buf.remaining() == 0) buf.rewind();
+return buf;
+}
 }

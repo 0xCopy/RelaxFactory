@@ -126,7 +126,7 @@ public class CouchDriverTest {
         DocPersist.$().db(SOMEDB).validjson("{\"name\":\"b\",\"brand\":\"d\"}").to().fire().tx();
 
         //running view
-        CouchResultSet<Map<String, String>> data = ViewFetch.<Map<String, String>>$().db(SOMEDB).type(Map.class).view("_design/sample/_view/foo?key=\"a\"").to().fire().rows();
+        CouchResultSet<Map<String, String>> data = ViewFetch. $().db(SOMEDB).type(Map.class).view("_design/sample/_view/foo?key=\"a\"").to().fire().rows();
         assertNotNull(data);
         assertEquals(1, data.rows.size());
         assertEquals("a", data.rows.get(0).value.get("name"));
@@ -149,7 +149,7 @@ public class CouchDriverTest {
         assertFalse(obj.get("_rev").equals(tx.getRev()));
         assertEquals(obj.get("_id"), tx.id());
 
-        CouchResultSet<Map<String, String>> data = ViewFetch.<Map<String, String>>$().db(SOMEDB).type(Map.class).view("_design/sample/_view/foo?key=\"d\"").to().fire().rows();
+        CouchResultSet<Map<String, String>> data = ViewFetch. $().db(SOMEDB).type(Map.class).view("_design/sample/_view/foo?key=\"d\"").to().fire().rows();
         assertNotNull(data);
         assertEquals(1, data.rows.size());
         assertEquals("b", data.rows.get(0).value.get("name"));
