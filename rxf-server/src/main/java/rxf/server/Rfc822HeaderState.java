@@ -74,6 +74,10 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
       return (T) pathResCode(pathRescode.name().substring(1));
     }
 
+    public HttpStatus statusEnum() {
+      return HttpStatus.valueOf('$' + resCode());
+    }
+
     public String status() {
       return super.protocolStatus();
     }
