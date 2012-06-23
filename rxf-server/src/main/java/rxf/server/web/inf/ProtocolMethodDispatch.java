@@ -74,7 +74,7 @@ public class ProtocolMethodDispatch extends Impl {
 
 
     /**
-     * any url begining with /i is a proxied request to couchdb but only permits image/* and text/*
+     * any url begining with /i is a proxied $req to couchdb but only permits image/* and text/*
      */
 
     Pattern passthroughExpr = Pattern.compile("^/i(/.*)$");

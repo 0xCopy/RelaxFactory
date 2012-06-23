@@ -70,7 +70,7 @@ public class CouchDriverTest {
   public void testDrivers() {
     try {
       {//this can fail with a 415 error if the db already exists - should have some setup that deletes dbs if they exist
-        final CouchTx tx = DbCreate.$().db(SOMEDB).to().fire().tx();
+        CouchTx tx = DbCreate.$().db(SOMEDB).to().fire().tx();
         assertNotNull(tx);
         assertTrue(tx.ok());
         assertNull(tx.getError());

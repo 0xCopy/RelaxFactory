@@ -78,7 +78,7 @@ public class BlobAntiPatternObject {
 
           try {
             channel = lazyQueue.poll();
-            if (channel == null) {
+            if (null == channel) {
               channel = SocketChannel.open();
               channel.configureBlocking(false);
               channel.connect(new InetSocketAddress(LOOPBACK, 5984));
@@ -236,9 +236,8 @@ public class BlobAntiPatternObject {
     return DEBUG_SENDJSON ? TimeUnit.HOURS : defaultCollectorTimeUnit;
   }
 
-  static public
-ByteBuffer avoidStarvation(ByteBuffer buf) {
-if (buf.remaining() == 0) buf.rewind();
-return buf;
-}
+  public static ByteBuffer avoidStarvation(ByteBuffer buf) {
+    if (0 == buf.remaining()) buf.rewind();
+    return buf;
+  }
 }

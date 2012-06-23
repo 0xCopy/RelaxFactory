@@ -359,7 +359,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
         ByteBuffer dst = ByteBuffer.allocateDirect(BlobAntiPatternObject.getReceiveBufferSize());
         int read = channel.read(dst);
         dst.flip();
-        System.err.println("response: " + UTF8.decode((ByteBuffer) dst.duplicate().rewind()));
+        System.err.println("$res: " + UTF8.decode((ByteBuffer) dst.duplicate().rewind()));
         while (!Character.isWhitespace(dst.get())) ;
         ByteBuffer d2 = dst.duplicate();
         while (!Character.isWhitespace(dst.get())) ;
@@ -495,7 +495,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
                         ByteBuffer dst1 = ByteBuffer.allocateDirect(BlobAntiPatternObject.getReceiveBufferSize());
                         int read1 = channel.read(dst1);
                         final long l2 = System.currentTimeMillis();
-//                          System.err.println("response for "+path+": "+UTF8.decode((ByteBuffer) dst1.flip()))
+//                          System.err.println("$res for "+path+": "+UTF8.decode((ByteBuffer) dst1.flip()))
 
 
                         ByteBuffer headers = (ByteBuffer) moveCaretToDoubleEol((ByteBuffer) dst1.flip()).duplicate().flip();

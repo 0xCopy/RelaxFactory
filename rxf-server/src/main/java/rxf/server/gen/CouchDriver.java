@@ -242,7 +242,10 @@ public interface CouchDriver {
 
           public String json() {
             try {
-              return HttpMethod.UTF8.decode(avoidStarvation(CouchMetaDriver.DocFetch.visit())).toString();
+              final ByteBuffer visit = CouchMetaDriver.DocFetch.visit();
+              final ByteBuffer bb = avoidStarvation(visit);
+              final String s = HttpMethod.UTF8.decode(bb).toString();
+              return s;
             } catch (Exception e) {
               e.printStackTrace();
             }
