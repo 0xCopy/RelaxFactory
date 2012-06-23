@@ -25,7 +25,7 @@ public class Rfc822HeaderStateTest {
     assertEquals(1, state.headerInterest().length);
     state.addHeaderInterest("Two", "Three");
     assertEquals(3, state.headerInterest().length);
-    assertArrayEquals(new String[]{"One", "Two", "Three"}, state.headerInterest());
+    assertArrayEquals(new String[]{"One", "Three", "Two",}, state.headerInterest());
   }
 
   @Test

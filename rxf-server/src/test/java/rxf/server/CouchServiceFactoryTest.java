@@ -15,14 +15,17 @@ import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
 
 public class CouchServiceFactoryTest {
   private static ScheduledExecutorService exec;
-static                                        boolean first=true;
+  static boolean first = true;
+
   @BeforeClass
   public static void setUp() throws Exception {
     try {
-      if(first) {first=false;
+      if (first) {
+        first = false;
         tearDown();
       }
     } catch (Exception e) {
@@ -68,72 +71,85 @@ static                                        boolean first=true;
     public String brand;
   }
 
+  public interface SimpleCouchService extends CouchService<CSFTest> {
+    @View(map = "function(doc){emit(doc.brand, doc); }")
+    List<CSFTest> getItemsWithBrand(@Key String brand);
+  }
+
   public interface TrivialCouchService extends CouchService<CSFTest> {
 
   }
 
   @Test
   public void testCouchServiceDotFind() throws Exception {
-    TrivialCouchService service = CouchServiceFactory.get(TrivialCouchService.class);
+    {
+      TrivialCouchService service = CouchServiceFactory.get(TrivialCouchService.class);
 
 
-    String id = CouchDriver.DocPersist.$().db(DB).validjson("{\"model\":\"abc\",\"brand\":\"def\"}").to().fire().tx().id();
+      String id = CouchDriver.DocPersist.$().db(DB).validjson("{\"model\":\"abc\",\"brand\":\"def\"}").to().fire().tx().id();
 
-    CSFTest obj = service.find(id);
-    assertNotNull(obj);
-    assertEquals("abc", obj.model);
-    assertEquals("def", obj.brand);
-  }
+      CSFTest obj = service.find(id);
+      assertNotNull(obj);
+      assertEquals("abc", obj.model);
+      assertEquals("def", obj.brand);
+    }
 
-  @Test
-  public void testCouchServiceDotPersist() throws Exception {
-    TrivialCouchService service = CouchServiceFactory.get(TrivialCouchService.class);
+    {
 
-    CouchTx tx = service.persist(new CSFTest());
+      TrivialCouchService service = null;
+      try {
+        service = CouchServiceFactory.get(TrivialCouchService.class);
+      } catch (Throwable e) {
+        e.printStackTrace();  //todo: verify for a purpose
+        fail();
+      }
 
-    assertNotNull(tx);
-    assertTrue(tx.ok());
-    assertNull(tx.getError());
+      CouchTx tx = service.persist(new CSFTest());
 
-    CSFTest obj = service.find(tx.id());
-    assertNull(obj.brand);
-    assertNull(obj.model);
-    obj.brand = "Best";
-    obj.model = "Sample";
+      assertNotNull(tx);
+      assertTrue(tx.ok());
+      assertNull(tx.getError());
 
-    CouchTx tx2 = service.persist(obj);
-    assertEquals(tx.id(), tx2.id());
-    assertFalse(tx.rev().equals(tx2.rev()));
+      CSFTest obj = service.find(tx.id());
+      assertNull(obj.brand);
+      assertNull(obj.model);
+      obj.brand = "Best";
+      obj.model = "Sample";
 
-    CSFTest obj2 = service.find(tx.id());
-    assertEquals("Best", obj2.brand);
-    assertEquals("Sample", obj2.model);
-  }
+      CouchTx tx2 = service.persist(obj);
+      assertEquals(tx.id(), tx2.id());
+      assertFalse(tx.rev().equals(tx2.rev()));
 
-  public interface SimpleCouchService extends CouchService<CSFTest> {
-    @View(map = "function(doc){emit(doc.brand, doc); }")
-    List<CSFTest> getItemsWithBrand(@Key String brand);
-  }
+      CSFTest obj2 = service.find(tx.id());
+      assertEquals("Best", obj2.brand);
+      assertEquals("Sample", obj2.model);
+    }
 
-  @Test
-  public void testSimpleViewMethod() throws Exception {
-    SimpleCouchService service = CouchServiceFactory.get(SimpleCouchService.class);
+    {
+      SimpleCouchService service = null;
+      try {
+        service = CouchServiceFactory.get(SimpleCouchService.class);
+      } catch (Throwable e) {
+        e.printStackTrace();  //todo: verify for a purpose
+        fail(e.getMessage());
+      }
 
-    CSFTest a = new CSFTest();
-    a.brand = "something";
-    CSFTest b = new CSFTest();
-    b.brand = "else";
+      CSFTest a = new CSFTest();
+      a.brand = "something";
+      CSFTest b = new CSFTest();
+      b.brand = "else";
 
-    service.persist(a);
-    service.persist(b);
+      service.persist(a);
+      service.persist(b);
 
-    List<CSFTest> results = service.getItemsWithBrand("something");
-    assertNotNull(results);
-    assertEquals(1, results.size());
-    assertEquals("something", results.get(0).brand);
+      List<CSFTest> results = service.getItemsWithBrand("something");
+      assertNotNull(results);
+      assertEquals(1, results.size());
+      assertEquals("something", results.get(0).brand);
 
-    List<CSFTest> noResults = service.getItemsWithBrand("a");
-    assertNotNull(noResults);
-    assertEquals(0, noResults.size());
+      List<CSFTest> noResults = service.getItemsWithBrand("a");
+      assertNotNull(noResults);
+      assertEquals(0, noResults.size());
+    }
   }
 }
