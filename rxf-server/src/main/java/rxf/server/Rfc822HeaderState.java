@@ -144,8 +144,8 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
       return protocolStatus();    //To change body of overridden methods use File | Settings | File Templates.
     }
 
-    public T protocol(String protocolStatus) {
-      return (T) protocolStatus(protocolStatus);    //To change body of overridden methods use File | Settings | File Templates.
+    public T protocol(String protocol) {
+      return (T) protocolStatus(protocol);    //To change body of overridden methods use File | Settings | File Templates.
     }
 
     @Override
@@ -642,27 +642,22 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
     return (T) this;
   }
 
-  /**
-   * hard to explain what this does. very complicated.
-   *
-   * @return a string
-   */
   @Override
   public String toString() {
     return "Rfc822HeaderState{" +
         "dirty=" + dirty +
-        ", addHeaderInterest=" + (null == headerInterest ? null : Arrays.asList(headerInterest)) +
-        ", cookies=" + (null == cookies ? null : Arrays.asList(cookies)) +
+        ", headerInterest=" + Arrays.asList(headerInterest.get()) +
+        ", cookies=" + (cookies == null ? null : Arrays.asList(cookies)) +
         ", sourceRoute=" + sourceRoute +
         ", headerBuf=" + headerBuf +
         ", headerStrings=" + headerStrings +
         ", cookieStrings=" + cookieStrings +
         ", methodProtocol='" + methodProtocol + '\'' +
-        ", pathResCode='" + pathRescode + '\'' +
+        ", pathRescode='" + pathRescode + '\'' +
         ", protocolStatus='" + protocolStatus + '\'' +
+        ", sourceKey=" + sourceKey +
         '}';
   }
-
 
   /**
    * writes method, headersStrings, and cookieStrings to a {@link String } suitable for Response addHeaderInterest

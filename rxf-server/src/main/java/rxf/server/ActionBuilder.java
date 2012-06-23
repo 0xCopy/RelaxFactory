@@ -3,6 +3,10 @@ package rxf.server;
 import java.nio.channels.SelectionKey;
 import java.util.Arrays;
 import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static rxf.server.driver.CouchMetaDriver.CONTENT_LENGTH;
+import static rxf.server.driver.CouchMetaDriver.ETAG;
 
 /**
  * User: jim
@@ -11,7 +15,7 @@ import java.util.concurrent.SynchronousQueue;
  */
 public abstract class ActionBuilder<T> {
 
-  private Rfc822HeaderState state;
+  private AtomicReference<Rfc822HeaderState> state = new AtomicReference<Rfc822HeaderState>();
   private SelectionKey key;
   protected static ThreadLocal<ActionBuilder<?>> currentAction = new InheritableThreadLocal<ActionBuilder<?>>();
   private SynchronousQueue[] synchronousQueues;
@@ -20,7 +24,6 @@ public abstract class ActionBuilder<T> {
     this.synchronousQueues = synchronousQueues;
     currentAction.set(this);
   }
-
 
 
   private SynchronousQueue[] many(SynchronousQueue... ts) {
@@ -37,7 +40,9 @@ public abstract class ActionBuilder<T> {
   }
 
   public Rfc822HeaderState state() {
-    return this.state == null ? this.state = new Rfc822HeaderState(BlobAntiPatternObject.COOKIE, "ETag") : state;
+    Rfc822HeaderState ret = this.state.get();
+    if (null == ret) state.set(ret = new Rfc822HeaderState(ETAG, CONTENT_LENGTH));
+    return ret;
   }
 
   public SelectionKey key() {
@@ -48,7 +53,7 @@ public abstract class ActionBuilder<T> {
 
 
   public ActionBuilder<T> state(Rfc822HeaderState state) {
-    this.state = state;
+    this.state.set(state);
     return this;
   }
 

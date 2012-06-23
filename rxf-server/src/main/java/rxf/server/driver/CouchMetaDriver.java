@@ -9,9 +9,12 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import one.xio.AsioVisitor.Impl;
+import one.xio.HttpStatus;
 import one.xio.MimeType;
 import org.intellij.lang.annotations.Language;
 import rxf.server.*;
+import rxf.server.Rfc822HeaderState.HttpRequest;
+import rxf.server.Rfc822HeaderState.HttpResponse;
 import rxf.server.an.DbKeys;
 import rxf.server.an.DbKeys.etype;
 import rxf.server.an.DbTask;
@@ -155,7 +158,7 @@ public enum CouchMetaDriver {
             cursor = ByteBuffer.allocateDirect(getReceiveBufferSize());
             int read = channel.read(cursor);
 
-            final Rfc822HeaderState state = actionBuilder.state();
+            Rfc822HeaderState state = actionBuilder.state();
             state.headerInterest(CONTENT_LENGTH).apply((ByteBuffer) cursor.flip());
             if (DEBUG_SENDJSON) {
               System.err.println(deepToString(state.pathResCode(), state, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
@@ -199,18 +202,18 @@ public enum CouchMetaDriver {
 
   @DbTask({pojo, future, json}) @DbKeys({db, docId})DocFetch {
     @Override
-    public <T> ByteBuffer visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
+    public <T> ByteBuffer visit(DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
 
 
       String db = (String) dbKeysBuilder.get(etype.db);
       String id = (String) dbKeysBuilder.get(docId);
       /*final Rfc822HeaderState state = */
-      final Rfc822HeaderState state = actionBuilder.state().$req()
+      final HttpRequest state = actionBuilder.state().$req();
+      state
           .path("/" + db + (null == id ? "" : "/" + id.trim()))
           .$req()//2nd one free.  java kludge.
-          .method(GET)
-          .headerInterest(CONTENT_LENGTH);
+          .method(GET).addHeaderInterest(CONTENT_LENGTH);
       final SocketChannel channel = createCouchConnection();
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
       enqueue(channel, OP_CONNECT | OP_WRITE, new Impl() {
@@ -237,17 +240,21 @@ public enum CouchMetaDriver {
           }
           ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
           int read = channel.read(dst);
-          String s = state.apply((ByteBuffer) dst.flip()).pathResCode();
-          if (s.startsWith("20")) {
-            int remaining = Integer.parseInt(state.headerString(CONTENT_LENGTH));
-            if (remaining == dst.remaining()) {
-              cursor = dst.slice();
-              deliver();
-              return;
-            }
-            cursor = ByteBuffer.allocate(remaining).put(dst);
-          } else {//error
-            cyclicBarrier.reset();
+
+          final HttpResponse state = actionBuilder.state().apply((ByteBuffer) dst.flip()).$res();
+          HttpStatus httpStatus = state.statusEnum();
+          switch (httpStatus) {
+            case $200:
+//            case $201:
+              int remaining = Integer.parseInt(state.headerString(CONTENT_LENGTH));
+              if (remaining == dst.remaining()) {
+                cursor = dst.slice();
+                deliver();
+                return;
+              }
+              cursor = ByteBuffer.allocate(remaining).put(dst);
+            default: //error
+              cyclicBarrier.reset();
           }
         }
 
@@ -351,13 +358,13 @@ public enum CouchMetaDriver {
     public <T> ByteBuffer visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
-      final Rfc822HeaderState state = actionBuilder.state();
-      final ByteBuffer header = (ByteBuffer) state
-          .$req()
+      final HttpRequest state = actionBuilder.state()
+          .$req();
+      final ByteBuffer header = ((ByteBuffer) state
           .path("/" + dbKeysBuilder.get(db) + "/" + dbKeysBuilder.get(docId) + "?rev=" + dbKeysBuilder.get(rev))
           .$req()
           .method(DELETE)
-          .as(ByteBuffer.class);
+          .as(ByteBuffer.class));
       final SocketChannel channel = createCouchConnection();
       enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
         ByteBuffer cursor;
@@ -436,9 +443,10 @@ public enum CouchMetaDriver {
         @Override
         public void onWrite(SelectionKey key) throws Exception {
 
+          HttpRequest state = actionBuilder.state()
+              .$req();
           ByteBuffer buffer =
-              (ByteBuffer) actionBuilder.state()
-                  .$req()
+              (ByteBuffer) state
                   .method(GET)
                   .$req()
                   .path(('/' + db + '/' + dbKeysBuilder.get(view)).replace("//", "/"))
