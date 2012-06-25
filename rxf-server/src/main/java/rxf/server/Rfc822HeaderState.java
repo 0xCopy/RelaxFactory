@@ -59,20 +59,20 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
       return methodProtocol();    //To change body of overridden methods use File | Settings | File Templates.
     }
 
-    public T method(HttpMethod method) {
+    public HttpRequest method(HttpMethod method) {
       return method(method.name());    //To change body of overridden methods use File | Settings | File Templates.
     }
 
-    private T method(String s) {
-      return (T) methodProtocol(s);
+    private HttpRequest method(String s) {
+      return methodProtocol(s);
     }
 
     public String path() {
       return pathResCode();    //To change body of overridden methods use File | Settings | File Templates.
     }
 
-    public T path(String path) {
-      return (T) pathResCode(path);
+    public HttpRequest path(String path) {
+      return pathResCode(path);
     }
 
 
@@ -80,8 +80,8 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
       return protocolStatus();    //To change body of overridden methods use File | Settings | File Templates.
     }
 
-    public T protocol(String protocol) {
-      return (T) protocolStatus(protocol);    //To change body of overridden methods use File | Settings | File Templates.
+    public HttpRequest protocol(String protocol) {
+      return protocolStatus(protocol);    //To change body of overridden methods use File | Settings | File Templates.
     }
 
     @Override
@@ -129,20 +129,20 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
       return protocolStatus();
     }
 
-    public T protocol(String protocol) {
-      return (T) methodProtocol(protocol);
+    public HttpResponse protocol(String protocol) {
+      return methodProtocol(protocol);
     }
 
-    public T resCode(String res) {
-      return (T) pathResCode(res);
+    public HttpResponse resCode(String res) {
+      return pathResCode(res);
     }
 
-    public T resCode(HttpStatus resCode) {
-      return (T) pathResCode(resCode.name().substring(1));
+    public HttpResponse resCode(HttpStatus resCode) {
+      return pathResCode(resCode.name().substring(1));
     }
 
-    public T status(String status) {
-      return (T) protocolStatus(status);
+    public HttpResponse status(String status) {
+      return protocolStatus(status);
     }
 
     /**
@@ -151,7 +151,7 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
      * @param httpStatus
      * @return
      */
-    public T status(HttpStatus httpStatus) {
+    public HttpResponse status(HttpStatus httpStatus) {
       return protocolStatus(httpStatus.caption).resCode(httpStatus);
     }
 
