@@ -139,7 +139,11 @@ public enum CouchMetaDriver {
     public <T> ByteBuffer visit(DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
-      final ByteBuffer header = (ByteBuffer) actionBuilder.state().$req().method(DELETE).pathResCode("/" + dbKeysBuilder.get(db))
+      final ByteBuffer header = (ByteBuffer) actionBuilder
+          .state()
+          .$req()
+          .method(DELETE)
+          .pathResCode("/" + dbKeysBuilder.get(db))
           .as(ByteBuffer.class);
       final SocketChannel channel = createCouchConnection();
       enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
@@ -319,7 +323,6 @@ public enum CouchMetaDriver {
                 return null;                    //V
               } catch (Exception e) {           //V
                 cyclicBarrier.reset();          //V
-                e.printStackTrace();            //V
               } finally {                       //V
                 recycleChannel(channel);        //V
               }                                 //V
@@ -327,14 +330,9 @@ public enum CouchMetaDriver {
             }                                   //V
           });                                   //V
         }                                         //V
-      });                                         //V
-      //V
-      try {                                       //V
-        cyclicBarrier.await(3, getDefaultCollectorTimeUnit());
-      } catch (Throwable e) {
-        e.printStackTrace();  //todo: verify for a purpose
-      }
-      return (ByteBuffer) payload.get();
+      });
+      cyclicBarrier.await(3, getDefaultCollectorTimeUnit());
+      return payload.get();
     }
   },
   @DbTask({tx, oneWay, future}) @DbKeys(value = {db, validjson}, optional = {docId, rev})DocPersist {
@@ -362,11 +360,11 @@ public enum CouchMetaDriver {
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
       final HttpRequest state = actionBuilder.state()
           .$req();
-      final ByteBuffer header = ((ByteBuffer) state
+      final ByteBuffer header = (ByteBuffer) state
           .path("/" + dbKeysBuilder.get(db) + "/" + dbKeysBuilder.get(docId) + "?rev=" + dbKeysBuilder.get(rev))
           .$req()
           .method(DELETE)
-          .as(ByteBuffer.class));
+          .as(ByteBuffer.class);
       final SocketChannel channel = createCouchConnection();
       enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
         ByteBuffer cursor;
@@ -572,6 +570,7 @@ public enum CouchMetaDriver {
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
       String opaque = '/' + ((String) dbKeysBuilder.get(etype.opaque)).replace("//", "/");
       String validjson = (String) dbKeysBuilder.get(etype.validjson);
+      validjson = validjson == null ? "{}" : validjson;
       int lastSlashIndex = opaque.lastIndexOf('/');
       final byte[] outbound = validjson.getBytes(UTF8);
 

@@ -177,7 +177,7 @@ public class GeoIpService {
     return new Pair<ByteBuffer, ByteBuffer>(indexBuf, locBuf);
   }
 
-  static void testWalnutCreek(final ByteBuffer ix, ByteBuffer loc, long[] l1, int[] l2) throws UnknownHostException {
+  static void testWalnutCreek(ByteBuffer ix, ByteBuffer loc, long[] l1, int[] l2) throws UnknownHostException {
 
     try {
 //      String s2 = "127.0.0.1";
@@ -192,10 +192,8 @@ public class GeoIpService {
 //      }
       try {
         installLocalhostDeveloperGeoIp();
-        {
-          System.err.println("jim: " + mapAddressLookup(walnutCreek));
-          System.err.println("c: " + mapAddressLookup(Inet4Address.getByName("ppp-69-217-127-68.dsl.chcgil.ameritech.net")));
-        }
+        System.err.println("jim: " + mapAddressLookup(walnutCreek));
+        System.err.println("c: " + mapAddressLookup(Inet4Address.getByName("ppp-69-217-127-68.dsl.chcgil.ameritech.net")));
 
       } catch (Throwable e) {
         e.printStackTrace();  //todo: verify for a purpose
@@ -228,30 +226,25 @@ public class GeoIpService {
     System.err.println("geoip addHeaderInterest: " + mapAddressLookup(BlobAntiPatternObject.LOOPBACK));
   }
 
-  public static void runGeoIpLookupBenchMark(ByteBuffer loc, long[] l1, int[] l2, final ByteBuffer ix) throws UnknownHostException {
+  public static void runGeoIpLookupBenchMark(ByteBuffer loc, long[] l1, int[] l2, ByteBuffer ix) throws UnknownHostException {
     byte[][] bytes1 = new byte[1000][4];
-    {
-      long l3 = System.currentTimeMillis();
+    long l3 = System.currentTimeMillis();
 //      byte[] bytes = new byte[4];
-      for (int i = 0; i < bytes1.length; i++) {
+    for (int i = 0; i < bytes1.length; i++) {
 
-        RANDOM.nextBytes(bytes1[i] = new byte[4]);
-      }
-
-      System.err.println("random generator overhead: " + (System.currentTimeMillis() - l3));
+      RANDOM.nextBytes(bytes1[i] = new byte[4]);
     }
+
+    System.err.println("random generator overhead: " + (System.currentTimeMillis() - l3));
     InetAddress[] inetAddresses = new InetAddress[1000];
-    {
-      long l3 = System.currentTimeMillis();
-      for (int i = 0, bytes1Length = bytes1.length; i < bytes1Length; i++) {
-        inetAddresses[i] = InetAddress.getByAddress(bytes1[i]);
+    l3 = System.currentTimeMillis();
+    for (int i = 0, bytes1Length = bytes1.length; i < bytes1Length; i++) {
+      inetAddresses[i] = InetAddress.getByAddress(bytes1[i]);
 
-      }
-      System.err.println("inataddr overhead: " + (System.currentTimeMillis() - l3));
     }
+    System.err.println("inataddr overhead: " + (System.currentTimeMillis() - l3));
 
-    {
-      try {
+    try {
 //                long l3 = System.currentTimeMillis();
 //
 //
@@ -260,10 +253,9 @@ public class GeoIpService {
 //                    KernelImpl.lookupInetAddress(inetAddress, ix, bufAbstraction);
 //                }
 //                System.err.println("list benchmark: " + (System.currentTimeMillis() - l3));
-      } catch (Throwable e) {
-        e.printStackTrace();  //todo: verify for a purpose
-      } finally {
-      }
+    } catch (Throwable e) {
+      e.printStackTrace();  //todo: verify for a purpose
+    } finally {
     }
 
     if (null != GeoIpService.indexMMBuf && null != locationMMBuf) {
@@ -281,7 +273,7 @@ for (InetAddress inetAddress : inetAddresses) {
 System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
     }
     if (null != l1 && null != l2) {
-      long l3 = System.currentTimeMillis();
+      l3 = System.currentTimeMillis();
 
       for (InetAddress inetAddress : inetAddresses) {
         arraysLookup(l2, l1, inetAddress, loc);
@@ -336,33 +328,33 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
    * @throws javax.xml.xpath.XPathExpressionException
    *
    */
-  static void startGeoIpService(final String dbinstance) throws Exception {
+  static void startGeoIpService(String dbinstance) throws Exception {
     try {
       EXECUTOR_SERVICE.submit(new Callable() {
         public Object call() throws Exception {
-          String fire;
+          String fire = null;
           try {
             fire = RevisionFetch.$().db("geoip").docId("current").to().fire().json();
-            System.err.println("" + fire);
+            System.err.println("v " + fire);
           } catch (Exception e) {
-            if (!(e instanceof BrokenBarrierException)) {
-              e.printStackTrace();
-            } else {
-//              BrokenBarrierException brokenBarrierException = (BrokenBarrierException) e;
-              CouchTx geoip = DbCreate.$().db("geoip").to().fire().tx();
-              assert geoip.ok();
-              //...
-              CouchTx tx = DocPersist.$().db("geoip").docId("current").to().fire().tx();
-              assert tx.ok();
-              createGeoIpIndex();
-
-            }
+            e.printStackTrace();
           } finally {
+          }
+          if (null == fire) {
+
+            //              BrokenBarrierException brokenBarrierException = (BrokenBarrierException) e;
+            CouchTx geoip = DbCreate.$().db("geoip").to().fire().tx();
+            assert geoip.ok();
+            //...
+            CouchTx tx = DocPersist.$().db("geoip").docId("current").to().fire().tx();
+            assert tx.ok();
+            createGeoIpIndex();
+
           }
 
           return null;
         }
-      }).get();
+      });
 //      System.err.println( deepToString( json ) );
     } catch (Throwable e) {
       e.printStackTrace();  //todo: verify for a purpose
@@ -647,7 +639,7 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
     Integer integer = l2[abs];
 
     ByteBuffer bb = (ByteBuffer) csvData.duplicate().clear().position(integer);
-    while (bb.hasRemaining() && bb.get() != '\n') ;
+    while (bb.hasRemaining() && '\n' != bb.get()) ;
     return UTF8.decode((ByteBuffer) bb.flip().position(integer)).toString();
 
   }
@@ -696,16 +688,16 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
           locBuf = ByteBuffer.wrap(content);
           long l1 = System.currentTimeMillis();
           ArrayList<Integer> a = new ArrayList<Integer>();
-          while (locBuf.get() != '\n') ;//copyright
-          while (locBuf.get() != ',') ; //start with country
+          while ('\n' != locBuf.get()) ;//copyright
+          while (',' != locBuf.get()) ; //start with country
           geoIpHeaderOffset = locBuf.position();
-          while (locBuf.get() != '\n') ;//addHeaderInterest
+          while ('\n' != locBuf.get()) ;//addHeaderInterest
 
           while (locBuf.hasRemaining()) {
             while (locBuf.hasRemaining() && ',' != locBuf.get()) ;
             int position = locBuf.position();
             a.add(position);
-            while (locBuf.hasRemaining() && locBuf.get() != '\n') ;
+            while (locBuf.hasRemaining() && '\n' != locBuf.get()) ;
           }
           locations = a.toArray(new Integer[a.size()]);
           System.err.println("loc index time: " + (System.currentTimeMillis() - l1) + " (ms) lc: " + a.size());
@@ -724,19 +716,19 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
           //without string.split() etc
           //  tc: 1016 (ms) lc: 1874805
 
-          while (blockBuf.get() != '\n') ;//copyright
-          while (blockBuf.get() != '\n') ;//addHeaderInterest
+          while ('\n' != blockBuf.get()) ;//copyright
+          while ('\n' != blockBuf.get()) ;//addHeaderInterest
           long l1 = System.currentTimeMillis();
           while (blockBuf.hasRemaining()) {
             tBuf.clear().position(blockBuf.position() + 1);
-            while (blockBuf.get() != ',') ;//f1
+            while (',' != blockBuf.get()) ;//f1
             tBuf.limit(blockBuf.position() - 2);
             long value = Long.parseLong(UTF8.decode(tBuf).toString());
-            while (blockBuf.get() != ',') ;//f2
+            while (',' != blockBuf.get()) ;//f2
 
 
             tBuf.clear().position(blockBuf.position() + 1);
-            while (blockBuf.get() != '\n') ;
+            while ('\n' != blockBuf.get()) ;
             tBuf.limit(blockBuf.position() - 2);
             int value1 = Integer.parseInt(UTF8.decode(tBuf).toString());
             indexBuf.putInt((int) (value & IPMASK));
