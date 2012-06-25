@@ -4,8 +4,8 @@ import java.nio.channels.SelectionKey;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static rxf.server.driver.CouchMetaDriver.CONTENT_LENGTH;
-import static rxf.server.driver.CouchMetaDriver.ETAG;
+import static one.xio.HttpHeaders.Content$2dLength;
+import static one.xio.HttpHeaders.ETag;
 
 /**
  * User: jim
@@ -37,7 +37,7 @@ public abstract class ActionBuilder<T> {
 
   public Rfc822HeaderState state() {
     Rfc822HeaderState ret = this.state.get();
-    if (null == ret) state.set(ret = new Rfc822HeaderState(ETAG, CONTENT_LENGTH));
+    if (null == ret) state.set(ret = new Rfc822HeaderState(ETag.getHeader(), Content$2dLength.getHeader()));
     return ret;
   }
 

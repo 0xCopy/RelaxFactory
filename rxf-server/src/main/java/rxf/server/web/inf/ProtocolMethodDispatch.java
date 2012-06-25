@@ -13,14 +13,14 @@ import one.xio.HttpMethod;
 import rxf.server.*;
 
 import static java.nio.channels.SelectionKey.OP_READ;
+import static one.xio.HttpHeaders.Accept;
+import static one.xio.HttpHeaders.Content$2dEncoding;
+import static one.xio.HttpHeaders.Content$2dLength;
+import static one.xio.HttpHeaders.Content$2dType;
+import static one.xio.HttpHeaders.ETag;
+import static one.xio.HttpHeaders.Transfer$2dEncoding;
 import static one.xio.HttpMethod.GET;
 import static one.xio.HttpMethod.POST;
-import static rxf.server.driver.CouchMetaDriver.ACCEPT;
-import static rxf.server.driver.CouchMetaDriver.CONTENT_ENCODING;
-import static rxf.server.driver.CouchMetaDriver.CONTENT_LENGTH;
-import static rxf.server.driver.CouchMetaDriver.CONTENT_TYPE;
-import static rxf.server.driver.CouchMetaDriver.ETAG;
-import static rxf.server.driver.CouchMetaDriver.TRANSFER_ENCODING;
 
 /**
  * this class holds a protocol namespace to dispatch requests
@@ -114,7 +114,7 @@ public class ProtocolMethodDispatch extends Impl {
     //break down the incoming addHeaderInterest.
     Rfc822HeaderState state;
 
-    RFState.set(state = new Rfc822HeaderState(CONTENT_LENGTH, CONTENT_TYPE, CONTENT_ENCODING, ETAG, TRANSFER_ENCODING, ACCEPT).cookies(BlobAntiPatternObject.class.getCanonicalName(), BlobAntiPatternObject.MYGEOIPSTRING).sourceKey(key).apply((ByteBuffer) cursor.flip()));
+    RFState.set(state = new Rfc822HeaderState(Content$2dLength.getHeader(), Content$2dType.getHeader(), Content$2dEncoding.getHeader(), ETag.getHeader(), Transfer$2dEncoding.getHeader(), Accept.getHeader()).cookies(BlobAntiPatternObject.class.getCanonicalName(), BlobAntiPatternObject.MYGEOIPSTRING).sourceKey(key).apply((ByteBuffer) cursor.flip()));
     HttpMethod method = null;
     try {
 //find the method to dispatch

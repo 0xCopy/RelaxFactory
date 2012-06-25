@@ -12,8 +12,8 @@ import one.xio.AsioVisitor.Impl;
 
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
+import static one.xio.HttpHeaders.Content$2dLength;
 import static one.xio.HttpMethod.UTF8;
-import static rxf.server.driver.CouchMetaDriver.CONTENT_LENGTH;
 
 /**
  * User: jim
@@ -40,7 +40,7 @@ public class GwtRequestFactoryVisitor extends Impl {
             ;
       }
     }
-    int remaining = Integer.parseInt(state.get().headerString(CONTENT_LENGTH));
+    int remaining = Integer.parseInt(state.get().headerString(Content$2dLength.getHeader()));
     if (remaining == cursor.get().remaining()) {
       ByteBuffer byteBuffer = cursor.get();
       deliver(byteBuffer, state.get());
@@ -76,7 +76,7 @@ public class GwtRequestFactoryVisitor extends Impl {
           state./*cookieStrings(null).*/sourceKey().interestOps(OP_WRITE).attach(new Impl() {
             @Override
             public void onWrite(SelectionKey key) throws Exception {
-              ByteBuffer headersBuf = state.headerString(CONTENT_LENGTH, String.valueOf(payload.limit())).asResponseHeaderByteBuffer();
+              ByteBuffer headersBuf = state.headerString(Content$2dLength.getHeader(), String.valueOf(payload.limit())).asResponseHeaderByteBuffer();
               final SocketChannel channel = (SocketChannel) key.channel();
               channel.write((ByteBuffer) headersBuf);
               int write = channel.write((ByteBuffer) payload.rewind());

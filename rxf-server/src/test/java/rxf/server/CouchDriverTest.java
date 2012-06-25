@@ -87,11 +87,26 @@ public class CouchDriverTest {
 
   }
 
+  @SuppressWarnings({"UnnecessaryCodeBlock"})
   @Test
   public void testDrivers() throws IOException, TimeoutException, InterruptedException {
     try {
 
+      {
+        //REALLY NUKE THE OLD TESTS
 
+        try {
+          String json = DocFetch.$().db("").docId("_all_dbs").to().fire().json();
+          String[] strings = GSON.fromJson(json, String[].class);
+          for (String s : strings) {
+            if (s.startsWith(SOMEDBPREFIX)) DbDelete.$().db(s).to().fire().tx();
+          }
+        } catch (JsonSyntaxException e) {
+          e.printStackTrace();
+          fail();
+        }
+
+      }
       {
         CouchTx tx = DbCreate.$().db(SOMEDB).to().fire().tx();
         assertNotNull(tx);
@@ -99,7 +114,7 @@ public class CouchDriverTest {
         assertNull(tx.getError());
       }
       {
-        CouchTx tx = DocPersist.$().db(SOMEDB).validjson("{}").to().fire().tx();
+        CouchTx tx = DocPersist.$().db(SOMEDB).validjson("{\"_id\":\"t\"}").to().fire().tx();
         assertNotNull(tx);
         assertTrue(tx.ok());
         assertNotNull(tx.getId());
@@ -181,10 +196,10 @@ public class CouchDriverTest {
         String rev = null;
         try {
           rev = RevisionFetch.$().db(SOMEDB).docId(DESIGN_SAMPLE).to().fire().json();
-          final CouchTx tx = DocDelete.$().db(SOMEDB).docId(DESIGN_SAMPLE).rev(rev).to().fire().tx();
+          CouchTx tx = DocDelete.$().db(SOMEDB).docId(DESIGN_SAMPLE).rev(rev).to().fire().tx();
           assert tx.ok();
         } catch (Exception e) {
-          e.printStackTrace();  //todo: verify for a purpose
+          e.printStackTrace();
           fail(rev);
         }
         String designDoc = DesignDocFetch.$().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
@@ -196,7 +211,14 @@ public class CouchDriverTest {
         TrivialCouchService service = CouchServiceFactory.get(TrivialCouchService.class, SOMEDB);
 
 
-        final CouchTx tx = DocPersist.$().db(SOMEDB).validjson("{\"model\":\"abc\",\"brand\":\"def\"}").to().fire().tx();
+        CSFTest entity = new CSFTest();
+
+
+        entity.model = "abc";
+        entity.brand = "def";
+
+
+        CouchTx tx = service.persist(entity);
         String id = tx.id();
 
         CSFTest obj = service.find(id);
@@ -259,21 +281,7 @@ public class CouchDriverTest {
         junit.framework.Assert.assertNotNull(noResults);
         junit.framework.Assert.assertEquals(0, noResults.size());
       }
-      {
-        //REALLY NUKE THE OLD TESTS
 
-        try {
-          String json = DocFetch.$().db("").docId("_all_dbs").to().fire().json();
-          String[] strings = GSON.fromJson(json, String[].class);
-          for (String s : strings) {
-            if (s.startsWith(SOMEDBPREFIX)) DbDelete.$().db(s).to().fire().tx();
-          }
-        } catch (JsonSyntaxException e) {
-          e.printStackTrace();
-          fail();
-        }
-
-      }
     } catch (Exception e) {
       e.printStackTrace();
       fail();

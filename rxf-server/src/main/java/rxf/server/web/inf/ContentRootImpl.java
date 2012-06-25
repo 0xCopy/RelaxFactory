@@ -10,16 +10,17 @@ import java.util.regex.Pattern;
 import one.xio.AsioVisitor.Impl;
 import one.xio.MimeType;
 import rxf.server.*;
+import rxf.server.driver.CouchMetaDriver;
 
 import static java.lang.Math.min;
 import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
+import static one.xio.HttpHeaders.Accept$2dEncoding;
+import static one.xio.HttpHeaders.Content$2dEncoding;
+import static one.xio.HttpHeaders.Content$2dLength;
+import static one.xio.HttpHeaders.Content$2dType;
 import static one.xio.HttpMethod.UTF8;
-import static rxf.server.driver.CouchMetaDriver.ACCEPT_ENCODING;
-import static rxf.server.driver.CouchMetaDriver.CONTENT_ENCODING;
-import static rxf.server.driver.CouchMetaDriver.CONTENT_LENGTH;
-import static rxf.server.driver.CouchMetaDriver.CONTENT_TYPE;
 
 /**
  * User: jim
@@ -56,7 +57,7 @@ public class ContentRootImpl extends Impl {
 
       //      System.err.println("### " + BlobAntiPatternObject.deepToString(path, Pattern.compile("[\\?#]").split(absolutePath.getAbsolutePath() + '/' + path, 2)));
 
-      fname = URLDecoder.decode((Pattern.compile("[\\?#]").split(absolutePath.getAbsolutePath() + '/' + path, 2)[0]).replace("//", "/").replace("../", "./"), UTF8.name());
+      fname = URLDecoder.decode(CouchMetaDriver.scrub(Pattern.compile("[\\?#]").split(absolutePath.getAbsolutePath() + '/' + path, 2)[0]), UTF8.name());
 
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();  //todo: verify for a purpose
@@ -74,7 +75,7 @@ public class ContentRootImpl extends Impl {
       @Override
       public void onWrite(SelectionKey key) throws Exception {
 
-        String accepts = state.get().headerString(ACCEPT_ENCODING);
+        String accepts = state.get().headerString(Accept$2dEncoding.getHeader());
         String ceString = null;
         if (null != accepts) {
 //              String accepts = UTF8.decode((ByteBuffer) addHeaderInterest.clear().limit(ints[1]).position(ints[0])).toString().trim();
@@ -107,13 +108,13 @@ public class ContentRootImpl extends Impl {
           MimeType mimeType = MimeType.valueOf(substring);
           long length = randomAccessFile.length();
           Rfc822HeaderState responseHeader = new Rfc822HeaderState()
-              .headerString(CONTENT_TYPE, (null == mimeType ? MimeType.bin : mimeType).contentType)
-              .headerString(CONTENT_LENGTH, String.valueOf(length))
+              .headerString(Content$2dType.getHeader(), (null == mimeType ? MimeType.bin : mimeType).contentType)
+              .headerString(Content$2dLength.getHeader(), String.valueOf(length))
               .pathResCode("200")
               .methodProtocol("HTTP/1.1")
               .protocolStatus("OK");
           if (null != ceString)
-            responseHeader.headerString(CONTENT_ENCODING, ceString);
+            responseHeader.headerString(Content$2dEncoding.getHeader(), ceString);
           ByteBuffer response = responseHeader.asResponseHeaderByteBuffer();
           int write = channel.write(response);
           final int sendBufferSize = BlobAntiPatternObject.getSendBufferSize();

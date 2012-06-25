@@ -12,10 +12,10 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.web.bindery.requestfactory.server.SimpleRequestProcessor;
 import one.xio.*;
-import rxf.server.driver.CouchMetaDriver;
 import rxf.server.web.inf.ProtocolMethodDispatch;
 
 import static java.lang.Math.abs;
+import static one.xio.HttpHeaders.Set$2dCookie;
 import static one.xio.HttpMethod.UTF8;
 import static rxf.server.BlobAntiPatternObject.COOKIE;
 
@@ -46,6 +46,10 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
 
 
   public static final String[] EMPTY = new String[0];
+
+  public String headerString(HttpHeaders httpHeader) {
+    return headerString(httpHeader.getHeader());  //To change body of created methods use File | Settings | File Templates.
+  }
 
 
   @SuppressWarnings({"RedundantCast"})
@@ -111,7 +115,12 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
     }
 
     public HttpStatus statusEnum() {
-      return HttpStatus.valueOf('$' + resCode());
+      try {
+        return HttpStatus.valueOf('$' + resCode());
+      } catch (Exception e) {
+        e.printStackTrace();  //todo: verify for a purpose
+      }
+      return null;
     }
 
     @Override
@@ -284,7 +293,7 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
   public static final String PREFIX = ": ";
 
   public T headerString(HttpHeaders hdrEnum, String s) {
-    return headerString(hdrEnum.name(), s);  //To change body of created methods use File | Settings | File Templates.
+    return headerString(hdrEnum.getHeader().toString().trim(), s);  //To change body of created methods use File | Settings | File Templates.
   }
 
 
@@ -431,8 +440,8 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
     boolean wantsCookies = 0 < cookies().length;
     boolean wantsHeaders = wantsCookies || 0 < headerInterest.get().length;
     headerBuf = (ByteBuffer) moveCaretToDoubleEol(cursor).duplicate().flip();
-    headerStrings.get().clear();
-    cookieStrings.get().clear();
+    headerStrings().clear();
+    cookieStrings().clear();
     if (wantsHeaders) {
       Map<String, int[]> headerMap = HttpHeaders.getHeaders((ByteBuffer) headerBuf.rewind());
       headerStrings.set(new LinkedHashMap<String, String>());
@@ -687,7 +696,7 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
       protocol += stringStringEntry.getKey() + ": " + stringStringEntry.getValue() + "\r\n";
     }
     for (Entry<String, String> stringStringEntry : cookieStrings().entrySet()) {
-      protocol += CouchMetaDriver.SET_COOKIE + ": " + stringStringEntry.getKey() + "=" + stringStringEntry.getValue() + "\r\n";
+      protocol += Set$2dCookie.getHeader() + ": " + stringStringEntry.getKey() + "=" + stringStringEntry.getValue() + "\r\n";
     }
 
     protocol += "\r\n";

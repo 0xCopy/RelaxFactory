@@ -4,14 +4,16 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-import com.google.gson.JsonObject;
+import com.google.gson.annotations.SerializedName;
 import rxf.server.CouchResultSet.tuple;
 import rxf.server.CouchService.View;
 import rxf.server.gen.CouchDriver;
 import rxf.server.gen.CouchDriver.*;
+import rxf.server.gen.CouchDriver.DocPersist.DocPersistTerminalBuilder;
 
 import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 import static rxf.server.BlobAntiPatternObject.GSON;
+import static rxf.server.BlobAntiPatternObject.deepToString;
 import static rxf.server.BlobAntiPatternObject.getDefaultOrgName;
 
 /**
@@ -34,9 +36,9 @@ public class CouchServiceFactory {
    * @author colin
    */
   private static class CouchServiceHandler<E> implements InvocationHandler, CouchNamespace<E> {
-    private Map<String, String> viewMethods = new HashMap<String, String>();
+    Map<String, String> viewMethods = new HashMap<String, String>();
     private Future<Object> init;
-    private Class<E> entityType;
+    Class<E> entityType;
 
     public CouchServiceHandler(Class<?> serviceInterface, String... ns) throws ExecutionException, InterruptedException {
 
@@ -44,15 +46,31 @@ public class CouchServiceFactory {
 
     }
 
+    public class CouchView {
+      public String map;
+      public String reduce;
+    }
+
+    public class CouchDesignDoc {
+      @SerializedName("_id")
+      public String id;
+      @SerializedName("_rev")
+      public String version;
+      public String language = "javascript";
+
+
+      public Map<String, CouchView> views = new LinkedHashMap<String, CouchView>();
+    }
+
+    ;
+
     private void init(final Class<?> serviceInterface, final String... initNs) throws ExecutionException, InterruptedException {
 
       Type[] genericInterfaces = serviceInterface.getGenericInterfaces();
       final ParameterizedType genericInterface = (ParameterizedType) genericInterfaces[0];
+      entityType = (Class<E>) genericInterface.getActualTypeArguments()[0];
       init = EXECUTOR_SERVICE.submit(new Callable<Object>() {
 
-        {
-          entityType = (Class<E>) genericInterface.getActualTypeArguments()[0];
-        }
 
         public Object call() throws Exception {
           for (int i = 0; i < initNs.length; i++) {
@@ -61,13 +79,19 @@ public class CouchServiceFactory {
           }
           try {
             //harvest, construct a view instance based on the interface. Probably not cheap, should be avoided.
-            JsonObject design = new JsonObject();
-            design.addProperty("language", "javascript");
-            String id = "_design/" + getEntityName();
+            CouchDesignDoc design = new CouchDesignDoc();
 
-            design.addProperty("_id", id);
+            design.id = "_design/" + getEntityName();
+            try {
+              design.version = RevisionFetch.$().db(getPathPrefix()).docId(design.id).to().fire().json();
+            } catch (Throwable ignored) {
+              try {
+                CouchTx tx = DbCreate.$().db(getPathPrefix()).to().fire().tx();
+                System.err.println("had to create " + getPathPrefix());
+              } finally {
+              }
+            }
 
-            JsonObject views = new JsonObject();
 
             Map<String, Type> returnTypes = new LinkedHashMap<String, Type>();
 
@@ -76,31 +100,23 @@ public class CouchServiceFactory {
               returnTypes.put(methodName, m.getReturnType());//not sure if this is good enough
               View viewAnnotation = m.getAnnotation(View.class);
               if (null != viewAnnotation) {
-                JsonObject view = new JsonObject();
+                CouchView view = new CouchView();
                 if (!viewAnnotation.map().isEmpty())
-                  view.addProperty("map", viewAnnotation.map());
+                  view.map = viewAnnotation.map();
                 if (!viewAnnotation.reduce().isEmpty()) {
-                  view.addProperty("reduce", viewAnnotation.reduce());
+                  view.reduce = viewAnnotation.reduce();
                 }
-                views.add(methodName, view);
+                design.views.put(methodName, view);
 
-                viewMethods.put(methodName, id + "/_view/" + methodName + "?key=\"%1$s\"");
+                viewMethods.put(methodName, design.id + "/_view/" + methodName + "?key=\"%1$s\"");
               }
 
             }
-            design.add("views", views);
-            final String rev;
-            String stringParam = null;
-            try {
-              stringParam = design.toString();
-              rev = RevisionFetch.$().db(getPathPrefix()).docId(id).to().fire().json();    //updating a doc, with a db but no rev or id?
 
-              DocPersist.$().db(getPathPrefix()).docId(id).rev(rev)/**/.validjson(stringParam).to().fire().oneWay();
-            } catch (Exception e) {
-
-              CouchTx tx = DocPersist.$().db(getPathPrefix()).docId(id).validjson(stringParam).to().fire().tx();
-            }
-
+            final String stringParam = GSON.toJson(design);
+            DocPersistTerminalBuilder fire = DocPersist.$().db(getPathPrefix()).docId(design.id).validjson(stringParam).to().fire();
+            CouchTx tx = fire.tx();
+            System.err.println(deepToString(tx));
 
           } catch (Exception e) {
             e.printStackTrace();
@@ -138,11 +154,14 @@ public class CouchServiceFactory {
           }
         }).get();
       } else {
-        //TODO: rewire implicit methods to be explicit wrappers?
+
         //persist or find by key
         if ("persist".equals(method.getName())) {
           //again, no point, see above with DocPersist
-          return CouchDriver.DocPersist.$().db(getPathPrefix()).validjson(GSON.toJson(args[0])).to().fire().tx();
+          String stringParam = GSON.toJson(args[0]);
+          DocPersistTerminalBuilder fire = DocPersist.$().db(getPathPrefix()).validjson(stringParam).to().fire();
+          CouchTx tx = fire.tx();
+          return tx;
         } else {
           assert "find".equals(method.getName());
           String doc = CouchDriver.DocFetch.$().db(getPathPrefix()).docId((String) args[0]).to().fire().json();
@@ -195,5 +214,7 @@ public class CouchServiceFactory {
     public void setPathPrefix(String pathPrefix) {
       this.pathPrefix = pathPrefix;
     }
+
+
   }
 }

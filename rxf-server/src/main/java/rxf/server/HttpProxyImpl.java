@@ -15,8 +15,8 @@ import rxf.server.web.inf.ProtocolMethodDispatch;
 import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
+import static one.xio.HttpHeaders.Content$2dLength;
 import static one.xio.HttpMethod.UTF8;
-import static rxf.server.driver.CouchMetaDriver.CONTENT_LENGTH;
 
 /**
  * User: jim
@@ -68,8 +68,8 @@ public class HttpProxyImpl extends Impl {
               SocketChannel channel = (SocketChannel) couchKey.channel();
               final ByteBuffer dst = ByteBuffer.allocateDirect(BlobAntiPatternObject.getReceiveBufferSize());
               int read = channel.read(dst);
-              Rfc822HeaderState proxyState = new Rfc822HeaderState(CONTENT_LENGTH);
-              final int total = Integer.parseInt(proxyState.headerString(CONTENT_LENGTH));
+              Rfc822HeaderState proxyState = new Rfc822HeaderState(Content$2dLength.getHeader());
+              final int total = Integer.parseInt(proxyState.headerString(Content$2dLength.getHeader()));
               final SocketChannel browserChannel = (SocketChannel) browserKey.channel();
               try {
 
