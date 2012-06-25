@@ -14,10 +14,14 @@ public abstract class DbKeysBuilder<T> {
   protected static ThreadLocal<DbKeysBuilder> currentKeys = new InheritableThreadLocal<DbKeysBuilder>();
   protected final java.util.EnumMap<DbKeys.etype, Object> parms = new java.util.EnumMap<DbKeys.etype, Object>(DbKeys.etype.class);
 
+  private Throwable trace;
+
   protected abstract ActionBuilder<T> to();
 
   public DbKeysBuilder() {
     currentKeys.set(this);
+    if (BlobAntiPatternObject.DEBUG_SENDJSON) debug();
+
   }
 
   public boolean validate() {
@@ -42,5 +46,14 @@ public abstract class DbKeysBuilder<T> {
 
   public <T> T remove(etype designDocId) {
     return (T) parms.remove(designDocId);
+  }
+
+  public DbKeysBuilder<T> debug() {
+    trace = new Throwable().fillInStackTrace();
+    return this;
+  }
+
+  public Throwable trace() {
+    return trace;
   }
 }

@@ -556,7 +556,13 @@ public enum CouchMetaDriver {
           }                                                                   //V
         }                                                                     //V
       });                                                                     //V
-      joinPoint.await(5L, getDefaultCollectorTimeUnit());//5 seconds query is enough.
+      try {
+        joinPoint.await(5L, getDefaultCollectorTimeUnit());//5 seconds query is enough.
+      } catch (Exception e) {
+        e.printStackTrace();  //todo: verify for a purpose
+        System.err.println("\tfrom:");
+        dbKeysBuilder.trace().printStackTrace();
+      }
       return payload.get();
     }
   },
@@ -574,7 +580,8 @@ public enum CouchMetaDriver {
       final byte[] outbound = validjson.getBytes(UTF8);
 
       final Rfc822HeaderState state = actionBuilder.state();
-      final ByteBuffer header = (ByteBuffer) state.$req()
+      final ByteBuffer header = (ByteBuffer) state
+          .$req()
           .method(lastSlashIndex < opaque.lastIndexOf('?') || lastSlashIndex != opaque.indexOf('/') ? PUT : POST)
           .path(opaque)
           .headerInterest(ETAG, CONTENT_LENGTH, CONTENT_ENCODING)

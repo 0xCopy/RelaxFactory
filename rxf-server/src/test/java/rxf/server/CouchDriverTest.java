@@ -236,10 +236,10 @@ public class CouchDriverTest {
       {
         SimpleCouchService service = null;
         try {
-          service = CouchServiceFactory.get(SimpleCouchService.class);
+          service = CouchServiceFactory.get(SimpleCouchService.class, SOMEDB);
         } catch (Throwable e) {
           e.printStackTrace();  //todo: verify for a purpose
-          junit.framework.Assert.fail(e.getMessage());
+          fail(e.getMessage());
         }
 
         CSFTest a = new CSFTest();

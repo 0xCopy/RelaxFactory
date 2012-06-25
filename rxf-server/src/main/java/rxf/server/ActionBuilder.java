@@ -1,7 +1,6 @@
 package rxf.server;
 
 import java.nio.channels.SelectionKey;
-import java.util.Arrays;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -18,10 +17,8 @@ public abstract class ActionBuilder<T> {
   private AtomicReference<Rfc822HeaderState> state = new AtomicReference<Rfc822HeaderState>();
   private SelectionKey key;
   protected static ThreadLocal<ActionBuilder<?>> currentAction = new InheritableThreadLocal<ActionBuilder<?>>();
-  private SynchronousQueue[] synchronousQueues;
 
-  public ActionBuilder(SynchronousQueue... synchronousQueues) {
-    this.synchronousQueues = synchronousQueues;
+  public ActionBuilder() {
     currentAction.set(this);
   }
 
@@ -35,7 +32,6 @@ public abstract class ActionBuilder<T> {
     return "ActionBuilder{" +
         "state=" + state +
         ", key=" + key +
-        ", synchronousQueues=" + (synchronousQueues == null ? null : Arrays.asList(synchronousQueues)) +
         '}';
   }
 
@@ -68,8 +64,5 @@ public abstract class ActionBuilder<T> {
     return (ActionBuilder<T>) currentAction.get();
   }
 
-  public ActionBuilder<T> sync(SynchronousQueue... ts) {
-    this.synchronousQueues = ts;
-    return this;
-  }
+
 }
