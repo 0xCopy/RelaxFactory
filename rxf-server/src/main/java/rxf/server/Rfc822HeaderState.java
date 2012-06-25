@@ -429,8 +429,8 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
     boolean wantsCookies = 0 < cookies().length;
     boolean wantsHeaders = wantsCookies || 0 < headerInterest.get().length;
     headerBuf = (ByteBuffer) moveCaretToDoubleEol(cursor).duplicate().flip();
-    headerStrings.set(null);
-    cookieStrings.set(null);
+    headerStrings.get().clear();
+    cookieStrings.get().clear();
     if (wantsHeaders) {
       Map<String, int[]> headerMap = HttpHeaders.getHeaders((ByteBuffer) headerBuf.rewind());
       headerStrings.set(new LinkedHashMap<String, String>());

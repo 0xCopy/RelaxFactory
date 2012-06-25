@@ -242,10 +242,8 @@ public interface CouchDriver {
 
           public String json() {
             try {
-              final ByteBuffer visit = CouchMetaDriver.DocFetch.visit();
-              final ByteBuffer bb = avoidStarvation(visit);
-              final String s = HttpMethod.UTF8.decode(bb).toString();
-              return s;
+              ByteBuffer visit = CouchMetaDriver.DocFetch.visit();
+              return null == visit ? null : HttpMethod.UTF8.decode(avoidStarvation(visit)).toString();
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -313,7 +311,9 @@ public interface CouchDriver {
         return new RevisionFetchTerminalBuilder() {
           public String json() {
             try {
-              return HttpMethod.UTF8.decode(avoidStarvation(CouchMetaDriver.RevisionFetch.visit())).toString();
+              ByteBuffer visit = CouchMetaDriver.RevisionFetch.visit();
+
+              return visit == null ? null : HttpMethod.UTF8.decode(avoidStarvation(visit)).toString();
             } catch (Exception e) {
               e.printStackTrace();
             }

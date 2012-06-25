@@ -127,8 +127,14 @@ public enum DbTerminal {
   }, json {
     @Override
     public String builder(CouchMetaDriver couchDriver, etype[] parms, boolean implementation) {
-      @Language("JAVA") String s = "{try{\n    return one.xio.HttpMethod.UTF8.decode(avoidStarvation(CouchMetaDriver." +
-          "" + couchDriver + ".visit())).toString();\n}catch(Exception e){\n    e.printStackTrace();  \n}\n    return null;\n}";
+      @Language("JAVA") String s = "   try {\n" +
+          "              ByteBuffer visit = CouchMetaDriver." + couchDriver.name() +
+          ".visit();\n" +
+          "              return null==visit?null:HttpMethod.UTF8.decode(avoidStarvation(visit)).toString();\n" +
+          "            } catch (Exception e) {\n" +
+          "              e.printStackTrace();\n" +
+          "            }\n" +
+          "            return null;";
       return (implementation ? " public " : "") + " String  json()" + (implementation ?
           s : ";");
     }

@@ -8,6 +8,7 @@ import com.google.gson.JsonSyntaxException;
 import one.xio.AsioVisitor;
 import one.xio.HttpMethod;
 import org.junit.*;
+import rxf.server.gen.CouchDriver;
 import rxf.server.gen.CouchDriver.*;
 import rxf.server.web.inf.ProtocolMethodDispatch;
 
@@ -24,7 +25,8 @@ import static rxf.server.BlobAntiPatternObject.GSON;
  */
 public class CouchDriverTest {
 
-  public static final String SOMEDB = "test_somedb_" + System.currentTimeMillis();   //ordered names of testdbs for failure postmortem....
+  public static final String SOMEDBPREFIX = "test_somedb_";
+  public static final String SOMEDB = SOMEDBPREFIX + System.currentTimeMillis();   //ordered names of testdbs for failure postmortem....
   private ScheduledExecutorService exec;
 
   @Before
@@ -69,6 +71,16 @@ public class CouchDriverTest {
   @Test
   public void testDrivers() {
     try {
+
+      {  //REALLY NUKE THE OLD TESTS
+
+        String json = DocFetch.$().db("").docId("_all_dbs").to().fire().json();
+        String[] strings = GSON.fromJson(json, String[].class);
+        for (String s : strings) {
+          if (s.startsWith(SOMEDBPREFIX)) CouchDriver.DbDelete.$().db(s).to().fire().tx();
+        }
+
+      }
       {//this can fail with a 415 error if the db already exists - should have some setup that deletes dbs if they exist
         CouchTx tx = DbCreate.$().db(SOMEDB).to().fire().tx();
         assertNotNull(tx);
@@ -174,12 +186,12 @@ public class CouchDriverTest {
         assertTrue(tx.ok());
         assertNull(tx.getError());
       }
+
     } catch (JsonSyntaxException e) {
       e.printStackTrace();
       fail();
-    } finally {
-
     }
+
   }
 
   private CouchTx ensureGone() {

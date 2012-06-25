@@ -9,8 +9,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import one.xio.AsioVisitor.Impl;
-import one.xio.HttpStatus;
-import one.xio.MimeType;
+import one.xio.*;
 import org.intellij.lang.annotations.Language;
 import rxf.server.*;
 import rxf.server.Rfc822HeaderState.HttpRequest;
@@ -211,7 +210,7 @@ public enum CouchMetaDriver {
       /*final Rfc822HeaderState state = */
       final HttpRequest state = actionBuilder.state().$req();
       state
-          .path("/" + db + (null == id ? "" : "/" + id.trim()))
+          .path(("/" + db + (null == id ? "" : "/" + id.trim())).replace("//", "/"))
           .$req()//2nd one free.  java kludge.
           .method(GET).addHeaderInterest(CONTENT_LENGTH);
       final SocketChannel channel = createCouchConnection();
@@ -241,7 +240,7 @@ public enum CouchMetaDriver {
           ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
           int read = channel.read(dst);
 
-          final HttpResponse state = actionBuilder.state().apply((ByteBuffer) dst.flip()).$res();
+          HttpResponse state = actionBuilder.state().apply((ByteBuffer) dst.flip()).$res();
           HttpStatus httpStatus = state.statusEnum();
           switch (httpStatus) {
             case $200:
@@ -285,6 +284,8 @@ public enum CouchMetaDriver {
       return payload.get();
     }
   },
+
+
   @DbTask({json, future}) @DbKeys({db, docId})RevisionFetch {
     @Override
     public <T> ByteBuffer visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
@@ -292,47 +293,48 @@ public enum CouchMetaDriver {
       Object id = dbKeysBuilder.get(docId);
       String pathRescode = "/" + dbKeysBuilder.get(db) + (null != id ? "/" + id : "");
       final Rfc822HeaderState state = actionBuilder.state().headerInterest(ETAG).methodProtocol("HEAD").pathResCode(pathRescode);
-      state.protocolStatus("HTTP/1.1");
-      return EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
-        public ByteBuffer call() throws Exception {
-          final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
-
-          enqueue(createCouchConnection(), OP_WRITE | OP_CONNECT, new Impl() {
-            @Override
-            public void onWrite(SelectionKey key) throws Exception {
-              SocketChannel channel = (SocketChannel) key.channel();
-              int write = channel.write(state.asRequestHeaderByteBuffer());
-              key.interestOps(OP_READ).selector().wakeup();
-            }
-
-            @Override
-            public void onRead(final SelectionKey key) throws Exception {
-              EXECUTOR_SERVICE.submit(
-                  new Runnable() {
-                    public void run() {
-                      SocketChannel channel = null;
-                      try {
-                        channel = (SocketChannel) key.channel();
-                        ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
-                        int read = channel.read(dst);
-                        state.apply((ByteBuffer) dst.flip());
-                        cyclicBarrier.await();  //V
-                      } catch (Exception e) {                                //V
-                        e.printStackTrace();                                 //V
-                      } finally {                                            //V
-                        recycleChannel(channel);                             //V
-                      }                                                      //V
-                    }                                                        //V
-                  });                                                        //V
-            }                                                                //V
-          });                                                                //V
-          cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
-          Map<String, String> headerStrings = state.getHeaderStrings();
-          String rev1 = state.dequotedHeader(ETAG);
-          return ByteBuffer.wrap(rev1.getBytes());
-
+      final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
+      final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
+      final SocketChannel channel = createCouchConnection();
+      HttpMethod.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
+        @Override
+        public void onWrite(SelectionKey key) throws Exception {
+          ByteBuffer as = (ByteBuffer) state.$req().as(ByteBuffer.class);
+          int write = channel.write(as);
+          assert !as.hasRemaining();
+          key.interestOps(OP_READ);
         }
-      }).get();
+
+        @Override
+        public void onRead(SelectionKey key) throws Exception {
+          final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
+          int read = channel.read(dst);
+          final int[] ints = HttpHeaders.getHeaders((ByteBuffer) dst.flip()).get(ETAG);
+          assert -1 != read;
+          EXECUTOR_SERVICE.submit(new Callable<Object>() {
+            public Object call() throws Exception {
+              try {
+                payload.set((ByteBuffer) dst.duplicate().limit(ints[1]).position(ints[0]));
+                cyclicBarrier.await();          //V
+                return null;                    //V
+              } catch (Exception e) {           //V
+                cyclicBarrier.reset();          //V
+                e.printStackTrace();            //V
+              } finally {                       //V
+                recycleChannel(channel);        //V
+              }                                 //V
+              return null;                      //V
+            }                                   //V
+          });                                   //V
+        }                                         //V
+      });                                         //V
+      //V
+      try {                                       //V
+        cyclicBarrier.await(3, getDefaultCollectorTimeUnit());
+      } catch (Throwable e) {
+        e.printStackTrace();  //todo: verify for a purpose
+      }
+      return (ByteBuffer) payload.get();
     }
   },
   @DbTask({tx, oneWay, future}) @DbKeys(value = {db, validjson}, optional = {docId, rev})DocPersist {
@@ -443,10 +445,9 @@ public enum CouchMetaDriver {
         @Override
         public void onWrite(SelectionKey key) throws Exception {
 
-          HttpRequest state = actionBuilder.state()
-              .$req();
+
           ByteBuffer buffer =
-              (ByteBuffer) state
+              (ByteBuffer) actionBuilder.state().$req()
                   .method(GET)
                   .$req()
                   .path(('/' + db + '/' + dbKeysBuilder.get(view)).replace("//", "/"))
@@ -474,7 +475,11 @@ public enum CouchMetaDriver {
             remaining = channel.read(dst);
             Rfc822HeaderState state = actionBuilder.state();
 
-            switch (state.apply((ByteBuffer) dst.flip()).$res().statusEnum()) {
+            HttpStatus httpStatus = actionBuilder.state()
+                .$res()
+                .apply((ByteBuffer) dst.flip())
+                .$res().statusEnum();
+            switch (httpStatus) {
               case $200:
                 break;
               default:
@@ -724,6 +729,7 @@ public enum CouchMetaDriver {
 //
 //  }
   ;
+  public static final String[] EMPTY = new String[0];
   private static final String APPLICATION_JSON = MimeType.json.contentType;
   public static final String ETAG = "ETag";
   public static final String CONTENT_LENGTH = "Content-Length";
