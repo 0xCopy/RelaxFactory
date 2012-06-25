@@ -123,9 +123,10 @@ public class CouchServiceFactory {
             /*       dont forget to uncomment this after new CouchResult gen*/
             if (viewMethods.containsKey(name)) {
               // where is the design doc defined? part of the view?
+              assert (entityType != null);
               CouchResultSet<E> rows = (CouchResultSet<E>) ViewFetch.$().db(getOrgName()).type(entityType).view(String.format(viewMethods.get(name), args)).to().fire().rows();
               if (null != rows && null != rows.rows) {
-                ArrayList<E> ar = new ArrayList<E>();
+                List<E> ar = new ArrayList<E>();
                 for (tuple<E> row : rows.rows) {
                   ar.add(row.value);
                 }

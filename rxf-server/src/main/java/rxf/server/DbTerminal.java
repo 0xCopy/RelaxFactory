@@ -32,9 +32,9 @@ public enum DbTerminal {
       String cmdName = couchDriver.name();
       @Language("JAVA") String s = "{\n" +
           "            try {\n" +
-          "              return    BlobAntiPatternObject.GSON.fromJson(one.xio.HttpMethod.UTF8.decode(" +
-          visitor + ".visit()).toString(),\n" +
-          "                  new ParameterizedType() {\n" +
+          "              return    BlobAntiPatternObject.GSON.fromJson(one.xio.HttpMethod.UTF8.decode(avoidStarvation(" +
+          visitor + ".visit())).toString(),\n" +
+          "                  new java.lang.reflect.ParameterizedType() {\n" +
           "                    public Type getRawType() {\n" +
           "                      return CouchResultSet.class;\n" +
           "                    }\n" +

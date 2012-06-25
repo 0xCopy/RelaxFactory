@@ -439,17 +439,21 @@ public enum CouchMetaDriver {
         ByteBuffer cursor;
         List<ByteBuffer> list = new ArrayList<ByteBuffer>();
         final Impl prev = this;
+        private String attempt;
 
         @Override
         public void onWrite(SelectionKey key) throws Exception {
 
 
+          final HttpRequest request = actionBuilder.state().$req();
           ByteBuffer buffer =
-              (ByteBuffer) actionBuilder.state().$req()
+              (ByteBuffer) request
                   .method(GET)
                   .path(('/' + db + '/' + dbKeysBuilder.get(view)).replace("//", "/"))
+                  .headerString(HttpHeaders.Accept, MimeType.json.contentType)
                   .headerInterest(ETAG, TRANSFER_ENCODING, CONTENT_LENGTH)
                   .as(ByteBuffer.class);
+          attempt = request.toString();
           int wrote = channel.write(buffer);
           assert !buffer.hasRemaining();
           key.interestOps(OP_READ);//READ immmmmediately follows WRITE in httpmethod.init loop
@@ -472,8 +476,10 @@ public enum CouchMetaDriver {
             remaining = channel.read(dst);
             Rfc822HeaderState state = actionBuilder.state();
 
-            HttpStatus httpStatus = actionBuilder.state()
-                .$res()
+            final Rfc822HeaderState httpResponse = actionBuilder.state()
+                .$res();
+
+            HttpStatus httpStatus = httpResponse
                 .apply((ByteBuffer) dst.flip())
                 .$res().statusEnum();
             switch (httpStatus) {
