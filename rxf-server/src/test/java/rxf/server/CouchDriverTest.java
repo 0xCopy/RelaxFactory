@@ -9,7 +9,6 @@ import com.google.gson.JsonSyntaxException;
 import one.xio.AsioVisitor;
 import one.xio.HttpMethod;
 import org.junit.*;
-import rxf.server.gen.CouchDriver;
 import rxf.server.gen.CouchDriver.*;
 import rxf.server.web.inf.ProtocolMethodDispatch;
 
@@ -28,6 +27,7 @@ public class CouchDriverTest {
 
   public static final String SOMEDBPREFIX = "test_somedb_";
   public static final String SOMEDB = SOMEDBPREFIX + System.currentTimeMillis();   //ordered names of testdbs for failure postmortem....
+  public static final String DESIGN_SAMPLE = "_design/sample";
   private ScheduledExecutorService exec;
 
   @Before
@@ -141,7 +141,7 @@ public class CouchDriverTest {
             "/_design/sample").validjson(doc).to().fire().tx();
         assertNotNull(tx);
         assertTrue(tx.ok());
-        assertEquals(tx.id(), "_design/sample");
+        assertEquals(tx.id(), DESIGN_SAMPLE);
       }
       {
         // sample data
@@ -156,7 +156,7 @@ public class CouchDriverTest {
       }
       {
         //TODO no consistent way to write designdoc
-        String designDoc = DesignDocFetch.$().db(SOMEDB).designDocId("_design/sample").to().fire().json();
+        String designDoc = DesignDocFetch.$().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
         assertNotNull(designDoc);
         Map<String, Object> obj = GSON.<Map<String, Object>>fromJson(designDoc, Map.class);
 
@@ -178,17 +178,16 @@ public class CouchDriverTest {
         assertEquals("b", data.rows.get(0).value.get("name"));
       }
       {
-        Rfc822HeaderState state = new Rfc822HeaderState("ETag");
-        String designDoc = DesignDocFetch.$().db(SOMEDB).designDocId("_design/sample").to().state(state).fire().json();
-        String rev = state.headerString("ETag");
-        assertNotNull(rev);
-        rev = rev.substring(1, rev.length() - 1);
-        CouchTx tx = DocDelete.$().db(SOMEDB).docId("_design/sample").rev(rev).to().fire().tx();
-        assertNotNull(tx);
-        assertTrue(tx.ok());
-        assertNull(tx.error());
-
-        designDoc = DesignDocFetch.$().db(SOMEDB).designDocId("_design/sample").to().fire().json();
+        String rev = null;
+        try {
+          rev = RevisionFetch.$().db(SOMEDB).docId(DESIGN_SAMPLE).to().fire().json();
+          final CouchTx tx = DocDelete.$().db(SOMEDB).docId(DESIGN_SAMPLE).rev(rev).to().fire().tx();
+          assert tx.ok();
+        } catch (Exception e) {
+          e.printStackTrace();  //todo: verify for a purpose
+          fail(rev);
+        }
+        String designDoc = DesignDocFetch.$().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
         assertNull(designDoc);
       }
 
@@ -197,7 +196,8 @@ public class CouchDriverTest {
         TrivialCouchService service = CouchServiceFactory.get(TrivialCouchService.class, SOMEDB);
 
 
-        String id = CouchDriver.DocPersist.$().db(SOMEDB).validjson("{\"model\":\"abc\",\"brand\":\"def\"}").to().fire().tx().id();
+        final CouchTx tx = DocPersist.$().db(SOMEDB).validjson("{\"model\":\"abc\",\"brand\":\"def\"}").to().fire().tx();
+        String id = tx.id();
 
         CSFTest obj = service.find(id);
         junit.framework.Assert.assertNotNull(obj);
@@ -238,7 +238,7 @@ public class CouchDriverTest {
         try {
           service = CouchServiceFactory.get(SimpleCouchService.class, SOMEDB);
         } catch (Throwable e) {
-          e.printStackTrace();  //todo: verify for a purpose
+          e.printStackTrace();
           fail(e.getMessage());
         }
 
@@ -260,20 +260,19 @@ public class CouchDriverTest {
         junit.framework.Assert.assertEquals(0, noResults.size());
       }
       {
-        {  //REALLY NUKE THE OLD TESTS
+        //REALLY NUKE THE OLD TESTS
 
-          try {
-            String json = DocFetch.$().db("").docId("_all_dbs").to().fire().json();
-            String[] strings = GSON.fromJson(json, String[].class);
-            for (String s : strings) {
-              if (s.startsWith(SOMEDBPREFIX)) DbDelete.$().db(s).to().fire().tx();
-            }
-          } catch (JsonSyntaxException e) {
-            e.printStackTrace();
-            fail();
+        try {
+          String json = DocFetch.$().db("").docId("_all_dbs").to().fire().json();
+          String[] strings = GSON.fromJson(json, String[].class);
+          for (String s : strings) {
+            if (s.startsWith(SOMEDBPREFIX)) DbDelete.$().db(s).to().fire().tx();
           }
-
+        } catch (JsonSyntaxException e) {
+          e.printStackTrace();
+          fail();
         }
+
       }
     } catch (Exception e) {
       e.printStackTrace();

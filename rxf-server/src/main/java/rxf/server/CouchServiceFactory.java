@@ -8,11 +8,11 @@ import com.google.gson.JsonObject;
 import rxf.server.CouchResultSet.tuple;
 import rxf.server.CouchService.View;
 import rxf.server.gen.CouchDriver;
-import rxf.server.gen.CouchDriver.ViewFetch;
+import rxf.server.gen.CouchDriver.*;
 
 import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 import static rxf.server.BlobAntiPatternObject.GSON;
-import static rxf.server.driver.CouchMetaDriver.ETAG;
+import static rxf.server.BlobAntiPatternObject.getDefaultOrgName;
 
 /**
  * Creates CouchService instances by translating {@literal @}View annotations into CouchDB design documents
@@ -77,8 +77,9 @@ public class CouchServiceFactory {
               View viewAnnotation = m.getAnnotation(View.class);
               if (null != viewAnnotation) {
                 JsonObject view = new JsonObject();
-                view.addProperty("map", viewAnnotation.map());
-                if (!"".equals(viewAnnotation.reduce())) {
+                if (!viewAnnotation.map().isEmpty())
+                  view.addProperty("map", viewAnnotation.map());
+                if (!viewAnnotation.reduce().isEmpty()) {
                   view.addProperty("reduce", viewAnnotation.reduce());
                 }
                 views.add(methodName, view);
@@ -88,18 +89,18 @@ public class CouchServiceFactory {
 
             }
             design.add("views", views);
-            Rfc822HeaderState etag1 = new Rfc822HeaderState(ETAG);
-            String doc = CouchDriver.DesignDocFetch.$().db(getPathPrefix()).designDocId(id).to().state(etag1).fire().json();
+            final String rev;
+            String stringParam = null;
+            try {
+              stringParam = design.toString();
+              rev = RevisionFetch.$().db(getPathPrefix()).docId(id).to().fire().json();    //updating a doc, with a db but no rev or id?
 
-            if (null != doc) {
-              //updating a doc, with a db but no rev or id? 
-              CouchDriver.DocPersist.$().db(getPathPrefix())/*.id(id).rev(tx.rev())*/.validjson(design.toString()).to().fire().oneWay();
-            } else {
-              // this is nonsense, designdocs must be given an ID when created (via PUT) - we probably need a distinct
-              // DesignDocPersist type
-              CouchTx tx = CouchDriver.DocPersist.$().db(getPathPrefix())/*.designDocId(id)*/.validjson(design.toString()).to().fire().tx();
-              System.out.println(tx);
+              DocPersist.$().db(getPathPrefix()).docId(id).rev(rev)/**/.validjson(stringParam).to().fire().oneWay();
+            } catch (Exception e) {
+
+              CouchTx tx = DocPersist.$().db(getPathPrefix()).docId(id).validjson(stringParam).to().fire().tx();
             }
+
 
           } catch (Exception e) {
             e.printStackTrace();
@@ -123,8 +124,8 @@ public class CouchServiceFactory {
             /*       dont forget to uncomment this after new CouchResult gen*/
             if (viewMethods.containsKey(name)) {
               // where is the design doc defined? part of the view?
-              assert (entityType != null);
-              CouchResultSet<E> rows = (CouchResultSet<E>) ViewFetch.$().db(getOrgName()).type(entityType).view(String.format(viewMethods.get(name), args)).to().fire().rows();
+              assert entityType != null;
+              CouchResultSet<E> rows = (CouchResultSet<E>) ViewFetch.$().db(getPathPrefix()).type(entityType).view(String.format(viewMethods.get(name), args)).to().fire().rows();
               if (null != rows && null != rows.rows) {
                 List<E> ar = new ArrayList<E>();
                 for (tuple<E> row : rows.rows) {
@@ -141,10 +142,10 @@ public class CouchServiceFactory {
         //persist or find by key
         if ("persist".equals(method.getName())) {
           //again, no point, see above with DocPersist
-          return CouchDriver.DocPersist.$().db(getOrgName()).validjson(GSON.toJson(args[0])).to().fire().tx();
+          return CouchDriver.DocPersist.$().db(getPathPrefix()).validjson(GSON.toJson(args[0])).to().fire().tx();
         } else {
           assert "find".equals(method.getName());
-          String doc = CouchDriver.DocFetch.$().db(getOrgName()).docId((String) args[0]).to().fire().json();
+          String doc = CouchDriver.DocFetch.$().db(getPathPrefix()).docId((String) args[0]).to().fire().json();
           return (E) GSON.fromJson(doc, entityType);
         }
       }
@@ -173,13 +174,13 @@ public class CouchServiceFactory {
 
     @Override
     public String getDefaultEntityName() {
-      return getOrgName() + entityType.getSimpleName().toLowerCase();
+      return /*getOrgName() +*/ entityType.getSimpleName().toLowerCase();
     }
 
     @Override
 
     public String getOrgName() {
-      return null == orgname ? orgname = BlobAntiPatternObject.getDefaultOrgName() : orgname;
+      return null == orgname ? orgname = getDefaultOrgName() : orgname;
 
     }
 
@@ -188,7 +189,7 @@ public class CouchServiceFactory {
     }
 
     public String getPathPrefix() {
-      return null == pathPrefix ? pathPrefix = '/' + getOrgName() + '/' + getEntityName() + '/' : pathPrefix;
+      return null == pathPrefix ? pathPrefix = '/' + getOrgName() + getEntityName() + '/' : pathPrefix;
     }
 
     public void setPathPrefix(String pathPrefix) {

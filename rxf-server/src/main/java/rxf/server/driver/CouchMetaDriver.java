@@ -320,7 +320,8 @@ public enum CouchMetaDriver {
           EXECUTOR_SERVICE.submit(new Callable<Object>() {
             public Object call() throws Exception {
               try {
-                payload.set(((ByteBuffer) dst.duplicate().limit(ints[1]).position(ints[0])).slice());
+                //assumes quoted
+                payload.set(((ByteBuffer) dst.duplicate().limit(ints[1] - 3).position(ints[0] + 2)).slice());
                 cyclicBarrier.await();          //V
                 return null;                    //V
               } catch (Exception e) {           //V
@@ -333,7 +334,15 @@ public enum CouchMetaDriver {
           });                                   //V
         }                                         //V
       });
-      cyclicBarrier.await(3, getDefaultCollectorTimeUnit());
+      try {
+        cyclicBarrier.await(3, getDefaultCollectorTimeUnit());
+      } catch (Exception e) {
+        e.printStackTrace();
+
+
+        System.err.println("\tfrom");
+        dbKeysBuilder.trace().printStackTrace();
+      }
       return payload.get();
     }
   },
@@ -456,7 +465,7 @@ public enum CouchMetaDriver {
           attempt = request.toString();
           int wrote = channel.write(buffer);
           assert !buffer.hasRemaining();
-          key.interestOps(OP_READ);//READ immmmmediately follows WRITE in httpmethod.init loop
+          key.interestOps(OP_READ);//READ immediately follows WRITE in httpmethod.init loop
         }
 
 
