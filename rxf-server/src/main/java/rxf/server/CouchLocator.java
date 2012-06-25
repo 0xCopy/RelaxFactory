@@ -9,40 +9,8 @@ import rxf.server.gen.CouchDriver.DocPersist;
 
 import static rxf.server.BlobAntiPatternObject.GSON;
 
-public abstract class CouchLocator<T> extends Locator<T, String> {
+public abstract class CouchLocator<T> extends Locator<T, String> implements CouchNamespace<T> {
 
-  public enum ns {
-    orgname {
-      @Override
-      void setMe(CouchLocator cl, String ns) {
-        cl.setOrgname(ns);
-
-      }
-    }, entityName {
-      @Override
-      void setMe(CouchLocator cl, String ns) {
-        cl.setEntityName(ns);
-      }
-    };
-
-    abstract void setMe(CouchLocator cl, String ns);
-  }
-
-  /**
-   * User: jim
-   * Date: 5/10/12
-   * Time: 7:37 AM
-   */
-
-
-  private String entityName;
-
-  public void setEntityName(String entityName) {
-    this.entityName = entityName;
-  }
-
-  //threadlocals dont help much.  rf is dispatched to new threads in a seperate executor.
-  private String orgname = null;
 
   public CouchLocator(String... nse) {
     for (int i = 0; i < nse.length; i++) {
@@ -50,18 +18,6 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
           nse[i]);
 
     }
-  }
-
-  private static String getDefaultOrgName() {
-    return System.getenv("RXF_ORGNAME") == null ? System.getProperty(CouchLocator.class.getCanonicalName().toLowerCase() + ".orgname", "rxf_") : System.getenv("RXF_ORGNAME").toLowerCase().trim();
-  }
-
-  public String getEntityName() {
-    return entityName == null ? getDefaultEntityName() : entityName;
-  }
-
-  private String getDefaultEntityName() {
-    return getOrgname() + getDomainType().getSimpleName().toLowerCase();
   }
 
   /**
@@ -115,8 +71,14 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
   @Override
   abstract public Object getVersion(T domainObject);
 
-  public String getOrgname() {
-    return null == orgname ? getDefaultOrgName() : orgname;
+  @Override
+  public String getOrgName() {
+    return null == orgname ? BlobAntiPatternObject.getDefaultOrgName() : orgname;
+  }
+
+  @Override
+  public void setOrgname(String orgname) {
+    this.orgname = orgname;
   }
 
   public CouchTx persist(T domainObject) throws Exception {
@@ -134,6 +96,19 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
     return null;  //To change body of created methods use File | Settings | File Templates.
   }
 
+
+  ///CouchNS boilerplate
+
+  private String entityName;
+
+  //threadlocals dont help much.  rf is dispatched to new threads in a seperate executor.
+  private String orgname = null;
+
+  @Override
+  public void setEntityName(String entityName) {
+    this.entityName = entityName;
+  }
+
   /**
    * tbd -- longpolling feed rf token
    *
@@ -144,7 +119,14 @@ public abstract class CouchLocator<T> extends Locator<T, String> {
     return null;  //To change body of created methods use File | Settings | File Templates.
   }
 
-  public void setOrgname(String orgname) {
-    this.orgname = orgname;
+  @Override
+  public String getEntityName() {
+    return entityName == null ? getDefaultEntityName() : entityName;
   }
+
+  @Override
+  public String getDefaultEntityName() {
+    return getOrgName() + getDomainType().getSimpleName().toLowerCase();
+  }
+
 }

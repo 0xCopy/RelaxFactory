@@ -22,7 +22,6 @@ import static one.xio.HttpMethod.wheresWaldo;
 import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 import static rxf.server.BlobAntiPatternObject.GSON;
 import static rxf.server.BlobAntiPatternObject.ISO88591;
-import static rxf.server.BlobAntiPatternObject.sortableInetAddress;
 
 //import java.util.concurrent.ConcurrentSkipListMap;
 
@@ -743,4 +742,12 @@ System.err.println("arrays Benchmark: " + (System.currentTimeMillis() - l3));*/
     return new Triple<Integer[], ByteBuffer, ByteBuffer>(locations, indexBuf, locBuf);
   }
 
+  public static long sortableInetAddress(InetAddress inet4Address) {
+    byte[] address = inet4Address.getAddress();
+    long compare = 0;
+    for (int i = 0; i < address.length; i++) {
+      compare |= (address[i] & 0xff) << 8 * (address.length - 1 - i);
+    }
+    return compare;
+  }
 }

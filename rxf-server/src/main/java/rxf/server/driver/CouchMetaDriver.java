@@ -360,8 +360,7 @@ public enum CouchMetaDriver {
     public <T> ByteBuffer visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
-      final HttpRequest request = actionBuilder.state()
-          .$req();
+      final HttpRequest request = actionBuilder.state().$req();
       final ByteBuffer header = (ByteBuffer) request
           .path(("/" + dbKeysBuilder.get(db) + "/" + dbKeysBuilder.get(docId) + "?rev=" + dbKeysBuilder.get(rev)).replace("//", "/"))
           .method(DELETE)

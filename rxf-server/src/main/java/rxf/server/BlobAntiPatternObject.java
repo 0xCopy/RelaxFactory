@@ -42,11 +42,12 @@ public class BlobAntiPatternObject {
   public static final String MYGEOIPSTRING = "mygeoipstring";
 
   public static final String COOKIE = "Cookie";
-  public static InetAddress LOOPBACK = null;
 
   private static final TimeUnit defaultCollectorTimeUnit = TimeUnit.SECONDS;
 
   public static boolean DEBUG_SENDJSON = System.getenv().containsKey("DEBUG_SENDJSON");
+  public static final InetSocketAddress COUCHADDR;
+  public static InetAddress LOOPBACK = null;
 
   static {
     try {
@@ -63,60 +64,50 @@ public class BlobAntiPatternObject {
     } catch (UnknownHostException e) {
       e.printStackTrace();
     }
+    COUCHADDR = new InetSocketAddress(LOOPBACK, 5984);
   }
 
 
-  public static final BlockingDeque<SocketChannel> couchDq = new LinkedBlockingDeque<SocketChannel>(5);static {
-    Runnable task = new Runnable() {
+//  public static final BlockingDeque<SocketChannel> couchDq = new LinkedBlockingDeque<SocketChannel>(5);static {
+//    Runnable task = new Runnable() {
+//
+//      public void run() {
+//        while (!HttpMethod.killswitch) {
+//
+//          SocketChannel channel = null;
+//
+//          System.err.println("opening " + new InetSocketAddress(LOOPBACK, 5984).toString());
+//
+//          try {
+//            channel = lazyQueue.poll();
+//            if (null == channel) {
+//              channel = SocketChannel.open();
+//              channel.configureBlocking(false);
+//              channel.connect(new InetSocketAddress(LOOPBACK, 5984));
+//            } else couchDq.putFirst(channel);
+//            couchDq.putLast(channel);
+//          } catch (Exception e) {
+//            throw new Error("couch connector down - failllling fast!" + wheresWaldo(3));
+//          }
+//
+//        }
+//      }
+//    };
+//    //aggressively push two threads into 3 entries
+//    EXECUTOR_SERVICE.submit(task);
+//  }
 
-      public void run() {
-        while (!HttpMethod.killswitch) {
-
-          SocketChannel channel = null;
-
-          System.err.println("opening " + new InetSocketAddress(LOOPBACK, 5984).toString());
-
-          try {
-            channel = lazyQueue.poll();
-            if (null == channel) {
-              channel = SocketChannel.open();
-              channel.configureBlocking(false);
-              channel.connect(new InetSocketAddress(LOOPBACK, 5984));
-            } else couchDq.putFirst(channel);
-            couchDq.putLast(channel);
-          } catch (Exception e) {
-            throw new Error("couch connector down - failllling fast!" + wheresWaldo(3));
-          }
-
-        }
-      }
-    };
-    //aggressively push two threads into 3 entries
-    EXECUTOR_SERVICE.submit(task);
-  }
-
-
-  public static long sortableInetAddress(InetAddress inet4Address) {
-    byte[] address = inet4Address.getAddress();
-    long compare = 0;
-    for (int i = 0; i < address.length; i++) {
-      compare |= (address[i] & 0xff) << 8 * (address.length - 1 - i);
-    }
-    return compare;
-  }
 
   public static SocketChannel createCouchConnection() {
-
     while (!HttpMethod.killswitch) {
-
       try {
-        SocketChannel take = couchDq.poll(3, BlobAntiPatternObject.getDefaultCollectorTimeUnit());
-        if (take.isOpen()) {
-          System.err.println("+++ createCouch" + wheresWaldo());
-          return take;
-        }
-      } catch (InterruptedException e) {
-        e.printStackTrace();  //todo: verify for a purpose
+        SocketChannel channel = SocketChannel.open(COUCHADDR);
+        channel.configureBlocking(false);
+        return channel;
+      } catch (IOException e) {
+        System.err.println("----- very bad connection failure in " + wheresWaldo(4));
+        e.printStackTrace();
+      } finally {
       }
     }
     return null;
@@ -239,5 +230,9 @@ public class BlobAntiPatternObject {
   public static ByteBuffer avoidStarvation(ByteBuffer buf) {
     if (0 == buf.remaining()) buf.rewind();
     return buf;
+  }
+
+  public static String getDefaultOrgName() {
+    return System.getenv("RXF_ORGNAME") == null ? System.getProperty(CouchLocator.class.getCanonicalName().toLowerCase() + ".orgname", "rxf_") : System.getenv("RXF_ORGNAME").toLowerCase().trim();
   }
 }

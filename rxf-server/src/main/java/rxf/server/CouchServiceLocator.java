@@ -1,7 +1,6 @@
 package rxf.server;
 
-import java.io.IOException;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.ExecutionException;
 
 import com.google.web.bindery.requestfactory.shared.ServiceLocator;
 
@@ -12,11 +11,9 @@ public class CouchServiceLocator implements ServiceLocator {
   public Object getInstance(Class<?> arg0) {
     try {
       return CouchServiceFactory.get((Class<CouchService<?>>) arg0);
-    } catch (IOException e) {
-      e.printStackTrace();  //todo: verify for a purpose
-    } catch (TimeoutException e) {
-      e.printStackTrace();  //todo: verify for a purpose
     } catch (InterruptedException e) {
+      e.printStackTrace();  //todo: verify for a purpose
+    } catch (ExecutionException e) {
       e.printStackTrace();  //todo: verify for a purpose
     }
     return null;

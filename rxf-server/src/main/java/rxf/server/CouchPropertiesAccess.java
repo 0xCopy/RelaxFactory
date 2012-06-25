@@ -7,9 +7,9 @@ package rxf.server;
  */
 public class CouchPropertiesAccess<T> {
 
-  private CouchLocator<T> locator;
+  private CouchNamespace<T> locator;
 
-  public CouchPropertiesAccess(CouchLocator<T> locator) {
+  public CouchPropertiesAccess(CouchNamespace<T> locator) {
     this.locator = locator;
   }
 
