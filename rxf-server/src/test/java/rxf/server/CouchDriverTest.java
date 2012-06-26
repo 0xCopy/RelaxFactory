@@ -1,7 +1,8 @@
 package rxf.server;
 
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import com.google.gson.JsonSyntaxException;
 import junit.framework.TestCase;
@@ -13,7 +14,6 @@ import rxf.server.gen.CouchDriver.*;
 import rxf.server.gen.CouchDriver.ViewFetch.ViewFetchTerminalBuilder;
 import rxf.server.web.inf.ProtocolMethodDispatch;
 
-import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 import static rxf.server.BlobAntiPatternObject.GSON;
 
 /**
@@ -43,11 +43,11 @@ public class CouchDriverTest extends TestCase {
       }
     });
     nukeTestDbs();
-    EXECUTOR_SERVICE.schedule(new Runnable() {
-      public void run() {
-        fail();
-      }
-    }, 5, TimeUnit.SECONDS);
+//    EXECUTOR_SERVICE.schedule(new Runnable() {
+//      public void run() {
+//        fail();
+//      }
+//    }, 5, TimeUnit.SECONDS);
 
     {
       CouchTx tx = DbCreate.$().db(SOMEDB).to().fire().tx();

@@ -1,5 +1,6 @@
 package rxf.server.driver;
 
+import java.io.IOException;
 import java.lang.reflect.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -26,7 +27,6 @@ import static one.xio.HttpHeaders.Content$2dEncoding;
 import static one.xio.HttpHeaders.Content$2dLength;
 import static one.xio.HttpHeaders.Content$2dType;
 import static one.xio.HttpHeaders.ETag;
-import static one.xio.HttpHeaders.Transfer$2dEncoding;
 import static one.xio.HttpMethod.DELETE;
 import static one.xio.HttpMethod.GET;
 import static one.xio.HttpMethod.HEAD;
@@ -441,7 +441,6 @@ public enum CouchMetaDriver {
         ByteBuffer cursor;
         List<ByteBuffer> list = new ArrayList<ByteBuffer>();
         final Impl prev = this;
-        private String attempt;
 
 
         public void onWrite(SelectionKey key) throws Exception {
@@ -453,126 +452,112 @@ public enum CouchMetaDriver {
                   .method(GET)
                   .path(scrub('/' + db + '/' + dbKeysBuilder.get(view)))
                   .headerString(Accept, MimeType.json.contentType)
-                  .headerInterest(
-                      ETag.getHeader(),
-                      Transfer$2dEncoding.getHeader(),
-                      Content$2dLength.getHeader())
                   .as(ByteBuffer.class);
-          attempt = request.toString();
           int wrote = channel.write(buffer);
           assert !buffer.hasRemaining();
-          key.interestOps(OP_READ);//READ immediately follows WRITE in httpmethod.init loop
+          key.interestOps(OP_READ).selector().wakeup();//READ immediately follows WRITE in httpmethod.init loop
         }
 
+        @Override
+        public void onRead(SelectionKey key) throws IOException {
+          if (null == cursor) {
+            final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
+            final int read = channel.read(dst);
 
-        public void onRead(SelectionKey key) throws Exception {
-
-          //this AsioVisitor does one of 2 things - parse the addHeaderInterest and then parses the chunk length.  cursor instance is _owned_ by this method.
-          int remaining;
-          if (null != cursor) {
-            remaining = channel.read(cursor);
-            if (-1 == remaining) {
-              joinPoint.reset();
-              return;
-            }
-          } else {
-            ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
-            remaining = channel.read(dst);
-            Rfc822HeaderState state = actionBuilder.state();
-
-            Rfc822HeaderState httpResponse = actionBuilder.state()
-                .$res();
-
-            HttpStatus httpStatus = httpResponse
-                .apply((ByteBuffer) dst.flip())
-                .$res().statusEnum();
+            final HttpResponse httpResponse = actionBuilder.state().$res();
+            httpResponse
+                .headerInterest(STATIC_VF_HEADERS)
+                .apply((ByteBuffer) dst.flip());
+            final HttpStatus httpStatus = httpResponse.statusEnum();
             switch (httpStatus) {
               case $200:
+                cursor = (ByteBuffer) dst.slice().compact();
+                key.attach(this);
+                key.selector().wakeup();
                 break;
               default:
                 joinPoint.reset();
+                recycleChannel(channel);
+                return;
             }
-            cursor = dst.slice();
-          }
-
-
-          while (cursor.hasRemaining()) {
-            int cbegin = cursor.position();
-            while (cursor.hasRemaining() && '\n' != cursor.get()) ;//
-            if (cursor.hasRemaining()) {
-
-              int i = Integer.parseInt(UTF8.decode((ByteBuffer) cursor.duplicate().position(cbegin).limit(cursor.position())).toString().trim(), 0x10);
-              cursor = cursor.slice();
-              if (0 == i) {
-                EXECUTOR_SERVICE.submit(new Runnable() {
-                  public void run() {
-                    //handle for termination
-                    int sum = 0;
-                    for (ByteBuffer buffer : list) {
-                      sum += buffer.rewind().remaining();
-                    }
-                    ByteBuffer allocate = ByteBuffer.allocateDirect(sum);
-                    for (ByteBuffer byteBuffer : list) {
-                      allocate.put(byteBuffer);
-                    }
-                    payload.set((ByteBuffer) allocate.rewind());
-                    try {
-                      joinPoint.await(); //-------------------------------------->V
-                    } catch (InterruptedException e) {                          //V
-                      e.printStackTrace();                                      //V
-                    } catch (BrokenBarrierException e) {                        //V
-                      e.printStackTrace();                                      //V
-                    }                                                           //V
-                  }                                                             //V
-                });                                                             //V
-                recycleChannel(channel);                                        //V
-                return;                                                         //V
-              }                                                                 //V
-              else if (cursor.remaining() >= i) {
-                ByteBuffer chunk = ByteBuffer.allocateDirect(i);
-                chunk.put((ByteBuffer) cursor.slice().limit(i));
-                list.add(chunk);
-                cursor.position(cursor.position() + i);
-                while (cursor.hasRemaining() && '\n' != cursor.get()) ;
-
-              } else {
-                cursor = ByteBuffer.allocateDirect(i).put(cursor);
-                key.attach(new Impl() {
-
-                  public void onRead(SelectionKey key) throws Exception {
-                    int read = channel.read(cursor);
-                    if (-1 == read) {
-                      joinPoint.reset();
-                      recycleChannel(channel);
-                    } else {
-                      if (!cursor.hasRemaining()) {
-                        list.add(cursor);
-                        cursor = ByteBuffer.allocateDirect(getReceiveBufferSize());
-                        key.attach(prev);//goto
-                      }
-                    }
-                  }
-                });
+          } else
+            try {
+              final int read = channel.read(cursor);
+              if (-1 == read) {
+                list.add(cursor);
+                deliver();
+                recycleChannel(channel);
                 return;
               }
-            } else {
-              //recvbuffer starvation
-              //rewind the slice and reque with a shiny new recvbuffer
-
-              cursor = ByteBuffer.allocateDirect(getReceiveBufferSize()).put((ByteBuffer) cursor.rewind());
-              key.selector().wakeup();
-              return;
+            } catch (Throwable e) {
+              e.printStackTrace();  //todo: verify for a purpose
             }
-          }                                                                   //V
-        }                                                                     //V
-      });                                                                     //V
-//      try {
+
+          final ByteBuffer tmp = (ByteBuffer) cursor.duplicate();
+          final int position = tmp.position();
+          tmp.flip();
+          String decode = UTF8.decode(((ByteBuffer) tmp.position(position - CE_TERMINAL.length()))).toString();
+          if (CE_TERMINAL.equals(decode.toString())) {
+            list.add(cursor);
+            deliver();
+            recycleChannel(channel);
+            return;
+          }
+          if (!cursor.hasRemaining()) {
+            list.add(cursor);
+            cursor = ByteBuffer.allocateDirect(getReceiveBufferSize());
+          }
+        }
+
+        private void deliver() {
+
+          EXECUTOR_SERVICE.submit(new Callable<Object>() {
+            public Object call() throws Exception {
+              int sum = 0;
+              for (ByteBuffer byteBuffer : list) {
+                sum += byteBuffer.flip().limit();
+              }
+              final ByteBuffer outbound = ByteBuffer.allocate(sum);
+              for (ByteBuffer byteBuffer : list) {
+                final ByteBuffer put = outbound.put(byteBuffer);
+              }
+              if (DEBUG_SENDJSON) {
+                System.err.println(UTF8.decode((ByteBuffer) outbound.duplicate().flip()));
+              }
+              ByteBuffer src = ((ByteBuffer) outbound.rewind()).duplicate();
+              int endl = 0;
+              while (sum > 0 && src.hasRemaining()) {
+                if (DEBUG_SENDJSON)
+                  System.err.println("outbound:----\n" + UTF8.decode(outbound.duplicate()).toString() + "\n----");
+
+                byte b = 0;
+                boolean first = true;
+                while (src.hasRemaining() && ('\n' != (b = src.get()) || first))
+                  if (first && !Character.isWhitespace(b)) {
+                    first = false;
+                  }
+
+
+                final int i = Integer.parseInt(UTF8.decode((ByteBuffer) src.duplicate().flip()).toString().trim(), 0x10);
+                src = ((ByteBuffer) src.compact().position(i)).slice();
+                endl += i;
+                sum -= i;
+                if (0 == i) break;
+              }
+              ByteBuffer retval = null;
+              if (DEBUG_SENDJSON) {
+                retval = (ByteBuffer) outbound.clear().limit(endl);
+                System.err.println(UTF8.decode(retval));
+              }
+
+              payload.set(retval);       //V
+              joinPoint.await();         //V
+              return null;               //V
+            }                            //V
+          });                            //V
+        }                                //V
+      });                                //V                                    //V
       joinPoint.await(5L, getDefaultCollectorTimeUnit());//5 seconds query is enough.
-//      } catch (Exception e) {
-//        e.printStackTrace();  //todo: verify for a purpose
-//        System.err.println("\tfrom:");
-//        dbKeysBuilder.trace().printStackTrace();
-//      }
       return payload.get();
     }
   },
@@ -766,6 +751,10 @@ public enum CouchMetaDriver {
 //
 //  }
   ;
+  public static final String CE_TERMINAL = "\n0\r\n\r\n";
+
+  //"premature optimization" s/mature/view/
+  public static final String[] STATIC_VF_HEADERS = Rfc822HeaderState.staticHeaderStrings(new HttpHeaders[]{ETag, Content$2dEncoding});
 
   //"premature optimization" s/mature/view/
   public static final String[] STATIC_JSON_SEND_HEADERS = Rfc822HeaderState.staticHeaderStrings(new HttpHeaders[]{ETag, Content$2dLength, Content$2dEncoding});

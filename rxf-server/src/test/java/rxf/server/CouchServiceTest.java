@@ -187,7 +187,7 @@ public class CouchServiceTest extends TestCase {
     }
   }
 
-  public void testSimpleFinder2() {
+  public void testSimpleFinderEmptyRowset() {
     try {
       SimpleCouchService service = null;
 
