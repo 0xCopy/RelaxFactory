@@ -3,12 +3,14 @@ package rxf.server;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.gson.annotations.SerializedName;
 import rxf.server.CouchResultSet.tuple;
 import rxf.server.CouchService.View;
 import rxf.server.gen.CouchDriver;
 import rxf.server.gen.CouchDriver.*;
+import rxf.server.gen.CouchDriver.DocPersist.DocPersistActionBuilder;
 import rxf.server.gen.CouchDriver.DocPersist.DocPersistTerminalBuilder;
 
 import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
@@ -36,7 +38,7 @@ public class CouchServiceFactory {
    * @author colin
    */
   private static class CouchServiceHandler<E> implements InvocationHandler, CouchNamespace<E> {
-    Map<String, String> viewMethods = new HashMap<String, String>();
+    AtomicReference<Map<String, String>> viewMethods = new AtomicReference<Map<String, String>>(new TreeMap<String, String>());
     private Future<Object> init;
     Class<E> entityType;
 
@@ -59,10 +61,9 @@ public class CouchServiceFactory {
       public String language = "javascript";
 
 
-      public Map<String, CouchView> views = new LinkedHashMap<String, CouchView>();
+      public Map<String, CouchView> views = new TreeMap<String, CouchView>();
     }
 
-    ;
 
     private void init(final Class<?> serviceInterface, final String... initNs) throws ExecutionException, InterruptedException {
 
@@ -86,14 +87,16 @@ public class CouchServiceFactory {
               design.version = RevisionFetch.$().db(getPathPrefix()).docId(design.id).to().fire().json();
             } catch (Throwable ignored) {
               try {
-                CouchTx tx = DbCreate.$().db(getPathPrefix()).to().fire().tx();
-                System.err.println("had to create " + getPathPrefix());
               } finally {
               }
             }
+            if (null == design.version) {
+              DbCreate.$().db(getPathPrefix()).to().fire().oneWay();
+              System.err.println("had to create " + getPathPrefix());
+            }
 
 
-            Map<String, Type> returnTypes = new LinkedHashMap<String, Type>();
+            Map<String, Type> returnTypes = new TreeMap<String, Type>();
 
             for (Method m : serviceInterface.getMethods()) {
               String methodName = m.getName();
@@ -108,7 +111,7 @@ public class CouchServiceFactory {
                 }
                 design.views.put(methodName, view);
 
-                viewMethods.put(methodName, design.id + "/_view/" + methodName + "?key=\"%1$s\"");
+                viewMethods.get().put(methodName, design.id + "/_view/" + methodName + "?key=\"%1$s\"");
               }
 
             }
@@ -130,18 +133,17 @@ public class CouchServiceFactory {
 
     public Object invoke(Object proxy, final Method method, final Object[] args) throws ExecutionException, InterruptedException {
       init.get();
-      assert null != viewMethods;
 
-      if (viewMethods.containsKey(method.getName())) {
+      if (viewMethods.get().containsKey(method.getName())) {
         return EXECUTOR_SERVICE.submit(new Callable<Object>() {
           public Object call() throws Exception {
 
             String name = method.getName();
             /*       dont forget to uncomment this after new CouchResult gen*/
-            if (viewMethods.containsKey(name)) {
+            if (viewMethods.get().containsKey(name)) {
               // where is the design doc defined? part of the view?
               assert entityType != null;
-              CouchResultSet<E> rows = (CouchResultSet<E>) ViewFetch.$().db(getPathPrefix()).type(entityType).view(String.format(viewMethods.get(name), args)).to().fire().rows();
+              CouchResultSet<E> rows = (CouchResultSet<E>) ViewFetch.$().db(getPathPrefix()).type(entityType).view(String.format(viewMethods.get().get(name), args)).to().fire().rows();
               if (null != rows && null != rows.rows) {
                 List<E> ar = new ArrayList<E>();
                 for (tuple<E> row : rows.rows) {
@@ -159,7 +161,8 @@ public class CouchServiceFactory {
         if ("persist".equals(method.getName())) {
           //again, no point, see above with DocPersist
           String stringParam = GSON.toJson(args[0]);
-          DocPersistTerminalBuilder fire = DocPersist.$().db(getPathPrefix()).validjson(stringParam).to().fire();
+          final DocPersistActionBuilder to = DocPersist.$().db(getPathPrefix()).validjson(stringParam).to();
+          DocPersistTerminalBuilder fire = to.fire();
           CouchTx tx = fire.tx();
           return tx;
         } else {

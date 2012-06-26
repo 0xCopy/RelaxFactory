@@ -8,8 +8,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 import one.xio.AsioVisitor.Impl;
+import one.xio.HttpStatus;
 import one.xio.MimeType;
 import rxf.server.*;
+import rxf.server.Rfc822HeaderState.HttpResponse;
 import rxf.server.driver.CouchMetaDriver;
 
 import static java.lang.Math.min;
@@ -75,7 +77,7 @@ public class ContentRootImpl extends Impl {
       @Override
       public void onWrite(SelectionKey key) throws Exception {
 
-        String accepts = state.get().headerString(Accept$2dEncoding.getHeader());
+        String accepts = state.get().headerString(Accept$2dEncoding);
         String ceString = null;
         if (null != accepts) {
 //              String accepts = UTF8.decode((ByteBuffer) addHeaderInterest.clear().limit(ints[1]).position(ints[0])).toString().trim();
@@ -85,7 +87,7 @@ public class ContentRootImpl extends Impl {
               if (file1.isFile() && file1.canRead()) {
                 file[0] = file1;
                 System.err.println("sending compressed archive: " + file1.getAbsolutePath());
-                ceString = ("Content-Encoding: " + compType.name() + "\r\n");
+                ceString = (compType.name());
                 break;
               }
             }
@@ -107,15 +109,17 @@ public class ContentRootImpl extends Impl {
           String substring = finalFname.substring(finalFname.lastIndexOf('.') + 1);
           MimeType mimeType = MimeType.valueOf(substring);
           long length = randomAccessFile.length();
-          Rfc822HeaderState responseHeader = new Rfc822HeaderState()
-              .headerString(Content$2dType.getHeader(), (null == mimeType ? MimeType.bin : mimeType).contentType)
-              .headerString(Content$2dLength.getHeader(), String.valueOf(length))
-              .pathResCode("200")
-              .methodProtocol("HTTP/1.1")
-              .protocolStatus("OK");
+
+          final HttpResponse responseHeader = new Rfc822HeaderState().$res();
+
+          responseHeader
+              .status(HttpStatus.$200)
+              .headerString(Content$2dType, (null == mimeType ? MimeType.bin : mimeType).contentType)
+              .headerString(Content$2dLength, String.valueOf(length))
+          ;
           if (null != ceString)
-            responseHeader.headerString(Content$2dEncoding.getHeader(), ceString);
-          ByteBuffer response = responseHeader.asResponseHeaderByteBuffer();
+            responseHeader.headerString(Content$2dEncoding, ceString);
+          ByteBuffer response = responseHeader.as(ByteBuffer.class);
           int write = channel.write(response);
           final int sendBufferSize = BlobAntiPatternObject.getSendBufferSize();
           final long[] progress = {fileChannel.transferTo(0, sendBufferSize, channel)};

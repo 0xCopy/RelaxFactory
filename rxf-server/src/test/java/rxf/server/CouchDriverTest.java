@@ -152,8 +152,7 @@ public class CouchDriverTest {
             "  }" +
             "}";
         //TODO inconsistent with DesignDocFetch
-        CouchTx tx = JsonSend.$().opaque(SOMEDB +
-            "/_design/sample").validjson(doc).to().fire().tx();
+        CouchTx tx = JsonSend.$().opaque(SOMEDB).validjson(doc).to().fire().tx();
         assertNotNull(tx);
         assertTrue(tx.ok());
         assertEquals(tx.id(), DESIGN_SAMPLE);
@@ -179,8 +178,7 @@ public class CouchDriverTest {
         foo.put("map", "function(doc){ emit(doc.brand, doc); }");
 
         designDoc = GSON.toJson(obj);
-        CouchTx tx = JsonSend.$().opaque(SOMEDB +
-            "/_design/sample").validjson(designDoc).to().fire().tx();
+        CouchTx tx = JsonSend.$().opaque(SOMEDB).validjson(designDoc).to().fire().tx();
 
         assertNotNull(tx);
         assertTrue(tx.ok());

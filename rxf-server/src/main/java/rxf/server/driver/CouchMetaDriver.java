@@ -343,13 +343,11 @@ public enum CouchMetaDriver {
           });                                   //V
         }                                         //V
       });
-//      try {
-      cyclicBarrier.await(3, getDefaultCollectorTimeUnit());
-//      } catch (Exception e) {
-//        e.printStackTrace();
-//        System.err.println("\tfrom");
-//        dbKeysBuilder.trace().printStackTrace();
-//      }
+      try {
+        cyclicBarrier.await(3, getDefaultCollectorTimeUnit());
+      } catch (Exception e) {
+
+      }
       return payload.get();
     }
   },
@@ -360,7 +358,7 @@ public enum CouchMetaDriver {
       String db = (String) dbKeysBuilder.get(etype.db);
       String docId = (String) dbKeysBuilder.get(etype.docId);
       String rev = (String) dbKeysBuilder.get(etype.rev);
-      String sb = scrub('/' + db + (null == docId ? "" : ('/' + docId + (null == rev ? "" : "?rev=" + rev))));
+      String sb = scrub('/' + db + (null == docId ? "" : '/' + docId + (null == rev ? "" : "?rev=" + rev)));
       dbKeysBuilder.put(opaque, sb);
       actionBuilder.state().$req().headerString(HttpHeaders.Content$2dType, MimeType.json.contentType);
       return JsonSend.visit(dbKeysBuilder, actionBuilder);
@@ -590,22 +588,39 @@ public enum CouchMetaDriver {
 
   @DbTask({tx, oneWay, rows, json, future, continuousFeed}) @DbKeys(value = {opaque, validjson}, optional = type)JsonSend {
     @Override
-    public <T> ByteBuffer visit(DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+    public <T> ByteBuffer visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
       String opaque = scrub('/' + (String) dbKeysBuilder.get(etype.opaque));
+      int lastSlashIndex = opaque.lastIndexOf('/');
+      if (opaque.length() - 1 == lastSlashIndex) {
+        opaque = opaque.substring(0, opaque.length() - 1);
+      }
+      int c = 0;
+      label:
+      for (int i = 0; i < opaque.length(); i++) {
+        char c1 = opaque.charAt(i);
+        switch (c1) {
+          case '?':
+          case '#':
+            break label;
+          case '/':
+            c++;
+          default:
+            break;
+
+        }
+      }
       String validjson = (String) dbKeysBuilder.get(etype.validjson);
       validjson = validjson == null ? "{}" : validjson;
-      int lastSlashIndex = opaque.lastIndexOf('/');
-      final byte[] outbound = validjson.getBytes(UTF8);
 
       final Rfc822HeaderState state = actionBuilder.state();
       HttpRequest httpRequest = state.$req();
-      while (opaque.length() - 1 == lastSlashIndex) {
-        opaque = opaque.substring(0, opaque.length() - 1);
-      }
-      final ByteBuffer header = (ByteBuffer) httpRequest
-          .method(lastSlashIndex < opaque.lastIndexOf('?') || lastSlashIndex != opaque.indexOf('/') ? PUT : POST)
+      final byte[] outbound = validjson.getBytes(UTF8);
+
+
+      final HttpMethod method = 1 == c || !(lastSlashIndex < opaque.lastIndexOf('?') && lastSlashIndex != opaque.indexOf('/')) ? POST : PUT;
+      final ByteBuffer header = (ByteBuffer) httpRequest.method(method)
           .path(opaque)
           .headerInterest(ETag.getHeader(), Content$2dLength.getHeader(), Content$2dEncoding.getHeader())
           .headerString(Content$2dLength, String.valueOf(outbound.length))
@@ -627,7 +642,7 @@ public enum CouchMetaDriver {
           }
           int write = channel.write(cursor);
           if (!cursor.hasRemaining()) {
-            key.interestOps(OP_READ).selector().wakeup();
+            key.interestOps(OP_READ);
             cursor = null;
           }
         }
