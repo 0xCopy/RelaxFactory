@@ -119,7 +119,7 @@ public class ContentRootImpl extends Impl {
           ;
           if (null != ceString)
             responseHeader.headerString(Content$2dEncoding, ceString);
-          ByteBuffer response = responseHeader.as(ByteBuffer.class);
+          ByteBuffer response = (ByteBuffer) responseHeader.as(ByteBuffer.class);
           int write = channel.write(response);
           final int sendBufferSize = BlobAntiPatternObject.getSendBufferSize();
           final long[] progress = {fileChannel.transferTo(0, sendBufferSize, channel)};
