@@ -293,7 +293,7 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
   public static final String PREFIX = ": ";
 
   public T headerString(HttpHeaders hdrEnum, String s) {
-    return headerString(hdrEnum.getHeader().toString().trim(), s);  //To change body of created methods use File | Settings | File Templates.
+    return headerString(hdrEnum.getHeader().trim(), s);  //To change body of created methods use File | Settings | File Templates.
   }
 
 
@@ -455,9 +455,28 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
     return (T) this;
   }
 
+  public T headerInterest(HttpHeaders... replaceInterest) {
+    final String[] strings = staticHeaderStrings(replaceInterest);
+    return headerInterest(strings);
+  }
+
+  public static String[] staticHeaderStrings(HttpHeaders... replaceInterest) {
+    final String[] strings = new String[replaceInterest.length];
+    for (int i = 0; i < strings.length; i++) {
+      strings[i] = replaceInterest[i].getHeader();
+
+    }
+    return strings;
+  }
+
   public T headerInterest(String... replaceInterest) {
     headerInterest.set(replaceInterest);
     return (T) this;
+  }
+
+  public T addHeaderInterest(HttpHeaders... appendInterest) {
+    final String[] strings = staticHeaderStrings(appendInterest);
+    return addHeaderInterest(strings);
   }
 
   /**

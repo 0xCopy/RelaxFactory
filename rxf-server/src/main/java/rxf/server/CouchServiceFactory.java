@@ -12,6 +12,7 @@ import rxf.server.gen.CouchDriver;
 import rxf.server.gen.CouchDriver.*;
 import rxf.server.gen.CouchDriver.DocPersist.DocPersistActionBuilder;
 import rxf.server.gen.CouchDriver.DocPersist.DocPersistTerminalBuilder;
+import rxf.server.gen.CouchDriver.JsonSend.JsonSendTerminalBuilder;
 import rxf.server.gen.CouchDriver.ViewFetch.ViewFetchTerminalBuilder;
 
 import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
@@ -66,7 +67,7 @@ public class CouchServiceFactory {
     }
 
 
-    private void init(final Class<?> serviceInterface, final String... initNs) throws ExecutionException, InterruptedException {
+    void init(final Class<?> serviceInterface, final String... initNs) throws ExecutionException, InterruptedException {
 
       Type[] genericInterfaces = serviceInterface.getGenericInterfaces();
       final ParameterizedType genericInterface = (ParameterizedType) genericInterfaces[0];
@@ -82,23 +83,16 @@ public class CouchServiceFactory {
           try {
             //harvest, construct a view instance based on the interface. Probably not cheap, should be avoided.
             CouchDesignDoc design = new CouchDesignDoc();
-
             design.id = "_design/" + getEntityName();
             try {
               design.version = RevisionFetch.$().db(getPathPrefix()).docId(design.id).to().fire().json();
             } catch (Throwable ignored) {
-              try {
-              } finally {
-              }
             }
             if (null == design.version) {
               DbCreate.$().db(getPathPrefix()).to().fire().oneWay();
               System.err.println("had to create " + getPathPrefix());
             }
-
-
             Map<String, Type> returnTypes = new TreeMap<String, Type>();
-
             for (Method m : serviceInterface.getMethods()) {
               String methodName = m.getName();
               returnTypes.put(methodName, m.getReturnType());//not sure if this is good enough
@@ -111,15 +105,13 @@ public class CouchServiceFactory {
                   view.reduce = viewAnnotation.reduce();
                 }
                 design.views.put(methodName, view);
-
                 viewMethods.get().put(methodName, design.id + "/_view/" + methodName + "?key=\"%1$s\"");
               }
-
             }
-
             final String stringParam = GSON.toJson(design);
-            DocPersistTerminalBuilder fire = DocPersist.$().db(getPathPrefix()).docId(design.id).validjson(stringParam).to().fire();
-            CouchTx tx = fire.tx();
+            final JsonSendTerminalBuilder fire = JsonSend.$().opaque(getPathPrefix())/*.docId(design.id)*/.validjson(stringParam).to().fire();
+            final CouchTx tx = fire.tx();
+
             System.err.println(deepToString(tx));
 
           } catch (Exception e) {
@@ -127,7 +119,6 @@ public class CouchServiceFactory {
           }
           return null;
         }
-
       });
     }
 
@@ -155,7 +146,6 @@ public class CouchServiceFactory {
           }
         }).get();
       } else {
-
         //persist or find by key
         if ("persist".equals(method.getName())) {
           //again, no point, see above with DocPersist
@@ -208,7 +198,7 @@ public class CouchServiceFactory {
     }
 
     public String getPathPrefix() {
-      return null == pathPrefix ? pathPrefix = '/' + getOrgName() + getEntityName() + '/' : pathPrefix;
+      return null == pathPrefix ? pathPrefix = getOrgName() + getEntityName() : pathPrefix;
     }
 
     public void setPathPrefix(String pathPrefix) {

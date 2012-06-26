@@ -8,8 +8,9 @@ import junit.framework.TestCase;
 import one.xio.AsioVisitor;
 import one.xio.HttpMethod;
 import org.junit.AfterClass;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import rxf.server.gen.CouchDriver.*;
+import rxf.server.gen.CouchDriver.ViewFetch.ViewFetchTerminalBuilder;
 import rxf.server.web.inf.ProtocolMethodDispatch;
 
 import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
@@ -25,7 +26,7 @@ public class CouchDriverTest extends TestCase {
   public static final String DESIGN_SAMPLE = "_design/sample";
   public ScheduledExecutorService exec;
 
-  @Before
+  @BeforeClass
   public void setUp() throws Exception {
     BlobAntiPatternObject.DEBUG_SENDJSON = true;
     HttpMethod.killswitch = false;
@@ -97,23 +98,6 @@ public class CouchDriverTest extends TestCase {
   }
 
 
-  public void testManualViewSend() {
-    String doc = "{" +
-        "  \"_id\" : \"" + DESIGN_SAMPLE +
-        "\"," +
-        "  \"views\" : {" +
-        "    \"foo\" : {" +
-        "      \"map\" : \"function(doc){ emit(doc.name, doc); }\"" +
-        "    }" +
-        "  }" +
-        "}";
-    //TODO inconsistent with DesignDocFetch
-    CouchTx tx = JsonSend.$().opaque(SOMEDB).validjson(doc).to().fire().tx();
-    assertNotNull(tx);
-    assertTrue(tx.ok());
-    assertEquals(tx.id(), DESIGN_SAMPLE);
-  }
-
   public void testLowLevelUpdateDoc() {
     CouchTx tx = DocPersist.$().db(SOMEDB).validjson("{}").to().fire().tx();
 
@@ -147,20 +131,31 @@ public class CouchDriverTest extends TestCase {
     assertNull(tx.getError());
   }
 
-  public void testPersist() {
-    // sample data
+  public void testManualViewSend() {
+    String doc = "{" +
+        "  \"_id\" : \"" + DESIGN_SAMPLE +
+        "\"," +
+        "  \"views\" : {" +
+        "    \"foo\" : {" +
+        "      \"map\" : \"function(doc){ emit(doc.name, doc); }\"" +
+        "    }" +
+        "  }" +
+        "}";
+    //TODO inconsistent with DesignDocFetch
+    CouchTx tx = JsonSend.$().opaque(SOMEDB).validjson(doc).to().fire().tx();
+    assertNotNull(tx);
+    assertTrue(tx.ok());
+    assertEquals(tx.id(), DESIGN_SAMPLE);
+
     DocPersist.$().db(SOMEDB).validjson("{\"name\":\"a\",\"brand\":\"c\"}").to().fire().tx();
     DocPersist.$().db(SOMEDB).validjson("{\"name\":\"b\",\"brand\":\"d\"}").to().fire().tx();
 
     //running view
-    CouchResultSet<Map<String, String>> data = ViewFetch.$().db(SOMEDB).type(Map.class).view("_design/sample/_view/foo?key=\"a\"").to().fire().rows();
+    final ViewFetchTerminalBuilder fire = ViewFetch.$().db(SOMEDB).type(Map.class).view(DESIGN_SAMPLE + "/_view/foo?key=\"a\"").to().fire();
+    CouchResultSet<Map<String, String>> data = fire.rows();
     assertNotNull(data);
     assertEquals(1, data.rows.size());
-    assertEquals("a", data.rows.get(0).value.get("name"));
-  }
-
-  public void testMapTrivialFetch() {
-    //TODO no consistent way to write designdoc
+    assertEquals("a", data.rows.get(0).value.get("name"));  //TODO no consistent way to write designdoc
     String designDoc = DesignDocFetch.$().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
     assertNotNull(designDoc);
     Map<String, Object> obj = GSON.<Map<String, Object>>fromJson(designDoc, Map.class);
@@ -169,14 +164,14 @@ public class CouchDriverTest extends TestCase {
     foo.put("map", "function(doc){ emit(doc.brand, doc); }");
 
     designDoc = GSON.toJson(obj);
-    CouchTx tx = JsonSend.$().opaque(SOMEDB).validjson(designDoc).to().fire().tx();
+    tx = JsonSend.$().opaque(SOMEDB).validjson(designDoc).to().fire().tx();
 
     assertNotNull(tx);
     assertTrue(tx.ok());
     assertFalse(obj.get("_rev").equals(tx.getRev()));
     assertEquals(obj.get("_id"), tx.id());
 
-    CouchResultSet<Map<String, String>> data = ViewFetch.$().db(SOMEDB).type(Map.class).view(DESIGN_SAMPLE + "/_view/foo?key=\"d\"").to().fire().rows();
+    data = ViewFetch.$().db(SOMEDB).type(Map.class).view(DESIGN_SAMPLE + "/_view/foo?key=\"d\"").to().fire().rows();
     assertNotNull(data);
     assertEquals(1, data.rows.size());
     assertEquals("b", data.rows.get(0).value.get("name"));

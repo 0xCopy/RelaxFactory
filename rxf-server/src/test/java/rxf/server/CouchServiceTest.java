@@ -1,7 +1,6 @@
 package rxf.server;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.*;
 
 import com.google.gson.JsonSyntaxException;
@@ -78,8 +77,6 @@ public class CouchServiceTest extends TestCase {
     } catch (Exception ignore) {
     }
   }
-/*
-  public static final String DB = "rxf_csftest";*/
 
   public static class CSFTest {
     public String _id, _rev;
@@ -97,43 +94,6 @@ public class CouchServiceTest extends TestCase {
 
   }
 
-
-  public void testMapTrivialFetch() {
-    //TODO no consistent way to write designdoc
-    String designDoc = DesignDocFetch.$().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
-    assertNotNull(designDoc);
-    Map<String, Object> obj = GSON.<Map<String, Object>>fromJson(designDoc, Map.class);
-
-    Map<String, String> foo = (Map<String, String>) ((Map<String, Object>) obj.get("views")).get("foo");
-    foo.put("map", "function(doc){ emit(doc.brand, doc); }");
-
-    designDoc = GSON.toJson(obj);
-    CouchTx tx = JsonSend.$().opaque(SOMEDB).validjson(designDoc).to().fire().tx();
-
-    assertNotNull(tx);
-    assertTrue(tx.ok());
-    assertFalse(obj.get("_rev").equals(tx.getRev()));
-    assertEquals(obj.get("_id"), tx.id());
-
-    CouchResultSet<Map<String, String>> data = ViewFetch.$().db(SOMEDB).type(Map.class).view(DESIGN_SAMPLE + "/_view/foo?key=\"d\"").to().fire().rows();
-    assertNotNull(data);
-    assertEquals(1, data.rows.size());
-    assertEquals("b", data.rows.get(0).value.get("name"));
-  }
-
-  public void testRevisionAndDelete() {
-    String rev = null;
-    try {
-      rev = RevisionFetch.$().db(SOMEDB).docId(DESIGN_SAMPLE).to().fire().json();
-      CouchTx tx = DocDelete.$().db(SOMEDB).docId(DESIGN_SAMPLE).rev(rev).to().fire().tx();
-      assert tx.ok();
-    } catch (Exception e) {
-      e.printStackTrace();
-      fail(rev);
-    }
-    String designDoc = DesignDocFetch.$().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
-    assertNull(designDoc);
-  }
 
   public void testTrivialFetchDoc() throws InterruptedException, ExecutionException {
     TrivialCouchService service = CouchServiceFactory.get(TrivialCouchService.class, SOMEDB);
@@ -153,6 +113,22 @@ public class CouchServiceTest extends TestCase {
     junit.framework.Assert.assertNotNull(obj);
     junit.framework.Assert.assertEquals("abc", obj.model);
     junit.framework.Assert.assertEquals("def", obj.brand);
+
+
+  }
+
+  public void testRevisionAndDelete() {
+    String rev = null;
+    try {
+      rev = RevisionFetch.$().db(SOMEDB).docId(DESIGN_SAMPLE).to().fire().json();
+      CouchTx tx = DocDelete.$().db(SOMEDB).docId(DESIGN_SAMPLE).rev(rev).to().fire().tx();
+      assert tx.ok();
+    } catch (Exception e) {
+      e.printStackTrace();
+      fail(rev);
+    }
+    String designDoc = DesignDocFetch.$().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
+    assertNull(designDoc);
   }
 
   @Test
@@ -186,9 +162,7 @@ public class CouchServiceTest extends TestCase {
     }
   }
 
-  @Test
-
-  public void testFinder() {
+  public void testSimpleFinder() {
     try {
       SimpleCouchService service = null;
 
@@ -208,8 +182,28 @@ public class CouchServiceTest extends TestCase {
       junit.framework.Assert.assertEquals(1, results.size());
       junit.framework.Assert.assertEquals("something", results.get(0).brand);
 
+    } catch (Exception e) {
+      fail();
+    }
+  }
+
+  public void testSimpleFinder2() {
+    try {
+      SimpleCouchService service = null;
+
+      service = CouchServiceFactory.get(SimpleCouchService.class, SOMEDB);
+
+
+      CSFTest a = new CSFTest();
+      a.brand = "something";
+      CSFTest b = new CSFTest();
+      b.brand = "else";
+
+      service.persist(a);
+      service.persist(b);
+
       List<CSFTest> noResults = service.getItemsWithBrand("a");
-      junit.framework.Assert.assertNotNull(noResults);
+      assert (null == noResults || noResults.isEmpty());
       junit.framework.Assert.assertEquals(0, noResults.size());
     } catch (Exception e) {
       fail();

@@ -17,6 +17,7 @@ import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpHeaders.Content$2dLength;
 import static one.xio.HttpMethod.UTF8;
+import static rxf.server.Rfc822HeaderState.staticHeaderStrings;
 
 /**
  * User: jim
@@ -24,6 +25,7 @@ import static one.xio.HttpMethod.UTF8;
  * Time: 1:40 AM
  */
 public class HttpProxyImpl extends Impl {
+  public static final String[] HEADER_INTEREST = staticHeaderStrings(Content$2dLength);
   private final Pattern passthroughExpr;
 
   public HttpProxyImpl(Pattern passthroughExpr) {
@@ -68,8 +70,8 @@ public class HttpProxyImpl extends Impl {
               SocketChannel channel = (SocketChannel) couchKey.channel();
               final ByteBuffer dst = ByteBuffer.allocateDirect(BlobAntiPatternObject.getReceiveBufferSize());
               int read = channel.read(dst);
-              Rfc822HeaderState proxyState = new Rfc822HeaderState(Content$2dLength.getHeader());
-              final int total = Integer.parseInt(proxyState.headerString(Content$2dLength.getHeader()));
+              Rfc822HeaderState proxyState = new Rfc822HeaderState(HEADER_INTEREST);
+              final int total = Integer.parseInt(proxyState.headerString(Content$2dLength));
               final SocketChannel browserChannel = (SocketChannel) browserKey.channel();
               try {
 

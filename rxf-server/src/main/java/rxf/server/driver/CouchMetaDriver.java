@@ -98,7 +98,7 @@ public enum CouchMetaDriver {
             int read = channel.read(cursor);
             Rfc822HeaderState httpResponse = state.$res();
             httpResponse
-                .headerInterest(Content$2dLength.getHeader())
+                .headerInterest(new HttpHeaders[]{Content$2dLength})
                 .apply((ByteBuffer) cursor.flip());
             if (DEBUG_SENDJSON) {
               System.err.println(deepToString(state.pathResCode(), state, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
@@ -167,7 +167,7 @@ public enum CouchMetaDriver {
             int read = channel.read(cursor);
 
             Rfc822HeaderState state = actionBuilder.state();
-            state.headerInterest(Content$2dLength.getHeader()).apply((ByteBuffer) cursor.flip());
+            state.headerInterest(new HttpHeaders[]{Content$2dLength}).apply((ByteBuffer) cursor.flip());
             if (DEBUG_SENDJSON) {
               System.err.println(deepToString(state.pathResCode(), state, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
             }
@@ -220,7 +220,7 @@ public enum CouchMetaDriver {
       request
           .path(scrub("/" + db + (null == id ? "" : "/" + id)))
           .method(GET)
-          .addHeaderInterest(Content$2dLength.getHeader());
+          .addHeaderInterest(Content$2dLength);
       final SocketChannel channel = createCouchConnection();
       final ByteBuffer as = (ByteBuffer) request.$req().as(ByteBuffer.class);
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
@@ -254,7 +254,8 @@ public enum CouchMetaDriver {
           switch (httpStatus) {
             case $200:
 //            case $201:
-              int remaining = Integer.parseInt(state.headerString(Content$2dLength));
+              final String s = state.headerString(Content$2dLength);
+              int remaining = Integer.parseInt(s);
               if (remaining == dst.remaining()) {
                 cursor = dst.slice();
                 deliver();
@@ -301,7 +302,7 @@ public enum CouchMetaDriver {
       Object id = dbKeysBuilder.get(docId);
       String scrubMe = "/" + dbKeysBuilder.get(db) + (null != id ? "/" + id : "");
       String path = scrub(scrubMe);
-      final Rfc822HeaderState state = actionBuilder.state().headerInterest(ETag.getHeader())
+      final Rfc822HeaderState state = actionBuilder.state().headerInterest(HEADER)
           .$req().method(HEAD)
           .path(path);
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
@@ -320,7 +321,7 @@ public enum CouchMetaDriver {
         public void onRead(SelectionKey key) throws Exception {
           final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
           int read = channel.read(dst);
-          final int[] ints = HttpHeaders.getHeaders((ByteBuffer) dst.flip()).get(ETag.getHeader());
+          final int[] ints = HttpHeaders.getHeaders((ByteBuffer) dst.flip()).get(ETag);
           assert -1 != read;
           EXECUTOR_SERVICE.submit(new Callable<Object>() {
             public Object call() throws Exception {
@@ -383,7 +384,7 @@ public enum CouchMetaDriver {
           if (null == cursor) {
             cursor = ByteBuffer.allocateDirect(getReceiveBufferSize());
             int read = channel.read(cursor);
-            request.headerInterest(Content$2dLength.getHeader()).apply((ByteBuffer) cursor.flip());
+            request.headerInterest(STATIC_CONTENT_LENGTH_ARR).apply((ByteBuffer) cursor.flip());
             if (DEBUG_SENDJSON) {
               System.err.println(deepToString(request.pathResCode(), request, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
             }
@@ -565,13 +566,13 @@ public enum CouchMetaDriver {
           }                                                                   //V
         }                                                                     //V
       });                                                                     //V
-      try {
-        joinPoint.await(5L, getDefaultCollectorTimeUnit());//5 seconds query is enough.
-      } catch (Exception e) {
-        e.printStackTrace();  //todo: verify for a purpose
-        System.err.println("\tfrom:");
-        dbKeysBuilder.trace().printStackTrace();
-      }
+//      try {
+      joinPoint.await(5L, getDefaultCollectorTimeUnit());//5 seconds query is enough.
+//      } catch (Exception e) {
+//        e.printStackTrace();  //todo: verify for a purpose
+//        System.err.println("\tfrom:");
+//        dbKeysBuilder.trace().printStackTrace();
+//      }
       return payload.get();
     }
   },
@@ -612,7 +613,7 @@ public enum CouchMetaDriver {
       final HttpMethod method = 1 == c || !(lastSlashIndex < opaque.lastIndexOf('?') && lastSlashIndex != opaque.indexOf('/')) ? POST : PUT;
       final ByteBuffer header = (ByteBuffer) httpRequest.method(method)
           .path(opaque)
-          .headerInterest(ETag.getHeader(), Content$2dLength.getHeader(), Content$2dEncoding.getHeader())
+          .headerInterest(STATIC_JSON_SEND_HEADERS)
           .headerString(Content$2dLength, String.valueOf(outbound.length))
           .headerString(Accept, MimeType.json.contentType)
           .headerString(Content$2dType, MimeType.json.contentType)
@@ -765,6 +766,13 @@ public enum CouchMetaDriver {
 //
 //  }
   ;
+
+  //"premature optimization" s/mature/view/
+  public static final String[] STATIC_JSON_SEND_HEADERS = Rfc822HeaderState.staticHeaderStrings(new HttpHeaders[]{ETag, Content$2dLength, Content$2dEncoding});
+  //"premature optimization" s/mature/view/
+  public static final String[] STATIC_CONTENT_LENGTH_ARR = Rfc822HeaderState.staticHeaderStrings(new HttpHeaders[]{Content$2dLength});
+
+  public static final String HEADER = ETag.getHeader();
 
   public static String scrub(String scrubMe) {
     return null == scrubMe ? null : scrubMe.trim().replace("//", "/").replace("..", ".");

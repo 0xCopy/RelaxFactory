@@ -14,6 +14,7 @@ import static one.xio.HttpHeaders.ETag;
  */
 public abstract class ActionBuilder<T> {
 
+  public static final String[] HEADER_INTEREST = Rfc822HeaderState.staticHeaderStrings(ETag, Content$2dLength);
   private AtomicReference<Rfc822HeaderState> state = new AtomicReference<Rfc822HeaderState>();
   private SelectionKey key;
   protected static ThreadLocal<ActionBuilder<?>> currentAction = new InheritableThreadLocal<ActionBuilder<?>>();
@@ -37,7 +38,7 @@ public abstract class ActionBuilder<T> {
 
   public Rfc822HeaderState state() {
     Rfc822HeaderState ret = this.state.get();
-    if (null == ret) state.set(ret = new Rfc822HeaderState(ETag.getHeader(), Content$2dLength.getHeader()));
+    if (null == ret) state.set(ret = new Rfc822HeaderState(HEADER_INTEREST));
     return ret;
   }
 
