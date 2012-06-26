@@ -131,5 +131,6 @@
     <modules>
         <module>rxf-shared</module>
         <module>rxf-server</module>
+        <module>rxf-guice</module>
     </modules>
 </project>
