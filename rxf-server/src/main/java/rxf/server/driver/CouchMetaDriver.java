@@ -74,7 +74,6 @@ import static rxf.server.an.DbKeys.etype.view;
 public enum CouchMetaDriver {
 
   @DbTask({tx, oneWay}) @DbKeys({db})DbCreate {
-    @Override
     public <T> ByteBuffer visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
@@ -86,13 +85,13 @@ public enum CouchMetaDriver {
       enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
         ByteBuffer cursor;
 
-        @Override
+
         public void onWrite(SelectionKey key) throws Exception {
           int write = channel.write(header);
           key.interestOps(OP_READ).selector().wakeup();
         }
 
-        @Override
+
         public void onRead(SelectionKey key) throws Exception {
           if (null == cursor) {
             cursor = ByteBuffer.allocateDirect(getReceiveBufferSize());
@@ -125,7 +124,7 @@ public enum CouchMetaDriver {
           payload.set(cursor);
           recycleChannel(channel);
           EXECUTOR_SERVICE.submit(new Runnable() {
-            @Override
+
             public void run() {
 
               try {
@@ -142,7 +141,6 @@ public enum CouchMetaDriver {
     }
   },
   @DbTask({tx, oneWay}) @DbKeys({db})DbDelete {
-    @Override
     public <T> ByteBuffer visit(DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
@@ -156,13 +154,13 @@ public enum CouchMetaDriver {
       enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
         ByteBuffer cursor;
 
-        @Override
+
         public void onWrite(SelectionKey key) throws Exception {
           int write = channel.write(header);
           key.interestOps(OP_READ).selector().wakeup();
         }
 
-        @Override
+
         public void onRead(SelectionKey key) throws Exception {
           if (null == cursor) {
             cursor = ByteBuffer.allocateDirect(getReceiveBufferSize());
@@ -194,7 +192,7 @@ public enum CouchMetaDriver {
           recycleChannel(channel);
           payload.set(cursor);
           EXECUTOR_SERVICE.submit(new Runnable() {
-            @Override
+
             public void run() {
               try {
                 cyclicBarrier.await();              //V
@@ -211,7 +209,6 @@ public enum CouchMetaDriver {
   },
 
   @DbTask({pojo, future, json}) @DbKeys({db, docId})DocFetch {
-    @Override
     public <T> ByteBuffer visit(DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
 
@@ -230,13 +227,13 @@ public enum CouchMetaDriver {
       enqueue(channel, OP_CONNECT | OP_WRITE, new Impl() {
         public ByteBuffer cursor;
 
-        @Override
+
         public void onWrite(SelectionKey key) throws Exception {
           int write = channel.write(as);
           key.interestOps(OP_READ).selector().wakeup();
         }
 
-        @Override
+
         public void onRead(SelectionKey key) throws Exception {
           if (null != cursor) {
             int read = channel.read(cursor);
@@ -275,7 +272,7 @@ public enum CouchMetaDriver {
 
           recycleChannel(channel);
           EXECUTOR_SERVICE.submit(new Runnable() {
-            @Override
+
             public void run() {
 
               try {
@@ -299,7 +296,6 @@ public enum CouchMetaDriver {
 
 
   @DbTask({json, future}) @DbKeys({db, docId})RevisionFetch {
-    @Override
     public <T> ByteBuffer visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
 
       Object id = dbKeysBuilder.get(docId);
@@ -312,7 +308,7 @@ public enum CouchMetaDriver {
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
       final SocketChannel channel = createCouchConnection();
       HttpMethod.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
-        @Override
+
         public void onWrite(SelectionKey key) throws Exception {
           ByteBuffer as = (ByteBuffer) state.$req().as(ByteBuffer.class);
           int write = channel.write(as);
@@ -320,7 +316,7 @@ public enum CouchMetaDriver {
           key.interestOps(OP_READ);
         }
 
-        @Override
+
         public void onRead(SelectionKey key) throws Exception {
           final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
           int read = channel.read(dst);
@@ -352,7 +348,6 @@ public enum CouchMetaDriver {
     }
   },
   @DbTask({tx, oneWay, future}) @DbKeys(value = {db, validjson}, optional = {docId, rev})DocPersist {
-    @Override
     public <T> ByteBuffer visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
 
       String db = (String) dbKeysBuilder.get(etype.db);
@@ -365,7 +360,6 @@ public enum CouchMetaDriver {
     }
   },
   @DbTask({tx, oneWay, future}) @DbKeys(value = {db, docId, rev})DocDelete {
-    @Override
     public <T> ByteBuffer visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
@@ -378,13 +372,13 @@ public enum CouchMetaDriver {
       enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
         ByteBuffer cursor;
 
-        @Override
+
         public void onWrite(SelectionKey key) throws Exception {
           int write = channel.write(header);
           key.interestOps(OP_READ).selector().wakeup();
         }
 
-        @Override
+
         public void onRead(SelectionKey key) throws Exception {
           if (null == cursor) {
             cursor = ByteBuffer.allocateDirect(getReceiveBufferSize());
@@ -414,7 +408,7 @@ public enum CouchMetaDriver {
           payload.set(cursor);
           recycleChannel(channel);
           EXECUTOR_SERVICE.submit(new Runnable() {
-            @Override
+
             public void run() {
               try {
                 cyclicBarrier.await();                                    //V
@@ -430,14 +424,12 @@ public enum CouchMetaDriver {
     }
   },
   @DbTask({pojo, future, json}) @DbKeys({db, designDocId})DesignDocFetch {
-    @Override
     public <T> ByteBuffer visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
       dbKeysBuilder.put(docId, dbKeysBuilder.remove(designDocId));
       return DocFetch.visit(dbKeysBuilder, actionBuilder);
     }
   },
   @DbTask({rows, future, continuousFeed}) @DbKeys(value = {db, view}, optional = type)ViewFetch {
-    @Override
     public <T> ByteBuffer visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
       final CyclicBarrier joinPoint = new CyclicBarrier(2);
@@ -450,7 +442,7 @@ public enum CouchMetaDriver {
         final Impl prev = this;
         private String attempt;
 
-        @Override
+
         public void onWrite(SelectionKey key) throws Exception {
 
 
@@ -472,7 +464,6 @@ public enum CouchMetaDriver {
         }
 
 
-        @Override
         public void onRead(SelectionKey key) throws Exception {
 
           //this AsioVisitor does one of 2 things - parse the addHeaderInterest and then parses the chunk length.  cursor instance is _owned_ by this method.
@@ -546,7 +537,7 @@ public enum CouchMetaDriver {
               } else {
                 cursor = ByteBuffer.allocateDirect(i).put(cursor);
                 key.attach(new Impl() {
-                  @Override
+
                   public void onRead(SelectionKey key) throws Exception {
                     int read = channel.read(cursor);
                     if (-1 == read) {
@@ -587,7 +578,6 @@ public enum CouchMetaDriver {
   //training day for the Terminal rewrites
 
   @DbTask({tx, oneWay, rows, json, future, continuousFeed}) @DbKeys(value = {opaque, validjson}, optional = type)JsonSend {
-    @Override
     public <T> ByteBuffer visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
@@ -634,7 +624,7 @@ public enum CouchMetaDriver {
       enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
         ByteBuffer cursor;
 
-        @Override
+
         public void onWrite(SelectionKey key) throws Exception {
           if (null == cursor) {
             int write = channel.write(header);
@@ -647,7 +637,7 @@ public enum CouchMetaDriver {
           }
         }
 
-        @Override
+
         public void onRead(SelectionKey key) throws Exception {
           if (null == cursor) {
             cursor = ByteBuffer.allocateDirect(getReceiveBufferSize());
@@ -693,7 +683,7 @@ public enum CouchMetaDriver {
 
 // TODO:
 // @DbTask({tx, future, oneWay})  @DbKeys({db, docId, opaque, mimetype, blob})BlobSend {
-//    @Override
+//    
 //    public <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
 //      final AtomicReference<String> payload = new AtomicReference<String>();
 //      final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
@@ -714,7 +704,7 @@ public enum CouchMetaDriver {
 //      HttpMethod.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
 //        public ByteBuffer cursor;
 //
-//        @Override
+//        
 //        public void onRead(SelectionKey key) throws Exception {
 //
 //          ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
@@ -729,7 +719,7 @@ public enum CouchMetaDriver {
 //
 //        }
 //
-//        @Override
+//        
 //        public void onWrite(SelectionKey key) throws Exception {
 //          if (null != cursor) {
 //            int write = channel.write(cursor);
@@ -737,7 +727,7 @@ public enum CouchMetaDriver {
 //              key.interestOps(OP_READ).selector().wakeup();
 //              cyclicBarrier.reset();
 //              key.attach(new Impl() {
-//                @Override
+//                
 //                public void onRead(final SelectionKey key) throws Exception {
 //
 //                  final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
@@ -745,7 +735,7 @@ public enum CouchMetaDriver {
 //                  actionBuilder.state().apply((ByteBuffer) dst.flip());
 //                  System.err.println(deepToString(this, dbKeysBuilder, actionBuilder));
 //                  EXECUTOR_SERVICE.submit(new Runnable() {
-//                    @Override
+//                    
 //                    public void run() {
 //                      try {
 //                        payload.set(UTF8.decode(dst.slice()).toString()); //todo: ignoring content-length here..  not actually sane.  testcase with getReceiveBufersize()=64 needed
@@ -862,13 +852,13 @@ public enum CouchMetaDriver {
           "();\n  }\n\n  public interface _ename_TerminalBuilder" +
           rtypeTypeParams + " extends TerminalBuilder<" + pfqsn + "> {    " + IFACE_FIRE_TARGETS +
           "\n  }\n\n  public class _ename_ActionBuilder extends ActionBuilder<" + pfqsn
-          + "> {\n    public _ename_ActionBuilder() {\n      super();\n    }\n\n    @Override\n    public _ename_TerminalBuilder" +
+          + "> {\n    public _ename_ActionBuilder() {\n      super();\n    }\n\n    \n    public _ename_TerminalBuilder" +
           rtypeTypeParams + " fire() {\n      return new _ename_TerminalBuilder" +
-          rtypeTypeParams + "() {        \n      " + FIRE_METHODS + "\n      };\n    }\n\n    @Override\n    " +
+          rtypeTypeParams + "() {        \n      " + FIRE_METHODS + "\n      };\n    }\n\n    \n    " +
           "public _ename_ActionBuilder state(Rfc822HeaderState state) {\n      " +
           "return (_ename_ActionBuilder) super.state(state);\n    " +
-          "}\n\n    @Override\n    public _ename_ActionBuilder key(java.nio.channels.SelectionKey key) " +
-          "{\n      return (_ename_ActionBuilder) super.key(key);\n    }\n  }\n\n  @Override\n  public _ename_ActionBuilder to() " +
+          "}\n\n    \n    public _ename_ActionBuilder key(java.nio.channels.SelectionKey key) " +
+          "{\n      return (_ename_ActionBuilder) super.key(key);\n    }\n  }\n\n  \n  public _ename_ActionBuilder to() " +
           "{\n    if (parms.size() >= parmsCount) return new _ename_ActionBuilder();\n    " +
           "throw new IllegalArgumentException(\"required parameters are: " + arrToString(parms) +
           "\");\n  } \n   \n   " +

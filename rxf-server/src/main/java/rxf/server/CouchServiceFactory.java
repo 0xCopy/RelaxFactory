@@ -12,6 +12,7 @@ import rxf.server.gen.CouchDriver;
 import rxf.server.gen.CouchDriver.*;
 import rxf.server.gen.CouchDriver.DocPersist.DocPersistActionBuilder;
 import rxf.server.gen.CouchDriver.DocPersist.DocPersistTerminalBuilder;
+import rxf.server.gen.CouchDriver.ViewFetch.ViewFetchTerminalBuilder;
 
 import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 import static rxf.server.BlobAntiPatternObject.GSON;
@@ -140,17 +141,15 @@ public class CouchServiceFactory {
 
             String name = method.getName();
             /*       dont forget to uncomment this after new CouchResult gen*/
-            if (viewMethods.get().containsKey(name)) {
-              // where is the design doc defined? part of the view?
-              assert entityType != null;
-              CouchResultSet<E> rows = (CouchResultSet<E>) ViewFetch.$().db(getPathPrefix()).type(entityType).view(String.format(viewMethods.get().get(name), args)).to().fire().rows();
-              if (null != rows && null != rows.rows) {
-                List<E> ar = new ArrayList<E>();
-                for (tuple<E> row : rows.rows) {
-                  ar.add(row.value);
-                }
-                return ar;
+            final Map<String, String> stringStringMap = viewMethods.get();
+            final ViewFetchTerminalBuilder fire = ViewFetch.$().db(getPathPrefix()).type(entityType).view(String.format(stringStringMap.get(name), args)).to().fire();
+            CouchResultSet<E> rows = (CouchResultSet<E>) fire.rows();
+            if (null != rows && null != rows.rows) {
+              List<E> ar = new ArrayList<E>();
+              for (tuple<E> row : rows.rows) {
+                ar.add(row.value);
               }
+              return ar;
             }
             return null;
           }
@@ -184,22 +183,20 @@ public class CouchServiceFactory {
     private String pathPrefix;
 
 
-    @Override
     public void setEntityName(String entityName) {
       this.entityName = entityName;
     }
 
-    @Override
+
     public String getEntityName() {
       return null == entityName ? entityName = getDefaultEntityName() : entityName;
     }
 
-    @Override
+
     public String getDefaultEntityName() {
       return /*getOrgName() +*/ entityType.getSimpleName().toLowerCase();
     }
 
-    @Override
 
     public String getOrgName() {
       return null == orgname ? orgname = getDefaultOrgName() : orgname;

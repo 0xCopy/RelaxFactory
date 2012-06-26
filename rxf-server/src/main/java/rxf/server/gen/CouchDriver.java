@@ -12,6 +12,7 @@ import java.util.concurrent.Future;
 import one.xio.HttpMethod;
 import rxf.server.*;
 import rxf.server.an.DbKeys;
+import rxf.server.an.DbKeys.etype;
 import rxf.server.driver.CouchMetaDriver;
 
 import static rxf.server.BlobAntiPatternObject.avoidStarvation;
@@ -43,7 +44,7 @@ public interface CouchDriver {
         super();
       }
 
-      @Override
+
       public DbCreateTerminalBuilder fire() {
         return new DbCreateTerminalBuilder() {
           public CouchTx tx() {
@@ -60,7 +61,7 @@ public interface CouchDriver {
             final ActionBuilder<Object> actionBuilder = ActionBuilder.get();
             dbKeysBuilder.validate();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
-              @Override
+
               public void run() {
                 try {
 
@@ -76,18 +77,18 @@ public interface CouchDriver {
         };
       }
 
-      @Override
+
       public DbCreateActionBuilder state(Rfc822HeaderState state) {
         return (DbCreateActionBuilder) super.state(state);
       }
 
-      @Override
+
       public DbCreateActionBuilder key(SelectionKey key) {
         return (DbCreateActionBuilder) super.key(key);
       }
     }
 
-    @Override
+
     public DbCreateActionBuilder to() {
       if (parms.size() >= parmsCount) return new DbCreateActionBuilder();
       throw new IllegalArgumentException("required parameters are: [db]");
@@ -126,7 +127,7 @@ public interface CouchDriver {
         super();
       }
 
-      @Override
+
       public DbDeleteTerminalBuilder fire() {
         return new DbDeleteTerminalBuilder() {
           public CouchTx tx() {
@@ -143,7 +144,7 @@ public interface CouchDriver {
             final ActionBuilder<Object> actionBuilder = ActionBuilder.get();
             dbKeysBuilder.validate();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
-              @Override
+
               public void run() {
                 try {
 
@@ -159,18 +160,18 @@ public interface CouchDriver {
         };
       }
 
-      @Override
+
       public DbDeleteActionBuilder state(Rfc822HeaderState state) {
         return (DbDeleteActionBuilder) super.state(state);
       }
 
-      @Override
+
       public DbDeleteActionBuilder key(SelectionKey key) {
         return (DbDeleteActionBuilder) super.key(key);
       }
     }
 
-    @Override
+
     public DbDeleteActionBuilder to() {
       if (parms.size() >= parmsCount) return new DbDeleteActionBuilder();
       throw new IllegalArgumentException("required parameters are: [db]");
@@ -211,7 +212,7 @@ public interface CouchDriver {
         super();
       }
 
-      @Override
+
       public DocFetchTerminalBuilder fire() {
         return new DocFetchTerminalBuilder() {
           public ByteBuffer pojo() {
@@ -254,18 +255,18 @@ public interface CouchDriver {
         };
       }
 
-      @Override
+
       public DocFetchActionBuilder state(Rfc822HeaderState state) {
         return (DocFetchActionBuilder) super.state(state);
       }
 
-      @Override
+
       public DocFetchActionBuilder key(SelectionKey key) {
         return (DocFetchActionBuilder) super.key(key);
       }
     }
 
-    @Override
+
     public DocFetchActionBuilder to() {
       if (parms.size() >= parmsCount) return new DocFetchActionBuilder();
       throw new IllegalArgumentException("required parameters are: [db, docId]");
@@ -309,7 +310,7 @@ public interface CouchDriver {
         super();
       }
 
-      @Override
+
       public RevisionFetchTerminalBuilder fire() {
         return new RevisionFetchTerminalBuilder() {
           public String json() {
@@ -343,18 +344,18 @@ public interface CouchDriver {
         };
       }
 
-      @Override
+
       public RevisionFetchActionBuilder state(Rfc822HeaderState state) {
         return (RevisionFetchActionBuilder) super.state(state);
       }
 
-      @Override
+
       public RevisionFetchActionBuilder key(SelectionKey key) {
         return (RevisionFetchActionBuilder) super.key(key);
       }
     }
 
-    @Override
+
     public RevisionFetchActionBuilder to() {
       if (parms.size() >= parmsCount) return new RevisionFetchActionBuilder();
       throw new IllegalArgumentException("required parameters are: [db, docId]");
@@ -400,7 +401,7 @@ public interface CouchDriver {
         super();
       }
 
-      @Override
+
       public DocPersistTerminalBuilder fire() {
         return new DocPersistTerminalBuilder() {
           public CouchTx tx() {
@@ -417,7 +418,7 @@ public interface CouchDriver {
             final ActionBuilder<Object> actionBuilder = ActionBuilder.get();
             dbKeysBuilder.validate();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
-              @Override
+
               public void run() {
                 try {
 
@@ -452,18 +453,18 @@ public interface CouchDriver {
         };
       }
 
-      @Override
+
       public DocPersistActionBuilder state(Rfc822HeaderState state) {
         return (DocPersistActionBuilder) super.state(state);
       }
 
-      @Override
+
       public DocPersistActionBuilder key(SelectionKey key) {
         return (DocPersistActionBuilder) super.key(key);
       }
     }
 
-    @Override
+
     public DocPersistActionBuilder to() {
       if (parms.size() >= parmsCount) return new DocPersistActionBuilder();
       throw new IllegalArgumentException("required parameters are: [db, validjson]");
@@ -519,7 +520,7 @@ public interface CouchDriver {
         super();
       }
 
-      @Override
+
       public DocDeleteTerminalBuilder fire() {
         return new DocDeleteTerminalBuilder() {
           public CouchTx tx() {
@@ -536,7 +537,7 @@ public interface CouchDriver {
             final ActionBuilder<Object> actionBuilder = ActionBuilder.get();
             dbKeysBuilder.validate();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
-              @Override
+
               public void run() {
                 try {
 
@@ -571,18 +572,18 @@ public interface CouchDriver {
         };
       }
 
-      @Override
+
       public DocDeleteActionBuilder state(Rfc822HeaderState state) {
         return (DocDeleteActionBuilder) super.state(state);
       }
 
-      @Override
+
       public DocDeleteActionBuilder key(SelectionKey key) {
         return (DocDeleteActionBuilder) super.key(key);
       }
     }
 
-    @Override
+
     public DocDeleteActionBuilder to() {
       if (parms.size() >= parmsCount) return new DocDeleteActionBuilder();
       throw new IllegalArgumentException("required parameters are: [db, docId, rev]");
@@ -633,7 +634,7 @@ public interface CouchDriver {
         super();
       }
 
-      @Override
+
       public DesignDocFetchTerminalBuilder fire() {
         return new DesignDocFetchTerminalBuilder() {
           public ByteBuffer pojo() {
@@ -676,18 +677,18 @@ public interface CouchDriver {
         };
       }
 
-      @Override
+
       public DesignDocFetchActionBuilder state(Rfc822HeaderState state) {
         return (DesignDocFetchActionBuilder) super.state(state);
       }
 
-      @Override
+
       public DesignDocFetchActionBuilder key(SelectionKey key) {
         return (DesignDocFetchActionBuilder) super.key(key);
       }
     }
 
-    @Override
+
     public DesignDocFetchActionBuilder to() {
       if (parms.size() >= parmsCount) return new DesignDocFetchActionBuilder();
       throw new IllegalArgumentException("required parameters are: [db, designDocId]");
@@ -734,25 +735,27 @@ public interface CouchDriver {
         super();
       }
 
-      @Override
+
       public ViewFetchTerminalBuilder fire() {
         return new ViewFetchTerminalBuilder() {
           public CouchResultSet rows() {
             try {
-              return BlobAntiPatternObject.GSON.fromJson(HttpMethod.UTF8.decode(avoidStarvation(CouchMetaDriver.ViewFetch.visit())).toString(),
-                  new ParameterizedType() {
-                    public Type getRawType() {
-                      return CouchResultSet.class;
-                    }
+              final ParameterizedType typeOfT = new ParameterizedType() {
+                public Type getRawType() {
+                  return CouchResultSet.class;
+                }
 
-                    public Type getOwnerType() {
-                      return null;
-                    }
+                public Type getOwnerType() {
+                  return null;
+                }
 
-                    public Type[] getActualTypeArguments() {
-                      return new Type[]{ViewFetch.this.<Class>get(DbKeys.etype.type)};
-                    }
-                  });
+                public Type[] getActualTypeArguments() {
+                  return new Type[]{ViewFetch.this.<Class>get(etype.type)};
+                }
+              };
+              final ByteBuffer visit = CouchMetaDriver.ViewFetch.visit();
+              return BlobAntiPatternObject.GSON.fromJson(HttpMethod.UTF8.decode(avoidStarvation(visit)).toString(),
+                  typeOfT);
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -784,18 +787,18 @@ public interface CouchDriver {
         };
       }
 
-      @Override
+
       public ViewFetchActionBuilder state(Rfc822HeaderState state) {
         return (ViewFetchActionBuilder) super.state(state);
       }
 
-      @Override
+
       public ViewFetchActionBuilder key(SelectionKey key) {
         return (ViewFetchActionBuilder) super.key(key);
       }
     }
 
-    @Override
+
     public ViewFetchActionBuilder to() {
       if (parms.size() >= parmsCount) return new ViewFetchActionBuilder();
       throw new IllegalArgumentException("required parameters are: [db, view]");
@@ -853,7 +856,7 @@ public interface CouchDriver {
         super();
       }
 
-      @Override
+
       public JsonSendTerminalBuilder fire() {
         return new JsonSendTerminalBuilder() {
           public CouchTx tx() {
@@ -870,7 +873,7 @@ public interface CouchDriver {
             final ActionBuilder<Object> actionBuilder = ActionBuilder.get();
             dbKeysBuilder.validate();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
-              @Override
+
               public void run() {
                 try {
 
@@ -941,18 +944,18 @@ public interface CouchDriver {
         };
       }
 
-      @Override
+
       public JsonSendActionBuilder state(Rfc822HeaderState state) {
         return (JsonSendActionBuilder) super.state(state);
       }
 
-      @Override
+
       public JsonSendActionBuilder key(SelectionKey key) {
         return (JsonSendActionBuilder) super.key(key);
       }
     }
 
-    @Override
+
     public JsonSendActionBuilder to() {
       if (parms.size() >= parmsCount) return new JsonSendActionBuilder();
       throw new IllegalArgumentException("required parameters are: [opaque, validjson]");
