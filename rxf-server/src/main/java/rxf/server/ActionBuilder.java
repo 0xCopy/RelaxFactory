@@ -22,6 +22,7 @@ public abstract class ActionBuilder<T> {
     currentAction.set(this);
   }
 
+  public abstract TerminalBuilder<T> fire();
 
   @Override
   public String toString() {
