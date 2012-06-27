@@ -2,16 +2,12 @@ package rxf.server.gen;
 //generated
 
 
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
-import one.xio.HttpMethod;
 import rxf.server.*;
-import rxf.server.an.DbKeys;
 import rxf.server.an.DbKeys.etype;
 import rxf.server.driver.CouchMetaDriver;
 
@@ -21,9 +17,9 @@ import static rxf.server.BlobAntiPatternObject.avoidStarvation;
  * generated drivers
  */
 public interface CouchDriver {
-  ByteBuffer DbCreate(String db);
+  java.nio.ByteBuffer DbCreate(String db);
 
-  public class DbCreate extends DbKeysBuilder<ByteBuffer> {
+  public class DbCreate extends DbKeysBuilder<java.nio.ByteBuffer> {
     private DbCreate() {
     }
 
@@ -33,13 +29,13 @@ public interface CouchDriver {
       return new DbCreate();
     }
 
-    public interface DbCreateTerminalBuilder extends TerminalBuilder<ByteBuffer> {
+    public interface DbCreateTerminalBuilder extends TerminalBuilder<java.nio.ByteBuffer> {
       CouchTx tx();
 
       void oneWay();
     }
 
-    public class DbCreateActionBuilder extends ActionBuilder<ByteBuffer> {
+    public class DbCreateActionBuilder extends ActionBuilder<java.nio.ByteBuffer> {
       public DbCreateActionBuilder() {
         super();
       }
@@ -49,7 +45,7 @@ public interface CouchDriver {
         return new DbCreateTerminalBuilder() {
           public CouchTx tx() {
             try {
-              return BlobAntiPatternObject.GSON.fromJson(HttpMethod.UTF8.decode(CouchMetaDriver.DbCreate.visit()).toString(), CouchTx.class);
+              return BlobAntiPatternObject.GSON.fromJson(one.xio.HttpMethod.UTF8.decode(CouchMetaDriver.DbCreate.visit()).toString(), CouchTx.class);
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -61,13 +57,12 @@ public interface CouchDriver {
             final ActionBuilder<Object> actionBuilder = ActionBuilder.get();
             dbKeysBuilder.validate();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
-
               public void run() {
                 try {
 
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  CouchMetaDriver.DbCreate.visit(/*dbKeysBuilder,actionBuilder*/);
+                  CouchMetaDriver.DbCreate.visit();
                 } catch (Exception e) {
                   e.printStackTrace();
                 }
@@ -83,7 +78,7 @@ public interface CouchDriver {
       }
 
 
-      public DbCreateActionBuilder key(SelectionKey key) {
+      public DbCreateActionBuilder key(java.nio.channels.SelectionKey key) {
         return (DbCreateActionBuilder) super.key(key);
       }
     }
@@ -98,15 +93,15 @@ public interface CouchDriver {
     static private final int parmsCount = 1;
 
     public DbCreate db(String stringParam) {
-      parms.put(DbKeys.etype.db, stringParam);
+      parms.put(etype.db, stringParam);
       return this;
     }
 
   }
 
-  ByteBuffer DbDelete(String db);
+  java.nio.ByteBuffer DbDelete(String db);
 
-  public class DbDelete extends DbKeysBuilder<ByteBuffer> {
+  public class DbDelete extends DbKeysBuilder<java.nio.ByteBuffer> {
     private DbDelete() {
     }
 
@@ -116,13 +111,13 @@ public interface CouchDriver {
       return new DbDelete();
     }
 
-    public interface DbDeleteTerminalBuilder extends TerminalBuilder<ByteBuffer> {
+    public interface DbDeleteTerminalBuilder extends TerminalBuilder<java.nio.ByteBuffer> {
       CouchTx tx();
 
       void oneWay();
     }
 
-    public class DbDeleteActionBuilder extends ActionBuilder<ByteBuffer> {
+    public class DbDeleteActionBuilder extends ActionBuilder<java.nio.ByteBuffer> {
       public DbDeleteActionBuilder() {
         super();
       }
@@ -132,7 +127,7 @@ public interface CouchDriver {
         return new DbDeleteTerminalBuilder() {
           public CouchTx tx() {
             try {
-              return BlobAntiPatternObject.GSON.fromJson(HttpMethod.UTF8.decode(CouchMetaDriver.DbDelete.visit()).toString(), CouchTx.class);
+              return BlobAntiPatternObject.GSON.fromJson(one.xio.HttpMethod.UTF8.decode(CouchMetaDriver.DbDelete.visit()).toString(), CouchTx.class);
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -144,13 +139,12 @@ public interface CouchDriver {
             final ActionBuilder<Object> actionBuilder = ActionBuilder.get();
             dbKeysBuilder.validate();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
-
               public void run() {
                 try {
 
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  CouchMetaDriver.DbDelete.visit(/*dbKeysBuilder,actionBuilder*/);
+                  CouchMetaDriver.DbDelete.visit();
                 } catch (Exception e) {
                   e.printStackTrace();
                 }
@@ -166,7 +160,7 @@ public interface CouchDriver {
       }
 
 
-      public DbDeleteActionBuilder key(SelectionKey key) {
+      public DbDeleteActionBuilder key(java.nio.channels.SelectionKey key) {
         return (DbDeleteActionBuilder) super.key(key);
       }
     }
@@ -181,15 +175,15 @@ public interface CouchDriver {
     static private final int parmsCount = 1;
 
     public DbDelete db(String stringParam) {
-      parms.put(DbKeys.etype.db, stringParam);
+      parms.put(etype.db, stringParam);
       return this;
     }
 
   }
 
-  ByteBuffer DocFetch(String db, String docId);
+  java.nio.ByteBuffer DocFetch(String db, String docId);
 
-  public class DocFetch extends DbKeysBuilder<ByteBuffer> {
+  public class DocFetch extends DbKeysBuilder<java.nio.ByteBuffer> {
     private DocFetch() {
     }
 
@@ -199,15 +193,15 @@ public interface CouchDriver {
       return new DocFetch();
     }
 
-    public interface DocFetchTerminalBuilder extends TerminalBuilder<ByteBuffer> {
-      ByteBuffer pojo();
+    public interface DocFetchTerminalBuilder extends TerminalBuilder<java.nio.ByteBuffer> {
+      java.nio.ByteBuffer pojo();
 
       Future<ByteBuffer> future();
 
       String json();
     }
 
-    public class DocFetchActionBuilder extends ActionBuilder<ByteBuffer> {
+    public class DocFetchActionBuilder extends ActionBuilder<java.nio.ByteBuffer> {
       public DocFetchActionBuilder() {
         super();
       }
@@ -215,7 +209,7 @@ public interface CouchDriver {
 
       public DocFetchTerminalBuilder fire() {
         return new DocFetchTerminalBuilder() {
-          public ByteBuffer pojo() {
+          public java.nio.ByteBuffer pojo() {
             try {
               return CouchMetaDriver.DocFetch.visit();
             } catch (Exception e) {
@@ -230,7 +224,7 @@ public interface CouchDriver {
                 final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
                 final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public ByteBuffer call() throws Exception {
+                public java.nio.ByteBuffer call() throws Exception {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
                   return CouchMetaDriver.DocFetch.visit(dbKeysBuilder, actionBuilder);
@@ -246,7 +240,7 @@ public interface CouchDriver {
           public String json() {
             try {
               ByteBuffer visit = CouchMetaDriver.DocFetch.visit();
-              return null == visit ? null : HttpMethod.UTF8.decode(avoidStarvation(visit)).toString();
+              return null == visit ? null : one.xio.HttpMethod.UTF8.decode(avoidStarvation(visit)).toString();
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -261,7 +255,7 @@ public interface CouchDriver {
       }
 
 
-      public DocFetchActionBuilder key(SelectionKey key) {
+      public DocFetchActionBuilder key(java.nio.channels.SelectionKey key) {
         return (DocFetchActionBuilder) super.key(key);
       }
     }
@@ -276,20 +270,20 @@ public interface CouchDriver {
     static private final int parmsCount = 2;
 
     public DocFetch db(String stringParam) {
-      parms.put(DbKeys.etype.db, stringParam);
+      parms.put(etype.db, stringParam);
       return this;
     }
 
     public DocFetch docId(String stringParam) {
-      parms.put(DbKeys.etype.docId, stringParam);
+      parms.put(etype.docId, stringParam);
       return this;
     }
 
   }
 
-  ByteBuffer RevisionFetch(String db, String docId);
+  java.nio.ByteBuffer RevisionFetch(String db, String docId);
 
-  public class RevisionFetch extends DbKeysBuilder<ByteBuffer> {
+  public class RevisionFetch extends DbKeysBuilder<java.nio.ByteBuffer> {
     private RevisionFetch() {
     }
 
@@ -299,13 +293,13 @@ public interface CouchDriver {
       return new RevisionFetch();
     }
 
-    public interface RevisionFetchTerminalBuilder extends TerminalBuilder<ByteBuffer> {
+    public interface RevisionFetchTerminalBuilder extends TerminalBuilder<java.nio.ByteBuffer> {
       String json();
 
       Future<ByteBuffer> future();
     }
 
-    public class RevisionFetchActionBuilder extends ActionBuilder<ByteBuffer> {
+    public class RevisionFetchActionBuilder extends ActionBuilder<java.nio.ByteBuffer> {
       public RevisionFetchActionBuilder() {
         super();
       }
@@ -316,7 +310,7 @@ public interface CouchDriver {
           public String json() {
             try {
               ByteBuffer visit = CouchMetaDriver.RevisionFetch.visit();
-              return null == visit ? null : HttpMethod.UTF8.decode(avoidStarvation(visit)).toString();
+              return null == visit ? null : one.xio.HttpMethod.UTF8.decode(avoidStarvation(visit)).toString();
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -329,7 +323,7 @@ public interface CouchDriver {
                 final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
                 final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public ByteBuffer call() throws Exception {
+                public java.nio.ByteBuffer call() throws Exception {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
                   return CouchMetaDriver.RevisionFetch.visit(dbKeysBuilder, actionBuilder);
@@ -350,7 +344,7 @@ public interface CouchDriver {
       }
 
 
-      public RevisionFetchActionBuilder key(SelectionKey key) {
+      public RevisionFetchActionBuilder key(java.nio.channels.SelectionKey key) {
         return (RevisionFetchActionBuilder) super.key(key);
       }
     }
@@ -365,20 +359,20 @@ public interface CouchDriver {
     static private final int parmsCount = 2;
 
     public RevisionFetch db(String stringParam) {
-      parms.put(DbKeys.etype.db, stringParam);
+      parms.put(etype.db, stringParam);
       return this;
     }
 
     public RevisionFetch docId(String stringParam) {
-      parms.put(DbKeys.etype.docId, stringParam);
+      parms.put(etype.docId, stringParam);
       return this;
     }
 
   }
 
-  ByteBuffer DocPersist(String db, String validjson);
+  java.nio.ByteBuffer DocPersist(String db, String validjson);
 
-  public class DocPersist extends DbKeysBuilder<ByteBuffer> {
+  public class DocPersist extends DbKeysBuilder<java.nio.ByteBuffer> {
     private DocPersist() {
     }
 
@@ -388,7 +382,7 @@ public interface CouchDriver {
       return new DocPersist();
     }
 
-    public interface DocPersistTerminalBuilder extends TerminalBuilder<ByteBuffer> {
+    public interface DocPersistTerminalBuilder extends TerminalBuilder<java.nio.ByteBuffer> {
       CouchTx tx();
 
       void oneWay();
@@ -396,7 +390,7 @@ public interface CouchDriver {
       Future<ByteBuffer> future();
     }
 
-    public class DocPersistActionBuilder extends ActionBuilder<ByteBuffer> {
+    public class DocPersistActionBuilder extends ActionBuilder<java.nio.ByteBuffer> {
       public DocPersistActionBuilder() {
         super();
       }
@@ -406,7 +400,7 @@ public interface CouchDriver {
         return new DocPersistTerminalBuilder() {
           public CouchTx tx() {
             try {
-              return BlobAntiPatternObject.GSON.fromJson(HttpMethod.UTF8.decode(CouchMetaDriver.DocPersist.visit()).toString(), CouchTx.class);
+              return BlobAntiPatternObject.GSON.fromJson(one.xio.HttpMethod.UTF8.decode(CouchMetaDriver.DocPersist.visit()).toString(), CouchTx.class);
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -418,13 +412,12 @@ public interface CouchDriver {
             final ActionBuilder<Object> actionBuilder = ActionBuilder.get();
             dbKeysBuilder.validate();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
-
               public void run() {
                 try {
 
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  CouchMetaDriver.DocPersist.visit(/*dbKeysBuilder,actionBuilder*/);
+                  CouchMetaDriver.DocPersist.visit();
                 } catch (Exception e) {
                   e.printStackTrace();
                 }
@@ -438,7 +431,7 @@ public interface CouchDriver {
                 final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
                 final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public ByteBuffer call() throws Exception {
+                public java.nio.ByteBuffer call() throws Exception {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
                   return CouchMetaDriver.DocPersist.visit(dbKeysBuilder, actionBuilder);
@@ -459,7 +452,7 @@ public interface CouchDriver {
       }
 
 
-      public DocPersistActionBuilder key(SelectionKey key) {
+      public DocPersistActionBuilder key(java.nio.channels.SelectionKey key) {
         return (DocPersistActionBuilder) super.key(key);
       }
     }
@@ -474,30 +467,30 @@ public interface CouchDriver {
     static private final int parmsCount = 2;
 
     public DocPersist db(String stringParam) {
-      parms.put(DbKeys.etype.db, stringParam);
+      parms.put(etype.db, stringParam);
       return this;
     }
 
     public DocPersist validjson(String stringParam) {
-      parms.put(DbKeys.etype.validjson, stringParam);
+      parms.put(etype.validjson, stringParam);
       return this;
     }
 
     public DocPersist docId(String stringParam) {
-      parms.put(DbKeys.etype.docId, stringParam);
+      parms.put(etype.docId, stringParam);
       return this;
     }
 
     public DocPersist rev(String stringParam) {
-      parms.put(DbKeys.etype.rev, stringParam);
+      parms.put(etype.rev, stringParam);
       return this;
     }
 
   }
 
-  ByteBuffer DocDelete(String db, String docId, String rev);
+  java.nio.ByteBuffer DocDelete(String db, String docId, String rev);
 
-  public class DocDelete extends DbKeysBuilder<ByteBuffer> {
+  public class DocDelete extends DbKeysBuilder<java.nio.ByteBuffer> {
     private DocDelete() {
     }
 
@@ -507,7 +500,7 @@ public interface CouchDriver {
       return new DocDelete();
     }
 
-    public interface DocDeleteTerminalBuilder extends TerminalBuilder<ByteBuffer> {
+    public interface DocDeleteTerminalBuilder extends TerminalBuilder<java.nio.ByteBuffer> {
       CouchTx tx();
 
       void oneWay();
@@ -515,7 +508,7 @@ public interface CouchDriver {
       Future<ByteBuffer> future();
     }
 
-    public class DocDeleteActionBuilder extends ActionBuilder<ByteBuffer> {
+    public class DocDeleteActionBuilder extends ActionBuilder<java.nio.ByteBuffer> {
       public DocDeleteActionBuilder() {
         super();
       }
@@ -525,7 +518,7 @@ public interface CouchDriver {
         return new DocDeleteTerminalBuilder() {
           public CouchTx tx() {
             try {
-              return BlobAntiPatternObject.GSON.fromJson(HttpMethod.UTF8.decode(CouchMetaDriver.DocDelete.visit()).toString(), CouchTx.class);
+              return BlobAntiPatternObject.GSON.fromJson(one.xio.HttpMethod.UTF8.decode(CouchMetaDriver.DocDelete.visit()).toString(), CouchTx.class);
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -537,13 +530,12 @@ public interface CouchDriver {
             final ActionBuilder<Object> actionBuilder = ActionBuilder.get();
             dbKeysBuilder.validate();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
-
               public void run() {
                 try {
 
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  CouchMetaDriver.DocDelete.visit(/*dbKeysBuilder,actionBuilder*/);
+                  CouchMetaDriver.DocDelete.visit();
                 } catch (Exception e) {
                   e.printStackTrace();
                 }
@@ -557,7 +549,7 @@ public interface CouchDriver {
                 final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
                 final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public ByteBuffer call() throws Exception {
+                public java.nio.ByteBuffer call() throws Exception {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
                   return CouchMetaDriver.DocDelete.visit(dbKeysBuilder, actionBuilder);
@@ -578,7 +570,7 @@ public interface CouchDriver {
       }
 
 
-      public DocDeleteActionBuilder key(SelectionKey key) {
+      public DocDeleteActionBuilder key(java.nio.channels.SelectionKey key) {
         return (DocDeleteActionBuilder) super.key(key);
       }
     }
@@ -593,25 +585,25 @@ public interface CouchDriver {
     static private final int parmsCount = 3;
 
     public DocDelete db(String stringParam) {
-      parms.put(DbKeys.etype.db, stringParam);
+      parms.put(etype.db, stringParam);
       return this;
     }
 
     public DocDelete docId(String stringParam) {
-      parms.put(DbKeys.etype.docId, stringParam);
+      parms.put(etype.docId, stringParam);
       return this;
     }
 
     public DocDelete rev(String stringParam) {
-      parms.put(DbKeys.etype.rev, stringParam);
+      parms.put(etype.rev, stringParam);
       return this;
     }
 
   }
 
-  ByteBuffer DesignDocFetch(String db, String designDocId);
+  java.nio.ByteBuffer DesignDocFetch(String db, String designDocId);
 
-  public class DesignDocFetch extends DbKeysBuilder<ByteBuffer> {
+  public class DesignDocFetch extends DbKeysBuilder<java.nio.ByteBuffer> {
     private DesignDocFetch() {
     }
 
@@ -621,15 +613,15 @@ public interface CouchDriver {
       return new DesignDocFetch();
     }
 
-    public interface DesignDocFetchTerminalBuilder extends TerminalBuilder<ByteBuffer> {
-      ByteBuffer pojo();
+    public interface DesignDocFetchTerminalBuilder extends TerminalBuilder<java.nio.ByteBuffer> {
+      java.nio.ByteBuffer pojo();
 
       Future<ByteBuffer> future();
 
       String json();
     }
 
-    public class DesignDocFetchActionBuilder extends ActionBuilder<ByteBuffer> {
+    public class DesignDocFetchActionBuilder extends ActionBuilder<java.nio.ByteBuffer> {
       public DesignDocFetchActionBuilder() {
         super();
       }
@@ -637,7 +629,7 @@ public interface CouchDriver {
 
       public DesignDocFetchTerminalBuilder fire() {
         return new DesignDocFetchTerminalBuilder() {
-          public ByteBuffer pojo() {
+          public java.nio.ByteBuffer pojo() {
             try {
               return CouchMetaDriver.DesignDocFetch.visit();
             } catch (Exception e) {
@@ -652,7 +644,7 @@ public interface CouchDriver {
                 final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
                 final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public ByteBuffer call() throws Exception {
+                public java.nio.ByteBuffer call() throws Exception {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
                   return CouchMetaDriver.DesignDocFetch.visit(dbKeysBuilder, actionBuilder);
@@ -668,7 +660,7 @@ public interface CouchDriver {
           public String json() {
             try {
               ByteBuffer visit = CouchMetaDriver.DesignDocFetch.visit();
-              return null == visit ? null : HttpMethod.UTF8.decode(avoidStarvation(visit)).toString();
+              return null == visit ? null : one.xio.HttpMethod.UTF8.decode(avoidStarvation(visit)).toString();
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -683,7 +675,7 @@ public interface CouchDriver {
       }
 
 
-      public DesignDocFetchActionBuilder key(SelectionKey key) {
+      public DesignDocFetchActionBuilder key(java.nio.channels.SelectionKey key) {
         return (DesignDocFetchActionBuilder) super.key(key);
       }
     }
@@ -698,20 +690,20 @@ public interface CouchDriver {
     static private final int parmsCount = 2;
 
     public DesignDocFetch db(String stringParam) {
-      parms.put(DbKeys.etype.db, stringParam);
+      parms.put(etype.db, stringParam);
       return this;
     }
 
     public DesignDocFetch designDocId(String stringParam) {
-      parms.put(DbKeys.etype.designDocId, stringParam);
+      parms.put(etype.designDocId, stringParam);
       return this;
     }
 
   }
 
-  ByteBuffer ViewFetch(String db, String view);
+  java.nio.ByteBuffer ViewFetch(String db, String view);
 
-  public class ViewFetch extends DbKeysBuilder<ByteBuffer> {
+  public class ViewFetch extends DbKeysBuilder<java.nio.ByteBuffer> {
     private ViewFetch() {
     }
 
@@ -721,8 +713,8 @@ public interface CouchDriver {
       return new ViewFetch();
     }
 
-    public interface ViewFetchTerminalBuilder extends TerminalBuilder<ByteBuffer> {
-      CouchResultSet rows();
+    public interface ViewFetchTerminalBuilder extends TerminalBuilder<java.nio.ByteBuffer> {
+      rxf.server.CouchResultSet rows();
 
       Future<ByteBuffer> future();
 
@@ -730,7 +722,7 @@ public interface CouchDriver {
 
     }
 
-    public class ViewFetchActionBuilder extends ActionBuilder<ByteBuffer> {
+    public class ViewFetchActionBuilder extends ActionBuilder<java.nio.ByteBuffer> {
       public ViewFetchActionBuilder() {
         super();
       }
@@ -738,24 +730,22 @@ public interface CouchDriver {
 
       public ViewFetchTerminalBuilder fire() {
         return new ViewFetchTerminalBuilder() {
-          public CouchResultSet rows() {
+          public rxf.server.CouchResultSet rows() {
             try {
-              final ParameterizedType typeOfT = new ParameterizedType() {
-                public Type getRawType() {
-                  return CouchResultSet.class;
-                }
+              return BlobAntiPatternObject.GSON.fromJson(one.xio.HttpMethod.UTF8.decode(avoidStarvation(CouchMetaDriver.ViewFetch.visit())).toString(),
+                  new java.lang.reflect.ParameterizedType() {
+                    public Type getRawType() {
+                      return CouchResultSet.class;
+                    }
 
-                public Type getOwnerType() {
-                  return null;
-                }
+                    public Type getOwnerType() {
+                      return null;
+                    }
 
-                public Type[] getActualTypeArguments() {
-                  return new Type[]{ViewFetch.this.<Class>get(etype.type)};
-                }
-              };
-              final ByteBuffer visit = CouchMetaDriver.ViewFetch.visit();
-              return BlobAntiPatternObject.GSON.fromJson(HttpMethod.UTF8.decode(avoidStarvation(visit)).toString(),
-                  typeOfT);
+                    public Type[] getActualTypeArguments() {
+                      return new Type[]{ViewFetch.this.<Class>get(etype.type)};
+                    }
+                  });
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -768,7 +758,7 @@ public interface CouchDriver {
                 final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
                 final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public ByteBuffer call() throws Exception {
+                public java.nio.ByteBuffer call() throws Exception {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
                   return CouchMetaDriver.ViewFetch.visit(dbKeysBuilder, actionBuilder);
@@ -793,7 +783,7 @@ public interface CouchDriver {
       }
 
 
-      public ViewFetchActionBuilder key(SelectionKey key) {
+      public ViewFetchActionBuilder key(java.nio.channels.SelectionKey key) {
         return (ViewFetchActionBuilder) super.key(key);
       }
     }
@@ -808,25 +798,25 @@ public interface CouchDriver {
     static private final int parmsCount = 2;
 
     public ViewFetch db(String stringParam) {
-      parms.put(DbKeys.etype.db, stringParam);
+      parms.put(etype.db, stringParam);
       return this;
     }
 
     public ViewFetch view(String stringParam) {
-      parms.put(DbKeys.etype.view, stringParam);
+      parms.put(etype.view, stringParam);
       return this;
     }
 
-    public ViewFetch type(Class classParam) {
-      parms.put(DbKeys.etype.type, classParam);
+    public ViewFetch type(java.lang.Class classParam) {
+      parms.put(etype.type, classParam);
       return this;
     }
 
   }
 
-  ByteBuffer JsonSend(String opaque, String validjson);
+  java.nio.ByteBuffer JsonSend(String opaque, String validjson);
 
-  public class JsonSend extends DbKeysBuilder<ByteBuffer> {
+  public class JsonSend extends DbKeysBuilder<java.nio.ByteBuffer> {
     private JsonSend() {
     }
 
@@ -836,12 +826,12 @@ public interface CouchDriver {
       return new JsonSend();
     }
 
-    public interface JsonSendTerminalBuilder extends TerminalBuilder<ByteBuffer> {
+    public interface JsonSendTerminalBuilder extends TerminalBuilder<java.nio.ByteBuffer> {
       CouchTx tx();
 
       void oneWay();
 
-      CouchResultSet rows();
+      rxf.server.CouchResultSet rows();
 
       String json();
 
@@ -851,7 +841,7 @@ public interface CouchDriver {
 
     }
 
-    public class JsonSendActionBuilder extends ActionBuilder<ByteBuffer> {
+    public class JsonSendActionBuilder extends ActionBuilder<java.nio.ByteBuffer> {
       public JsonSendActionBuilder() {
         super();
       }
@@ -861,7 +851,7 @@ public interface CouchDriver {
         return new JsonSendTerminalBuilder() {
           public CouchTx tx() {
             try {
-              return BlobAntiPatternObject.GSON.fromJson(HttpMethod.UTF8.decode(CouchMetaDriver.JsonSend.visit()).toString(), CouchTx.class);
+              return BlobAntiPatternObject.GSON.fromJson(one.xio.HttpMethod.UTF8.decode(CouchMetaDriver.JsonSend.visit()).toString(), CouchTx.class);
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -873,13 +863,12 @@ public interface CouchDriver {
             final ActionBuilder<Object> actionBuilder = ActionBuilder.get();
             dbKeysBuilder.validate();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
-
               public void run() {
                 try {
 
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  CouchMetaDriver.JsonSend.visit(/*dbKeysBuilder,actionBuilder*/);
+                  CouchMetaDriver.JsonSend.visit();
                 } catch (Exception e) {
                   e.printStackTrace();
                 }
@@ -887,10 +876,10 @@ public interface CouchDriver {
             });
           }
 
-          public CouchResultSet rows() {
+          public rxf.server.CouchResultSet rows() {
             try {
-              return BlobAntiPatternObject.GSON.fromJson(HttpMethod.UTF8.decode(avoidStarvation(CouchMetaDriver.JsonSend.visit())).toString(),
-                  new ParameterizedType() {
+              return BlobAntiPatternObject.GSON.fromJson(one.xio.HttpMethod.UTF8.decode(avoidStarvation(CouchMetaDriver.JsonSend.visit())).toString(),
+                  new java.lang.reflect.ParameterizedType() {
                     public Type getRawType() {
                       return CouchResultSet.class;
                     }
@@ -900,7 +889,7 @@ public interface CouchDriver {
                     }
 
                     public Type[] getActualTypeArguments() {
-                      return new Type[]{JsonSend.this.<Class>get(DbKeys.etype.type)};
+                      return new Type[]{JsonSend.this.<Class>get(etype.type)};
                     }
                   });
             } catch (Exception e) {
@@ -912,7 +901,7 @@ public interface CouchDriver {
           public String json() {
             try {
               ByteBuffer visit = CouchMetaDriver.JsonSend.visit();
-              return null == visit ? null : HttpMethod.UTF8.decode(avoidStarvation(visit)).toString();
+              return null == visit ? null : one.xio.HttpMethod.UTF8.decode(avoidStarvation(visit)).toString();
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -925,7 +914,7 @@ public interface CouchDriver {
                 final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
                 final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public ByteBuffer call() throws Exception {
+                public java.nio.ByteBuffer call() throws Exception {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
                   return CouchMetaDriver.JsonSend.visit(dbKeysBuilder, actionBuilder);
@@ -950,7 +939,7 @@ public interface CouchDriver {
       }
 
 
-      public JsonSendActionBuilder key(SelectionKey key) {
+      public JsonSendActionBuilder key(java.nio.channels.SelectionKey key) {
         return (JsonSendActionBuilder) super.key(key);
       }
     }
@@ -965,17 +954,17 @@ public interface CouchDriver {
     static private final int parmsCount = 2;
 
     public JsonSend opaque(String stringParam) {
-      parms.put(DbKeys.etype.opaque, stringParam);
+      parms.put(etype.opaque, stringParam);
       return this;
     }
 
     public JsonSend validjson(String stringParam) {
-      parms.put(DbKeys.etype.validjson, stringParam);
+      parms.put(etype.validjson, stringParam);
       return this;
     }
 
-    public JsonSend type(Class classParam) {
-      parms.put(DbKeys.etype.type, classParam);
+    public JsonSend type(java.lang.Class classParam) {
+      parms.put(etype.type, classParam);
       return this;
     }
 

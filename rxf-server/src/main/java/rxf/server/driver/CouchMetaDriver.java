@@ -459,7 +459,7 @@ public enum CouchMetaDriver {
           key.interestOps(OP_READ).selector().wakeup();//READ immediately follows WRITE in httpmethod.init loop
         }
 
-        @Override
+
         public void onRead(SelectionKey key) throws IOException {
           if (null == cursor) {
             final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
@@ -487,7 +487,7 @@ public enum CouchMetaDriver {
                   } else {
                     cursor = ByteBuffer.allocateDirect(remaining).put(dst);
                     key.attach(new Impl() {
-                      @Override
+
                       public void onRead(SelectionKey key) throws Exception {
                         channel.read(cursor);
                         if (cursor.hasRemaining()) {

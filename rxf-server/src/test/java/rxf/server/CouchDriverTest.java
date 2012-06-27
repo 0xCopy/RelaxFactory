@@ -43,11 +43,6 @@ public class CouchDriverTest extends TestCase {
       }
     });
     nukeTestDbs();
-//    EXECUTOR_SERVICE.schedule(new Runnable() {
-//      public void run() {
-//        fail();
-//      }
-//    }, 5, TimeUnit.SECONDS);
 
     {
       CouchTx tx = DbCreate.$().db(SOMEDB).to().fire().tx();

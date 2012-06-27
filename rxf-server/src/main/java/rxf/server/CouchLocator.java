@@ -40,9 +40,9 @@ public abstract class CouchLocator<T> extends Locator<T, String> implements Couc
     try {
       return clazz.newInstance();
     } catch (InstantiationException e) {
-      e.printStackTrace();  //todo: verify for a purpose
+      e.printStackTrace();
     } catch (IllegalAccessException e) {
-      e.printStackTrace();  //todo: verify for a purpose
+      e.printStackTrace();
     }
     throw new UnsupportedOperationException("no default ctor " + HttpMethod.wheresWaldo(3));
   }
@@ -71,12 +71,10 @@ public abstract class CouchLocator<T> extends Locator<T, String> implements Couc
   @Override
   abstract public Object getVersion(T domainObject);
 
-  @Override
   public String getOrgName() {
     return null == orgname ? BlobAntiPatternObject.getDefaultOrgName() : orgname;
   }
 
-  @Override
   public void setOrgname(String orgname) {
     this.orgname = orgname;
   }
@@ -104,7 +102,6 @@ public abstract class CouchLocator<T> extends Locator<T, String> implements Couc
   //threadlocals dont help much.  rf is dispatched to new threads in a seperate executor.
   private String orgname = null;
 
-  @Override
   public void setEntityName(String entityName) {
     this.entityName = entityName;
   }
@@ -116,15 +113,13 @@ public abstract class CouchLocator<T> extends Locator<T, String> implements Couc
    * @return
    */
   String searchAsync(String queryParm) {
-    return null;  //To change body of created methods use File | Settings | File Templates.
+    return null;
   }
 
-  @Override
   public String getEntityName() {
     return entityName == null ? getDefaultEntityName() : entityName;
   }
 
-  @Override
   public String getDefaultEntityName() {
     return getOrgName() + getDomainType().getSimpleName().toLowerCase();
   }

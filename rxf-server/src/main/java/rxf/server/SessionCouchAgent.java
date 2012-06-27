@@ -16,7 +16,7 @@ public class SessionCouchAgent<T> extends CouchChangesClient {
   @Override
   public Runnable getDocUpdateHandler(final LinkedHashMap couchChange) {
     return new Runnable() {
-      @Override
+
       public void run() {
         String id = String.valueOf(couchChange.get("id"));
         System.err.println("session details changed for the id: " + id);

@@ -12,19 +12,17 @@ public enum DbTerminal {
    * results are squashed.
    */
   oneWay {
-    @Override
     public String builder(CouchMetaDriver couchDriver, etype[] parms, boolean implementation) {
       return (implementation ? "public " : "") + "void " + name() + "()" + (implementation ? "{\n    final DbKeysBuilder<Object>dbKeysBuilder=(DbKeysBuilder<Object>)DbKeysBuilder.get();\n" +
           "final ActionBuilder<Object>actionBuilder=(ActionBuilder<Object>)ActionBuilder.get();" +
           "\ndbKeysBuilder.validate();\n BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable(){" +
-          "@Override\npublic void run(){\n" + "    try{\n\n      DbKeysBuilder.currentKeys.set(dbKeysBuilder);   \n      ActionBuilder.currentAction.set(actionBuilder); \nrxf.server.driver.CouchMetaDriver." + couchDriver + ".visit(/*dbKeysBuilder,actionBuilder*/);\n}catch(Exception e){\n    e.printStackTrace();}\n    }\n    });\n}" : ";");
+          "\npublic void run(){\n" + "    try{\n\n      DbKeysBuilder.currentKeys.set(dbKeysBuilder);   \n      ActionBuilder.currentAction.set(actionBuilder); \nrxf.server.driver.CouchMetaDriver." + couchDriver + ".visit();\n}catch(Exception e){\n    e.printStackTrace();}\n    }\n    });\n}" : ";");
     }
   },
   /**
    * returns resultset from the assumed Future<couchTx>
    */
   rows {
-    @Override
     public String builder(CouchMetaDriver couchDriver, etype[] parms, boolean implementation) {
 
 
@@ -60,7 +58,6 @@ public enum DbTerminal {
    * returns resultset from the assumed Future<couchTx>
    */
   pojo {
-    @Override
     public String builder(CouchMetaDriver couchDriver, etype[] parms, boolean implementation) {
       EnumSet<etype> of = EnumSet.of(parms[0], parms);
       assert of.contains(etype.type);
@@ -84,7 +81,6 @@ public enum DbTerminal {
    * returns couchTx from the assumed Future<couchTx>
    */
   tx {
-    @Override
     public String builder(CouchMetaDriver couchDriver, etype[] parms, boolean implementation) {
       return (implementation ? " public " : "") + " CouchTx tx()" + (implementation ?
           "{try {\n" +
@@ -99,8 +95,6 @@ public enum DbTerminal {
    * returns the Future<?> used.
    */
   future {
-    @Override
-
     public String builder(CouchMetaDriver couchDriver, etype[] parms, boolean implementation) {
       return
           (implementation ? "public " : "") + "Future<ByteBuffer>future()" +
@@ -120,12 +114,10 @@ public enum DbTerminal {
    * follows the _changes semantics with potential 1-byte chunksizes.
    */
   continuousFeed {
-    @Override
     public String builder(CouchMetaDriver couchDriver, etype[] parms, boolean implementation) {
       return (implementation ? " public " : "") + " void " + name() + "()" + (implementation ? ("{" + BIG_EMPTY_PLACE + "} ") : ";\n");
     }
   }, json {
-    @Override
     public String builder(CouchMetaDriver couchDriver, etype[] parms, boolean implementation) {
       @Language("JAVA") String s = "{\n    try{\n" +
           "    ByteBuffer visit=rxf.server.driver.CouchMetaDriver." + couchDriver.name() +

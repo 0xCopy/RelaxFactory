@@ -1,7 +1,6 @@
 package rxf.server;
 
 import java.nio.channels.SelectionKey;
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static one.xio.HttpHeaders.Content$2dLength;
@@ -24,10 +23,6 @@ public abstract class ActionBuilder<T> {
   }
 
 
-  private SynchronousQueue[] many(SynchronousQueue... ts) {
-    return ts;
-  }
-
   @Override
   public String toString() {
     return "ActionBuilder{" +
@@ -45,8 +40,6 @@ public abstract class ActionBuilder<T> {
   public SelectionKey key() {
     return this.key;
   }
-
-  abstract protected TerminalBuilder<T> fire() throws Exception;
 
 
   public ActionBuilder<T> state(Rfc822HeaderState state) {
