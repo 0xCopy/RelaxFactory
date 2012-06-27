@@ -94,13 +94,12 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
       return asRequestHeaderString();
     }
 
-    @Override
-    public <T, C extends Class<T>> T as(C clazz) {
+    public <T> T as(Class<T> clazz) {
       if (ByteBuffer.class.equals(clazz)) {
         if (null == protocol()) protocol("HTTP/1.1");
         return (T) asRequestHeaderByteBuffer();
       }
-      return super.as(clazz);
+      return (T)super.as(clazz);
     }
 
   }
@@ -167,7 +166,7 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
     }
 
     @Override
-    public <T, C extends Class<T>> T as(C clazz) {
+    public <T> T as(Class<T> clazz) {
       if (ByteBuffer.class.equals(clazz)) {
         if (null == protocol()) {
           protocol("HTTP/1.1");
@@ -198,7 +197,7 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
     return HttpResponse.class == this.getClass() ? (HttpResponse) this : new HttpResponse(this);
   }
 
-  public <T, C extends Class<T>> T as(C clazz) {
+  public <T> T as(Class<T> clazz) {
     if (HttpResponse.class.equals(clazz)) {
       return (T) $res();
 

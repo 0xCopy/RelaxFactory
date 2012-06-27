@@ -27,6 +27,7 @@ import static one.xio.HttpHeaders.Content$2dEncoding;
 import static one.xio.HttpHeaders.Content$2dLength;
 import static one.xio.HttpHeaders.Content$2dType;
 import static one.xio.HttpHeaders.ETag;
+import static one.xio.HttpHeaders.Transfer$2dEncoding;
 import static one.xio.HttpMethod.DELETE;
 import static one.xio.HttpMethod.GET;
 import static one.xio.HttpMethod.HEAD;
@@ -471,6 +472,38 @@ public enum CouchMetaDriver {
             final HttpStatus httpStatus = httpResponse.statusEnum();
             switch (httpStatus) {
               case $200:
+                final String remainingString = httpResponse.headerString(Content$2dLength);
+                if (remainingString != null) {
+                  int remaining = Integer.parseInt(remainingString);
+                  if (dst.remaining() == remaining) {
+                    payload.set(dst.slice());
+                    EXECUTOR_SERVICE.submit(new Callable<Object>() {
+                      public Object call() throws Exception {
+                        joinPoint.await();
+                        recycleChannel(channel);
+                        return null;
+                      }
+                    });
+                  }else{
+                    cursor=ByteBuffer.allocateDirect(remaining).put(dst);
+                    key.attach(new Impl(){
+                      @Override
+                      public void onRead(SelectionKey key) throws Exception {
+                        channel.read(cursor);
+                        if(cursor.hasRemaining()){
+                          payload.set(cursor);
+                            EXECUTOR_SERVICE.submit(new Callable<Object>() {
+                      public Object call() throws Exception {
+                        joinPoint.await();
+                        recycleChannel(channel);
+                        return null;
+                      }
+                    });
+                        }
+                      }
+                    });
+                  }
+                }
                 cursor = (ByteBuffer) dst.slice().compact();
                 key.attach(this);
                 key.selector().wakeup();
@@ -754,7 +787,7 @@ public enum CouchMetaDriver {
   public static final String CE_TERMINAL = "\n0\r\n\r\n";
 
   //"premature optimization" s/mature/view/
-  public static final String[] STATIC_VF_HEADERS = Rfc822HeaderState.staticHeaderStrings(new HttpHeaders[]{ETag, Content$2dEncoding});
+  public static final String[] STATIC_VF_HEADERS = Rfc822HeaderState.staticHeaderStrings(new HttpHeaders[]{ETag, Content$2dLength, Transfer$2dEncoding});
 
   //"premature optimization" s/mature/view/
   public static final String[] STATIC_JSON_SEND_HEADERS = Rfc822HeaderState.staticHeaderStrings(new HttpHeaders[]{ETag, Content$2dLength, Content$2dEncoding});
