@@ -322,7 +322,7 @@ public enum CouchMetaDriver {
         public void onRead(SelectionKey key) throws Exception {
           final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
           int read = channel.read(dst);
-          final int[] ints = HttpHeaders.getHeaders((ByteBuffer) dst.flip()).get(ETag);
+          final int[] ints = HttpHeaders.getHeaders((ByteBuffer) dst.flip()).get(ETag.getHeader());
           assert -1 != read;
           EXECUTOR_SERVICE.submit(new Callable<Object>() {
             public Object call() throws Exception {
@@ -484,21 +484,21 @@ public enum CouchMetaDriver {
                         return null;
                       }
                     });
-                  }else{
-                    cursor=ByteBuffer.allocateDirect(remaining).put(dst);
-                    key.attach(new Impl(){
+                  } else {
+                    cursor = ByteBuffer.allocateDirect(remaining).put(dst);
+                    key.attach(new Impl() {
                       @Override
                       public void onRead(SelectionKey key) throws Exception {
                         channel.read(cursor);
-                        if(cursor.hasRemaining()){
+                        if (cursor.hasRemaining()) {
                           payload.set(cursor);
-                            EXECUTOR_SERVICE.submit(new Callable<Object>() {
-                      public Object call() throws Exception {
-                        joinPoint.await();
-                        recycleChannel(channel);
-                        return null;
-                      }
-                    });
+                          EXECUTOR_SERVICE.submit(new Callable<Object>() {
+                            public Object call() throws Exception {
+                              joinPoint.await();
+                              recycleChannel(channel);
+                              return null;
+                            }
+                          });
                         }
                       }
                     });

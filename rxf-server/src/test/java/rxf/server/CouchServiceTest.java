@@ -8,7 +8,8 @@ import junit.framework.TestCase;
 import one.xio.AsioVisitor;
 import one.xio.HttpMethod;
 import org.junit.*;
-import rxf.server.gen.CouchDriver.*;
+import rxf.server.gen.CouchDriver.DbDelete;
+import rxf.server.gen.CouchDriver.DocFetch;
 import rxf.server.web.inf.ProtocolMethodDispatch;
 
 import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
@@ -21,7 +22,6 @@ public class CouchServiceTest extends TestCase {
 
   public static final String SOMEDBPREFIX = "test_somedb_";
   public static final String SOMEDB = SOMEDBPREFIX + System.currentTimeMillis();   //ordered names of testdbs for failure postmortem....
-  public static final String DESIGN_SAMPLE = "_design/sample";
   public ScheduledExecutorService exec;
 
   @BeforeClass
@@ -117,19 +117,19 @@ public class CouchServiceTest extends TestCase {
 
   }
 
-  public void testRevisionAndDelete() {
-    String rev = null;
-    try {
-      rev = RevisionFetch.$().db(SOMEDB).docId(DESIGN_SAMPLE).to().fire().json();
-      CouchTx tx = DocDelete.$().db(SOMEDB).docId(DESIGN_SAMPLE).rev(rev).to().fire().tx();
-      assert tx.ok();
-    } catch (Exception e) {
-      e.printStackTrace();
-      fail(rev);
-    }
-    String designDoc = DesignDocFetch.$().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
-    assertNull(designDoc);
-  }
+//  public void testRevisionAndDelete() {
+//    String rev = null;
+//    try {
+//      rev = RevisionFetch.$().db(SOMEDB).docId(DESIGN_SAMPLE).to().fire().json();
+//      CouchTx tx = DocDelete.$().db(SOMEDB).docId(DESIGN_SAMPLE).rev(rev).to().fire().tx();
+//      assert tx.ok();
+//    } catch (Exception e) {
+//      e.printStackTrace();
+//      fail(rev);
+//    }
+//    String designDoc = DesignDocFetch.$().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
+//    assertNull(designDoc);
+//  }
 
   @Test
   public void testTrivialFinders() {

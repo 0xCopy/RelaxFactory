@@ -175,19 +175,17 @@ public class CouchDriverTest extends TestCase {
     assertNotNull(data);
     assertEquals(1, data.rows.size());
     assertEquals("b", data.rows.get(0).value.get("name"));
-  }
 
-  public void testRevisionAndDelete() {
     String rev = null;
     try {
       rev = RevisionFetch.$().db(SOMEDB).docId(DESIGN_SAMPLE).to().fire().json();
-      CouchTx tx = DocDelete.$().db(SOMEDB).docId(DESIGN_SAMPLE).rev(rev).to().fire().tx();
+      tx = DocDelete.$().db(SOMEDB).docId(DESIGN_SAMPLE).rev(rev).to().fire().tx();
       assert tx.ok();
     } catch (Exception e) {
       e.printStackTrace();
       fail(rev);
     }
-    String designDoc = DesignDocFetch.$().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
+    designDoc = DesignDocFetch.$().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
     assertNull(designDoc);
   }
 
