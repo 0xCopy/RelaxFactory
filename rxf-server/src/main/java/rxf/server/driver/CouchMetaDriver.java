@@ -217,61 +217,86 @@ public enum CouchMetaDriver {
   },
 
   @DbTask({pojo, future, json}) @DbKeys({db, docId})DocFetch {
-    public <T> ByteBuffer visit(DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+    public <T> ByteBuffer visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
 
-
-      String db = (String) dbKeysBuilder.get(etype.db);
-      String id = (String) dbKeysBuilder.get(docId);
-      /*final Rfc822HeaderState state = */
-      HttpRequest request = actionBuilder.state().$req();
-      request
-          .path(scrub("/" + db + (null == id ? "" : "/" + id)))
-          .method(GET)
-          .addHeaderInterest(Content$2dLength);
       final SocketChannel channel = createCouchConnection();
-      final ByteBuffer as =(ByteBuffer) request.$req().as(ByteBuffer.class);
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
       enqueue(channel, OP_CONNECT | OP_WRITE, new Impl() {
-        public ByteBuffer cursor;
+        // *******************************
+        // *******************************
+        // pathological buffersize traits
+        // *******************************
+        // *******************************
 
+        public LinkedList<ByteBuffer> list;
+
+        ByteBuffer cursor;
+
+        String db = (String) dbKeysBuilder.get(etype.db);
+        String id = (String) dbKeysBuilder.get(docId);
+        /*final Rfc822HeaderState state = */
+        HttpRequest request = actionBuilder.state().$req();
+        private HttpResponse response;
+        ByteBuffer header = (ByteBuffer) request
+            .path(scrub("/" + db + (null == id ? "" : "/" + id)))
+            .method(GET)
+            .addHeaderInterest(STATIC_CONTENT_LENGTH_ARR).as(ByteBuffer.class);
 
         public void onWrite(SelectionKey key) throws Exception {
-          int write = channel.write(as);
-          key.interestOps(OP_READ).selector().wakeup();
+          int write = channel.write(header);
+          assert !header.hasRemaining();
+          header.clear();
+          response = request.headerInterest(STATIC_JSON_SEND_HEADERS).$res();
+
+          key.interestOps(OP_READ);/*WRITE-READ implicit turnaround in 1xio won't need .selector().wakeup()*/
         }
 
 
         public void onRead(SelectionKey key) throws Exception {
-          if (null != cursor) {
-            int read = channel.read(cursor);
-            if (-1 == read) {
-              channel.socket().close();
+          if (null == cursor) {
+            //geometric,  vulnerable to dev/null if not max'd here.
+            header = (null == header) ? ByteBuffer.allocateDirect(getReceiveBufferSize()) : header.hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2).put((ByteBuffer) header.flip());
+
+            int read = channel.read(header);
+            ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
+            response.apply((ByteBuffer) flip);
+
+            if (BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, response.headerBuf())) {
+              cursor = (ByteBuffer) flip.slice();
+              header = null;
+            } else {
+              return;
             }
+
+
+            if (DEBUG_SENDJSON) {
+              System.err.println(deepToString(response.statusEnum(), response, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
+            }
+
+
+            HttpStatus httpStatus = response.statusEnum();
+            switch (httpStatus) {
+              case $200:
+                int remaining = Integer.parseInt(response.headerString(Content$2dLength));
+
+
+                if (remaining == cursor.remaining()) {
+                  deliver();
+                } else {
+                  cursor = ByteBuffer.allocate(remaining).put(cursor);
+                }
+                break;
+              default: //error
+                cyclicBarrier.reset();
+            }
+          } else {
+            int read = channel.read(cursor);
+            if (-1 == read) cyclicBarrier.reset();
             if (!cursor.hasRemaining()) {
-              System.err.println("*********  " + UTF8.decode((ByteBuffer) cursor.duplicate().rewind()));
+              cursor.flip();
               deliver();
             }
-
-          }
-          ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
-          int read = channel.read(dst);
-
-          HttpResponse state = actionBuilder.state().apply((ByteBuffer) dst.flip()).$res();
-          HttpStatus httpStatus = state.statusEnum();
-          switch (httpStatus) {
-            case $200:
-//            case $201:
-              final String s = state.headerString(Content$2dLength);
-              int remaining = Integer.parseInt(s);
-              if (remaining == dst.remaining()) {
-                cursor = dst.slice();
-                deliver();
-                return;
-              }
-              cursor = ByteBuffer.allocate(remaining).put(dst);
-            default: //error
-              cyclicBarrier.reset();
           }
         }
 
@@ -369,19 +394,28 @@ public enum CouchMetaDriver {
     }
   },
   @DbTask({tx, oneWay, future}) @DbKeys(value = {db, docId, rev})DocDelete {
-    public <T> ByteBuffer visit(final DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
+    public <T> ByteBuffer visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
-      final HttpRequest request = actionBuilder.state().$req();
       final SocketChannel channel = createCouchConnection();
       enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
+
+
+        // *******************************
+        // *******************************
+        // pathological buffersize traits
+        // *******************************
+        // *******************************
+
+        final HttpRequest request = actionBuilder.state().$req();
         public LinkedList<ByteBuffer> list;
         private HttpResponse response;
         ByteBuffer header = (ByteBuffer) request
             .path(scrub("/" + dbKeysBuilder.get(db) + "/" + dbKeysBuilder.get(docId) + "?rev=" + dbKeysBuilder.get(rev)))
             .method(DELETE)
             .as(ByteBuffer.class);
-        ByteBuffer cursor ;
+        ByteBuffer cursor;
+
         public void onWrite(SelectionKey key) throws Exception {
           int write = channel.write(header);
           assert !header.hasRemaining();
@@ -398,21 +432,23 @@ public enum CouchMetaDriver {
             header = (null == header) ? ByteBuffer.allocateDirect(getReceiveBufferSize()) : header.hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2).put((ByteBuffer) header.flip());
 
             int read = channel.read(header);
+            if (-1 == read) cyclicBarrier.reset();
             ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
             response.apply((ByteBuffer) flip);
 
             if (BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, response.headerBuf())) {
               cursor = (ByteBuffer) flip.slice();
+              header = null;
             } else {
               return;
             }
 
 
             if (DEBUG_SENDJSON) {
-              System.err.println(deepToString(request.pathResCode(), request, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
+              System.err.println(deepToString(response.statusEnum(), response, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
             }
 
-            int remaining = Integer.parseInt(request.headerString(Content$2dLength));
+            int remaining = Integer.parseInt(response.headerString(Content$2dLength));
 
             if (remaining == cursor.remaining()) {
               deliver();
@@ -486,7 +522,7 @@ public enum CouchMetaDriver {
 
           HttpRequest request = actionBuilder.state().$req();
 
-          ByteBuffer buffer =(ByteBuffer)
+          ByteBuffer buffer = (ByteBuffer)
               request
                   .method(GET)
                   .path(scrub('/' + db + '/' + dbKeysBuilder.get(view)))
@@ -494,7 +530,7 @@ public enum CouchMetaDriver {
                   .as(ByteBuffer.class);
           int wrote = channel.write(buffer);
           assert !buffer.hasRemaining();
-          key.interestOps(OP_READ).selector().wakeup();//READ immediately follows WRITE in httpmethod.init loop
+          key.interestOps(OP_READ);
         }
 
 
