@@ -42,7 +42,7 @@ import static rxf.server.BlobAntiPatternObject.COOKIE;
  * Date: 5/19/12
  * Time: 10:00 PM
  */
-public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
+public class Rfc822HeaderState {
 
 
   public static final String[] EMPTY = new String[0];
@@ -53,7 +53,7 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
 
 
   @SuppressWarnings({"RedundantCast"})
-  public class HttpRequest extends Rfc822HeaderState<HttpRequest> {
+  public class HttpRequest extends Rfc822HeaderState {
     public HttpRequest(Rfc822HeaderState proto) {
       super(proto);
       String protocol = protocol();
@@ -99,13 +99,13 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
         if (null == protocol()) protocol("HTTP/1.1");
         return (T) asRequestHeaderByteBuffer();
       }
-      return (T)super.as(clazz);
+      return (T) super.as(clazz);
     }
 
   }
 
   @SuppressWarnings({"RedundantCast"})
-  public class HttpResponse extends Rfc822HeaderState<HttpResponse> {
+  public class HttpResponse extends Rfc822HeaderState {
 
     public HttpResponse(Rfc822HeaderState proto) {
       super(proto);
@@ -162,7 +162,7 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
      * @return
      */
     public HttpResponse status(HttpStatus httpStatus) {
-      return (HttpResponse) protocolStatus(httpStatus.caption).resCode(httpStatus);
+      return ((HttpResponse) protocolStatus(httpStatus.caption)).resCode(httpStatus);
     }
 
     @Override
@@ -220,7 +220,7 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
    *
    * @param proto the original Rfc822HeaderState
    */
-  public Rfc822HeaderState(Rfc822HeaderState<? extends Rfc822HeaderState> proto) {
+  public Rfc822HeaderState(Rfc822HeaderState proto) {
     cookies = proto.cookies;
     cookieStrings = proto.cookieStrings;
     dirty = proto.dirty;
@@ -291,7 +291,7 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
    */
   public static final String PREFIX = ": ";
 
-  public T headerString(HttpHeaders hdrEnum, String s) {
+  public Rfc822HeaderState headerString(HttpHeaders hdrEnum, String s) {
     return headerString(hdrEnum.getHeader().trim(), s);  //To change body of created methods use File | Settings | File Templates.
   }
 
@@ -315,11 +315,11 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
    * @return self
    * @throws IOException
    */
-  public T sourceKey(SelectionKey key) throws IOException {
+  public Rfc822HeaderState sourceKey(SelectionKey key) throws IOException {
     sourceKey.set(key);
     SocketChannel channel = (SocketChannel) sourceKey.get().channel();
     sourceRoute.set(channel.socket().getInetAddress());
-    return (T) this;
+    return (Rfc822HeaderState) this;
   }
 
   /**
@@ -388,7 +388,7 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
    * @param cookies a list of cookies registered to be auto-parsed
    * @return self
    */
-  public T cookies(String... cookies) {
+  public Rfc822HeaderState cookies(String... cookies) {
     this.cookies.set(cookies);
     List<String> headersNamed = getHeadersNamed(COOKIE);
     cookieStrings.set(new LinkedHashMap<String, String>());
@@ -401,7 +401,7 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
         }
       }
     }
-    return (T) this;
+    return (Rfc822HeaderState) this;
   }
 
   /**
@@ -418,7 +418,7 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
    * @param cursor
    * @return this
    */
-  public T apply(ByteBuffer cursor) {
+  public Rfc822HeaderState apply(ByteBuffer cursor) {
     if (!cursor.hasRemaining()) cursor.flip();
     int anchor = cursor.position();
     ByteBuffer slice = cursor.duplicate().slice();
@@ -451,10 +451,10 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
       }
 
     }
-    return (T) this;
+    return (Rfc822HeaderState) this;
   }
 
-  public T headerInterest(HttpHeaders... replaceInterest) {
+  public Rfc822HeaderState headerInterest(HttpHeaders... replaceInterest) {
     final String[] strings = staticHeaderStrings(replaceInterest);
     return headerInterest(strings);
   }
@@ -468,12 +468,12 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
     return strings;
   }
 
-  public T headerInterest(String... replaceInterest) {
+  public Rfc822HeaderState headerInterest(String... replaceInterest) {
     headerInterest.set(replaceInterest);
-    return (T) this;
+    return (Rfc822HeaderState) this;
   }
 
-  public T addHeaderInterest(HttpHeaders... appendInterest) {
+  public Rfc822HeaderState addHeaderInterest(HttpHeaders... appendInterest) {
     final String[] strings = staticHeaderStrings(appendInterest);
     return addHeaderInterest(strings);
   }
@@ -491,7 +491,7 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
    * @see #getHeadersNamed(String)
    * @see #apply(ByteBuffer)
    */
-  public T addHeaderInterest(String... newInterest) {
+  public Rfc822HeaderState addHeaderInterest(String... newInterest) {
 
 
     //adds a few more instructions than the blind append but does what was desired
@@ -505,7 +505,7 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
 //    System.arraycopy(this.addHeaderInterest, 0, temp, 0, this.addHeaderInterest.length);
 //    System.arraycopy(headerInterest, 0, temp, this.addHeaderInterest.length, headerInterest.length);
 //    this.addHeaderInterest = temp;
-    return (T) this;
+    return (Rfc822HeaderState) this;
   }
 
   /**
@@ -522,9 +522,9 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
    * @param dirty
    * @return
    */
-  public T dirty(boolean dirty) {
+  public Rfc822HeaderState dirty(boolean dirty) {
     this.dirty.set(dirty);
-    return (T) this;
+    return (Rfc822HeaderState) this;
   }
 
   /**
@@ -559,9 +559,9 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
    * @param sourceRoute an internet ipv4 address
    * @return self
    */
-  public T sourceRoute(InetAddress sourceRoute) {
+  public Rfc822HeaderState sourceRoute(InetAddress sourceRoute) {
     this.sourceRoute.set(sourceRoute);
-    return (T) this;
+    return (Rfc822HeaderState) this;
   }
 
   /**
@@ -573,9 +573,9 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
    * @param headerBuf an immutable  {@link  ByteBuffer}
    * @return self
    */
-  public T headerBuf(ByteBuffer headerBuf) {
+  public Rfc822HeaderState headerBuf(ByteBuffer headerBuf) {
     this.headerBuf = headerBuf;
-    return (T) this;
+    return (Rfc822HeaderState) this;
   }
 
   /**
@@ -584,9 +584,9 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
    *
    * @return
    */
-  public T headerStrings(Map<String, String> headerStrings) {
+  public Rfc822HeaderState headerStrings(Map<String, String> headerStrings) {
     this.headerStrings.set(headerStrings);
-    return (T) this;
+    return (Rfc822HeaderState) this;
   }
 
   /**
@@ -621,9 +621,9 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
    * @see #cookieStrings
    */
 
-  public T cookieStrings(Map<String, String> cookieStrings) {
+  public Rfc822HeaderState cookieStrings(Map<String, String> cookieStrings) {
     this.cookieStrings.set(cookieStrings);
-    return (T) this;
+    return (Rfc822HeaderState) this;
   }
 
   /**
@@ -638,9 +638,9 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
    * @return
    * @see #methodProtocol
    */
-  public T methodProtocol(String methodProtocol) {
+  public Rfc822HeaderState methodProtocol(String methodProtocol) {
     this.methodProtocol.set(methodProtocol);
-    return (T) this;
+    return (Rfc822HeaderState) this;
   }
 
   /**
@@ -660,9 +660,9 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
    * @return
    * @see #pathRescode
    */
-  public T pathResCode(String pathRescode) {
+  public Rfc822HeaderState pathResCode(String pathRescode) {
     this.pathRescode.set(pathRescode);
-    return (T) this;
+    return (Rfc822HeaderState) this;
   }
 
   /**
@@ -677,9 +677,9 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
   /**
    * @see Rfc822HeaderState#protocolStatus()
    */
-  public T protocolStatus(String protocolStatus) {
+  public Rfc822HeaderState protocolStatus(String protocolStatus) {
     this.protocolStatus.set(protocolStatus);
-    return (T) this;
+    return (Rfc822HeaderState) this;
   }
 
   @Override
@@ -796,9 +796,9 @@ public class Rfc822HeaderState<T extends Rfc822HeaderState<T>> {
    * @return
    * @see #headerStrings
    */
-  public T headerString(String key, String val) {
+  public Rfc822HeaderState headerString(String key, String val) {
     headerStrings().put(key, val);
-    return (T) this;
+    return (Rfc822HeaderState) this;
   }
 
   /**
