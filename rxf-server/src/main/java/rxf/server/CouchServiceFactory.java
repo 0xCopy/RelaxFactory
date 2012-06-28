@@ -1,24 +1,43 @@
 package rxf.server;
 
-import java.lang.reflect.*;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReference;
-
-import com.google.gson.annotations.SerializedName;
-import rxf.server.CouchResultSet.tuple;
-import rxf.server.CouchService.View;
-import rxf.server.gen.CouchDriver;
-import rxf.server.gen.CouchDriver.*;
-import rxf.server.gen.CouchDriver.DocPersist.DocPersistActionBuilder;
-import rxf.server.gen.CouchDriver.DocPersist.DocPersistTerminalBuilder;
-import rxf.server.gen.CouchDriver.JsonSend.JsonSendTerminalBuilder;
-import rxf.server.gen.CouchDriver.ViewFetch.ViewFetchTerminalBuilder;
-
 import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 import static rxf.server.BlobAntiPatternObject.GSON;
 import static rxf.server.BlobAntiPatternObject.deepToString;
 import static rxf.server.BlobAntiPatternObject.getDefaultOrgName;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Proxy;
+import java.lang.reflect.Type;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
+
+import rxf.server.CouchResultSet.tuple;
+import rxf.server.CouchService.CouchRequestParam;
+import rxf.server.CouchService.View;
+import rxf.server.gen.CouchDriver;
+import rxf.server.gen.CouchDriver.DbCreate;
+import rxf.server.gen.CouchDriver.DocPersist;
+import rxf.server.gen.CouchDriver.DocPersist.DocPersistActionBuilder;
+import rxf.server.gen.CouchDriver.DocPersist.DocPersistTerminalBuilder;
+import rxf.server.gen.CouchDriver.JsonSend;
+import rxf.server.gen.CouchDriver.JsonSend.JsonSendTerminalBuilder;
+import rxf.server.gen.CouchDriver.RevisionFetch;
+import rxf.server.gen.CouchDriver.ViewFetch;
+import rxf.server.gen.CouchDriver.ViewFetch.ViewFetchTerminalBuilder;
+
+import com.google.gson.annotations.SerializedName;
 
 /**
  * Creates CouchService instances by translating {@literal @}View annotations into CouchDB design documents
@@ -105,7 +124,43 @@ public class CouchServiceFactory {
                   view.reduce = viewAnnotation.reduce();
                 }
                 design.views.put(methodName, view);
-                viewMethods.get().put(methodName, design.id + "/_view/" + methodName + "?key=\"%1$s\"");
+                
+                StringBuilder queryBuilder = new StringBuilder(design.id).append("/_view/").append(methodName).append("?");
+                
+                Annotation[][] paramAnnotations = m.getParameterAnnotations();
+                if (paramAnnotations.length == 1 && paramAnnotations[0].length == 0) {
+                  //old, annotation-less queries
+                  queryBuilder.append("key=%1$s");
+                } else {
+                  Map<String, String> queryParams = new HashMap<String, String>();
+                  for (int i = 0; i < paramAnnotations.length; i++) {
+                    // look for a CouchRequestParam on this param, if none, ignore
+                    Annotation[] param = paramAnnotations[i];
+                    for (int j = 0; i < param.length; i++) {//only the first param that fits
+                      CouchRequestParam paramData = param[j].annotationType().getAnnotation(CouchRequestParam.class);
+                      if (paramData != null) {
+                        queryParams.put(paramData.value(), "%"+(i+1)+"$s");
+                        break;
+                      }
+                    }
+                  }
+                  //not supporting method annotations yet, unsure how to address a.value()
+//                  Annotation[] methodAnnotations = m.getAnnotations();
+//                  for (Annotation a : methodAnnotations) {
+//                    CouchRequestParam paramData = a.annotationType().getAnnotation(CouchRequestParam.class);
+//                    if (paramData != null) {
+//                      //probably should kick this through GSON...
+//                      queryParams.put(paramData.value(), URLEncoder.encode("" + a.value(), "UTF-8"));
+//                    }
+//                  }
+                  for (Map.Entry<String, String> param : queryParams.entrySet()) {
+                    // write out key = value
+                    // note that key is encoded, value is dealt with when the value is created
+                    queryBuilder.append(URLEncoder.encode(param.getKey(), "UTF-8")).append("=").append(param.getValue()).append("&");
+                  }
+                }
+
+                viewMethods.get().put(methodName, queryBuilder.toString());
               }
             }
             final String stringParam = GSON.toJson(design);
@@ -131,9 +186,15 @@ public class CouchServiceFactory {
           public Object call() throws Exception {
 
             String name = method.getName();
+            String[] jsonArgs = new String[args.length];
+            for (int i = 0; i < args.length; i++) {
+              jsonArgs[i] = URLEncoder.encode(GSON.toJson(args[i]), "UTF-8");
+            }
             /*       dont forget to uncomment this after new CouchResult gen*/
             final Map<String, String> stringStringMap = viewMethods.get();
-            final ViewFetchTerminalBuilder fire = ViewFetch.$().db(getPathPrefix()).type(entityType).view(String.format(stringStringMap.get(name), args)).to().fire();
+            //Object[] cast to make varargs behave
+            String format = String.format(stringStringMap.get(name), (Object[])jsonArgs);
+            final ViewFetchTerminalBuilder fire = ViewFetch.$().db(getPathPrefix()).type(entityType).view(format).to().fire();
             CouchResultSet<E> rows = (CouchResultSet<E>) fire.rows();
             if (null != rows && null != rows.rows) {
               List<E> ar = new ArrayList<E>();

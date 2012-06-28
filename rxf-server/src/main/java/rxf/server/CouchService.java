@@ -24,6 +24,7 @@ public interface CouchService<E> {
    */
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.METHOD)
+  @Documented
   public @interface View {
     String map();
 
@@ -31,27 +32,72 @@ public interface CouchService<E> {
   }
 
   /**
-   * Marks a service call parameter as being used on a couchdb view GET $req as "key":
+   * Indicates that the decorated annotation is a couch request param.
+   */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.ANNOTATION_TYPE)
+  public @interface CouchRequestParam {
+    /**
+     * The parameter name to use in the request
+     */
+    String value();
+  }
+  /**
+   * Marks a service call parameter as being used on a couchdb view GET request as "key".
    */
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.PARAMETER)
+  @CouchRequestParam("key")
+  @Documented
   public @interface Key {
   }
 
+  /**
+   * Marks a service method or parameter as being used on a couchdb view GET request as
+   * "keys".
+   */
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.PARAMETER)
+  @CouchRequestParam("keys")
+  @Documented
   public @interface Keys {
   }
 
+  /**
+   * Marks a service method or parameter as being used on a couchdb view GET request as
+   * "limit". A value need not be provided if used on a parameter, but the annotation is
+   * useless on the method without a value.
+   *
+   * (Not yet supported on a method)
+   */
   @Retention(RetentionPolicy.RUNTIME)
-  @Target({ElementType.PARAMETER, ElementType.METHOD})
+  @Target({ElementType.PARAMETER/*, ElementType.METHOD*/})
+  @CouchRequestParam("limit")
+  @Documented
   public @interface Limit {
-    int value() default -1;
+//    /**
+//     * Value to use as the "limit" parameter. Annotations on the method override possible
+//     * parameters.
+//     */
+//    int value() default -1;
   }
 
+  /**
+   * Marks a service method or parameter as being used on a couchdb view GET request
+   * as "skip". A value need not be provided if used on a parameter, but the annotation
+   * is useless on the method without a value.
+   *
+   * (Not yet supported on a method)
+   */
   @Retention(RetentionPolicy.RUNTIME)
-  @Target({ElementType.PARAMETER, ElementType.METHOD})
+  @Target({ElementType.PARAMETER/*, ElementType.METHOD*/})
+  @CouchRequestParam("skip")
+  @Documented
   public @interface Skip {
-    int value() default -1;
+//    /**
+//     * Value to use as the "skip" parameter. Annotations on the method override possible
+//     * parameters.
+//     */
+//    int value() default -1;
   }
 }
