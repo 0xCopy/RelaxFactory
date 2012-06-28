@@ -227,6 +227,9 @@ public class CouchServiceTest extends TestCase {
     
     @View(map="function(doc){emit({model:doc.model, brand:doc.brand}, doc);}")
     List<CSFTest> matchingTuples(@Key CSFTest obj);
+    
+    @View(map="function(doc){emit(doc.id,doc);}")
+    List<CSFTest> all();
   }
   public void testMultiParamFinder() throws Exception {
     SlightlyComplexCouchService service = CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
@@ -304,5 +307,18 @@ Caused by: java.lang.IllegalStateException: Expected a string but was BEGIN_OBJE
 //    assertNotNull(loaded);
 //    assertEquals(1, loaded.size());
 //    assertNotNull(loaded.get(0)._id);
+  }
+  public void testNoArgMethod() throws Exception {
+    SlightlyComplexCouchService service = CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
+    for (int i = 0; i < 10; i++) {
+      CSFTest a = new CSFTest();
+      a.brand = "-brand" + i;
+      a.model = "-model" + i;
+      service.persist(a);
+    }
+    
+    List<CSFTest> loaded = service.all();
+    assertNotNull(loaded);
+    assertEquals(10, loaded.size());
   }
 }
