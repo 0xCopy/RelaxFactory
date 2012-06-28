@@ -66,8 +66,14 @@ import static rxf.server.an.DbKeys.etype.view;
  * not wire that interface up anywhere but the inner classes of the interface use this enum for slotted method dispatch.
  * <p/>
  * the fluent interface is carried in threadlocal variables from step to step.  the visit() method cracks these open and
- * inserts them as the apropriate state for lower level method calls.
+ * inserts them as the apropriate state for lower level visit(builder1...buildern) method
  * <p/>
+ * <h2>{@link one.xio.AsioVisitor} visitor  sub-threads in threadpools must be one of:</h2><ol>
+ * <li>inner classes using the <u>final</u> paramters passed in
+ * via {@link #visit(rxf.server.DbKeysBuilder, rxf.server.ActionBuilder)}</li>
+ * <li>fluent class interface agnostic(highly unlikely)</li>
+ * <li>arduously carried in (same as first option but not as clean as inner class refs)</li>
+ * </ol>
  * User: jim
  * Date: 5/24/12
  * Time: 3:09 PM
@@ -339,9 +345,9 @@ public enum CouchMetaDriver {
               return null;                      //V
             }                                   //V
           });                                   //V
-        }                                         //V
-      });
-      try {
+        }                                       //V
+      });                                       //V
+      try {                                     //V
         cyclicBarrier.await(3, getDefaultCollectorTimeUnit());
       } catch (Exception e) {
 
@@ -377,7 +383,9 @@ public enum CouchMetaDriver {
 
         public void onWrite(SelectionKey key) throws Exception {
           int write = channel.write(header);
-          key.interestOps(OP_READ).selector().wakeup();
+          assert !header.hasRemaining();
+          key.interestOps(OP_READ);/*WRITE-READ implicit turnaround in 1xio won't need .selector().wakeup()*/
+          ;
         }
 
 
@@ -843,10 +851,9 @@ public enum CouchMetaDriver {
   }
 
   public static final String PCOUNT = "-0xdeadbeef.2";
-  public static final String GENERATED_METHODS = "/*generated ethods kadfsljhk*/";
-  public static final String IFACE_FIRE_TARGETS = "/*fire intereface lasjhfkjas h*/";
-  public static final String FIRE_METHODS = "/*embedded fire terminals alkjdssssf hasdlh*/";
-
+  public static final String GENERATED_METHODS = "/*generated methods vsd78vs0fd078fv0sa78*/";
+  public static final String IFACE_FIRE_TARGETS = "/*fire interface ijnoifnj453oijnfiojn h*/";
+  public static final String FIRE_METHODS = "/*embedded fire terminals j63l4k56jn4k3jn5l63l456jn*/";
 
   public <T> String builder() throws NoSuchFieldException {
     Field field = CouchMetaDriver.class.getField(name());

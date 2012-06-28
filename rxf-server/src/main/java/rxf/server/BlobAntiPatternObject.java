@@ -273,4 +273,8 @@ public class BlobAntiPatternObject {
     }
     return mismatch;
   }
+
+  public static void setReceiveBufferSize(int receiveBufferSize) {
+    BlobAntiPatternObject.receiveBufferSize = receiveBufferSize;
+  }
 }
