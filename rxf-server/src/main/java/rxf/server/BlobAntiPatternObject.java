@@ -235,4 +235,42 @@ public class BlobAntiPatternObject {
   public static String getDefaultOrgName() {
     return System.getenv("RXF_ORGNAME") == null ? System.getProperty(CouchLocator.class.getCanonicalName().toLowerCase() + ".orgname", "rxf_") : System.getenv("RXF_ORGNAME").toLowerCase().trim();
   }
+
+  /**
+   * byte-compare of suffixes
+   *
+   * @param terminator  the token used to terminate presumably unbounded growth of a list of buffers
+   * @param currentBuff current ByteBuffer which does not necessarily require a list to perform suffix checks.
+   * @param prev        a linked list which holds previous chunks
+   * @return whether the suffix composes the tail bytes of current and prev buffers.
+   */
+  static public boolean suffixCompareAgainstChunks(byte[] terminator,
+                                                   ByteBuffer currentBuff,
+                                                   LinkedList<ByteBuffer> prev) {
+    ByteBuffer tb = currentBuff;
+    Iterator<ByteBuffer> riter = prev.descendingIterator();
+    int backtrack = 0;
+    boolean mismatch = false;
+    int bl = terminator.length;
+    for (int i = bl - 1; i >= 0 && !mismatch; i--) {
+      int rskip = bl - i;
+      int comparisonOffset = tb.position() - rskip - backtrack;
+      if (comparisonOffset < 0) {
+        if (!riter.hasNext()) {
+          mismatch = true;
+        } else {
+          backtrack += tb.position();
+          tb = riter.next();
+          i++;
+        }
+      } else {
+        byte aByte = terminator[i];
+        byte b = tb.get(comparisonOffset);
+        if (aByte != b) {
+          mismatch = true;
+        }
+      }
+    }
+    return mismatch;
+  }
 }

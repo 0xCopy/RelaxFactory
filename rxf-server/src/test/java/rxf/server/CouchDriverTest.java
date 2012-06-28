@@ -155,7 +155,7 @@ public class CouchDriverTest extends TestCase {
     assertNotNull(designDoc);
     Map<String, Object> obj = GSON.<Map<String, Object>>fromJson(designDoc, Map.class);
 
-    Map<String, String> foo = (Map<String, String>) ((Map<String, Object>) obj.get("views")).get("foo");
+    Map<String, String> foo = (Map<String, String>) ((Map<String, ?>) obj.get("views")).get("foo");
     foo.put("map", "function(doc){ emit(doc.brand, doc); }");
 
     designDoc = GSON.toJson(obj);

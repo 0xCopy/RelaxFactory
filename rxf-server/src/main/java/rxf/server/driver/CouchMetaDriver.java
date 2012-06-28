@@ -431,6 +431,13 @@ public enum CouchMetaDriver {
       return DocFetch.visit(dbKeysBuilder, actionBuilder);
     }
   },
+
+
+  /**
+   * a statistically imperfect chunked encoding reader which searches the end of current input for a token.
+   * <p/>
+   * <u> statistically imperfect </u>means that data containing said token {@link  #CE_TERMINAL} delivered on  a packet boundary or byte-at-a-time will false trigger the suffix.
+   */
   @DbTask({rows, future, continuousFeed}) @DbKeys(value = {db, view}, optional = type)ViewFetch {
     public <T> ByteBuffer visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
@@ -451,6 +458,7 @@ public enum CouchMetaDriver {
 
 
           HttpRequest request = actionBuilder.state().$req();
+
           ByteBuffer buffer =
               (ByteBuffer) request
                   .method(GET)
@@ -529,31 +537,7 @@ public enum CouchMetaDriver {
               e.printStackTrace();  //todo: verify for a purpose
             }
           //token suffix check
-          byte[] bytes = CE_TERMINAL.getBytes();
-          ByteBuffer tb = cursor.duplicate();
-          Iterator<ByteBuffer> riter = list.descendingIterator();
-          int backtrack = 0;
-          boolean mismatch = false;
-          int bl = bytes.length;
-          for (int i = bl - 1; i >= 0 && !mismatch; i--) {
-            int rskip = bl - i;
-            int comparisonOffset = tb.position() - rskip - backtrack;
-            if (comparisonOffset < 0) {
-              if (!riter.hasNext()) {
-                mismatch = true;
-              } else {
-                backtrack += tb.position();
-                tb = riter.next();
-                i++;
-              }
-            } else {
-              byte aByte = bytes[i];
-              byte b = tb.get(comparisonOffset);
-              if (aByte != b) {
-                mismatch = true;
-              }
-            }
-          }
+          boolean mismatch = BlobAntiPatternObject.suffixCompareAgainstChunks(CE_TERMINAL.getBytes(), cursor.duplicate(), list);
           if (!mismatch) {
             if (cursor.position() > 0)
               list.add(cursor);
@@ -578,6 +562,7 @@ public enum CouchMetaDriver {
             cursor = ByteBuffer.allocateDirect(getReceiveBufferSize());
           }
         }
+
 
         private void deliver() {
 
@@ -993,7 +978,6 @@ public enum CouchMetaDriver {
     s += "}";
     System.out.println(s);
   }
-
 
 }
 
