@@ -136,7 +136,7 @@ public class CouchServiceFactory {
                   for (int i = 0; i < paramAnnotations.length; i++) {
                     // look for a CouchRequestParam on this param, if none, ignore
                     Annotation[] param = paramAnnotations[i];
-                    for (int j = 0; i < param.length; i++) {//only the first param that fits
+                    for (int j = 0; j < param.length; j++) {//only the first param that fits
                       CouchRequestParam paramData = param[j].annotationType().getAnnotation(CouchRequestParam.class);
                       if (paramData != null) {
                         queryParams.put(paramData.value(), "%"+(i+1)+"$s");

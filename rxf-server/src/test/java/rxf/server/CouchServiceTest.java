@@ -1,19 +1,27 @@
 package rxf.server;
 
-import java.util.List;
-import java.util.concurrent.*;
+import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
+import static rxf.server.BlobAntiPatternObject.GSON;
 
-import com.google.gson.JsonSyntaxException;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import junit.framework.TestCase;
 import one.xio.AsioVisitor;
 import one.xio.HttpMethod;
-import org.junit.*;
+
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
 import rxf.server.gen.CouchDriver.DbDelete;
 import rxf.server.gen.CouchDriver.DocFetch;
 import rxf.server.web.inf.ProtocolMethodDispatch;
 
-import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
-import static rxf.server.BlobAntiPatternObject.GSON;
+import com.google.gson.JsonSyntaxException;
 
 /**
  * Tests out the db, cleaning up after itself. These must be run in order to work correctly and clean up.
@@ -208,6 +216,25 @@ public class CouchServiceTest extends TestCase {
     } catch (Exception e) {
       fail();
     }
+  }
+  
+  public interface SlightlyComplexCouchService extends CouchService<CSFTest> {
+    @View(map="function(doc){emit(doc.model.slice(0,4), doc);}")
+    List<CSFTest> load(@Key String key, @Limit int limit, @Skip int skip);
+  }
+  public void testMultiParamFinder() throws Exception {
+    SlightlyComplexCouchService service = CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
+    for (int i = 0; i < 10; i++) {
+      CSFTest a = new CSFTest();
+      a.brand = "-brand" + i;
+      a.model = "-model" + i;
+      service.persist(a);
+    }
+    
+    List<CSFTest> loaded = service.load("-mod", 5, 5);
+    assertEquals(5, loaded.size());
+    assertEquals("-brand5", loaded.get(0).brand);
+    assertEquals("-model9", loaded.get(4).model);
   }
 
 }
