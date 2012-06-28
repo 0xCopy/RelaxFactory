@@ -440,7 +440,10 @@ public enum CouchMetaDriver {
       final SocketChannel channel = createCouchConnection();
       enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
         ByteBuffer cursor;
-        List<ByteBuffer> list = new ArrayList<ByteBuffer>();
+        /**
+         * holds un-rewound raw buffers.  must potentially be backtracked to fulfill CE_TERMINAL.length token check under pathological fragmentation
+         */
+        LinkedList<ByteBuffer> list = new LinkedList<ByteBuffer>();
         final Impl prev = this;
 
 
@@ -505,8 +508,8 @@ public enum CouchMetaDriver {
                   }
                 }
                 cursor = (ByteBuffer) dst.slice().compact();
-                key.attach(this);
-                key.selector().wakeup();
+//                key.attach(this);
+//                key.selector().wakeup();
                 break;
               default:
                 joinPoint.reset();
@@ -517,7 +520,7 @@ public enum CouchMetaDriver {
             try {
               final int read = channel.read(cursor);
               if (-1 == read) {
-                list.add(cursor);
+                if (cursor.position() > 0) list.add(cursor);
                 deliver();
                 recycleChannel(channel);
                 return;
@@ -525,7 +528,40 @@ public enum CouchMetaDriver {
             } catch (Throwable e) {
               e.printStackTrace();  //todo: verify for a purpose
             }
-
+          //token suffix check
+          byte[] bytes = CE_TERMINAL.getBytes();
+          ByteBuffer tb = cursor.duplicate();
+          Iterator<ByteBuffer> riter = list.descendingIterator();
+          int backtrack = 0;
+          boolean mismatch = false;
+          int bl = bytes.length;
+          for (int i = bl - 1; i >= 0 && !mismatch; i--) {
+            int rskip = bl - i;
+            int comparisonOffset = tb.position() - rskip - backtrack;
+            if (comparisonOffset < 0) {
+              if (!riter.hasNext()) {
+                mismatch = true;
+              } else {
+                backtrack += tb.position();
+                tb = riter.next();
+                i++;
+              }
+            } else {
+              byte aByte = bytes[i];
+              byte b = tb.get(comparisonOffset);
+              if (aByte != b) {
+                mismatch = true;
+              }
+            }
+          }
+          if (!mismatch) {
+            if (cursor.position() > 0)
+              list.add(cursor);
+            deliver();
+            recycleChannel(channel);
+            return;
+          }
+/*
           final ByteBuffer tmp = (ByteBuffer) cursor.duplicate();
           final int position = tmp.position();
           tmp.flip();
@@ -536,6 +572,7 @@ public enum CouchMetaDriver {
             recycleChannel(channel);
             return;
           }
+*/
           if (!cursor.hasRemaining()) {
             list.add(cursor);
             cursor = ByteBuffer.allocateDirect(getReceiveBufferSize());
@@ -570,13 +607,13 @@ public enum CouchMetaDriver {
                     first = false;
                   }
 
-
                 final int i = Integer.parseInt(UTF8.decode((ByteBuffer) src.duplicate().flip()).toString().trim(), 0x10);
                 src = ((ByteBuffer) src.compact().position(i)).slice();
                 endl += i;
                 sum -= i;
                 if (0 == i) break;
               }
+
               ByteBuffer retval = null;
               if (DEBUG_SENDJSON) {
                 retval = (ByteBuffer) outbound.clear().limit(endl);
