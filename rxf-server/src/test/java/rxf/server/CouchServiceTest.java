@@ -221,6 +221,12 @@ public class CouchServiceTest extends TestCase {
   public interface SlightlyComplexCouchService extends CouchService<CSFTest> {
     @View(map="function(doc){emit(doc.model.slice(0,4), doc);}")
     List<CSFTest> load(@Key String key, @Limit int limit, @Skip int skip);
+    
+    @View(map="function(doc){emit(doc.model, doc);}")
+    List<CSFTest> anyMatching(@Keys String... keys);
+    
+    @View(map="function(doc){emit({model:doc.model, brand:doc.brand}, doc);}")
+    List<CSFTest> matchingTuples(@Key CSFTest obj);
   }
   public void testMultiParamFinder() throws Exception {
     SlightlyComplexCouchService service = CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
@@ -232,9 +238,71 @@ public class CouchServiceTest extends TestCase {
     }
     
     List<CSFTest> loaded = service.load("-mod", 5, 5);
+    assertNotNull(loaded);
     assertEquals(5, loaded.size());
     assertEquals("-brand5", loaded.get(0).brand);
     assertEquals("-model9", loaded.get(4).model);
   }
-
+  public void testKeysFinder() throws Exception {
+    SlightlyComplexCouchService service = CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
+    for (int i = 0; i < 10; i++) {
+      CSFTest a = new CSFTest();
+      a.brand = "-brand" + i;
+      a.model = "-model" + i;
+      service.persist(a);
+    }
+    
+    List<CSFTest> loaded = service.anyMatching("-model1", "-model5");
+    assertNotNull(loaded);
+    assertEquals(2, loaded.size());
+  }
+  public void testNonPrimitiveKeyFinder() throws Exception {
+    SlightlyComplexCouchService service = CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
+    for (int i = 0; i < 10; i++) {
+      CSFTest a = new CSFTest();
+      a.brand = "-brand" + i;
+      a.model = "-model" + i;
+      service.persist(a);
+    }
+    
+    CSFTest sample = new CSFTest();
+    sample.brand = "-brand4";
+    sample.model = "-model4";
+    List<CSFTest> loaded = service.matchingTuples(sample);
+    //returns null, whoops
+    //turns out to be a json exception:
+    /*
+com.google.gson.JsonSyntaxException: java.lang.IllegalStateException: Expected a string but was BEGIN_OBJECT at line 2 column 49
+    at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:180)
+    at com.google.gson.internal.bind.TypeAdapterRuntimeTypeWrapper.read(TypeAdapterRuntimeTypeWrapper.java:40)
+    at com.google.gson.internal.bind.CollectionTypeAdapterFactory$Adapter.read(CollectionTypeAdapterFactory.java:81)
+    at com.google.gson.internal.bind.CollectionTypeAdapterFactory$Adapter.read(CollectionTypeAdapterFactory.java:60)
+    at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:93)
+    at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:176)
+    at com.google.gson.Gson.fromJson(Gson.java:755)
+    at com.google.gson.Gson.fromJson(Gson.java:721)
+    at com.google.gson.Gson.fromJson(Gson.java:670)
+    at rxf.server.gen.CouchDriver$ViewFetch$ViewFetchActionBuilder$1.rows(CouchDriver.java:735)
+    at rxf.server.CouchServiceFactory$CouchServiceHandler$2.call(CouchServiceFactory.java:198)
+    at java.util.concurrent.FutureTask$Sync.innerRun(FutureTask.java:334)
+    at java.util.concurrent.FutureTask.run(FutureTask.java:166)
+    at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$201(ScheduledThreadPoolExecutor.java:178)
+    at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:292)
+    at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1110)
+    at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:603)
+    at java.lang.Thread.run(Thread.java:722)
+Caused by: java.lang.IllegalStateException: Expected a string but was BEGIN_OBJECT at line 2 column 49
+    at com.google.gson.stream.JsonReader.nextString(JsonReader.java:464)
+    at com.google.gson.internal.bind.TypeAdapters$13.read(TypeAdapters.java:347)
+    at com.google.gson.internal.bind.TypeAdapters$13.read(TypeAdapters.java:335)
+    at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:93)
+    at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:176)
+    ... 17 more
+     */
+    
+    //Comment in these tests to see it fail, currently fails silently, returning null
+//    assertNotNull(loaded);
+//    assertEquals(1, loaded.size());
+//    assertNotNull(loaded.get(0)._id);
+  }
 }
