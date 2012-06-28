@@ -239,16 +239,17 @@ public class BlobAntiPatternObject {
   /**
    * byte-compare of suffixes
    *
+   *
    * @param terminator  the token used to terminate presumably unbounded growth of a list of buffers
    * @param currentBuff current ByteBuffer which does not necessarily require a list to perform suffix checks.
    * @param prev        a linked list which holds previous chunks
    * @return whether the suffix composes the tail bytes of current and prev buffers.
    */
-  static public boolean suffixCompareAgainstChunks(byte[] terminator,
-                                                   ByteBuffer currentBuff,
-                                                   LinkedList<ByteBuffer> prev) {
+  static public boolean suffixMatchChunks(byte[] terminator,
+                                          ByteBuffer currentBuff,
+                                          ByteBuffer... prev) {
     ByteBuffer tb = currentBuff;
-    Iterator<ByteBuffer> riter = prev.descendingIterator();
+    int prevMark = prev.length;
     int backtrack = 0;
     boolean mismatch = false;
     int bl = terminator.length;
@@ -256,11 +257,11 @@ public class BlobAntiPatternObject {
       int rskip = bl - i;
       int comparisonOffset = tb.position() - rskip - backtrack;
       if (comparisonOffset < 0) {
-        if (!riter.hasNext()) {
+        if (prevMark-->0&&null!=(tb=prev[prevMark])) {
           mismatch = true;
         } else {
           backtrack += tb.position();
-          tb = riter.next();
+//          tb = riter.next();
           i++;
         }
       } else {
@@ -271,7 +272,7 @@ public class BlobAntiPatternObject {
         }
       }
     }
-    return mismatch;
+    return !mismatch;
   }
 
   public static void setReceiveBufferSize(int receiveBufferSize) {

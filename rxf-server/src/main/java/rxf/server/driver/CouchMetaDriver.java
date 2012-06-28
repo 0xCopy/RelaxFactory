@@ -78,6 +78,7 @@ import static rxf.server.an.DbKeys.etype.view;
  * Date: 5/24/12
  * Time: 3:09 PM
  */
+@SuppressWarnings({"RedundantCast"})
 public enum CouchMetaDriver {
 
   @DbTask({tx, oneWay}) @DbKeys({db})DbCreate {
@@ -229,7 +230,7 @@ public enum CouchMetaDriver {
           .method(GET)
           .addHeaderInterest(Content$2dLength);
       final SocketChannel channel = createCouchConnection();
-      final ByteBuffer as = (ByteBuffer) request.$req().as(ByteBuffer.class);
+      final ByteBuffer as =(ByteBuffer) request.$req().as(ByteBuffer.class);
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
       enqueue(channel, OP_CONNECT | OP_WRITE, new Impl() {
         public ByteBuffer cursor;
@@ -368,32 +369,45 @@ public enum CouchMetaDriver {
     }
   },
   @DbTask({tx, oneWay, future}) @DbKeys(value = {db, docId, rev})DocDelete {
-    public <T> ByteBuffer visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
+    public <T> ByteBuffer visit(final DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
       final HttpRequest request = actionBuilder.state().$req();
-      final ByteBuffer header = (ByteBuffer) request
-          .path(scrub("/" + dbKeysBuilder.get(db) + "/" + dbKeysBuilder.get(docId) + "?rev=" + dbKeysBuilder.get(rev)))
-          .method(DELETE)
-          .as(ByteBuffer.class);
       final SocketChannel channel = createCouchConnection();
       enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
-        ByteBuffer cursor;
-
-
+        public LinkedList<ByteBuffer> list;
+        private HttpResponse response;
+        ByteBuffer header = (ByteBuffer) request
+            .path(scrub("/" + dbKeysBuilder.get(db) + "/" + dbKeysBuilder.get(docId) + "?rev=" + dbKeysBuilder.get(rev)))
+            .method(DELETE)
+            .as(ByteBuffer.class);
+        ByteBuffer cursor ;
         public void onWrite(SelectionKey key) throws Exception {
           int write = channel.write(header);
           assert !header.hasRemaining();
+          header.clear();
+          response = request.headerInterest(STATIC_CONTENT_LENGTH_ARR).$res();
+
           key.interestOps(OP_READ);/*WRITE-READ implicit turnaround in 1xio won't need .selector().wakeup()*/
-          ;
         }
 
 
         public void onRead(SelectionKey key) throws Exception {
           if (null == cursor) {
-            cursor = ByteBuffer.allocateDirect(getReceiveBufferSize());
-            int read = channel.read(cursor);
-            request.headerInterest(STATIC_CONTENT_LENGTH_ARR).apply((ByteBuffer) cursor.flip());
+            //geometric,  vulnerable to dev/null if not max'd here.
+            header = (null == header) ? ByteBuffer.allocateDirect(getReceiveBufferSize()) : header.hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2).put((ByteBuffer) header.flip());
+
+            int read = channel.read(header);
+            ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
+            response.apply((ByteBuffer) flip);
+
+            if (BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, response.headerBuf())) {
+              cursor = (ByteBuffer) flip.slice();
+            } else {
+              return;
+            }
+
+
             if (DEBUG_SENDJSON) {
               System.err.println(deepToString(request.pathResCode(), request, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
             }
@@ -412,6 +426,10 @@ public enum CouchMetaDriver {
               deliver();
             }
           }
+        }
+
+        private LinkedList<ByteBuffer> getReadList() {
+          return this.list == null ? new LinkedList<ByteBuffer>() : this.list;
         }
 
         private void deliver() {
@@ -458,7 +476,8 @@ public enum CouchMetaDriver {
         /**
          * holds un-rewound raw buffers.  must potentially be backtracked to fulfill CE_TERMINAL.length token check under pathological fragmentation
          */
-        LinkedList<ByteBuffer> list = new LinkedList<ByteBuffer>();
+
+        List<ByteBuffer> list = new ArrayList<ByteBuffer>();
         final Impl prev = this;
 
 
@@ -467,8 +486,8 @@ public enum CouchMetaDriver {
 
           HttpRequest request = actionBuilder.state().$req();
 
-          ByteBuffer buffer =
-              (ByteBuffer) request
+          ByteBuffer buffer =(ByteBuffer)
+              request
                   .method(GET)
                   .path(scrub('/' + db + '/' + dbKeysBuilder.get(view)))
                   .headerString(Accept, MimeType.json.contentType)
@@ -523,7 +542,7 @@ public enum CouchMetaDriver {
                     });
                   }
                 }
-                cursor = (ByteBuffer) dst.slice().compact();
+                cursor = dst.slice().compact();
 //                key.attach(this);
 //                key.selector().wakeup();
                 break;
@@ -545,8 +564,9 @@ public enum CouchMetaDriver {
               e.printStackTrace();  //todo: verify for a purpose
             }
           //token suffix check
-          boolean mismatch = BlobAntiPatternObject.suffixCompareAgainstChunks(CE_TERMINAL.getBytes(), cursor.duplicate(), list);
-          if (!mismatch) {
+          boolean suffixMatches = BlobAntiPatternObject.suffixMatchChunks(CE_TERMINAL, cursor.duplicate(), list.toArray(new ByteBuffer[list.size()]));
+
+          if (suffixMatches) {
             if (cursor.position() > 0)
               list.add(cursor);
             deliver();
@@ -814,7 +834,8 @@ public enum CouchMetaDriver {
 //
 //  }
   ;
-  public static final String CE_TERMINAL = "\n0\r\n\r\n";
+  public static final byte[] HEADER_TERMINATOR = "\r\n\r\n".getBytes(UTF8);
+  public static final byte[] CE_TERMINAL = "\n0\r\n\r\n".getBytes(UTF8);
 
   //"premature optimization" s/mature/view/
   public static final String[] STATIC_VF_HEADERS = Rfc822HeaderState.staticHeaderStrings(new HttpHeaders[]{ETag, Content$2dLength, Transfer$2dEncoding});
