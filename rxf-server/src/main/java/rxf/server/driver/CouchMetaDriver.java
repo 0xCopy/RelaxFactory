@@ -431,6 +431,13 @@ public enum CouchMetaDriver {
       return DocFetch.visit(dbKeysBuilder, actionBuilder);
     }
   },
+
+
+  /**
+   * a statistically imperfect chunked encoding reader which searches the end of current input for a token.
+   * <p/>
+   * <u> statistically imperfect </u>means that data containing said token {@link  #CE_TERMINAL} delivered on  a packet boundary or byte-at-a-time will false trigger the suffix.
+   */
   @DbTask({rows, future, continuousFeed}) @DbKeys(value = {db, view}, optional = type)ViewFetch {
     public <T> ByteBuffer visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
@@ -440,7 +447,10 @@ public enum CouchMetaDriver {
       final SocketChannel channel = createCouchConnection();
       enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
         ByteBuffer cursor;
-        List<ByteBuffer> list = new ArrayList<ByteBuffer>();
+        /**
+         * holds un-rewound raw buffers.  must potentially be backtracked to fulfill CE_TERMINAL.length token check under pathological fragmentation
+         */
+        LinkedList<ByteBuffer> list = new LinkedList<ByteBuffer>();
         final Impl prev = this;
 
 
@@ -448,6 +458,7 @@ public enum CouchMetaDriver {
 
 
           HttpRequest request = actionBuilder.state().$req();
+
           ByteBuffer buffer =
               (ByteBuffer) request
                   .method(GET)
@@ -505,8 +516,8 @@ public enum CouchMetaDriver {
                   }
                 }
                 cursor = (ByteBuffer) dst.slice().compact();
-                key.attach(this);
-                key.selector().wakeup();
+//                key.attach(this);
+//                key.selector().wakeup();
                 break;
               default:
                 joinPoint.reset();
@@ -517,7 +528,7 @@ public enum CouchMetaDriver {
             try {
               final int read = channel.read(cursor);
               if (-1 == read) {
-                list.add(cursor);
+                if (cursor.position() > 0) list.add(cursor);
                 deliver();
                 recycleChannel(channel);
                 return;
@@ -525,7 +536,16 @@ public enum CouchMetaDriver {
             } catch (Throwable e) {
               e.printStackTrace();  //todo: verify for a purpose
             }
-
+          //token suffix check
+          boolean mismatch = BlobAntiPatternObject.suffixCompareAgainstChunks(CE_TERMINAL.getBytes(), cursor.duplicate(), list);
+          if (!mismatch) {
+            if (cursor.position() > 0)
+              list.add(cursor);
+            deliver();
+            recycleChannel(channel);
+            return;
+          }
+/*
           final ByteBuffer tmp = (ByteBuffer) cursor.duplicate();
           final int position = tmp.position();
           tmp.flip();
@@ -536,11 +556,13 @@ public enum CouchMetaDriver {
             recycleChannel(channel);
             return;
           }
+*/
           if (!cursor.hasRemaining()) {
             list.add(cursor);
             cursor = ByteBuffer.allocateDirect(getReceiveBufferSize());
           }
         }
+
 
         private void deliver() {
 
@@ -570,13 +592,13 @@ public enum CouchMetaDriver {
                     first = false;
                   }
 
-
                 final int i = Integer.parseInt(UTF8.decode((ByteBuffer) src.duplicate().flip()).toString().trim(), 0x10);
                 src = ((ByteBuffer) src.compact().position(i)).slice();
                 endl += i;
                 sum -= i;
                 if (0 == i) break;
               }
+
               ByteBuffer retval = null;
               if (DEBUG_SENDJSON) {
                 retval = (ByteBuffer) outbound.clear().limit(endl);
@@ -956,7 +978,6 @@ public enum CouchMetaDriver {
     s += "}";
     System.out.println(s);
   }
-
 
 }
 
