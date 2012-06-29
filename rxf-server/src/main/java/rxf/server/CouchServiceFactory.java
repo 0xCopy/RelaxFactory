@@ -186,9 +186,12 @@ public class CouchServiceFactory {
           public Object call() throws Exception {
 
             String name = method.getName();
-            String[] jsonArgs = new String[args.length];
-            for (int i = 0; i < args.length; i++) {
-              jsonArgs[i] = URLEncoder.encode(GSON.toJson(args[i]), "UTF-8");
+            String[] jsonArgs = null;
+            if (args != null) {//apparently args is null for a zero-arg method
+              jsonArgs = new String[args.length];
+              for (int i = 0; i < args.length; i++) {
+                jsonArgs[i] = URLEncoder.encode(GSON.toJson(args[i]), "UTF-8");
+              }
             }
             /*       dont forget to uncomment this after new CouchResult gen*/
             final Map<String, String> stringStringMap = viewMethods.get();
