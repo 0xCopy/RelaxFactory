@@ -256,7 +256,8 @@ public class BlobAntiPatternObject {
       int rskip = bl - i;
       int comparisonOffset = tb.position() - rskip - backtrack;
       if (comparisonOffset < 0) {
-        if (prevMark-- > 0 && prevMark < prev.length && null != (tb = prev[prevMark])) {
+        prevMark--;
+        if (prevMark > 0 && prevMark < prev.length && null != (tb = prev[prevMark])) {
           mismatch = true;
         } else {
           backtrack += tb.position();
