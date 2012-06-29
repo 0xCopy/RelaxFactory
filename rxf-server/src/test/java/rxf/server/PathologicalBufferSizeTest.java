@@ -19,7 +19,7 @@ import static rxf.server.BlobAntiPatternObject.GSON;
 /**
  * Tests out the db, cleaning up after itself. These must be run in order to work correctly and clean up.
  */
-public class CouchDriverTest extends TestCase {
+public class PathologicalBufferSizeTest extends TestCase {
 
   public static final String SOMEDBPREFIX = "test_somedb_";
   public static final String SOMEDB = SOMEDBPREFIX + System.currentTimeMillis();   //ordered names of testdbs for failure postmortem....
@@ -42,7 +42,8 @@ public class CouchDriverTest extends TestCase {
       }
     });
     nukeTestDbs();
-
+    BlobAntiPatternObject.setReceiveBufferSize(127);
+    BlobAntiPatternObject.setSendBufferSize(67);
     {
       CouchTx tx = DbCreate.$().db(SOMEDB).to().fire().tx();
       assertNotNull(tx);

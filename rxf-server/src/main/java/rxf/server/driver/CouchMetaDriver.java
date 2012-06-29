@@ -577,42 +577,60 @@ public enum CouchMetaDriver {
 
         List<ByteBuffer> list = new ArrayList<ByteBuffer>();
         final Impl prev = this;
+        private HttpRequest request;
+        private ByteBuffer header;
+        private HttpResponse response;
 
 
         public void onWrite(SelectionKey key) throws Exception {
 
 
-          HttpRequest request = actionBuilder.state().$req();
+          request = actionBuilder.state().$req();
 
-          ByteBuffer buffer = (ByteBuffer)
+          header = (ByteBuffer)
               request
                   .method(GET)
                   .path(scrub('/' + db + '/' + dbKeysBuilder.get(view)))
                   .headerString(Accept, MimeType.json.contentType)
                   .as(ByteBuffer.class);
-          int wrote = channel.write(buffer);
-          assert !buffer.hasRemaining();
+          int wrote = channel.write(header);
+          assert !header.hasRemaining();
           key.interestOps(OP_READ);
         }
 
 
         public void onRead(SelectionKey key) throws IOException {
           if (null == cursor) {
-            final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
-            final int read = channel.read(dst);
+            //geometric,  vulnerable to dev/null if not max'd here.
+            header = (null == header) ? ByteBuffer.allocateDirect(getReceiveBufferSize()) : header.hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2).put((ByteBuffer) header.flip());
 
-            final HttpResponse httpResponse = actionBuilder.state().$res();
-            httpResponse
-                .headerInterest(STATIC_VF_HEADERS)
-                .apply((ByteBuffer) dst.flip());
-            final HttpStatus httpStatus = httpResponse.statusEnum();
+            int read = channel.read(header);
+            ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
+            response = request.$res();
+            response.apply((ByteBuffer) flip);
+
+            if (BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, response.headerBuf())) {
+              cursor = (ByteBuffer) flip.slice();
+              header = null;
+            } else {
+              return;
+            }
+
+
+            if (DEBUG_SENDJSON) {
+              System.err.println(deepToString(response.statusEnum(), response, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
+            }
+
+
+            HttpStatus httpStatus = response.statusEnum();
             switch (httpStatus) {
               case $200:
-                final String remainingString = httpResponse.headerString(Content$2dLength);
-                if (remainingString != null) {
+
+                if (response.headerStrings().containsKey(Content$2dLength.getHeader())) {  //rarity but for empty rowsets
+                  final String remainingString = response.headerString(Content$2dLength);
                   int remaining = Integer.parseInt(remainingString);
-                  if (dst.remaining() == remaining) {
-                    payload.set(dst.slice());
+                  if (cursor.remaining() == remaining) {
+                    payload.set(cursor.slice());
                     EXECUTOR_SERVICE.submit(new Callable<Object>() {
                       public Object call() throws Exception {
                         joinPoint.await();
@@ -621,7 +639,7 @@ public enum CouchMetaDriver {
                       }
                     });
                   } else {
-                    cursor = ByteBuffer.allocateDirect(remaining).put(dst);
+                    cursor = ByteBuffer.allocateDirect(remaining).put(cursor);
                     key.attach(new Impl() {
 
                       public void onRead(SelectionKey key) throws Exception {
@@ -640,7 +658,7 @@ public enum CouchMetaDriver {
                     });
                   }
                 }
-                cursor = dst.slice().compact();
+                cursor = cursor.slice().compact();
 //                key.attach(this);
 //                key.selector().wakeup();
                 break;

@@ -277,4 +277,8 @@ public class BlobAntiPatternObject {
   public static void setReceiveBufferSize(int receiveBufferSize) {
     BlobAntiPatternObject.receiveBufferSize = receiveBufferSize;
   }
+
+  public static void setSendBufferSize(int sendBufferSize) {
+    BlobAntiPatternObject.sendBufferSize = sendBufferSize;
+  }
 }
