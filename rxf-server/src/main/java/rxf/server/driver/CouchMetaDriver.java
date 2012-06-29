@@ -392,50 +392,89 @@ public enum CouchMetaDriver {
 
 
   @DbTask({json, future}) @DbKeys({db, docId})RevisionFetch {
-    public <T> ByteBuffer visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
-
-      Object id = dbKeysBuilder.get(docId);
-      String scrubMe = "/" + dbKeysBuilder.get(db) + (null != id ? "/" + id : "");
-      String path = scrub(scrubMe);
-      final Rfc822HeaderState state = actionBuilder.state().headerInterest(HEADER)
-          .$req().method(HEAD)
-          .path(path);
+    public <T> ByteBuffer visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
-      final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
       final SocketChannel channel = createCouchConnection();
-      HttpMethod.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
+      final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
+      enqueue(channel, OP_CONNECT | OP_WRITE, new Impl() {
+        // *******************************
+        // *******************************
+        // pathological buffersize traits
+        // *******************************
+        // *******************************
+
+
+        String db = (String) dbKeysBuilder.get(etype.db);
+        String id = (String) dbKeysBuilder.get(docId);
+        HttpRequest request = actionBuilder.state().$req();
+        private HttpResponse response;
+        ByteBuffer header = (ByteBuffer) request
+            .path(scrub("/" + (db) + (null != id ? "/" + id : "")))
+            .method(HEAD).as(ByteBuffer.class);
 
         public void onWrite(SelectionKey key) throws Exception {
-          ByteBuffer as = (ByteBuffer) state.$req().as(ByteBuffer.class);
-          int write = channel.write(as);
-          assert !as.hasRemaining();
-          key.interestOps(OP_READ);
+          int write = channel.write(header);
+          assert !header.hasRemaining();
+          header.clear();
+          response = request.headerInterest(ETag).$res();
+
+          key.interestOps(OP_READ);/*WRITE-READ implicit turnaround in 1xio won't need .selector().wakeup()*/
         }
+
+        ByteBuffer cursor;
+
+//      Object id = dbKeysBuilder.get(docId);
+//      String scrubMe = "/" + dbKeysBuilder.get(db) + (null != id ? "/" + id : "");
+//      String path = scrub(scrubMe);
+//      final Rfc822HeaderState state = actionBuilder.state().headerInterest(HEADER)
+//          .$req().method(HEAD)
+//          .path(path);
+//      final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
+//      final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
+//      final SocketChannel channel = createCouchConnection();
+//      HttpMethod.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
+//
+//        public void onWrite(SelectionKey key) throws Exception {
+//          ByteBuffer as = (ByteBuffer) state.$req().as(ByteBuffer.class);
+//          int write = channel.write(as);
+//          assert !as.hasRemaining();
+//          key.interestOps(OP_READ);
+//        }
 
 
         public void onRead(SelectionKey key) throws Exception {
-          final ByteBuffer dst = ByteBuffer.allocateDirect(getReceiveBufferSize());
-          int read = channel.read(dst);
-          final int[] ints = HttpHeaders.getHeaders((ByteBuffer) dst.flip()).get(ETag.getHeader());
-          assert -1 != read;
-          EXECUTOR_SERVICE.submit(new Callable<Object>() {
-            public Object call() throws Exception {
-              try {
-                //assumes quoted
-                payload.set(((ByteBuffer) dst.duplicate().limit(ints[1] - 3).position(ints[0] + 2)).slice());
-                cyclicBarrier.await();          //V
-                return null;                    //V
-              } catch (Exception e) {           //V
-                cyclicBarrier.reset();          //V
-              } finally {                       //V
-                recycleChannel(channel);        //V
-              }                                 //V
-              return null;                      //V
-            }                                   //V
-          });                                   //V
-        }                                       //V
-      });                                       //V
-      try {                                     //V
+
+
+          if (null == cursor) {
+            //geometric,  vulnerable to dev/null if not max'd here.
+            header = (null == header) ? ByteBuffer.allocateDirect(getReceiveBufferSize()) : header.hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2).put((ByteBuffer) header.flip());
+
+            int read = channel.read(header);
+            if (-1 == read) cyclicBarrier.reset();
+            ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
+            response.apply((ByteBuffer) flip);
+
+            if (BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, response.headerBuf())) {
+              EXECUTOR_SERVICE.submit(new Callable<Object>() {
+                public Object call() throws Exception {
+                  try {
+                    //assumes quoted
+                    payload.set(UTF8.encode( request.dequotedHeader(ETag.getHeader())));
+                    cyclicBarrier.await();          //V
+                    return null;                    //V
+                  } catch (Exception e) {           //V
+                    cyclicBarrier.reset();          //V
+                  } finally {                       //V
+                    recycleChannel(channel);        //V
+                  }                                 //V
+                  return null;                      //V
+                }                                   //V
+              });                                   //V
+            }                                       //V
+          }                                         //V
+        }                                           //V
+      });                                           //V
+      try {                                         //V
         cyclicBarrier.await(3, getDefaultCollectorTimeUnit());
       } catch (Exception e) {
 
@@ -595,6 +634,9 @@ public enum CouchMetaDriver {
                   .as(ByteBuffer.class);
           int wrote = channel.write(header);
           assert !header.hasRemaining();
+          header.clear();
+          response = (HttpResponse) request.$res();
+          response.headerInterest(STATIC_VF_HEADERS);
           key.interestOps(OP_READ);
         }
 
@@ -606,10 +648,10 @@ public enum CouchMetaDriver {
 
             int read = channel.read(header);
             ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
-            response = request.$res();
             response.apply((ByteBuffer) flip);
 
-            if (BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, response.headerBuf())) {
+            ByteBuffer currentBuff = response.headerBuf();
+            if (BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, currentBuff)) {
               cursor = (ByteBuffer) flip.slice();
               header = null;
             } else {

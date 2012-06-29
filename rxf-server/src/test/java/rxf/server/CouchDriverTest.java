@@ -144,7 +144,14 @@ public class CouchDriverTest extends TestCase {
 
     DocPersist.$().db(SOMEDB).validjson("{\"name\":\"a\",\"brand\":\"c\"}").to().fire().tx();
     DocPersist.$().db(SOMEDB).validjson("{\"name\":\"b\",\"brand\":\"d\"}").to().fire().tx();
-
+    String space = "hal kjfljdskjahkjsdfkajhdf halkjsdf kgasdkjfh hwroeuvbdfhjvb nv ihdfousbkvjlsdfkvbdkjfvpghblkjfgbldkgf,xjbxdl kfjbhxv,vdlkgfhbfkljdflkjh dfjgh bsjdhfg hlhgdvkjhgksdfglhs";
+    DocPersist.$().db(SOMEDB).validjson("{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to().fire().tx();
+    DocPersist.$().db(SOMEDB).validjson("{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to().fire().tx();
+    DocPersist.$().db(SOMEDB).validjson("{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to().fire().tx();
+    DocPersist.$().db(SOMEDB).validjson("{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to().fire().tx();
+    DocPersist.$().db(SOMEDB).validjson("{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to().fire().tx();
+    DocPersist.$().db(SOMEDB).validjson("{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to().fire().tx();
+    DocPersist.$().db(SOMEDB).validjson("{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to().fire().tx();
     //running view
     final ViewFetchTerminalBuilder fire = ViewFetch.$().db(SOMEDB).type(Map.class).view(DESIGN_SAMPLE + "/_view/foo?key=\"a\"").to().fire();
     CouchResultSet<Map<String, String>> data = fire.rows();
@@ -168,7 +175,7 @@ public class CouchDriverTest extends TestCase {
 
     data = ViewFetch.$().db(SOMEDB).type(Map.class).view(DESIGN_SAMPLE + "/_view/foo?key=\"d\"").to().fire().rows();
     assertNotNull(data);
-    assertEquals(1, data.rows.size());
+    assertEquals(8, data.rows.size());
     assertEquals("b", data.rows.get(0).value.get("name"));
 
     String rev = null;

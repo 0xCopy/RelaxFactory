@@ -252,16 +252,18 @@ public class BlobAntiPatternObject {
     int backtrack = 0;
     boolean mismatch = false;
     int bl = terminator.length;
+    int rskip = 0;
     for (int i = bl - 1; i >= 0 && !mismatch; i--) {
-      int rskip = bl - i;
-      int comparisonOffset = tb.position() - rskip - backtrack;
+      rskip ++;
+      int comparisonOffset = tb.position() - rskip ;
       if (comparisonOffset < 0) {
         prevMark--;
-        if (prevMark > 0 && prevMark < prev.length && null != (tb = prev[prevMark])) {
+        if (prevMark < 0) {
           mismatch = true;
+          break;
         } else {
-          backtrack += tb.position();
-//          tb = riter.next();
+          tb = prev[prevMark];
+          rskip=0;
           i++;
         }
       } else {
