@@ -749,11 +749,10 @@ public enum CouchMetaDriver {
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
       String opaque = scrub('/' + (String) dbKeysBuilder.get(etype.opaque));
-      int lastSlashIndex = opaque.lastIndexOf('/');
-      if (opaque.length() - 1 == lastSlashIndex) {
-        opaque = opaque.substring(0, opaque.length() - 1);
-      }
-      int c = 0;
+
+
+      int slashCounter = 0;
+      int lastSlashIndex = 0;
       label:
       for (int i = 0; i < opaque.length(); i++) {
         char c1 = opaque.charAt(i);
@@ -762,11 +761,15 @@ public enum CouchMetaDriver {
           case '#':
             break label;
           case '/':
-            c++;
+            slashCounter++;
+            lastSlashIndex = i;
           default:
             break;
 
         }
+      }
+      if (opaque.length() - 1 == lastSlashIndex) {
+        opaque = opaque.substring(0, opaque.length() - 1);
       }
       String validjson = (String) dbKeysBuilder.get(etype.validjson);
       validjson = validjson == null ? "{}" : validjson;
@@ -775,7 +778,7 @@ public enum CouchMetaDriver {
       final byte[] outbound = validjson.getBytes(UTF8);
 
 
-      final HttpMethod method = 1 == c || !(lastSlashIndex < opaque.lastIndexOf('?') && lastSlashIndex != opaque.indexOf('/')) ? POST : PUT;
+      final HttpMethod method = 1 == slashCounter || !(lastSlashIndex < opaque.lastIndexOf('?') && lastSlashIndex != opaque.indexOf('/')) ? POST : PUT;
       HttpRequest request = state.$req();
       final ByteBuffer header = (ByteBuffer) request.method(method)
           .path(opaque)

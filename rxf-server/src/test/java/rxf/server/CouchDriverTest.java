@@ -36,7 +36,6 @@ public class CouchDriverTest extends TestCase {
         AsioVisitor topLevel = new ProtocolMethodDispatch();
         try {
           HttpMethod.init(new String[]{}, topLevel, 1000);
-
         } catch (Exception e) {
           fail();
         }
@@ -112,10 +111,11 @@ public class CouchDriverTest extends TestCase {
   }
 
   public void testMissingDocLowLevelFailure() {
+
+
     CouchTx tx = DocPersist.$().db("dne_dne").validjson("{}").to().fire().tx();
-    assertNotNull(tx);
-    assertFalse(tx.ok());
-    assertNotNull(tx.getError());
+    //new contract for non-20x results is find the nearest window and get to ground.
+    assertNull(tx);
   }
 
   public void testDocPersist() {
@@ -170,7 +170,7 @@ public class CouchDriverTest extends TestCase {
     assertNotNull(data);
     assertEquals(1, data.rows.size());
     assertEquals("b", data.rows.get(0).value.get("name"));
-             BlobAntiPatternObject.setReceiveBufferSize(104);
+    BlobAntiPatternObject.setReceiveBufferSize(104);
     String rev = null;
     try {
       rev = RevisionFetch.$().db(SOMEDB).docId(DESIGN_SAMPLE).to().fire().json();
@@ -183,6 +183,7 @@ public class CouchDriverTest extends TestCase {
     designDoc = DesignDocFetch.$().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
     assertNull(designDoc);
   }
+
   public void testManualViewFetch() {
     String doc = "{" +
         "  \"_id\" : \"" + DESIGN_SAMPLE +

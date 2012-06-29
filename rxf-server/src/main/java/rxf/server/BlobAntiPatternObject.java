@@ -239,7 +239,6 @@ public class BlobAntiPatternObject {
   /**
    * byte-compare of suffixes
    *
-   *
    * @param terminator  the token used to terminate presumably unbounded growth of a list of buffers
    * @param currentBuff current ByteBuffer which does not necessarily require a list to perform suffix checks.
    * @param prev        a linked list which holds previous chunks
@@ -257,7 +256,7 @@ public class BlobAntiPatternObject {
       int rskip = bl - i;
       int comparisonOffset = tb.position() - rskip - backtrack;
       if (comparisonOffset < 0) {
-        if (prevMark-->0&&null!=(tb=prev[prevMark])) {
+        if (prevMark-- > 0 && prevMark < prev.length && null != (tb = prev[prevMark])) {
           mismatch = true;
         } else {
           backtrack += tb.position();
