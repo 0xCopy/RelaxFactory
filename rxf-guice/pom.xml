@@ -14,9 +14,9 @@
             <version>3.0</version>
         </dependency>
         <dependency>
-        	<groupId>rxf</groupId>
-        	<artifactId>rxf-server</artifactId>
-        	<version>${project.version}</version>
+            <groupId>rxf</groupId>
+            <artifactId>rxf-server</artifactId>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 </project>
