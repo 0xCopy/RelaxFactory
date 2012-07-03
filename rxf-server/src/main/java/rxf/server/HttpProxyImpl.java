@@ -10,7 +10,6 @@ import java.util.regex.Pattern;
 
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpMethod;
-import rxf.server.web.inf.ProtocolMethodDispatch;
 
 import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_READ;
@@ -43,7 +42,7 @@ public class HttpProxyImpl extends Impl {
     Rfc822HeaderState state = null;
     for (Object o : Arrays.asList(browserKey.attachment())) {
       if (o instanceof Rfc822HeaderState) {
-        ProtocolMethodDispatch.RFState.set(state = (Rfc822HeaderState) o);
+        ActionBuilder.get().state((Rfc822HeaderState) o);
         break
             ;
       }
