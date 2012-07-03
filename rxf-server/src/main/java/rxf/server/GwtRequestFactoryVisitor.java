@@ -21,7 +21,7 @@ import static one.xio.HttpMethod.UTF8;
  * Time: 7:42 PM
  */
 public class GwtRequestFactoryVisitor extends Impl {
-  public static final SimpleRequestProcessor SIMPLE_REQUEST_PROCESSOR = new SimpleRequestProcessor(ServiceLayer.create());
+  public static SimpleRequestProcessor SIMPLE_REQUEST_PROCESSOR = new SimpleRequestProcessor(ServiceLayer.create());
 
   @Override
   public Impl preRead(Object... env) {

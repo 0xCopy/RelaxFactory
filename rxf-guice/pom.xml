@@ -18,5 +18,12 @@
             <artifactId>rxf-server</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- Test-only dependency to make sure rf wiring via guice works -->
+        <dependency>
+            <groupId>com.google.web.bindery</groupId>
+            <artifactId>requestfactory-apt</artifactId>
+            <version>${gwt.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>
