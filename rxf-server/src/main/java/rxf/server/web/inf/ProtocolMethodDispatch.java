@@ -35,10 +35,10 @@ import static one.xio.HttpMethod.POST;
 public class ProtocolMethodDispatch extends Impl {
 
 
-  /**
-   * todo: potentially redundant with the builders
-   */
-  public static ThreadLocal<Rfc822HeaderState> RFState = new ThreadLocal<Rfc822HeaderState>();
+//  /**
+//   * todo: potentially redundant with the builders
+//   */
+//  public static ThreadLocal<Rfc822HeaderState> RFState = new ThreadLocal<Rfc822HeaderState>();
 
   /**
    * a map of http methods each containing an ordered map of regexes tested in order of
@@ -114,11 +114,11 @@ public class ProtocolMethodDispatch extends Impl {
     //break down the incoming addHeaderInterest.
     Rfc822HeaderState state;
 
-    RFState.set(state = new Rfc822HeaderState(Content$2dLength.getHeader(), Content$2dType.getHeader(), Content$2dEncoding.getHeader(), ETag.getHeader(), Transfer$2dEncoding.getHeader(), Accept.getHeader()).cookies(BlobAntiPatternObject.class.getCanonicalName(), BlobAntiPatternObject.MYGEOIPSTRING).sourceKey(key).apply((ByteBuffer) cursor.flip()));
+    ActionBuilder.get().state().headerInterest(Content$2dLength, Content$2dType, Content$2dEncoding, ETag, Transfer$2dEncoding, Accept).cookies(BlobAntiPatternObject.class.getCanonicalName(), BlobAntiPatternObject.MYGEOIPSTRING).sourceKey(key).apply((ByteBuffer) cursor.flip());
     HttpMethod method = null;
     try {
 //find the method to dispatch
-      method = HttpMethod.valueOf(state.methodProtocol());
+      method = HttpMethod.valueOf(ActionBuilder.get().state().methodProtocol());
     } catch (Exception e) {
     }
 
@@ -130,11 +130,11 @@ public class ProtocolMethodDispatch extends Impl {
     //check for namespace registration
     // todo: preRead is  wierd initiailizer which needs some review.
     for (Entry<Pattern, Impl> visitorEntry : BlobAntiPatternObject.getNamespace().get(method).entrySet()) {
-      Matcher matcher = visitorEntry.getKey().matcher(state.pathResCode());
+      Matcher matcher = visitorEntry.getKey().matcher(ActionBuilder.get().state().pathResCode());
       if (matcher.find()) {
         Impl impl = visitorEntry.getValue();
 
-        Impl ob = impl.preRead(state, cursor);
+        Impl ob = impl.preRead(ActionBuilder.get().state(), cursor);
         if (null != ob) {
           key.attach(ob);
 //        visitorEntry.getValue().onRead(key);
@@ -145,7 +145,7 @@ public class ProtocolMethodDispatch extends Impl {
     }
     switch (method) {
       default:
-        throw new Error(BlobAntiPatternObject.arrToString("unknown method in", state));
+        throw new Error(BlobAntiPatternObject.arrToString("unknown method in", ActionBuilder.get().state()));
     }
   }
 }
