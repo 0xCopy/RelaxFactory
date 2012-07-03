@@ -56,6 +56,13 @@ public abstract class ActionBuilder<T> {
   }
 
   public static <T> ActionBuilder<T> get() {
+    if (currentAction.get() == null)
+      currentAction.set(new ActionBuilder<T>() {
+        @Override
+        public TerminalBuilder<T> fire() {
+          throw new AbstractMethodError("This is a ActionBuilder with no DbKeysBuilder and therefore now Terminal");
+        }
+      });
     return (ActionBuilder<T>) currentAction.get();
   }
 

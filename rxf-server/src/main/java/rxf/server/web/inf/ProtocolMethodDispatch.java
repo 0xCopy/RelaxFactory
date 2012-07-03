@@ -34,11 +34,28 @@ import static one.xio.HttpMethod.POST;
  */
 public class ProtocolMethodDispatch extends Impl {
 
-
   /**
-   * todo: potentially redundant with the builders
+   * if you *must* register a new priority ahead of existing patterns, this is how.  otherwise the LinkedHashMap stays ordered as defined.
+   *
+   * @param method
+   * @param pattern
+   * @param impl
+   * @return
    */
-  public static ThreadLocal<Rfc822HeaderState> RFState = new ThreadLocal<Rfc822HeaderState>();
+  public static Map<Pattern, Impl> precedeAllWith(HttpMethod method, Pattern pattern
+      , Impl impl) {
+    Map<Pattern, Impl> patternImplMap = NAMESPACE.get(method);
+    LinkedHashMap<Pattern, Impl> ret = new LinkedHashMap<Pattern, Impl>();
+    ret.put(pattern, impl);
+    if (null == patternImplMap) patternImplMap = new LinkedHashMap<Pattern, Impl>();
+
+    for (Entry<Pattern, Impl> patternImplEntry : patternImplMap.entrySet()) {
+      ret.put(patternImplEntry.getKey(), patternImplEntry.getValue());
+    }
+    NAMESPACE.put(method, ret);
+    return patternImplMap;
+
+  }
 
   /**
    * a map of http methods each containing an ordered map of regexes tested in order of
@@ -49,12 +66,12 @@ public class ProtocolMethodDispatch extends Impl {
   /**
    * the PUT protocol handlers, only static for the sake of javadocs
    */
-  static Map<Pattern, Impl> PUTmap = new LinkedHashMap<Pattern, Impl>();
+  public static Map<Pattern, Impl> PUTmap = new LinkedHashMap<Pattern, Impl>();
 
   /**
    * the GET protocol handlers, only static for the sake of javadocs
    */
-  static Map<Pattern, Impl> GETmap = new LinkedHashMap<Pattern, Impl>();
+  public static Map<Pattern, Impl> GETmap = new LinkedHashMap<Pattern, Impl>();
 
   /**
    *
@@ -87,6 +104,8 @@ public class ProtocolMethodDispatch extends Impl {
      * any random config mechanism with a default will suffice here to define the content root.
      *
      * widest regex last intentionally
+     *
+     * system proprty: RXF_SERVER_CONTENT_ROOT
      */
     GETmap.put(Pattern.compile(".*"), new ContentRootImpl(System.getProperty(RXF_SERVER_CONTENT_ROOT, "./")));
   }
@@ -114,11 +133,11 @@ public class ProtocolMethodDispatch extends Impl {
     //break down the incoming addHeaderInterest.
     Rfc822HeaderState state;
 
-    RFState.set(state = new Rfc822HeaderState(Content$2dLength.getHeader(), Content$2dType.getHeader(), Content$2dEncoding.getHeader(), ETag.getHeader(), Transfer$2dEncoding.getHeader(), Accept.getHeader()).cookies(BlobAntiPatternObject.class.getCanonicalName(), BlobAntiPatternObject.MYGEOIPSTRING).sourceKey(key).apply((ByteBuffer) cursor.flip()));
+    ActionBuilder.get().state().headerInterest(Content$2dLength, Content$2dType, Content$2dEncoding, ETag, Transfer$2dEncoding, Accept).cookies(BlobAntiPatternObject.class.getCanonicalName(), BlobAntiPatternObject.MYGEOIPSTRING).sourceKey(key).apply((ByteBuffer) cursor.flip());
     HttpMethod method = null;
     try {
 //find the method to dispatch
-      method = HttpMethod.valueOf(state.methodProtocol());
+      method = HttpMethod.valueOf(ActionBuilder.get().state().methodProtocol());
     } catch (Exception e) {
     }
 
@@ -130,11 +149,11 @@ public class ProtocolMethodDispatch extends Impl {
     //check for namespace registration
     // todo: preRead is  wierd initiailizer which needs some review.
     for (Entry<Pattern, Impl> visitorEntry : BlobAntiPatternObject.getNamespace().get(method).entrySet()) {
-      Matcher matcher = visitorEntry.getKey().matcher(state.pathResCode());
+      Matcher matcher = visitorEntry.getKey().matcher(ActionBuilder.get().state().pathResCode());
       if (matcher.find()) {
         Impl impl = visitorEntry.getValue();
 
-        Impl ob = impl.preRead(state, cursor);
+        Impl ob = impl.preRead(ActionBuilder.get().state(), cursor);
         if (null != ob) {
           key.attach(ob);
 //        visitorEntry.getValue().onRead(key);
@@ -145,7 +164,7 @@ public class ProtocolMethodDispatch extends Impl {
     }
     switch (method) {
       default:
-        throw new Error(BlobAntiPatternObject.arrToString("unknown method in", state));
+        throw new Error(BlobAntiPatternObject.arrToString("unknown method in", ActionBuilder.get().state()));
     }
   }
 }
