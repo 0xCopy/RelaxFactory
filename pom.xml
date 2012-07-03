@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>rxf</groupId>
     <artifactId>relaxfactory</artifactId>
-    <version>0.8.2</version>
+    <version>0.9.0</version>
     <packaging>pom</packaging>
     <properties>
         <java.version>1.6</java.version>
