@@ -34,11 +34,28 @@ import static one.xio.HttpMethod.POST;
  */
 public class ProtocolMethodDispatch extends Impl {
 
+  /**
+   * if you *must* register a new priority ahead of existing patterns, this is how.  otherwise the LinkedHashMap stays ordered as defined.
+   *
+   * @param method
+   * @param pattern
+   * @param impl
+   * @return
+   */
+  public static Map<Pattern, Impl> precedeAllWith(HttpMethod method, Pattern pattern
+      , Impl impl) {
+    Map<Pattern, Impl> patternImplMap = NAMESPACE.get(method);
+    LinkedHashMap<Pattern, Impl> ret = new LinkedHashMap<Pattern, Impl>();
+    ret.put(pattern, impl);
+    if (null == patternImplMap) patternImplMap = new LinkedHashMap<Pattern, Impl>();
 
-//  /**
-//   * todo: potentially redundant with the builders
-//   */
-//  public static ThreadLocal<Rfc822HeaderState> RFState = new ThreadLocal<Rfc822HeaderState>();
+    for (Entry<Pattern, Impl> patternImplEntry : patternImplMap.entrySet()) {
+      ret.put(patternImplEntry.getKey(), patternImplEntry.getValue());
+    }
+    NAMESPACE.put(method, ret);
+    return patternImplMap;
+
+  }
 
   /**
    * a map of http methods each containing an ordered map of regexes tested in order of
@@ -49,12 +66,12 @@ public class ProtocolMethodDispatch extends Impl {
   /**
    * the PUT protocol handlers, only static for the sake of javadocs
    */
-  static Map<Pattern, Impl> PUTmap = new LinkedHashMap<Pattern, Impl>();
+  public static Map<Pattern, Impl> PUTmap = new LinkedHashMap<Pattern, Impl>();
 
   /**
    * the GET protocol handlers, only static for the sake of javadocs
    */
-  static Map<Pattern, Impl> GETmap = new LinkedHashMap<Pattern, Impl>();
+  public static Map<Pattern, Impl> GETmap = new LinkedHashMap<Pattern, Impl>();
 
   /**
    *
@@ -87,6 +104,8 @@ public class ProtocolMethodDispatch extends Impl {
      * any random config mechanism with a default will suffice here to define the content root.
      *
      * widest regex last intentionally
+     *
+     * system proprty: RXF_SERVER_CONTENT_ROOT
      */
     GETmap.put(Pattern.compile(".*"), new ContentRootImpl(System.getProperty(RXF_SERVER_CONTENT_ROOT, "./")));
   }

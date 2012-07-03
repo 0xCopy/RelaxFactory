@@ -72,7 +72,7 @@ public class ContentRootImpl extends Impl {
 //              state.get().sourceKey().selector().wakeup();
     state.get().sourceKey().interestOps(OP_WRITE);
     final SocketChannel channel = (SocketChannel) state.get().sourceKey().channel();
-    return (new Impl() {
+    return new Impl() {
 
       @Override
       public void onWrite(SelectionKey key) throws Exception {
@@ -157,6 +157,6 @@ public class ContentRootImpl extends Impl {
           });
         }
       }
-    });
+    };
   }
 }
