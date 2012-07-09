@@ -10,30 +10,34 @@ import rxf.server.an.DbKeys.etype;
  * Date: 5/29/12
  * Time: 1:58 PM
  */
-public abstract class DbKeysBuilder<T> {
+public abstract class DbKeysBuilder {
   protected static ThreadLocal<DbKeysBuilder> currentKeys = new InheritableThreadLocal<DbKeysBuilder>();
   protected final java.util.EnumMap<DbKeys.etype, Object> parms = new java.util.EnumMap<DbKeys.etype, Object>(DbKeys.etype.class);
 
   private Throwable trace;
 
-  protected abstract ActionBuilder<T> to();
+  protected abstract ActionBuilder to();
 
   public DbKeysBuilder() {
     currentKeys.set(this);
-    if (BlobAntiPatternObject.DEBUG_SENDJSON) debug();
+    if (BlobAntiPatternObject.DEBUG_SENDJSON) {
+      debug();
+    }
 
   }
 
   public boolean validate() {
     for (etype etype : parms.keySet()) {
       Object o = get(etype);
-      if (!etype.validate(o)) throw new ValidationException("!!! " + etype + " fails with value: " + o);
+      if (!etype.validate(o)) {
+        throw new ValidationException("!!! " + etype + " fails with value: " + o);
+      }
     }
     return true;
   }
 
-  public static <T, B extends DbKeysBuilder<T>> B get() {
-    return (B) currentKeys.get();
+  public static DbKeysBuilder get() {
+    return currentKeys.get();
   }
 
   public <T> T get(etype key) {
@@ -48,7 +52,12 @@ public abstract class DbKeysBuilder<T> {
     return (T) parms.remove(designDocId);
   }
 
-  public DbKeysBuilder<T> debug() {
+  /**
+   * creates a trace object here and now.
+   *
+   * @return
+   */
+  public DbKeysBuilder debug() {
     trace = new Throwable().fillInStackTrace();
     return this;
   }

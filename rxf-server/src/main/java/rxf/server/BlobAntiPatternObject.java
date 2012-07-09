@@ -7,19 +7,20 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Map;
 import java.util.concurrent.*;
-import java.util.regex.Pattern;
 
 import com.google.gson.*;
 import one.xio.AsioVisitor;
-import one.xio.AsioVisitor.Impl;
 import one.xio.HttpMethod;
 import rxf.server.web.inf.ProtocolMethodDispatch;
 
 import static java.lang.Math.abs;
 import static java.nio.channels.SelectionKey.OP_ACCEPT;
+import static one.xio.HttpMethod.UTF8;
 import static one.xio.HttpMethod.wheresWaldo;
+import static rxf.server.CouchNamespace.COUCH_DEFAULT_ORGNAME;
 
 /**
  * <a href='http://www.antipatterns.com/briefing/sld024.htm'> Blob Anti Pattern </a>
@@ -30,8 +31,6 @@ import static one.xio.HttpMethod.wheresWaldo;
  */
 public class BlobAntiPatternObject {
   public static final ScheduledExecutorService EXECUTOR_SERVICE = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() + 3);
-  private static Queue<SocketChannel> lazyQueue = new ConcurrentLinkedQueue<SocketChannel>();
-  public static final ThreadLocal<Map<String, String>> ThreadLocalSetCookies = new ThreadLocal<Map<String, String>>();
   public static final String YYYY_MM_DD_T_HH_MM_SS_SSSZ = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
   public static final Gson GSON = new GsonBuilder()
       .setDateFormat(YYYY_MM_DD_T_HH_MM_SS_SSSZ)
@@ -48,6 +47,7 @@ public class BlobAntiPatternObject {
   public static boolean DEBUG_SENDJSON = System.getenv().containsKey("DEBUG_SENDJSON");
   public static final InetSocketAddress COUCHADDR;
   public static InetAddress LOOPBACK = null;
+  public static final byte[] HEADER_TERMINATOR = "\r\n\r\n".getBytes(UTF8);
 
   static {
     try {
@@ -185,10 +185,6 @@ public class BlobAntiPatternObject {
   }
 
 
-  public static Map<HttpMethod, Map<Pattern, Impl>> getNamespace() {
-    return ProtocolMethodDispatch.NAMESPACE;
-  }
-
   public static String dequote(String s) {
     String ret = s;
     if (null != s && ret.startsWith("\"") && ret.endsWith("\"")) {
@@ -233,7 +229,7 @@ public class BlobAntiPatternObject {
   }
 
   public static String getDefaultOrgName() {
-    return System.getenv("RXF_ORGNAME") == null ? System.getProperty(CouchLocator.class.getCanonicalName().toLowerCase() + ".orgname", "rxf_") : System.getenv("RXF_ORGNAME").toLowerCase().trim();
+    return COUCH_DEFAULT_ORGNAME;
   }
 
   /**
@@ -254,8 +250,8 @@ public class BlobAntiPatternObject {
     int bl = terminator.length;
     int rskip = 0;
     for (int i = bl - 1; i >= 0 && !mismatch; i--) {
-      rskip ++;
-      int comparisonOffset = tb.position() - rskip ;
+      rskip++;
+      int comparisonOffset = tb.position() - rskip;
       if (comparisonOffset < 0) {
         prevMark--;
         if (prevMark < 0) {
@@ -263,7 +259,7 @@ public class BlobAntiPatternObject {
           break;
         } else {
           tb = prev[prevMark];
-          rskip=0;
+          rskip = 0;
           i++;
         }
       } else {
@@ -283,5 +279,9 @@ public class BlobAntiPatternObject {
 
   public static void setSendBufferSize(int sendBufferSize) {
     BlobAntiPatternObject.sendBufferSize = sendBufferSize;
+  }
+
+  public static String scrub(String scrubMe) {
+    return null == scrubMe ? null : scrubMe.trim().replace("//", "/").replace("..", ".");
   }
 }

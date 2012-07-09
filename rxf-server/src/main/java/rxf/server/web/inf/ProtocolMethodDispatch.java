@@ -11,21 +11,18 @@ import java.util.regex.Pattern;
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpMethod;
 import rxf.server.*;
+import rxf.server.Rfc822HeaderState.HttpRequest;
 
 import static java.nio.channels.SelectionKey.OP_READ;
-import static one.xio.HttpHeaders.Accept;
-import static one.xio.HttpHeaders.Content$2dEncoding;
-import static one.xio.HttpHeaders.Content$2dLength;
-import static one.xio.HttpHeaders.Content$2dType;
-import static one.xio.HttpHeaders.ETag;
-import static one.xio.HttpHeaders.Transfer$2dEncoding;
 import static one.xio.HttpMethod.GET;
 import static one.xio.HttpMethod.POST;
+import static one.xio.HttpMethod.UTF8;
+import static rxf.server.CouchNamespace.NAMESPACE;
 
 /**
  * this class holds a protocol namespace to dispatch requests
  * <p/>
- * {@link  #NAMESPACE } is a  map of http methods each containing an ordered map of regexes tested in order of
+ * {@link  rxf.server.CouchNamespace#NAMESPACE } is a  map of http methods each containing an ordered map of regexes tested in order of
  * map insertion.
  * <p/>
  * User: jim
@@ -33,6 +30,8 @@ import static one.xio.HttpMethod.POST;
  * Time: 12:37 PM
  */
 public class ProtocolMethodDispatch extends Impl {
+
+  public static final ByteBuffer NONCE = ByteBuffer.allocate(0);
 
   /**
    * if you *must* register a new priority ahead of existing patterns, this is how.  otherwise the LinkedHashMap stays ordered as defined.
@@ -42,14 +41,14 @@ public class ProtocolMethodDispatch extends Impl {
    * @param impl
    * @return
    */
-  public static Map<Pattern, Impl> precedeAllWith(HttpMethod method, Pattern pattern
-      , Impl impl) {
-    Map<Pattern, Impl> patternImplMap = NAMESPACE.get(method);
-    LinkedHashMap<Pattern, Impl> ret = new LinkedHashMap<Pattern, Impl>();
+  public static Map<Pattern, Class<? extends Impl>> precedeAllWith(HttpMethod method, Pattern pattern
+      , Class<? extends Impl> impl) {
+    Map<Pattern, Class<? extends Impl>> patternImplMap = NAMESPACE.get(method);
+    Map<Pattern, Class<? extends Impl>> ret = new LinkedHashMap<Pattern, Class<? extends Impl>>();
     ret.put(pattern, impl);
-    if (null == patternImplMap) patternImplMap = new LinkedHashMap<Pattern, Impl>();
+    if (null == patternImplMap) patternImplMap = new LinkedHashMap<Pattern, Class<? extends Impl>>();
 
-    for (Entry<Pattern, Impl> patternImplEntry : patternImplMap.entrySet()) {
+    for (Entry<Pattern, Class<? extends Impl>> patternImplEntry : patternImplMap.entrySet()) {
       ret.put(patternImplEntry.getKey(), patternImplEntry.getValue());
     }
     NAMESPACE.put(method, ret);
@@ -58,25 +57,14 @@ public class ProtocolMethodDispatch extends Impl {
   }
 
   /**
-   * a map of http methods each containing an ordered map of regexes tested in order of
-   * map insertion.
-   */
-  public static final Map<HttpMethod, Map<Pattern, Impl>> NAMESPACE = new EnumMap<HttpMethod, Map<Pattern, Impl>>(HttpMethod.class);
-
-  /**
    * the PUT protocol handlers, only static for the sake of javadocs
    */
-  public static Map<Pattern, Impl> PUTmap = new LinkedHashMap<Pattern, Impl>();
+  public static Map<Pattern, Class<? extends Impl>> PUTmap = new LinkedHashMap<Pattern, Class<? extends Impl>>();
 
   /**
    * the GET protocol handlers, only static for the sake of javadocs
    */
-  public static Map<Pattern, Impl> GETmap = new LinkedHashMap<Pattern, Impl>();
-
-  /**
-   *
-   */
-  public static final String RXF_SERVER_CONTENT_ROOT = "rxf.server.content.root";
+  public static Map<Pattern, Class<? extends Impl>> GETmap = new LinkedHashMap<Pattern, Class<? extends Impl>>();
 
   static {
     NAMESPACE.put(POST, PUTmap);
@@ -87,7 +75,7 @@ public class ProtocolMethodDispatch extends Impl {
      *
      * TODO: rf GET from query parameters
      */
-    PUTmap.put(Pattern.compile("^/gwtRequest"), new GwtRequestFactoryVisitor());
+    PUTmap.put(Pattern.compile("^/gwtRequest"), GwtRequestFactoryVisitor.class);
 
 
     /**
@@ -95,8 +83,7 @@ public class ProtocolMethodDispatch extends Impl {
      */
 
     Pattern passthroughExpr = Pattern.compile("^/i(/.*)$");
-    HttpProxyImpl theCouchImagePassthru = new HttpProxyImpl(passthroughExpr);
-    GETmap.put(passthroughExpr, theCouchImagePassthru);
+    GETmap.put(passthroughExpr, HttpProxyImpl.class/*(passthroughExpr)*/);
 
     /**
      * general purpose httpd static content server that recognizes .gz and other compression suffixes when convenient
@@ -107,11 +94,10 @@ public class ProtocolMethodDispatch extends Impl {
      *
      * system proprty: RXF_SERVER_CONTENT_ROOT
      */
-    GETmap.put(Pattern.compile(".*"), new ContentRootImpl(System.getProperty(RXF_SERVER_CONTENT_ROOT, "./")));
+    GETmap.put(Pattern.compile(".*"), ContentRootImpl.class/*(COUCH_DEFAULT_FS_ROOT)*/);
   }
 
 
-  @Override
   public void onAccept(SelectionKey key) throws IOException {
     ServerSocketChannel channel = (ServerSocketChannel) key.channel();
     SocketChannel accept = channel.accept();
@@ -120,7 +106,7 @@ public class ProtocolMethodDispatch extends Impl {
 
   }
 
-  @Override
+
   public void onRead(SelectionKey key) throws Exception {
     SocketChannel channel = (SocketChannel) key.channel();
 
@@ -130,14 +116,18 @@ public class ProtocolMethodDispatch extends Impl {
       ((SocketChannel) key.channel()).socket().close();//cancel();
       return;
     }
-    //break down the incoming addHeaderInterest.
-    Rfc822HeaderState state;
 
-    ActionBuilder.get().state().headerInterest(Content$2dLength, Content$2dType, Content$2dEncoding, ETag, Transfer$2dEncoding, Accept).cookies(BlobAntiPatternObject.class.getCanonicalName(), BlobAntiPatternObject.MYGEOIPSTRING).sourceKey(key).apply((ByteBuffer) cursor.flip());
     HttpMethod method = null;
+    HttpRequest httpRequest = null;
     try {
-//find the method to dispatch
-      method = HttpMethod.valueOf(ActionBuilder.get().state().methodProtocol());
+      //find the method to dispatch
+      Rfc822HeaderState state = ActionBuilder.get().state();
+      Rfc822HeaderState apply = state.apply((ByteBuffer) cursor.flip());
+      httpRequest = apply.$req();
+      System.err.println(BlobAntiPatternObject.deepToString(UTF8.decode((ByteBuffer) httpRequest.headerBuf().duplicate().rewind())));
+      String method1 = httpRequest.method();
+      method = HttpMethod.valueOf(method1);
+
     } catch (Exception e) {
     }
 
@@ -146,26 +136,30 @@ public class ProtocolMethodDispatch extends Impl {
 
       return;
     }
-    //check for namespace registration
-    // todo: preRead is  wierd initiailizer which needs some review.
-    for (Entry<Pattern, Impl> visitorEntry : BlobAntiPatternObject.getNamespace().get(method).entrySet()) {
-      Matcher matcher = visitorEntry.getKey().matcher(ActionBuilder.get().state().pathResCode());
-      if (matcher.find()) {
-        Impl impl = visitorEntry.getValue();
 
-        Impl ob = impl.preRead(ActionBuilder.get().state(), cursor);
-        if (null != ob) {
-          key.attach(ob);
-//        visitorEntry.getValue().onRead(key);
-          key.selector().wakeup();
+    Set<Entry<Pattern, Class<? extends Impl>>> entries = NAMESPACE.get(method).entrySet();
+    for (Entry<Pattern, Class<? extends Impl>> visitorEntry :
+        entries) {
+      Matcher matcher = visitorEntry.getKey().matcher(httpRequest.path());
+      if (matcher.find()) {
+        Class<? extends Impl> value = visitorEntry.getValue();
+        Impl impl;
+
+        impl = value.newInstance();
+        Object a[] = {impl, httpRequest, cursor};
+        key.attach(a);
+
+        if (PreRead.class.isAssignableFrom(value)) {
+          impl.onRead(key);
         }
-        return;
+        key.selector().wakeup();
+
+        break;
       }
-    }
-    switch (method) {
-      default:
-        throw new Error(BlobAntiPatternObject.arrToString("unknown method in", ActionBuilder.get().state()));
+
     }
   }
+
 }
+
 

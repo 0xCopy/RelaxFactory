@@ -115,8 +115,6 @@ public class PathologicalBufferSizeTest extends TestCase {
     }
 
     public void testMissingDocLowLevelFailure() {
-
-
         CouchTx tx = DocPersist.$().db("dne_dne").validjson("{}").to().fire().tx();
         //new contract for non-20x results is find the nearest window and get to ground.
         assertNull(tx);
