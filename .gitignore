@@ -4,9 +4,9 @@ test-classes
 .idea
 target
 war
-#.settings
-#.project
-#.classpath
+.settings
+.project
+.classpath
 *.iws
 *.iml
 *.ipr
