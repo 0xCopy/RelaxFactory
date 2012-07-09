@@ -19,10 +19,33 @@ public interface CouchNamespace<T> {
      * map insertion.
      */
     Map<HttpMethod, Map<Pattern, AsioVisitor.Impl>> NAMESPACE = new EnumMap<HttpMethod, Map<Pattern, AsioVisitor.Impl>>(HttpMethod.class);
-    String RXF_SERVER_CONTENT_ROOT_SYSTEM_KEY = "rxf.server.content.root";
-    String COUCH_DEFAULT_FS_ROOT = System.getProperty(RXF_SERVER_CONTENT_ROOT_SYSTEM_KEY, "./");
+
+
+    /**
+     * a key for java -D xxxx to specify a deployment dir.
+     */
+    String RXF_SERVER_CONTENT_ROOT_SYSTEM_KEY = "rxf.server.content.root",
+    /**
+     * a key for java -D xxxx to specify a tenant name
+     */
+    RXF_ORGNAME_SYSTEM_KEY = "rxf.orgname";
+
+    /**
+     * a key to specify tenant name among otherwise identical apps on a common couch server
+     * <p/>
+     * overrides {@link #RXF_ORGNAME_SYSTEM_KEY}
+     */
     String RXF_ORGNAME_ENV_KEY = "RXF_ORGNAME";
-    String COUCH_DEFAULT_ORGNAME = System.getenv("RXF_ORGNAME") == null ? System.getProperty(CouchLocator.class.getCanonicalName().toLowerCase() + ".orgname", "rxf_") : System.getenv(RXF_ORGNAME_ENV_KEY).toLowerCase().trim();
+
+    /**
+     * defines where 1xio finds static content root.
+     */
+    String COUCH_DEFAULT_FS_ROOT = System.getProperty(RXF_SERVER_CONTENT_ROOT_SYSTEM_KEY, "./");
+
+    /**
+     * creates the orgname used in factories without localized namespaces
+     */
+    String COUCH_DEFAULT_ORGNAME = System.getenv(RXF_ORGNAME_ENV_KEY) == null ? System.getProperty(RXF_ORGNAME_SYSTEM_KEY, "rxf_") : System.getenv(RXF_ORGNAME_ENV_KEY).toLowerCase().trim();
 
     String getOrgName();
 
