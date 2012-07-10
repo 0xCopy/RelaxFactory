@@ -581,7 +581,7 @@ public enum CouchMetaDriver {
             Class type = (Class) dbKeysBuilder.get(etype.type);
             final SocketChannel channel = createCouchConnection();
             enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
-                ByteBuffer cursor;
+
                 /**
                  * holds un-rewound raw buffers.  must potentially be backtracked to fulfill CE_TERMINAL.length token check under pathological fragmentation
                  */
@@ -591,6 +591,7 @@ public enum CouchMetaDriver {
                 private HttpRequest request;
                 private ByteBuffer header;
                 private HttpResponse response;
+                private ByteBuffer cursor;
 
 
                 public void onWrite(SelectionKey key) throws Exception {
@@ -642,7 +643,7 @@ public enum CouchMetaDriver {
 
                                 if (response.headerStrings().containsKey(Content$2dLength.getHeader())) {  //rarity but for empty rowsets
                                     final String remainingString = response.headerString(Content$2dLength);
-                                    int remaining = Integer.parseInt(remainingString);
+                                    final int remaining = Integer.parseInt(remainingString);
                                     if (cursor.remaining() == remaining) {
                                         payload.set(cursor.slice());
                                         EXECUTOR_SERVICE.submit(new Callable() {
@@ -653,13 +654,21 @@ public enum CouchMetaDriver {
                                             }
                                         });
                                     } else {
-                                        cursor = ByteBuffer.allocateDirect(remaining).put(cursor);
+                                        //windows workaround?
                                         key.attach(new Impl() {
+                                            private ByteBuffer cursor1 = cursor.capacity() > remaining ? (ByteBuffer) cursor.limit(remaining) : ByteBuffer.allocateDirect(remaining).put(cursor);
 
                                             public void onRead(SelectionKey key) throws Exception {
-                                                channel.read(cursor);
-                                                if (cursor.hasRemaining()) {
-                                                    payload.set(cursor);
+                                                int read1 = channel.read(cursor1);
+                                                switch (read1) {
+                                                    case -1:
+                                                        joinPoint.reset();
+                                                        key.cancel();
+                                                        channel.close();
+                                                        break;
+                                                }
+                                                if (!cursor1.hasRemaining()) {
+                                                    payload.set((ByteBuffer) cursor1.flip());
                                                     EXECUTOR_SERVICE.submit(new Callable() {
                                                         public Object call() throws Exception {
                                                             joinPoint.await();
