@@ -127,6 +127,7 @@ public enum CouchMetaDriver {
                                 break;
                             default: //error
                                 cyclicBarrier.reset();
+                                key.cancel();
                         }
                     } else {
                         int read = channel.read(cursor);
@@ -154,7 +155,11 @@ public enum CouchMetaDriver {
                     });                                         //V
                 }                                             //V
             });                                             //V
-            int await = cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
+            try {
+                cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
+            } catch (Exception e) {
+//                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
             return payload.get();
         }
     },
@@ -248,7 +253,11 @@ public enum CouchMetaDriver {
                     });                                       //V
                 }                                           //V
             });                                           //V
-            int await = cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
+            try {
+                cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
+            } catch (Exception e) {
+//                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
             return payload.get();
         }
     },
@@ -351,11 +360,11 @@ public enum CouchMetaDriver {
                         }                                              //V
                     });                                              //V
                 }                                                  //V
-            });                                                  //V
-            try {                                                //V
+            });                                                     //V
+            try {
                 cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
-            } catch (BrokenBarrierException ex) {
-                // non-200 error code
+            } catch (Exception e) {
+//                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
 
             return payload.get();
@@ -445,11 +454,11 @@ public enum CouchMetaDriver {
                         }                                       //V
                     }                                         //V
                 }                                           //V
-            });                                           //V
-            try {                                         //V
-                cyclicBarrier.await(3, getDefaultCollectorTimeUnit());
+            });                                        //V
+            try {
+                cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
             } catch (Exception e) {
-
+//                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
             return payload.get();
         }
@@ -556,7 +565,11 @@ public enum CouchMetaDriver {
                     });                                                             //V
                 }                                                                 //V
             });                                                                 //V
-            int await = cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
+            try {
+                cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
+            } catch (Exception e) {
+//                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
             return payload.get();
         }
     },
@@ -593,6 +606,18 @@ public enum CouchMetaDriver {
                 private HttpResponse response;
                 private ByteBuffer cursor;
 
+                private void simpleDeploy(ByteBuffer flip1) {
+                    Callable task = new Callable() {
+                        public Object call() throws Exception {
+                            joinPoint.await();
+                            recycleChannel(channel);
+                            return null;
+                        }
+                    };
+                    payload.set((ByteBuffer) flip1);
+                    EXECUTOR_SERVICE.submit(task);
+                }
+
 
                 public void onWrite(SelectionKey key) throws Exception {
 
@@ -627,68 +652,54 @@ public enum CouchMetaDriver {
                         if (BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, currentBuff)) {
                             cursor = (ByteBuffer) flip.slice();
                             header = null;
+
+
+                            if (DEBUG_SENDJSON) {
+                                System.err.println(deepToString(response.statusEnum(), response, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
+                            }
+
+
+                            HttpStatus httpStatus = response.statusEnum();
+                            switch (httpStatus) {
+                                case $200:
+
+                                    if (response.headerStrings().containsKey(Content$2dLength.getHeader())) {  //rarity but for empty rowsets
+                                        final String remainingString = response.headerString(Content$2dLength);
+                                        final int remaining = Integer.parseInt(remainingString);
+                                        if (cursor.remaining() == remaining) {
+                                            ByteBuffer slice = cursor.slice();
+                                            simpleDeploy(slice);
+                                        } else {
+                                            //windows workaround?
+                                            key.attach(new Impl() {
+                                                private ByteBuffer cursor1 = cursor.capacity() > remaining ? (ByteBuffer) cursor.limit(remaining) : ByteBuffer.allocateDirect(remaining).put(cursor);
+
+                                                public void onRead(SelectionKey key) throws Exception {
+                                                    int read1 = channel.read(cursor1);
+                                                    switch (read1) {
+                                                        case -1:
+                                                            joinPoint.reset();
+                                                            key.cancel();
+                                                            channel.close();
+                                                            break;
+                                                    }
+                                                    if (!cursor1.hasRemaining()) {
+                                                        ByteBuffer flip1 = (ByteBuffer) cursor1.flip();
+                                                        simpleDeploy(flip1);
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    }
+                                    cursor = cursor.slice().compact();
+                                    break;
+                                default:
+                                    joinPoint.reset();
+                                    recycleChannel(channel);
+                                    return;
+                            }
                         } else {
                             return;
-                        }
-
-
-                        if (DEBUG_SENDJSON) {
-                            System.err.println(deepToString(response.statusEnum(), response, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
-                        }
-
-
-                        HttpStatus httpStatus = response.statusEnum();
-                        switch (httpStatus) {
-                            case $200:
-
-                                if (response.headerStrings().containsKey(Content$2dLength.getHeader())) {  //rarity but for empty rowsets
-                                    final String remainingString = response.headerString(Content$2dLength);
-                                    final int remaining = Integer.parseInt(remainingString);
-                                    if (cursor.remaining() == remaining) {
-                                        payload.set(cursor.slice());
-                                        EXECUTOR_SERVICE.submit(new Callable() {
-                                            public Object call() throws Exception {
-                                                joinPoint.await();
-                                                recycleChannel(channel);
-                                                return null;
-                                            }
-                                        });
-                                    } else {
-                                        //windows workaround?
-                                        key.attach(new Impl() {
-                                            private ByteBuffer cursor1 = cursor.capacity() > remaining ? (ByteBuffer) cursor.limit(remaining) : ByteBuffer.allocateDirect(remaining).put(cursor);
-
-                                            public void onRead(SelectionKey key) throws Exception {
-                                                int read1 = channel.read(cursor1);
-                                                switch (read1) {
-                                                    case -1:
-                                                        joinPoint.reset();
-                                                        key.cancel();
-                                                        channel.close();
-                                                        break;
-                                                }
-                                                if (!cursor1.hasRemaining()) {
-                                                    payload.set((ByteBuffer) cursor1.flip());
-                                                    EXECUTOR_SERVICE.submit(new Callable() {
-                                                        public Object call() throws Exception {
-                                                            joinPoint.await();
-                                                            recycleChannel(channel);
-                                                            return null;
-                                                        }
-                                                    });
-                                                }
-                                            }
-                                        });
-                                    }
-                                }
-                                cursor = cursor.slice().compact();
-//                key.attach(this);
-//                key.selector().wakeup();
-                                break;
-                            default:
-                                joinPoint.reset();
-                                recycleChannel(channel);
-                                return;
                         }
                     } else
                         try {
@@ -779,7 +790,12 @@ public enum CouchMetaDriver {
                     });                            //V
                 }                                //V
             });                                //V                                    //V
-            joinPoint.await(5L, getDefaultCollectorTimeUnit());//5 seconds query is enough.
+            try {
+                joinPoint.await(5L, getDefaultCollectorTimeUnit());//5 seconds query is enough.
+
+            } catch (Exception e) {
+//                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
             return payload.get();
         }
     },
@@ -879,7 +895,8 @@ public enum CouchMetaDriver {
                             int read = channel.read(header);
                         } catch (IOException e) {
                             cyclicBarrier.reset();
-                            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                            deepToString(e);
+                            channel.close();
                         }
                         ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
                         response.apply((ByteBuffer) flip);
@@ -933,15 +950,11 @@ public enum CouchMetaDriver {
                     });
                     recycleChannel(channel);                           //V
                 }                                                    //V
-            });                                                    //V
+            });
             try {
                 cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
             } catch (Exception e) {
-//                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-//            } catch (BrokenBarrierException e) {
-//                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-//            } catch (TimeoutException e) {
-//                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+//                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
 
             return payload.get();
@@ -1032,6 +1045,7 @@ public enum CouchMetaDriver {
 //
 //  }
     ;
+
     public static final byte[] HEADER_TERMINATOR = "\r\n\r\n".getBytes(UTF8);
     public static final byte[] CE_TERMINAL = "\n0\r\n\r\n".getBytes(UTF8);
 

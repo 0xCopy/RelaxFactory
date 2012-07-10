@@ -14,6 +14,7 @@ import rxf.server.web.inf.ProtocolMethodDispatch;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import static rxf.server.BlobAntiPatternObject.GSON;
 
@@ -176,7 +177,11 @@ public class CouchDriverTest extends TestCase {
         assertTrue(tx.ok());
         assertFalse(obj.get("_rev").equals(tx.getRev()));
         assertEquals(obj.get("_id"), tx.id());
-
+        try {
+            TimeUnit.MILLISECONDS.sleep(500);
+        } catch (InterruptedException e) {
+            fail(e.toString());
+        }
         data = ViewFetch.$().db(SOMEDB).type(Map.class).view(DESIGN_SAMPLE + "/_view/foo?key=\"d\"").to().fire().rows();
         assertNotNull(data);
         assertEquals(8, data.rows.size());
@@ -194,5 +199,6 @@ public class CouchDriverTest extends TestCase {
         designDoc = DesignDocFetch.$().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
         assertNull(designDoc);
     }
+
 
 }
