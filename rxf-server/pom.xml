@@ -37,12 +37,12 @@
             <version>2.1</version>
         </dependency>
 
-        <dependency>
+        <!--  <dependency>
             <groupId>com.googlecode.gwtquery</groupId>
             <artifactId>gwtquery</artifactId>
             <version>1.1.1-SNAPSHOT</version>
             <scope>provided</scope>
-        </dependency>
+        </dependency>-->
 
         <dependency>
             <groupId>com.google.web.bindery</groupId>
@@ -78,7 +78,7 @@
     </dependencies>
     <build>
         <plugins>
-            <!--<plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
@@ -87,10 +87,10 @@
                     <target>${java.version}</target>
                     <showDeprecation>true</showDeprecation>
                     <showWarnings>true</showWarnings>
-                    &lt;!&ndash;<executable>${env.JAVA_HOME_7}/bin/javac</executable>&ndash;&gt;
-                    &lt;!&ndash;<fork>true</fork>&ndash;&gt;
+                    <!--<executable>${env.JAVA_HOME_7}/bin/javac</executable>-->
+                    <!--<fork>true</fork>-->
                 </configuration>
-            </plugin>-->
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>

@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.google.web.bindery.requestfactory.shared.Locator;
 import one.xio.HttpMethod;
+import rxf.server.gen.CouchDriver;
 import rxf.server.gen.CouchDriver.DocFetch;
 import rxf.server.gen.CouchDriver.DocPersist;
 
@@ -80,10 +81,18 @@ public abstract class CouchLocator<T> extends Locator<T, String> implements Couc
   }
 
   public CouchTx persist(T domainObject) throws Exception {
-    String pathPrefix = getEntityName();
-    String id = getId(domainObject);
 
-    return DocPersist.$().db(pathPrefix).validjson(GSON.toJson(domainObject)).to().fire().tx();
+                 CouchTx ret=null;
+      try {
+            String pathPrefix = getEntityName();
+    String id = getId(domainObject);
+          final DocPersist.DocPersistTerminalBuilder fire = DocPersist.$().db(pathPrefix).validjson(GSON.toJson(domainObject)).to().fire();
+          ret= fire.tx();
+      } catch (Exception e) {
+          e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      } finally {
+      }
+          return ret;
   }
 
   List<T> findAll() {

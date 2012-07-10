@@ -88,7 +88,7 @@ public enum DbTerminal {
                             "        return (CouchTx)rxf.server.BlobAntiPatternObject.GSON.fromJson(one.xio.HttpMethod.UTF8.decode(" +
                             " rxf.server.driver.CouchMetaDriver." + couchDriver + ".visit()).toString(),CouchTx.class);\n" +
                             "      } catch (Exception e) {\n" +
-                            "        e.printStackTrace();   \n" +
+                            "        if(rxf.server.BlobAntiPatternObject.DEBUG_SENDJSON)e.printStackTrace();   \n" +
                             "      } return null;} " : ";");
         }
     },

@@ -55,7 +55,7 @@ public abstract class ActionBuilder {
         return this;
     }
 
-    public static <T> ActionBuilder get() {
+    public static ActionBuilder get() {
         if (currentAction.get() == null)
             currentAction.set(new ActionBuilder() {
                 @Override
