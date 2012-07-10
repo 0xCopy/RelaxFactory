@@ -11,60 +11,60 @@ import static one.xio.HttpHeaders.ETag;
  * Date: 5/29/12
  * Time: 1:58 PM
  */
-public abstract class ActionBuilder<T> {
+public abstract class ActionBuilder {
 
-  public static final String[] HEADER_INTEREST = Rfc822HeaderState.staticHeaderStrings(ETag, Content$2dLength);
-  private AtomicReference<Rfc822HeaderState> state = new AtomicReference<Rfc822HeaderState>();
-  private SelectionKey key;
-  protected static ThreadLocal<ActionBuilder<?>> currentAction = new InheritableThreadLocal<ActionBuilder<?>>();
+    public static final String[] HEADER_INTEREST = Rfc822HeaderState.staticHeaderStrings(ETag, Content$2dLength);
+    private AtomicReference<Rfc822HeaderState> state = new AtomicReference<Rfc822HeaderState>();
+    private SelectionKey key;
+    protected static ThreadLocal<ActionBuilder> currentAction = new InheritableThreadLocal<ActionBuilder>();
 
-  public ActionBuilder() {
-    currentAction.set(this);
-  }
+    public ActionBuilder() {
+        currentAction.set(this);
+    }
 
-  public abstract TerminalBuilder<T> fire();
+    public abstract TerminalBuilder fire();
 
-  @Override
-  public String toString() {
-    return "ActionBuilder{" +
-        "state=" + state +
-        ", key=" + key +
-        '}';
-  }
+    @Override
+    public String toString() {
+        return "ActionBuilder{" +
+                "state=" + state +
+                ", key=" + key +
+                '}';
+    }
 
-  public Rfc822HeaderState state() {
-    Rfc822HeaderState ret = this.state.get();
-    if (null == ret) state.set(ret = new Rfc822HeaderState(HEADER_INTEREST));
-    return ret;
-  }
+    public Rfc822HeaderState state() {
+        Rfc822HeaderState ret = this.state.get();
+        if (null == ret) state.set(ret = new Rfc822HeaderState(HEADER_INTEREST));
+        return ret;
+    }
 
-  public SelectionKey key() {
-    return this.key;
-  }
-
-
-  public ActionBuilder<T> state(Rfc822HeaderState state) {
-    this.state.set(state);
-    return this;
-  }
+    public SelectionKey key() {
+        return this.key;
+    }
 
 
-  public ActionBuilder<T> key(SelectionKey key) {
-    this.key = key;
+    public ActionBuilder state(Rfc822HeaderState state) {
+        this.state.set(state);
+        return this;
+    }
 
-    return this;
-  }
 
-  public static <T> ActionBuilder<T> get() {
-    if (currentAction.get() == null)
-      currentAction.set(new ActionBuilder<T>() {
-        @Override
-        public TerminalBuilder<T> fire() {
-          throw new AbstractMethodError("This is a ActionBuilder with no DbKeysBuilder and therefore now Terminal");
-        }
-      });
-    return (ActionBuilder<T>) currentAction.get();
-  }
+    public ActionBuilder key(SelectionKey key) {
+        this.key = key;
+
+        return this;
+    }
+
+    public static <T> ActionBuilder get() {
+        if (currentAction.get() == null)
+            currentAction.set(new ActionBuilder() {
+                @Override
+                public TerminalBuilder fire() {
+                    throw new AbstractMethodError("This is a ActionBuilder with no DbKeysBuilder and therefore now Terminal");
+                }
+            });
+        return (ActionBuilder) currentAction.get();
+    }
 
 
 }

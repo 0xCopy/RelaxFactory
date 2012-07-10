@@ -14,7 +14,10 @@ import rxf.server.gen.CouchDriver.ViewFetch.ViewFetchTerminalBuilder;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.net.URLEncoder;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -43,7 +46,7 @@ public class CouchServiceFactory {
      */
     private static class CouchServiceHandler<E> implements InvocationHandler, CouchNamespace<E> {
         AtomicReference<Map<String, String>> viewMethods = new AtomicReference<Map<String, String>>(new TreeMap<String, String>());
-        private Future<Object> init;
+        private Future init;
         Class<E> entityType;
 
         public CouchServiceHandler(Class<?> serviceInterface, String... ns) throws ExecutionException, InterruptedException {
@@ -74,7 +77,7 @@ public class CouchServiceFactory {
             Type[] genericInterfaces = serviceInterface.getGenericInterfaces();
             final ParameterizedType genericInterface = (ParameterizedType) genericInterfaces[0];
             entityType = (Class<E>) genericInterface.getActualTypeArguments()[0];
-            init = EXECUTOR_SERVICE.submit(new Callable<Object>() {
+            init = EXECUTOR_SERVICE.submit(new Callable() {
 
 
                 public Object call() throws Exception {
@@ -115,7 +118,7 @@ public class CouchServiceFactory {
                                     //old, annotation-less queries
                                     queryBuilder.append("key=%1$s");
                                 } else {
-                                    Map<String, String> queryParams = new HashMap<String, String>();
+                                    Map<String, String> queryParams = new TreeMap<String, String>();
                                     for (int i = 0; i < paramAnnotations.length; i++) {
                                         // look for a CouchRequestParam on this param, if none, ignore
                                         Annotation[] param = paramAnnotations[i];
@@ -165,7 +168,7 @@ public class CouchServiceFactory {
             init.get();
 
             if (viewMethods.get().containsKey(method.getName())) {
-                return EXECUTOR_SERVICE.submit(new Callable<Object>() {
+                return EXECUTOR_SERVICE.submit(new Callable() {
                     public Object call() throws Exception {
 
                         String name = method.getName();

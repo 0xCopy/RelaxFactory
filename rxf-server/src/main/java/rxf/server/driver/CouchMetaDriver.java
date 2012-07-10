@@ -57,7 +57,7 @@ import static rxf.server.an.DbKeys.etype.*;
 public enum CouchMetaDriver {
 
     @DbTask({tx, oneWay}) @DbKeys({db})DbCreate {
-        public <T> ByteBuffer visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+        public ByteBuffer visit(final DbKeysBuilder dbKeysBuilder, final ActionBuilder actionBuilder) throws Exception {
             final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
             final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
 //      final Rfc822HeaderState state = actionBuilder.state();
@@ -162,7 +162,7 @@ public enum CouchMetaDriver {
         }
     },
     @DbTask({tx, oneWay}) @DbKeys({db})DbDelete {
-        public <T> ByteBuffer visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+        public ByteBuffer visit(final DbKeysBuilder dbKeysBuilder, final ActionBuilder actionBuilder) throws Exception {
             final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
             final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
 
@@ -257,7 +257,7 @@ public enum CouchMetaDriver {
     },
 
     @DbTask({pojo, future, json}) @DbKeys({db, docId})DocFetch {
-        public <T> ByteBuffer visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+        public ByteBuffer visit(final DbKeysBuilder dbKeysBuilder, final ActionBuilder actionBuilder) throws Exception {
             final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
 
             final SocketChannel channel = createCouchConnection();
@@ -367,7 +367,7 @@ public enum CouchMetaDriver {
 
 
     @DbTask({json, future}) @DbKeys({db, docId})RevisionFetch {
-        public <T> ByteBuffer visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+        public ByteBuffer visit(final DbKeysBuilder dbKeysBuilder, final ActionBuilder actionBuilder) throws Exception {
             final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
             final SocketChannel channel = createCouchConnection();
             final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
@@ -430,7 +430,7 @@ public enum CouchMetaDriver {
                         response.apply((ByteBuffer) flip);
 
                         if (BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, response.headerBuf())) {
-                            EXECUTOR_SERVICE.submit(new Callable<Object>() {
+                            EXECUTOR_SERVICE.submit(new Callable() {
                                 public Object call() throws Exception {
                                     try {
                                         //assumes quoted
@@ -458,7 +458,7 @@ public enum CouchMetaDriver {
         }
     },
     @DbTask({tx, oneWay, future}) @DbKeys(value = {db, validjson}, optional = {docId, rev})DocPersist {
-        public <T> ByteBuffer visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
+        public ByteBuffer visit(DbKeysBuilder dbKeysBuilder, ActionBuilder actionBuilder) throws Exception {
 
             String db = (String) dbKeysBuilder.get(etype.db);
             String docId = (String) dbKeysBuilder.get(etype.docId);
@@ -470,7 +470,7 @@ public enum CouchMetaDriver {
         }
     },
     @DbTask({tx, oneWay, future}) @DbKeys(value = {db, docId, rev})DocDelete {
-        public <T> ByteBuffer visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+        public ByteBuffer visit(final DbKeysBuilder dbKeysBuilder, final ActionBuilder actionBuilder) throws Exception {
             final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
             final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
             final SocketChannel channel = createCouchConnection();
@@ -564,7 +564,7 @@ public enum CouchMetaDriver {
         }
     },
     @DbTask({pojo, future, json}) @DbKeys({db, designDocId})DesignDocFetch {
-        public <T> ByteBuffer visit(DbKeysBuilder<T> dbKeysBuilder, ActionBuilder<T> actionBuilder) throws Exception {
+        public ByteBuffer visit(DbKeysBuilder dbKeysBuilder, ActionBuilder actionBuilder) throws Exception {
             dbKeysBuilder.put(docId, dbKeysBuilder.remove(designDocId));
             return DocFetch.visit(dbKeysBuilder, actionBuilder);
         }
@@ -577,11 +577,11 @@ public enum CouchMetaDriver {
      * <u> statistically imperfect </u>means that data containing said token {@link  #CE_TERMINAL} delivered on  a packet boundary or byte-at-a-time will false trigger the suffix.
      */
     @DbTask({rows, future, continuousFeed}) @DbKeys(value = {db, view}, optional = type)ViewFetch {
-        public <T> ByteBuffer visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+        public ByteBuffer visit(final DbKeysBuilder dbKeysBuilder, final ActionBuilder actionBuilder) throws Exception {
             final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
             final CyclicBarrier joinPoint = new CyclicBarrier(2);
             final String db = scrub('/' + (String) dbKeysBuilder.get(etype.db));
-            Class<T> type = dbKeysBuilder.get(etype.type);
+            Class type = (Class) dbKeysBuilder.get(etype.type);
             final SocketChannel channel = createCouchConnection();
             enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
                 ByteBuffer cursor;
@@ -648,7 +648,7 @@ public enum CouchMetaDriver {
                                     int remaining = Integer.parseInt(remainingString);
                                     if (cursor.remaining() == remaining) {
                                         payload.set(cursor.slice());
-                                        EXECUTOR_SERVICE.submit(new Callable<Object>() {
+                                        EXECUTOR_SERVICE.submit(new Callable() {
                                             public Object call() throws Exception {
                                                 joinPoint.await();
                                                 recycleChannel(channel);
@@ -663,7 +663,7 @@ public enum CouchMetaDriver {
                                                 channel.read(cursor);
                                                 if (cursor.hasRemaining()) {
                                                     payload.set(cursor);
-                                                    EXECUTOR_SERVICE.submit(new Callable<Object>() {
+                                                    EXECUTOR_SERVICE.submit(new Callable() {
                                                         public Object call() throws Exception {
                                                             joinPoint.await();
                                                             recycleChannel(channel);
@@ -727,7 +727,7 @@ public enum CouchMetaDriver {
 
                 private void deliver() {
 
-                    EXECUTOR_SERVICE.submit(new Callable<Object>() {
+                    EXECUTOR_SERVICE.submit(new Callable() {
                         public Object call() throws Exception {
                             int sum = 0;
                             for (ByteBuffer byteBuffer : list) {
@@ -780,7 +780,7 @@ public enum CouchMetaDriver {
     //training day for the Terminal rewrites
 
     @DbTask({tx, oneWay, rows, json, future, continuousFeed}) @DbKeys(value = {opaque, validjson}, optional = type)JsonSend {
-        public <T> ByteBuffer visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+        public ByteBuffer visit(final DbKeysBuilder dbKeysBuilder, final ActionBuilder actionBuilder) throws Exception {
             final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
             final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
             String opaque = scrub('/' + (String) dbKeysBuilder.get(etype.opaque));
@@ -919,7 +919,7 @@ public enum CouchMetaDriver {
 
                 void deliver() throws BrokenBarrierException, InterruptedException {
                     payload.set(cursor);
-                    EXECUTOR_SERVICE.submit(new Callable<Object>() {
+                    EXECUTOR_SERVICE.submit(new Callable() {
                         public Object call() throws Exception {
                             cyclicBarrier.await();                 //V
                             return null;
@@ -945,7 +945,7 @@ public enum CouchMetaDriver {
 // TODO:
 // @DbTask({tx, future, oneWay})  @DbKeys({db, docId, opaque, mimetype, blob})BlobSend {
 //    
-//    public <T> Object visit(final DbKeysBuilder<T> dbKeysBuilder, final ActionBuilder<T> actionBuilder) throws Exception {
+//    public  Object visit(final DbKeysBuilder dbKeysBuilder, final ActionBuilder actionBuilder) throws Exception {
 //      final AtomicReference<String> payload = new AtomicReference<String>();
 //      final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
 //      CouchTx visit = (CouchTx) RevisionFetch.visit(dbKeysBuilder, actionBuilder);
@@ -1046,9 +1046,9 @@ public enum CouchMetaDriver {
     public static final String[] EMPTY = new String[0];
 
 
-    public <T> ByteBuffer visit() throws Exception {
-        DbKeysBuilder<T> dbKeysBuilder = (DbKeysBuilder<T>) DbKeysBuilder.get();
-        ActionBuilder<T> actionBuilder = ActionBuilder.get();
+    public ByteBuffer visit() throws Exception {
+        DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
+        ActionBuilder actionBuilder = ActionBuilder.get();
 
         if (!dbKeysBuilder.validate()) {
 
@@ -1058,8 +1058,8 @@ public enum CouchMetaDriver {
     }
 
     /*abstract */
-    public <T> ByteBuffer visit(DbKeysBuilder<T> dbKeysBuilder,
-                                ActionBuilder<T> actionBuilder) throws Exception {
+    public ByteBuffer visit(DbKeysBuilder dbKeysBuilder,
+                            ActionBuilder actionBuilder) throws Exception {
         throw new AbstractMethodError();
     }
 
@@ -1068,7 +1068,7 @@ public enum CouchMetaDriver {
     public static final String IFACE_FIRE_TARGETS = "/*fire interface ijnoifnj453oijnfiojn h*/";
     public static final String FIRE_METHODS = "/*embedded fire terminals j63l4k56jn4k3jn5l63l456jn*/";
 
-    public <T> String builder() throws NoSuchFieldException {
+    public String builder() throws NoSuchFieldException {
         Field field = CouchMetaDriver.class.getField(name());
 
 
@@ -1117,14 +1117,12 @@ public enum CouchMetaDriver {
                 }
             }
             String fqsn = rtype.getCanonicalName();
-            String pfqsn = fqsn + rtypeTypeParams;
-            s = "public class _ename_" +
-                    rtypeTypeParams + " extends DbKeysBuilder<" + pfqsn + "> {\n  private _ename_() {\n  }\n\n  static public " +
+//            String pfqsn = fqsn + rtypeTypeParams;
+            s = "public class _ename_" + rtypeTypeParams + " extends DbKeysBuilder  {\n  private _ename_() {\n  }\n\n  static public " +
                     rtypeBounds + " _ename_" + rtypeTypeParams + "\n\n  $() {\n    return new _ename_" + rtypeTypeParams +
                     "();\n  }\n\n  public interface _ename_TerminalBuilder" +
-                    rtypeTypeParams + " extends TerminalBuilder<" + pfqsn + "> {    " + IFACE_FIRE_TARGETS +
-                    "\n  }\n\n  public class _ename_ActionBuilder extends ActionBuilder<" + pfqsn
-                    + "> {\n    public _ename_ActionBuilder() {\n      super();\n    }\n\n    \n    public _ename_TerminalBuilder" +
+                    rtypeTypeParams + " extends TerminalBuilder {" + IFACE_FIRE_TARGETS +
+                    "\n  }\n\n  public class _ename_ActionBuilder extends ActionBuilder  {\n    public _ename_ActionBuilder() {\n      super();\n    }\n\n    \n    public _ename_TerminalBuilder" +
                     rtypeTypeParams + " fire() {\n      return new _ename_TerminalBuilder" +
                     rtypeTypeParams + "() {        \n      " + FIRE_METHODS + "\n      };\n    }\n\n    \n    " +
                     "public _ename_ActionBuilder state(Rfc822HeaderState state) {\n      " +
