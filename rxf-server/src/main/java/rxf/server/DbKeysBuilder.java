@@ -32,8 +32,8 @@ public abstract class DbKeysBuilder {
         return true;
     }
 
-    public static <T, B extends DbKeysBuilder> B get() {
-        return (B) currentKeys.get();
+    public static DbKeysBuilder get() {
+        return currentKeys.get();
     }
 
     public <T> T get(etype key) {

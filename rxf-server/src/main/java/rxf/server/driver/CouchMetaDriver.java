@@ -15,9 +15,6 @@ import rxf.server.an.DbTask;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.lang.reflect.GenericDeclaration;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
@@ -1085,7 +1082,7 @@ public enum CouchMetaDriver {
             }
             String rtypeTypeParams = "";
             String rtypeBounds = "";
-            if (0 != rtype.getTypeParameters().length) {
+            /*          if (0 != rtype.getTypeParameters().length) {
 
                 boolean first = true;
 
@@ -1115,9 +1112,8 @@ public enum CouchMetaDriver {
                     rtypeTypeParams = s0;
                     rtypeBounds = s1;
                 }
-            }
-            String fqsn = rtype.getCanonicalName();
-//            String pfqsn = fqsn + rtypeTypeParams;
+            }*/
+            //            String pfqsn = fqsn + rtypeTypeParams;
             s = "public class _ename_" + rtypeTypeParams + " extends DbKeysBuilder  {\n  private _ename_() {\n  }\n\n  static public " +
                     rtypeBounds + " _ename_" + rtypeTypeParams + "\n\n  $() {\n    return new _ename_" + rtypeTypeParams +
                     "();\n  }\n\n  public interface _ename_TerminalBuilder" +
