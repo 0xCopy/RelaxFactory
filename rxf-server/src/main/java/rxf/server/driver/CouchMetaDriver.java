@@ -102,36 +102,40 @@ public enum CouchMetaDriver {
                         if (BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, response.headerBuf())) {
                             cursor = (ByteBuffer) flip.slice();
                             header = null;
-                        } else {
-                            return;
-                        }
 
 
-                        if (DEBUG_SENDJSON) {
-                            System.err.println(deepToString(response.statusEnum(), response, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
-                        }
+                            if (DEBUG_SENDJSON) {
+                                System.err.println(deepToString(response.statusEnum(), response, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
+                            }
 
 
-                        HttpStatus httpStatus = response.statusEnum();
-                        switch (httpStatus) {
-                            case $200:
-                            case $201:
-                                int remaining = Integer.parseInt(response.headerString(Content$2dLength));
+                            HttpStatus httpStatus = response.statusEnum();
+                            switch (httpStatus) {
+                                case $200:
+                                case $201:
+                                    int remaining = Integer.parseInt(response.headerString(Content$2dLength));
 
 
-                                if (remaining == cursor.remaining()) {
-                                    deliver();
-                                } else {
-                                    cursor = ByteBuffer.allocate(remaining).put(cursor);
-                                }
-                                break;
-                            default: //error
-                                cyclicBarrier.reset();
-                                key.cancel();
+                                    if (remaining == cursor.remaining()) {
+                                        deliver();
+                                    } else {
+                                        cursor = ByteBuffer.allocate(remaining).put(cursor);
+                                    }
+                                    break;
+                                default: //error
+                                    cyclicBarrier.reset();
+                                    channel.close();
+                            }
                         }
                     } else {
                         int read = channel.read(cursor);
-                        if (-1 == read) cyclicBarrier.reset();
+                        switch (read) {
+                            case -1:
+                                cyclicBarrier.reset();
+
+                                channel.close();
+                                return;
+                        }
                         if (!cursor.hasRemaining()) {
                             cursor.flip();
                             deliver();
@@ -203,34 +207,39 @@ public enum CouchMetaDriver {
                         if (BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, response.headerBuf())) {
                             cursor = (ByteBuffer) flip.slice();
                             header = null;
-                        } else {
-                            return;
-                        }
 
 
-                        if (DEBUG_SENDJSON) {
-                            System.err.println(deepToString(response.statusEnum(), response, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
-                        }
+                            if (DEBUG_SENDJSON) {
+                                System.err.println(deepToString(response.statusEnum(), response, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
+                            }
 
 
-                        HttpStatus httpStatus = response.statusEnum();
-                        switch (httpStatus) {
-                            case $200:
-                                int remaining = Integer.parseInt(response.headerString(Content$2dLength));
+                            HttpStatus httpStatus = response.statusEnum();
+                            switch (httpStatus) {
+                                case $200:
+                                    int remaining = Integer.parseInt(response.headerString(Content$2dLength));
 
 
-                                if (remaining == cursor.remaining()) {
-                                    deliver();
-                                } else {
-                                    cursor = ByteBuffer.allocate(remaining).put(cursor);
-                                }
-                                break;
-                            default: //error
-                                cyclicBarrier.reset();
+                                    if (remaining == cursor.remaining()) {
+                                        deliver();
+                                    } else {
+                                        cursor = ByteBuffer.allocate(remaining).put(cursor);
+                                    }
+                                    break;
+                                default: //error
+                                    cyclicBarrier.reset();
+                                    channel.close();
+                            }
                         }
                     } else {
                         int read = channel.read(cursor);
-                        if (-1 == read) cyclicBarrier.reset();
+                        switch (read) {
+                            case -1:
+                                cyclicBarrier.reset();
+
+                                channel.close();
+                                return;
+                        }
                         if (!cursor.hasRemaining()) {
                             cursor.flip();
                             deliver();
@@ -308,34 +317,38 @@ public enum CouchMetaDriver {
                         if (BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, response.headerBuf())) {
                             cursor = (ByteBuffer) flip.slice();
                             header = null;
-                        } else {
-                            return;
-                        }
 
 
-                        if (DEBUG_SENDJSON) {
-                            System.err.println(deepToString(response.statusEnum(), response, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
-                        }
+                            if (DEBUG_SENDJSON) {
+                                System.err.println(deepToString(response.statusEnum(), response, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
+                            }
 
 
-                        HttpStatus httpStatus = response.statusEnum();
-                        switch (httpStatus) {
-                            case $200:
-                                int remaining = Integer.parseInt(response.headerString(Content$2dLength));
+                            HttpStatus httpStatus = response.statusEnum();
+                            switch (httpStatus) {
+                                case $200:
+                                    int remaining = Integer.parseInt(response.headerString(Content$2dLength));
 
 
-                                if (remaining == cursor.remaining()) {
-                                    deliver();
-                                } else {
-                                    cursor = ByteBuffer.allocate(remaining).put(cursor);
-                                }
-                                break;
-                            default: //error
-                                cyclicBarrier.reset();
+                                    if (remaining == cursor.remaining()) {
+                                        deliver();
+                                    } else {
+                                        cursor = ByteBuffer.allocate(remaining).put(cursor);
+                                    }
+                                    break;
+                                default: //error
+                                    cyclicBarrier.reset();
+                                    channel.close();
+                            }
                         }
                     } else {
                         int read = channel.read(cursor);
-                        if (-1 == read) cyclicBarrier.reset();
+                        switch (read) {
+                            case -1:
+                                cyclicBarrier.reset();
+                                channel.close();
+                                return;
+                        }
                         if (!cursor.hasRemaining()) {
                             cursor.flip();
                             deliver();
@@ -428,30 +441,49 @@ public enum CouchMetaDriver {
 
                     if (null == cursor) {
                         //geometric,  vulnerable to dev/null if not max'd here.
-                        header = (null == header) ? ByteBuffer.allocateDirect(getReceiveBufferSize()) : header.hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2).put((ByteBuffer) header.flip());
+                        header = (null == header) ?
+                                ByteBuffer.allocateDirect(getReceiveBufferSize()) :
+                                header.hasRemaining() ? header :
+                                        ByteBuffer.allocateDirect(header.capacity() * 2).put((ByteBuffer) header.flip());
 
                         int read = channel.read(header);
-                        if (-1 == read) cyclicBarrier.reset();
-                        ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
-                        response.apply((ByteBuffer) flip);
+                        if (-1 != read) {
+                            ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
+                            response.apply((ByteBuffer) flip);
 
-                        if (BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, response.headerBuf())) {
-                            EXECUTOR_SERVICE.submit(new Callable() {
-                                public Object call() throws Exception {
-                                    try {
-                                        //assumes quoted
-                                        payload.set(UTF8.encode(request.dequotedHeader(ETag.getHeader())));
-                                        cyclicBarrier.await();          //V
-                                        return null;                    //V
-                                    } catch (Exception e) {           //V
-                                        cyclicBarrier.reset();          //V
-                                    } finally {                       //V
-                                        recycleChannel(channel);        //V
-                                    }                                 //V
-                                    return null;                      //V
-                                }                                   //V
-                            });                                   //V
-                        }                                       //V
+                            if (BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, response.headerBuf())) {
+                                try {
+                                    payload.set(UTF8.encode(response.dequotedHeader(ETag.getHeader())));
+                                } catch (Exception e) {
+                                    if (DEBUG_SENDJSON) {
+                                        e.printStackTrace();
+                                        Throwable trace = dbKeysBuilder.trace();
+                                        if (trace != null) {
+                                            System.err.println("\tfrom:");
+                                            trace.printStackTrace();
+                                        }
+                                    }
+
+                                }
+                                EXECUTOR_SERVICE.submit(new Callable() {
+                                    public Object call() throws Exception {
+                                        try {
+                                            //assumes quoted
+                                            cyclicBarrier.await();          //V
+                                        } catch (Exception e) {           //V
+                                            cyclicBarrier.reset();
+                                            channel.close();        //V
+                                        } finally {                       //V
+                                            recycleChannel(channel);        //V
+                                        }                                 //V
+                                        return null;                      //V
+                                    }                                   //V
+                                });                                   //V
+                            }                                       //V
+                        } else {
+                            cyclicBarrier.reset();
+                            channel.close();
+                        }
                     }                                         //V
                 }                                           //V
             });                                        //V
@@ -514,28 +546,31 @@ public enum CouchMetaDriver {
                         header = (null == header) ? ByteBuffer.allocateDirect(getReceiveBufferSize()) : header.hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2).put((ByteBuffer) header.flip());
 
                         int read = channel.read(header);
-                        if (-1 == read) cyclicBarrier.reset();
+                        switch (read) {
+                            case -1:
+                                cyclicBarrier.reset();
+                                channel.close();
+                                break;
+                        }
                         ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
                         response.apply((ByteBuffer) flip);
 
                         if (BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, response.headerBuf())) {
                             cursor = (ByteBuffer) flip.slice();
                             header = null;
-                        } else {
-                            return;
-                        }
 
 
-                        if (DEBUG_SENDJSON) {
-                            System.err.println(deepToString(response.statusEnum(), response, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
-                        }
+                            if (DEBUG_SENDJSON) {
+                                System.err.println(deepToString(response.statusEnum(), response, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
+                            }
 
-                        int remaining = Integer.parseInt(response.headerString(Content$2dLength));
+                            int remaining = Integer.parseInt(response.headerString(Content$2dLength));
 
-                        if (remaining == cursor.remaining()) {
-                            deliver();
-                        } else {
-                            cursor = ByteBuffer.allocate(remaining).put(cursor);
+                            if (remaining == cursor.remaining()) {
+                                deliver();
+                            } else {
+                                cursor = ByteBuffer.allocate(remaining).put(cursor);
+                            }
                         }
                     } else {
                         int read = channel.read(cursor);
@@ -589,7 +624,7 @@ public enum CouchMetaDriver {
     @DbTask({rows, future, continuousFeed}) @DbKeys(value = {db, view}, optional = type)ViewFetch {
         public ByteBuffer visit(final DbKeysBuilder dbKeysBuilder, final ActionBuilder actionBuilder) throws Exception {
             final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
-            final CyclicBarrier joinPoint = new CyclicBarrier(2);
+            final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
             final String db = scrub('/' + (String) dbKeysBuilder.get(etype.db));
             Class type = (Class) dbKeysBuilder.get(etype.type);
             final SocketChannel channel = createCouchConnection();
@@ -606,16 +641,15 @@ public enum CouchMetaDriver {
                 private HttpResponse response;
                 private ByteBuffer cursor;
 
-                private void simpleDeploy(ByteBuffer flip1) {
-                    Callable task = new Callable() {
+                private void simpleDeploy(ByteBuffer buffer) {
+                    payload.set((ByteBuffer) buffer);
+                    EXECUTOR_SERVICE.submit(new Callable() {
                         public Object call() throws Exception {
-                            joinPoint.await();
+                            cyclicBarrier.await();
                             recycleChannel(channel);
                             return null;
                         }
-                    };
-                    payload.set((ByteBuffer) flip1);
-                    EXECUTOR_SERVICE.submit(task);
+                    });
                 }
 
 
@@ -678,8 +712,7 @@ public enum CouchMetaDriver {
                                                     int read1 = channel.read(cursor1);
                                                     switch (read1) {
                                                         case -1:
-                                                            joinPoint.reset();
-                                                            key.cancel();
+                                                            cyclicBarrier.reset();
                                                             channel.close();
                                                             break;
                                                     }
@@ -694,18 +727,18 @@ public enum CouchMetaDriver {
                                     cursor = cursor.slice().compact();
                                     break;
                                 default:
-                                    joinPoint.reset();
+                                    cyclicBarrier.reset();
                                     recycleChannel(channel);
                                     return;
                             }
-                        } else {
-                            return;
                         }
+                        return;
                     } else
                         try {
                             final int read = channel.read(cursor);
                             if (-1 == read) {
-                                if (cursor.position() > 0) list.add(cursor);
+                                if (cursor.position() > 0)
+                                    list.add(cursor);
                                 deliver();
                                 recycleChannel(channel);
                                 return;
@@ -784,14 +817,14 @@ public enum CouchMetaDriver {
                             }
 
                             payload.set(retval);       //V
-                            joinPoint.await();         //V
+                            cyclicBarrier.await();         //V
                             return null;               //V
                         }                            //V
                     });                            //V
                 }                                //V
             });                                //V                                    //V
             try {
-                joinPoint.await(5L, getDefaultCollectorTimeUnit());//5 seconds query is enough.
+                cyclicBarrier.await(5L, getDefaultCollectorTimeUnit());//5 seconds query is enough.
 
             } catch (Exception e) {
 //                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
@@ -904,35 +937,40 @@ public enum CouchMetaDriver {
                         if (BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, response.headerBuf())) {
                             cursor = (ByteBuffer) flip.slice();
                             header = null;
-                        } else {
-                            return;
-                        }
 
 
-                        if (DEBUG_SENDJSON) {
-                            System.err.println(deepToString(response.statusEnum(), response, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
-                        }
+                            if (DEBUG_SENDJSON) {
+                                System.err.println(deepToString(response.statusEnum(), response, UTF8.decode((ByteBuffer) cursor.duplicate().rewind())));
+                            }
 
 
-                        HttpStatus httpStatus = response.statusEnum();
-                        switch (httpStatus) {
-                            case $200:
-                            case $201:
-                                int remaining = Integer.parseInt(response.headerString(Content$2dLength));
+                            HttpStatus httpStatus = response.statusEnum();
+                            switch (httpStatus) {
+                                case $200:
+                                case $201:
+                                    int remaining = Integer.parseInt(response.headerString(Content$2dLength));
 
 
-                                if (remaining == cursor.remaining()) {
-                                    deliver();
-                                } else {
-                                    cursor = ByteBuffer.allocate(remaining).put(cursor);
-                                }
-                                break;
-                            default: //error
-                                cyclicBarrier.reset();
+                                    if (remaining == cursor.remaining()) {
+                                        deliver();
+                                    } else {
+                                        cursor = ByteBuffer.allocate(remaining).put(cursor);
+                                    }
+                                    break;
+                                default: //error
+                                    cyclicBarrier.reset();
+                                    channel.close();
+                            }
                         }
                     } else {
                         int read = channel.read(cursor);
-                        if (-1 == read) cyclicBarrier.reset();
+                        switch (read) {
+                            case -1:
+                                cyclicBarrier.reset();
+
+                                channel.close();
+                                return;
+                        }
                         if (!cursor.hasRemaining()) {
                             cursor.flip();
                             deliver();
