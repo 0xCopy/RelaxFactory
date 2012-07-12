@@ -192,7 +192,7 @@ public enum CouchMetaDriver {
         cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
       } catch (Exception e) {
         if (DEBUG_SENDJSON) {
-          System.err.println("!!! " + deepToString(e) + "\n\tfrom");
+          System.err.println("!!! " + deepToString(this,e) + "\n\tfrom");
           dbKeysBuilder.trace().printStackTrace();
         }
       }
@@ -299,7 +299,7 @@ public enum CouchMetaDriver {
         cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
       } catch (Exception e) {
         if (DEBUG_SENDJSON) {
-          System.err.println("!!! " + deepToString(e) + "\n\tfrom");
+          System.err.println("!!! " + deepToString(this,e) + "\n\tfrom");
           dbKeysBuilder.trace().printStackTrace();
         }
       }
@@ -415,7 +415,7 @@ public enum CouchMetaDriver {
         cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
       } catch (Throwable e) {
         if (DEBUG_SENDJSON) {
-          System.err.println("!!! " + deepToString(e) + "\n\tfrom");
+          System.err.println("!!! " + deepToString(this,e) + "\n\tfrom");
           dbKeysBuilder.trace().printStackTrace();
         }
       }
@@ -474,7 +474,8 @@ public enum CouchMetaDriver {
               response.apply((ByteBuffer) flip);
 
               if (BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, response.headerBuf())) {
-                try {
+                try {              if (DEBUG_SENDJSON)  {
+                  System.err.println(deepToString( "??? ",UTF8.decode((ByteBuffer) flip.duplicate().rewind())));}
                   payload.set(UTF8.encode(response.dequotedHeader(ETag.getHeader())));
                 } catch (Exception e) {
                   if (DEBUG_SENDJSON) {
@@ -513,7 +514,7 @@ public enum CouchMetaDriver {
         cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
       } catch (Exception e) {
         if (DEBUG_SENDJSON) {
-          System.err.println("!!! " + deepToString(e) + "\n\tfrom");
+          System.err.println("!!! " + deepToString(this,e) + "\n\tfrom");
           dbKeysBuilder.trace().printStackTrace();
         }
       }
@@ -629,7 +630,7 @@ public enum CouchMetaDriver {
         cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
       } catch (Exception e) {
         if (DEBUG_SENDJSON) {
-          System.err.println("!!! " + deepToString(e) + "\n\tfrom");
+          System.err.println("!!! " + deepToString(this,e) + "\n\tfrom");
           dbKeysBuilder.trace().printStackTrace();
         }
       }
@@ -855,7 +856,7 @@ public enum CouchMetaDriver {
         cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
       } catch (Exception e) {
         if (DEBUG_SENDJSON) {
-          System.err.println("!!! " + deepToString(e) + "\n\tfrom");
+          System.err.println("!!! " + deepToString(this,e) + "\n\tfrom");
           dbKeysBuilder.trace().printStackTrace();
         }
       }
@@ -958,7 +959,7 @@ public enum CouchMetaDriver {
               int read = channel.read(header);
             } catch (IOException e) {
               cyclicBarrier.reset();
-              deepToString(e);
+              deepToString(this,e);
               channel.close();
             }
             ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
@@ -1023,7 +1024,7 @@ public enum CouchMetaDriver {
         cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
       } catch (Exception e) {
         if (DEBUG_SENDJSON) {
-          System.err.println("!!! " + deepToString(e) + "\n\tfrom");
+          System.err.println("!!! " + deepToString(this,e) + "\n\tfrom");
           dbKeysBuilder.trace().printStackTrace();
         }
       }

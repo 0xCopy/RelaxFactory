@@ -124,7 +124,9 @@ public class ProtocolMethodDispatch extends Impl {
       Rfc822HeaderState state = ActionBuilder.get().state();
       Rfc822HeaderState apply = state.apply((ByteBuffer) cursor.flip());
       httpRequest = apply.$req();
-      System.err.println(BlobAntiPatternObject.deepToString(UTF8.decode((ByteBuffer) httpRequest.headerBuf().duplicate().rewind())));
+      if (BlobAntiPatternObject.DEBUG_SENDJSON) {
+        System.err.println(BlobAntiPatternObject.deepToString(UTF8.decode((ByteBuffer) httpRequest.headerBuf().duplicate().rewind())));
+      }
       String method1 = httpRequest.method();
       method = HttpMethod.valueOf(method1);
 
@@ -148,10 +150,11 @@ public class ProtocolMethodDispatch extends Impl {
         impl = value.newInstance();
         Object a[] = {impl, httpRequest, cursor};
         key.attach(a);
-
         if (PreRead.class.isAssignableFrom(value)) {
-          impl.onRead(key);
+          impl.onRead(key);        //becomes responsible for its own key
         }
+        ;
+
         key.selector().wakeup();
 
         break;
