@@ -176,7 +176,7 @@ public class ContentRootImpl extends Impl implements PreRead {
             randomAccessFile.close();
             key.selector().wakeup();
             key.interestOps(OP_READ);
-            key.attach(new Object[0]);
+            key.attach(null);
           }
         }
       });

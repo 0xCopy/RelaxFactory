@@ -22,13 +22,16 @@ public interface CouchNamespace<T> {
 
 
   /**
-   * a key for java -D xxxx to specify a deployment dir.
+   * specify web/gwt content root
+   *
+   * a key for java -Drxf.server.content.root=target/my[roject-1.0 (if maven)
    */
-  String RXF_SERVER_CONTENT_ROOT_SYSTEM_KEY = "rxf.server.content.root",
+  String RXF_SERVER_CONTENT_ROOT_SYSTEM_KEY = "rxf.server.content.root";
+
   /**
    * a key for java -D xxxx to specify a tenant name
    */
-  RXF_ORGNAME_SYSTEM_KEY = "rxf.orgname";
+  String RXF_ORGNAME_SYSTEM_KEY = "rxf.orgname";
 
   /**
    * a key to specify tenant name among otherwise identical apps on a common couch server
@@ -36,16 +39,19 @@ public interface CouchNamespace<T> {
    * overrides {@link #RXF_ORGNAME_SYSTEM_KEY}
    */
   String RXF_ORGNAME_ENV_KEY = "RXF_ORGNAME";
-
   /**
-   * defines where 1xio finds static content root.
+   *   content root env key
    */
-  String COUCH_DEFAULT_FS_ROOT = System.getProperty(RXF_SERVER_CONTENT_ROOT_SYSTEM_KEY, "./");
+  String        RXF_SERVER_CONTENT_ROOT_ENV_KEY="RXF_SERVER_CONTENT_ROOT";
+  /**
+   * defines where 1xio/rxf finds static content root.
+   */
+  String COUCH_DEFAULT_FS_ROOT =null==System.getenv(RXF_SERVER_CONTENT_ROOT_ENV_KEY) ? System.getProperty(RXF_SERVER_CONTENT_ROOT_SYSTEM_KEY, "./"):System.getenv(RXF_SERVER_CONTENT_ROOT_ENV_KEY);
 
   /**
    * creates the orgname used in factories without localized namespaces
    */
-  String COUCH_DEFAULT_ORGNAME = System.getenv(RXF_ORGNAME_ENV_KEY) == null ? System.getProperty(RXF_ORGNAME_SYSTEM_KEY, "rxf_") : System.getenv(RXF_ORGNAME_ENV_KEY).toLowerCase().trim();
+  String COUCH_DEFAULT_ORGNAME = null == System.getenv(RXF_ORGNAME_ENV_KEY) ? System.getProperty(RXF_ORGNAME_SYSTEM_KEY, "rxf_") : System.getenv(RXF_ORGNAME_ENV_KEY).toLowerCase().trim();
 
   String getOrgName();
 
