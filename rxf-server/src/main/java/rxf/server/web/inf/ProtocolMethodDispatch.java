@@ -140,10 +140,13 @@ public class ProtocolMethodDispatch extends Impl {
     }
 
     Set<Entry<Pattern, Class<? extends Impl>>> entries = NAMESPACE.get(method).entrySet();
+    String path = httpRequest.path();
     for (Entry<Pattern, Class<? extends Impl>> visitorEntry :
         entries) {
-      Matcher matcher = visitorEntry.getKey().matcher(httpRequest.path());
+      Matcher matcher = visitorEntry.getKey().matcher(path);
       if (matcher.find()) {
+        if(BlobAntiPatternObject.DEBUG_SENDJSON){
+          System.err.println("+?+?+? using "+matcher.toString() );}
         Class<? extends Impl> value = visitorEntry.getValue();
         Impl impl;
 
@@ -151,7 +154,7 @@ public class ProtocolMethodDispatch extends Impl {
         Object a[] = {impl, httpRequest, cursor};
         key.attach(a);
         if (PreRead.class.isAssignableFrom(value)) {
-          impl.onRead(key);        //becomes responsible for its own key
+          impl.onRead(key);
         }
         ;
 
@@ -161,6 +164,7 @@ public class ProtocolMethodDispatch extends Impl {
       }
 
     }
+    System.err.println(BlobAntiPatternObject.deepToString("!!!1!1!!","404",path,"using",NAMESPACE));
   }
 
 }

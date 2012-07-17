@@ -43,7 +43,6 @@ public class GwtRequestFactoryVisitor extends Impl implements PreRead {
           }
           if (o instanceof Rfc822HeaderState) {
             req = ((Rfc822HeaderState) o).$req();
-            continue;
           }
         }
       }
