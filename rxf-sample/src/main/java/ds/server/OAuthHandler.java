@@ -27,7 +27,8 @@ import static rxf.server.BlobAntiPatternObject.*;
  * Time: 6:11 PM
  */
 public class OAuthHandler extends Impl implements PreRead {
-    public static final InetSocketAddress REMOTE = new InetSocketAddress("www.googleapis.com", 80);
+    public static final String WWW_GOOGLEAPIS_COM = "www.googleapis.com";
+    public static final InetSocketAddress REMOTE = new InetSocketAddress(WWW_GOOGLEAPIS_COM, 80);
     HttpRequest req;
     ByteBuffer cursor = null;
     private SocketChannel channel;
@@ -88,7 +89,7 @@ public class OAuthHandler extends Impl implements PreRead {
                 goog = (SocketChannel) SocketChannel.open().configureBlocking(false);
                 goog.connect(REMOTE);
                 goog.register(getSelector(), OP_WRITE | OP_CONNECT,/*)
-                HttpMethod.enqueue(goog, OP_WRITE | OP_CONNECT, */new OauthVerifier(this, key));
+                HttpMethod.enqueue(goog, OP_WRITE | OP_CONNECT, */new OAuthVerifier(this, key));
             }
             return;
         } else {

@@ -27,7 +27,7 @@ import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
  * Time: 3:58 AM
  * To change this template use File | Settings | File Templates.
  */
-public class OauthVerifier extends AsioVisitor.Impl {
+public class OAuthVerifier extends AsioVisitor.Impl {
 
     private CharBuffer decode;
     private ByteBuffer idBuffer;
@@ -37,7 +37,7 @@ public class OauthVerifier extends AsioVisitor.Impl {
     private final SelectionKey parentKey;
     private OAuthHandler oAuthHandler;
 
-    public OauthVerifier(OAuthHandler oAuthHandler, SelectionKey parentKey) {
+    public OAuthVerifier(OAuthHandler oAuthHandler, SelectionKey parentKey) {
         this.oAuthHandler = oAuthHandler;
         this.parentKey = parentKey;
         decode = UTF8.decode((ByteBuffer) oAuthHandler.req.headerBuf().duplicate().rewind());
