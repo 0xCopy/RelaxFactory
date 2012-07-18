@@ -290,4 +290,6 @@ public class BlobAntiPatternObject {
     public static String scrub(String scrubMe) {
         return null == scrubMe ? null : scrubMe.trim().replace("//", "/").replace("..", ".");
     }
+
+
 }
