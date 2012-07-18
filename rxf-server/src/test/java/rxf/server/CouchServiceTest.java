@@ -27,6 +27,7 @@ public class CouchServiceTest extends TestCase {
 
     public static final String SOMEDBPREFIX = "test_somedb_";
     public static final String SOMEDB = SOMEDBPREFIX + System.currentTimeMillis();   //ordered names of testdbs for failure postmortem....
+    public static final String[] A = new String[]{};
     public ScheduledExecutorService exec;
 
     @BeforeClass
@@ -38,7 +39,7 @@ public class CouchServiceTest extends TestCase {
             public void run() {
                 AsioVisitor topLevel = new ProtocolMethodDispatch();
                 try {
-                    HttpMethod.init(new String[]{}, topLevel, 1000);
+                    HttpMethod.init(topLevel/*, 1000*/);
 
                 } catch (Exception e) {
                     fail();
