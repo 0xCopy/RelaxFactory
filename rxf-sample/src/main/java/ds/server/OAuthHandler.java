@@ -89,7 +89,7 @@ public class OAuthHandler extends Impl implements PreRead {
 
                 key.interestOps(0);
 //                POST https://www.googleapis.com/identitytoolkit/v1/relyingparty/verifyAssertion
-                goog = SocketChannel.open();
+                goog = (SocketChannel) SocketChannel.open().configureBlocking(false);
 
                 HttpMethod.enqueue(goog, OP_WRITE | OP_CONNECT, new Impl() {
 
