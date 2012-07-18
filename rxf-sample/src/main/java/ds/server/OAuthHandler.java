@@ -1,28 +1,24 @@
 package ds.server;
 
 import one.xio.AsioVisitor.Impl;
-import one.xio.HttpMethod;
-import one.xio.MimeType;
 import rxf.server.ActionBuilder;
 import rxf.server.BlobAntiPatternObject;
 import rxf.server.PreRead;
 import rxf.server.Rfc822HeaderState;
 import rxf.server.Rfc822HeaderState.HttpRequest;
-import rxf.server.Rfc822HeaderState.HttpResponse;
 
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
-import static java.nio.channels.SelectionKey.*;
+import static java.nio.channels.SelectionKey.OP_CONNECT;
+import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpHeaders.Content$2dLength;
-import static one.xio.HttpHeaders.Content$2dType;
 import static one.xio.HttpMethod.UTF8;
-import static one.xio.HttpStatus.$200;
+import static one.xio.HttpMethod.getSelector;
 import static rxf.server.BlobAntiPatternObject.*;
 
 /**
@@ -90,88 +86,9 @@ public class OAuthHandler extends Impl implements PreRead {
                 key.interestOps(0);
 //                POST https://www.googleapis.com/identitytoolkit/v1/relyingparty/verifyAssertion
                 goog = (SocketChannel) SocketChannel.open().configureBlocking(false);
-
-                HttpMethod.enqueue(goog, OP_WRITE | OP_CONNECT, new Impl() {
-
-                    private CharBuffer decode = UTF8.decode((ByteBuffer) req.headerBuf().duplicate().rewind());
-                    private ByteBuffer idBuffer;
-                    private HttpRequest httpRequest = new Rfc822HeaderState().$req();
-                    public HttpResponse res;
-                    private SocketChannel channel1;
-
-                    public void onWrite(SelectionKey selectionKey) throws Exception {
-                        if (null == idBuffer) {
-                            String s = "{\n" +
-                                    "  \"requestUri\": " + req.path() + ",\n" +
-                                    "  \"postBody\": " + UTF8.decode((ByteBuffer) cursor.duplicate().rewind()).toString().trim() + ",\n" +
-                                    "  \"returnOauthToken\": \"true\"\n" +
-                                    "}";
-                            ByteBuffer payload = UTF8.encode(s);
-                            ByteBuffer as = httpRequest.method(HttpMethod.POST)
-                                    .path("/identitytoolkit/v1/relyingparty/verifyAssertion")
-                                    .headerString(Content$2dLength, String.valueOf(payload.limit()))
-                                    .headerString(Content$2dType, MimeType.json.contentType).as(ByteBuffer.class);
-                            int limit = as.limit();
-                            int remaining = payload.limit() + as.limit();
-                            idBuffer = (ByteBuffer) ByteBuffer.allocateDirect(remaining).put((ByteBuffer) as.rewind()).put((ByteBuffer) payload.rewind()).rewind();
-                        }
-                        int write = ((SocketChannel) selectionKey.channel()).write(idBuffer);
-                        if (-1 == write) {
-                            selectionKey.cancel();
-                            key.cancel();
-                            return;
-                        }
-                        if (!idBuffer.hasRemaining()) {
-                            selectionKey.interestOps(OP_READ);
-                        }
-                        idBuffer = null;
-                    }
-
-
-                    public void onRead(SelectionKey selectionKey) throws Exception {
-                        //todo: pathological receive buffers...
-                        if (output == null) {
-                            if (null == idBuffer) {
-                                idBuffer = ByteBuffer.allocateDirect(getReceiveBufferSize());
-                                res = req.$res();
-                                res.headerInterest(Content$2dLength);
-                                channel1 = (SocketChannel) selectionKey.channel();
-                            }
-                            int read1 = channel1.read(idBuffer);
-                            if (-1 == read1) {
-                                selectionKey.cancel();
-                                key.cancel();
-                                return;
-                            }
-                            Rfc822HeaderState headerState = res.apply((ByteBuffer) idBuffer.duplicate().rewind());
-                            if (!BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, headerState.headerBuf())) {
-                                return;
-                            }
-                            if ($200 != res.statusEnum()) {
-                                selectionKey.cancel();
-                                key.cancel();
-                                return;
-                            }
-                            int remaining = Integer.parseInt(res.headerString(Content$2dLength));
-                            output = ByteBuffer.allocateDirect(remaining).put(idBuffer.slice());
-                        } else {
-                            int read1 = channel1.read(output);
-                            if (-1 == read1) {
-                                selectionKey.cancel();
-                                key.cancel();
-                                return;
-                            }
-                            if (!output.hasRemaining()) {
-                                key.interestOps(OP_WRITE);// return a result somewhere...
-                            }
-                        }
-                    }
-
-                    public void onConnect(SelectionKey key) throws Exception {
-                        key.interestOps(OP_WRITE);
-                    }
-                });
-                                  goog.connect(REMOTE);
+                goog.connect(REMOTE);
+                goog.register(getSelector(), OP_WRITE | OP_CONNECT,/*)
+                HttpMethod.enqueue(goog, OP_WRITE | OP_CONNECT, */new OauthVerifier(this, key));
             }
             return;
         } else {
@@ -211,4 +128,5 @@ public class OAuthHandler extends Impl implements PreRead {
         System.err.println(deepToString("???", "payload:", UTF8.decode((ByteBuffer) output.duplicate().flip())));
         key.cancel();
     }
+
 }
