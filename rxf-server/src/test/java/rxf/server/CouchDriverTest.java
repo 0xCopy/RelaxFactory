@@ -37,7 +37,7 @@ public class CouchDriverTest extends TestCase {
             public void run() {
                 AsioVisitor topLevel = new ProtocolMethodDispatch();
                 try {
-                    HttpMethod.init(new String[]{}, topLevel, 1000);
+                    HttpMethod.init(topLevel);
                 } catch (Exception e) {
                     fail();
                 }
