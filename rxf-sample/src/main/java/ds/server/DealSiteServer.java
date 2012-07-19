@@ -19,6 +19,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+
 import static ds.server.SecurityImpl.*;
 import static java.lang.Math.abs;
 import static one.xio.HttpMethod.UTF8;
@@ -46,6 +49,9 @@ public class DealSiteServer {
     }
 
     public static void main(String... args) throws Exception {
+        // Create an injector to kick Guice into taking over RF for services
+        Injector injector = Guice.createInjector(new DealModule());
+
         if (System.getenv().containsKey("DEBUG_DEAL_EDITORS")) {
             BlobAntiPatternObject.EXECUTOR_SERVICE.schedule(new Runnable() {
                 public void run() {

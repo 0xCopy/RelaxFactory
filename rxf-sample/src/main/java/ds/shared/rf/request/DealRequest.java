@@ -1,21 +1,23 @@
 package ds.shared.rf.request;
 
+import java.util.List;
+
+import rxf.server.guice.InjectingServiceLocator;
+import rxf.shared.req.PersistsCouch;
+
 import com.google.web.bindery.requestfactory.shared.Request;
 import com.google.web.bindery.requestfactory.shared.RequestContext;
 import com.google.web.bindery.requestfactory.shared.Service;
+
 import ds.model.DealService;
 import ds.shared.rf.proxy.DealProxy;
-import rxf.server.CouchServiceLocator;
-import rxf.shared.req.PersistsCouch;
-
-import java.util.List;
 
 /**
  * User: jim
  * Date: 5/14/12
  * Time: 1:01 AM
  */
-@Service(value = DealService.class, locator = CouchServiceLocator.class)
+@Service(value = DealService.class, locator = InjectingServiceLocator.class)
 public interface DealRequest extends RequestContext, PersistsCouch<DealProxy> {
     Request<DealProxy> find(String key);
 
