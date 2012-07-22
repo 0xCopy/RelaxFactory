@@ -100,4 +100,29 @@ public interface CouchService<E> {
 //     */
 //    int value() default -1;
   }
+
+  /**
+   * Marks a service method or parameter as being used on a couchdb view GET request as
+   * "startkey". In conjunection with endkey and/or limit can be used to implement basic
+   * prefix search
+   *
+   */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.PARAMETER)
+  @CouchRequestParam("startkey")
+  @Documented
+  public @interface StartKey {
+  }
+
+  /**
+   * Marks a service method or parameter as being used on a couchdb view GET request as
+   * "endkey".
+   *
+   */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.PARAMETER)
+  @CouchRequestParam("endkey")
+  @Documented
+  public @interface EndKey {
+  }
 }
