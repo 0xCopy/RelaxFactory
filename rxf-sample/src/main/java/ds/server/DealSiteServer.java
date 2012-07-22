@@ -1,5 +1,7 @@
 package ds.server;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import ds.model.*;
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpMethod;
@@ -46,6 +48,9 @@ public class DealSiteServer {
     }
 
     public static void main(String... args) throws Exception {
+        // Create an injector to kick Guice into taking over RF for services
+        Injector injector = Guice.createInjector(new DealModule());
+
         if (System.getenv().containsKey("DEBUG_DEAL_EDITORS")) {
             BlobAntiPatternObject.EXECUTOR_SERVICE.schedule(new Runnable() {
                 public void run() {

@@ -1,16 +1,18 @@
 package ds.shared.rf.request;
 
-import java.util.List;
-
-import com.google.web.bindery.requestfactory.shared.*;
+import com.google.web.bindery.requestfactory.shared.Request;
+import com.google.web.bindery.requestfactory.shared.RequestContext;
+import com.google.web.bindery.requestfactory.shared.Service;
 import ds.model.NpoService;
 import ds.shared.rf.proxy.NpoProxy;
-import rxf.server.CouchServiceLocator;
+import rxf.server.guice.InjectingServiceLocator;
 
-@Service(value = NpoService.class, locator = CouchServiceLocator.class)
+import java.util.List;
+
+@Service(value = NpoService.class, locator = InjectingServiceLocator.class)
 public interface NpoRequest extends RequestContext {
 
-  Request<NpoProxy> find(String key);
-  
-  Request<List<NpoProxy>> findAll();
+    Request<NpoProxy> find(String key);
+
+    Request<List<NpoProxy>> findAll();
 }
