@@ -1,24 +1,17 @@
 package ds.server;
 
+import java.net.*;
+import java.nio.*;
+import java.nio.channels.*;
+
 import one.xio.AsioVisitor.Impl;
-import rxf.server.ActionBuilder;
-import rxf.server.BlobAntiPatternObject;
-import rxf.server.PreRead;
-import rxf.server.Rfc822HeaderState;
+import rxf.server.*;
 import rxf.server.Rfc822HeaderState.HttpRequest;
 
-import java.net.InetSocketAddress;
-import java.net.URL;
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.SocketChannel;
-
-import static java.nio.channels.SelectionKey.OP_CONNECT;
-import static java.nio.channels.SelectionKey.OP_WRITE;
+import static ds.server.OAuthVerifier.REMOTE;
+import static java.nio.channels.SelectionKey.*;
 import static one.xio.HttpHeaders.Content$2dLength;
-import static one.xio.HttpMethod.UTF8;
-import static one.xio.HttpMethod.getSelector;
+import static one.xio.HttpMethod.*;
 import static rxf.server.BlobAntiPatternObject.*;
 
 /**
@@ -27,17 +20,15 @@ import static rxf.server.BlobAntiPatternObject.*;
  * Time: 6:11 PM
  */
 public class OAuthHandler extends Impl implements PreRead {
-    public static final String WWW_GOOGLEAPIS_COM = "www.googleapis.com";
-    public static final InetSocketAddress REMOTE = new InetSocketAddress(WWW_GOOGLEAPIS_COM, 80);
-    HttpRequest req;
+
+  HttpRequest req;
     ByteBuffer cursor = null;
     private SocketChannel channel;
     String payload;
     ByteBuffer output;
-    private SocketChannel goog;
 
 
-    @Override
+  @Override
     public void onRead(final SelectionKey key) throws Exception {
         channel = (SocketChannel) key.channel();
         if (cursor == null) {
@@ -86,10 +77,9 @@ public class OAuthHandler extends Impl implements PreRead {
 
                 key.interestOps(0);
 //                POST https://www.googleapis.com/identitytoolkit/v1/relyingparty/verifyAssertion
-                goog = (SocketChannel) SocketChannel.open().configureBlocking(false);
+              SocketChannel goog = (SocketChannel) SocketChannel.open().configureBlocking(false);
                 goog.connect(REMOTE);
-                goog.register(getSelector(), OP_WRITE | OP_CONNECT,/*)
-                HttpMethod.enqueue(goog, OP_WRITE | OP_CONNECT, */new OAuthVerifier(this, key));
+                goog.register(getSelector(), OP_WRITE | OP_CONNECT, new OAuthVerifier(this, key));
             }
             return;
         } else {

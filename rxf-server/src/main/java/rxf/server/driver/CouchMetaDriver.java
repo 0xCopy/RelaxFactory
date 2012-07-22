@@ -3,8 +3,7 @@ package rxf.server.driver;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -13,57 +12,21 @@ import one.xio.AsioVisitor.Impl;
 import one.xio.*;
 import org.intellij.lang.annotations.Language;
 import rxf.server.*;
-import rxf.server.Rfc822HeaderState.HttpRequest;
-import rxf.server.Rfc822HeaderState.HttpResponse;
-import rxf.server.an.DbKeys;
+import rxf.server.Rfc822HeaderState.*;
+import rxf.server.an.*;
 import rxf.server.an.DbKeys.etype;
-import rxf.server.an.DbTask;
 
-import static java.nio.channels.SelectionKey.OP_CONNECT;
-import static java.nio.channels.SelectionKey.OP_READ;
-import static java.nio.channels.SelectionKey.OP_WRITE;
-import static one.xio.HttpHeaders.Accept;
-import static one.xio.HttpHeaders.Content$2dEncoding;
-import static one.xio.HttpHeaders.Content$2dLength;
-import static one.xio.HttpHeaders.Content$2dType;
-import static one.xio.HttpHeaders.ETag;
-import static one.xio.HttpHeaders.Transfer$2dEncoding;
-import static one.xio.HttpMethod.DELETE;
-import static one.xio.HttpMethod.GET;
-import static one.xio.HttpMethod.HEAD;
-import static one.xio.HttpMethod.POST;
-import static one.xio.HttpMethod.PUT;
-import static one.xio.HttpMethod.UTF8;
-import static one.xio.HttpMethod.enqueue;
-import static rxf.server.BlobAntiPatternObject.DEBUG_SENDJSON;
-import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
-import static rxf.server.BlobAntiPatternObject.HEADER_TERMINATOR;
-import static rxf.server.BlobAntiPatternObject.arrToString;
-import static rxf.server.BlobAntiPatternObject.createCouchConnection;
-import static rxf.server.BlobAntiPatternObject.deepToString;
-import static rxf.server.BlobAntiPatternObject.getDefaultCollectorTimeUnit;
-import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
-import static rxf.server.BlobAntiPatternObject.recycleChannel;
-import static rxf.server.DbTerminal.continuousFeed;
-import static rxf.server.DbTerminal.future;
-import static rxf.server.DbTerminal.json;
-import static rxf.server.DbTerminal.oneWay;
-import static rxf.server.DbTerminal.pojo;
-import static rxf.server.DbTerminal.rows;
-import static rxf.server.DbTerminal.tx;
-import static rxf.server.an.DbKeys.etype.db;
-import static rxf.server.an.DbKeys.etype.designDocId;
-import static rxf.server.an.DbKeys.etype.docId;
-import static rxf.server.an.DbKeys.etype.opaque;
-import static rxf.server.an.DbKeys.etype.rev;
-import static rxf.server.an.DbKeys.etype.type;
-import static rxf.server.an.DbKeys.etype.validjson;
-import static rxf.server.an.DbKeys.etype.view;
+import static java.nio.channels.SelectionKey.*;
+import static one.xio.HttpHeaders.*;
+import static one.xio.HttpMethod.*;
+import static rxf.server.BlobAntiPatternObject.*;
+import static rxf.server.DbTerminal.*;
+import static rxf.server.an.DbKeys.etype.*;
 
 /**
  * confers traits on an oo platform...
  * <p/>
- * CouchDriver defines an interface and a method for each CouchMetaDriver enum attribute.  presently the generator does
+ * CouchDriver defines an interface and a method for each {@link CouchMetaDriver } enum attribute.  presently the generator does
  * not wire that interface up anywhere but the inner classes of the interface use this enum for slotted method dispatch.
  * <p/>
  * the fluent interface is carried in threadlocal variables from step to step.  the visit() method cracks these open and
