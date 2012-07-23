@@ -1,7 +1,5 @@
 package ds.admin.client;
 
-import java.util.List;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -16,11 +14,15 @@ import ds.client.LoginService;
 import ds.client.widget.DealEditorWidget;
 import ds.shared.rf.DealRequestFactory;
 import ds.shared.rf.DealRequestFactory.SendRequest;
-import ds.shared.rf.proxy.*;
+import ds.shared.rf.proxy.DealProxy;
+import ds.shared.rf.proxy.NpoProxy;
+import ds.shared.rf.proxy.VendorProxy;
 import ds.shared.rf.request.NpoRequest;
 import ds.shared.rf.request.VendorRequest;
 import ds.shared.view.DealEditorView;
 import rxf.shared.prox.CouchTxProxy;
+
+import java.util.List;
 
 /*
  * Notice the superclass ugly hack going on here (and in the module) to keep admin stuff out of the main
@@ -71,7 +73,7 @@ public class DealAdminEntryPoint extends DealEntryPoint {
     rf.initialize(eventBus);
     LoginService loginService = new LoginService(rf, eventBus);
 
-    //Verify that we are logged in, and are admin. all other loading waits on this, ha just kidding
+   //Verify that we are logged in, and are admin. all other loading waits on this, ha just kidding
     loginService.login();
     //TODO when we have real login and some way of checking that we are admin, continue on.
     afterLogin();

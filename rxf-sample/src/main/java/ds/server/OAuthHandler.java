@@ -9,7 +9,7 @@ import rxf.server.Rfc822HeaderState;
 import rxf.server.Rfc822HeaderState.HttpRequest;
 
 import javax.net.ssl.HttpsURLConnection;
-import java.io.DataInputStream;
+import java.io.BufferedInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.URL;
@@ -17,10 +17,11 @@ import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.util.Map;
 
-import static one.xio.HttpHeaders.Content$2dLength;
-import static one.xio.HttpHeaders.Content$2dType;
+import static one.xio.HttpHeaders.*;
 import static one.xio.HttpMethod.UTF8;
+import static one.xio.HttpStatus.$200;
 import static rxf.server.BlobAntiPatternObject.*;
 
 /**
@@ -33,12 +34,18 @@ import static rxf.server.BlobAntiPatternObject.*;
  */
 public class OAuthHandler extends Impl implements PreRead {
 
+    public static final String WWW_GOOGLEAPIS_COM = "www.googleapis.com";
     HttpRequest req;
     ByteBuffer cursor = null;
     private SocketChannel channel;
-    String payload;
     ByteBuffer output;
+    private Map payload;
+    private ByteBuffer outgoing;
 
+    static {
+//        System.setProperty("java.protocol.handler.pkgs", "com.sun.net.ssl.internal.www.protocol");
+//        System.setProperty("javax.net.debug", "all");
+    }
 
     @Override
     public void onRead(final SelectionKey key) throws Exception {
@@ -73,8 +80,7 @@ public class OAuthHandler extends Impl implements PreRead {
 
             String method = req.method();
             if ("GET".equals(method)) {
-                //use the existing linkedhashmap to store the query parms and figure out what to do with it later...
-                final String query = new URL("http://" + req.path()).getQuery();
+                String query = new URL("http://" + req.path()).getQuery();
                 if (null == query) {
                     key.cancel();
                     return;
@@ -84,36 +90,19 @@ public class OAuthHandler extends Impl implements PreRead {
                     String[] kv = pair.split("\\=", 2);
                     req.headerString(kv[0], kv[1]);
                 }
-                // do something
                 System.err.println("??? " + deepToString("results of oauth: ", req.headerStrings()));
 
                 key.interestOps(0);
-//                POST https://www.googleapis.com/identitytoolkit/v1/relyingparty/verifyAssertion
-//              SocketChannel goog = (SocketChannel) SocketChannel.open().configureBlocking(false);
-//                goog.connect(REMOTE);
-//                goog.register(getSelector(), OP_WRITE | OP_CONNECT, new OAuthVerifier(this, key));
                 EXECUTOR_SERVICE.submit(new Runnable() {
                     @Override
                     public void run() {
                         try {
-//                            System.setProperty("java.protocol.handler.pkgs", "com.sun.net.ssl.internal.www.protocol");
-//                            java.security.Security.addProvider(new com.sun.net.ssl.internal.ssl.Provider());
                             URL url = new URL("https://www.googleapis.com/identitytoolkit/v1/relyingparty/verifyAssertion?key=AIzaSyBIRwIq-3Op3r5taLhE2_t_fbjRmGbmMNY");
                             HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
                             connection.setDoInput(true);
                             connection.setDoOutput(true);
-//                            String cookieHeader = connection.getHeaderField("set-cookie");
-//                            if (cookieHeader != null) {
-//                                int index = cookieHeader.indexOf(";");
-//                                String cuki = "";
-//                                if (index >= 0)
-//                                    cuki = cookieHeader.substring(0, index);
-//                                connection.setRequestProperty("Cookie", cuki);
-//                            }
-                            //                    .headerString(Content$2dType, MimeType.json.contentType)
 
                             connection.setRequestProperty(Content$2dType.getHeader(), MimeType.json.contentType);
-//                            connection.setRequestProperty("Host", "www.googleapis.com");
                             connection.setRequestMethod("POST");
                             connection.setFollowRedirects(true);
                             String s = "{\n" +
@@ -121,49 +110,32 @@ public class OAuthHandler extends Impl implements PreRead {
                                     "  \"postBody\": \"" + UTF8.decode((ByteBuffer) cursor.duplicate().rewind()).toString().trim() + "\",\n" +
                                     "  \"returnOauthToken\": \"true\"\n" +
                                     "}";
-                            final byte[] bytes = s.getBytes(UTF8);
+                            byte[] bytes = s.getBytes(UTF8);
                             connection.setRequestProperty(Content$2dLength.getHeader(), String.valueOf(bytes.length));
-//                            String query = "UserID=" + URLEncoder.encode("williamalex@hotmail.com");
-//                            query += "&";
-//                            query += "password=" + URLEncoder.encode("password");
-//                            query += "&";
-//                            query += "UserChk=" + URLEncoder.encode("Bidder");
-// This particular website I was working with, required that the referrel URL should be from this URL
-// as specified the previousURL. If you do not have such requirement you may omit it.
-//                            query += "&";
-//                            query += "PreviousURL=" + URLEncoder.encode("https://www.anysecuresite.com.sg/auct.cfm");
-
-//connection.setRequestProperty("Accept-Language","it");
-                            connection.setRequestProperty("Accept", MimeType.json.contentType);
-                            connection.setRequestProperty("Accept-Encoding", "gzip");
-
-//                            connection.setRequestProperty("Content-length", String.valueOf(query.length()));
-//                            connection.setRequestProperty("Content-Type", "application/x-www- form-urlencoded");
-//                            connection.setRequestProperty("User-Agent", "Mozilla/4.0 (compatible; MSIE 5.0; Windows 98; DigExt)");
-
-// open up the output stream of the connection
+                            connection.setRequestProperty(Accept.getHeader(), MimeType.json.contentType);
+                            connection.setRequestProperty(Accept$2dEncoding.getHeader(), "gzip");
                             DataOutputStream output = new DataOutputStream(connection.getOutputStream());
 
-// write out the data
-//                            int queryLength = bytes.length();
                             output.write(bytes);
-//output.close();
 
                             System.out.println("Resp Code:" + connection.getResponseCode());
                             System.out.println("Resp Message:" + connection.getResponseMessage());
 
 // get ready to read the response from the cgi script
-                            DataInputStream input = new DataInputStream(connection.getInputStream());
-
+                            BufferedInputStream input = new BufferedInputStream(connection.getInputStream());
+                            StringBuilder out = new StringBuilder();
 // read in each character until end-of-stream is detected
-                            for (int c = input.read(); c != -1; c = input.read())
-                                System.out.print((char) c);
-                            input.close();
+                            for (int c = input.read(); c != -1; c = input.read()) {
+                                out.append((char) c);
+                            }
+//                            System.err.println("+++ received " + out);
+
+                            payload = GSON.fromJson(out.toString(), Map.class);
+                            key.interestOps(SelectionKey.OP_WRITE);
+                            connection.disconnect();
                         } catch (IOException e) {
                             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                        } finally {
                         }
-
                     }
                 });
             }
@@ -202,8 +174,45 @@ public class OAuthHandler extends Impl implements PreRead {
 
     @Override
     public void onWrite(SelectionKey key) throws Exception {
-        System.err.println(deepToString("???", "payload:", UTF8.decode((ByteBuffer) output.duplicate().flip())));
-        key.cancel();
+        if (outgoing == null) {
+            //todo: assign login to user ****** HERE ******
+            /*
+    , cursor=java.nio.DirectByteBuffer[pos=0 lim=31864 cap=31864], channel=java.nio.channels.SocketChannel[
+    connected local=/127.0.0.1:8080 remote=/127.0.0.1:5716], payload='{
+    kind=identitytoolkit#relyingparty, identifier=https://accounts.google.com/9752836876294756278345,
+    authority=https://accounts.google.com, verifiedEmail=sdahfdfldh@gmail.com,
+    displayName=James Northrup, firstName=asjdk, lastName=sdal, fullName=James Northrup,
+    profilePicture=https://jhdflaahdfaldhasd/photo.jpg,
+    photoUrl=https://lafsdhalsdafsd/photo.jpg,
+    oauthAccessToken=ya29.AHES6ZTiZhF6mF_SBsqtvPaHwbF63DzP5DYVkmbRasadC1boWQ, oauthExpireIn=3599.0,
+    context={"rp_target":"callback","rp_purpose":"signin"}}'}
+
+            */
+
+            //per https://developers.google.com/identity-toolkit/v1/acguide#open_id_callback_logic_pseudocode
+            outgoing = UTF8.encode(
+                    "<script type='text/javascript' src='https://ajax.googleapis.com/jsapi'></script>\n" +
+                            "<script type='text/javascript'> \n" +
+                            "  google.load(\"identitytoolkit\", \"1.0\", {packages: [\"notify\"]});\n" +
+                            "</script> \n" +
+                            "<script type='text/javascript'>\n" +
+                            "  window.google.identitytoolkit.notifyFederatedSuccess({ \"email\": \"" + payload.get("verifiedEmail") +
+                            "\", \"registered\": true });\n" +
+                            "  // use window.google.identitytoolkit.notifyFederatedError(); in case of error\n" +
+                            "</script>");
+            Rfc822HeaderState.HttpResponse res = ((Rfc822HeaderState.HttpResponse) req.$res()).status($200);
+            ByteBuffer as = res.headerString(Content$2dLength, String.valueOf(outgoing.limit()))
+                    .headerString(Content$2dType, MimeType.html.contentType).as(ByteBuffer.class);
+
+            ByteBuffer put = ByteBuffer.allocateDirect(as.limit() + outgoing.limit()).put((ByteBuffer) as.rewind()).put((ByteBuffer) outgoing.rewind());
+            outgoing = (ByteBuffer) put.rewind();
+        }
+
+        int write = channel.write(outgoing);
+        if (!outgoing.hasRemaining()) {
+            key.interestOps(SelectionKey.OP_READ);
+        }
+
     }
 
 }

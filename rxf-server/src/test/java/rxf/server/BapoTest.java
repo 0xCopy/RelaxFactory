@@ -1,19 +1,17 @@
 package rxf.server;
 
-import java.nio.channels.SocketChannel;
-
+import junit.framework.TestCase;
 import one.xio.HttpMethod;
 
-import junit.framework.TestCase;
+import java.nio.channels.SocketChannel;
 
 public class BapoTest extends TestCase {
-  public void testCreateCouchChannel() {
-    HttpMethod.killswitch = false;
-    SocketChannel channel = BlobAntiPatternObject.createCouchConnection();
-    assertNotNull(channel);
-    BlobAntiPatternObject.recycleChannel(channel);
-    HttpMethod.killswitch = true;
-  }
-
+	public void testCreateCouchChannel() {
+		HttpMethod.killswitch = false;
+		SocketChannel channel = BlobAntiPatternObject.createCouchConnection();
+		assertNotNull(channel);
+		BlobAntiPatternObject.recycleChannel(channel);
+		HttpMethod.killswitch = true;
+	}
 
 }
