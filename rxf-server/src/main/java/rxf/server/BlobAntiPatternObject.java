@@ -18,6 +18,7 @@ import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -207,9 +208,22 @@ public class BlobAntiPatternObject {
     }
 
     public static void startServer(String... args) throws IOException {
-        AsioVisitor topLevel = new ProtocolMethodDispatch();
-        ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
-        serverSocketChannel.socket().bind(new InetSocketAddress(8080));
+        AsioVisitor topLevel;
+        ServerSocketChannel serverSocketChannel;
+        final String port;
+        InetAddress hostname;
+        {
+            String json = "";
+            for (String arg : args) {
+                json += arg;
+            }
+            final Properties properties = BlobAntiPatternObject.GSON.fromJson(json, Properties.class);
+            topLevel = new ProtocolMethodDispatch();
+            serverSocketChannel = ServerSocketChannel.open();
+            port = properties.getProperty("port", "8080");
+            hostname = InetAddress.getByName(properties.getProperty("hostname", "0.0.0.0"));
+        }
+        serverSocketChannel.socket().bind(new InetSocketAddress(hostname, Integer.parseInt(port)));
         serverSocketChannel.configureBlocking(false);
         HttpMethod.enqueue(serverSocketChannel, OP_ACCEPT, topLevel);
         /*

@@ -2,7 +2,6 @@ package rxf.server.guice;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
-import com.google.inject.Injector;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.google.web.bindery.requestfactory.server.ServiceLayerDecorator;
 import com.google.web.bindery.requestfactory.shared.*;
@@ -10,6 +9,8 @@ import com.google.web.bindery.requestfactory.vm.RequestFactorySource;
 import junit.framework.Assert;
 import org.junit.Test;
 import rxf.server.GwtRequestFactoryVisitor;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * This test may have difficulty running if the RF annotation processor isn't triggered before it.
@@ -44,9 +45,8 @@ public class RFServiceLayerModuleTest {
     @Test
     public void testBasicSetup() {
         //build injector, but don't make use of it directly, only via the request processor
-        Injector i = Guice.createInjector(new TestModule());
+        Guice.createInjector(new TestModule());
         SampleFactory f = RequestFactorySource.create(SampleFactory.class);
-        final String[] holder = new String[1];
         f.initialize(new SimpleEventBus(), new RequestTransport() {
             public void send(String arg0, TransportReceiver arg1) {
                 // the SIMPLE_REQUEST_PROCESSOR field should have been repopulated by guice
@@ -55,12 +55,13 @@ public class RFServiceLayerModuleTest {
                 arg1.onTransportSuccess(resp);
             }
         });
+        final AtomicReference<String> holder = new AtomicReference<String>();
         f.req().trim("   word   ").fire(new Receiver<String>() {
             @Override
             public void onSuccess(String arg0) {
-                holder[0] = arg0;
+                holder.set(arg0);
             }
         });
-        Assert.assertEquals("word", holder[0]);
+        Assert.assertEquals("word", holder.get());
     }
 }
