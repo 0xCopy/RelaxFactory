@@ -10,23 +10,23 @@ import com.google.web.bindery.requestfactory.shared.ValueProxy;
  */
 @ProxyForName(value = "rxf.server.CouchTx")
 public interface CouchTxProxy extends ValueProxy {
-  Boolean getOk();
+	Boolean getOk();
 
-  void setOk(Boolean ok);
+	void setOk(Boolean ok);
 
-  String getId();
+	String getId();
 
-  void setId(String id);
+	void setId(String id);
 
-  String getRev();
+	String getRev();
 
-  void setRev(String rev);
+	void setRev(String rev);
 
-  String getError();
+	String getError();
 
-  void setError(String error);
+	void setError(String error);
 
-  String getReason();
+	String getReason();
 
-  void setReason(String reason);
+	void setReason(String reason);
 }

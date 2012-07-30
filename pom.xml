@@ -92,14 +92,9 @@
     </repositories>
     <pluginRepositories>
         <pluginRepository>
-            <id>gwt-maven-rewraps</id>
-            <url>http://gwt-maven-rewraps.googlecode.com/git/</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
+            <id>maven-java-formatter-plugin</id>
+            <name>Maven2 Java Formatter Plugin repository</name>
+            <url>https://raw.github.com/benalexau/maven-java-formatter-plugin/master/releases/</url>
         </pluginRepository>
     </pluginRepositories>
     <dependencies>
@@ -161,15 +156,22 @@
                         <target>${java.version}</target>
                     </configuration>
                 </plugin>
+
                 <plugin>
-                    <groupId>com.relativitas.maven.plugins</groupId>
+                    <groupId>com.googlecode.maven-java-formatter-plugin</groupId>
                     <artifactId>maven-java-formatter-plugin</artifactId>
-                    <version>0.1.0</version>
+                    <version>0.4.0.e371sr1</version>
                     <configuration>
-                        <compilerSource>${java.version}</compilerSource>
-                        <compilerCompliance>${java.version}</compilerCompliance>
-                        <compilerTargetPlatform>${java.version}</compilerTargetPlatform>
+                        <!--<configFile>../eclipse-formatter-config.xml</configFile>-->
+                        <!--TODO: colin/gwt fanatic formatters-->
                     </configuration>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>format</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
