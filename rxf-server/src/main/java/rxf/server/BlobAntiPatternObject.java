@@ -23,7 +23,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static java.lang.Math.abs;
 import static java.nio.channels.SelectionKey.OP_ACCEPT;
 import static one.xio.HttpMethod.UTF8;
 import static one.xio.HttpMethod.wheresWaldo;
@@ -90,21 +89,6 @@ public class BlobAntiPatternObject {
 			}
 		}
 		return null;
-	}
-
-	public static ByteBuffer moveCaretToDoubleEol(ByteBuffer buffer) {
-		int distance;
-		int eol = buffer.position();
-
-		do {
-			int prev = eol;
-			while (buffer.hasRemaining() && '\n' != buffer.get());
-			eol = buffer.position();
-			distance = abs(eol - prev);
-			if (2 == distance && '\r' == buffer.get(eol - 2))
-				break;
-		} while (buffer.hasRemaining() && 1 < distance);
-		return buffer;
 	}
 
 	public static <T> String deepToString(T... d) {

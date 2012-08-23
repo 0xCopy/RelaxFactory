@@ -93,6 +93,16 @@
     </repository>
   </repositories>
   <pluginRepositories>
+    <pluginRepository>
+      <id>gwt-maven-rewraps</id>
+      <url>http://gwt-maven-rewraps.googlecode.com/git/</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+    </pluginRepository>
     <!--<pluginRepository>-->
     <!--<id>maven-java-formatter-plugin</id>-->
     <!--<name>Maven2 Java Formatter Plugin repository</name>-->
@@ -192,16 +202,16 @@
           <version>1.6</version>
           <configuration>
             <compileInBackground>true</compileInBackground>
-                                                           <jdkName>1.7</jdkName>
+            <jdkName>1.7</jdkName>
             <jdkLevel>JDK_1_7</jdkLevel>
             <downloadSources>true</downloadSources>
             <downloadJavadocs>true</downloadJavadocs>
             <assertNotNull>false</assertNotNull>
             <optimizeImportsBeforeCommit>false</optimizeImportsBeforeCommit>
-                    <reformatCodeBeforeCommit>fase</reformatCodeBeforeCommit>
-                        <performCodeAnalisisBeforeCommit>false</performCodeAnalisisBeforeCommit>
-        <autoscrollToSource>false</autoscrollToSource>
-                             <autoscrollFromSource>true</autoscrollFromSource>
+            <reformatCodeBeforeCommit>false</reformatCodeBeforeCommit>
+            <performCodeAnalisisBeforeCommit>false</performCodeAnalisisBeforeCommit>
+            <autoscrollToSource>false</autoscrollToSource>
+            <autoscrollFromSource>true</autoscrollFromSource>
             <hideEmptyPackages>false</hideEmptyPackages>
           </configuration>
         </plugin>

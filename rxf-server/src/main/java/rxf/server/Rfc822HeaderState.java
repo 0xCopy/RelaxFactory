@@ -842,7 +842,7 @@ public class Rfc822HeaderState {
 		return sourceKey.get(); //To change body of created methods use File | Settings | File Templates.
 	}
 
-	private static ByteBuffer moveCaretToDoubleEol(ByteBuffer buffer) {
+	public static ByteBuffer moveCaretToDoubleEol(ByteBuffer buffer) {
 		int distance;
 		int eol = buffer.position();
 
