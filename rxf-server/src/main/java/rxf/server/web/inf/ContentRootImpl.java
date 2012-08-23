@@ -37,14 +37,15 @@ public class ContentRootImpl extends Impl implements PreRead {
 	private HttpRequest request;
 	private SocketChannel channel;
 	private HttpRequest req;
+
+	public ContentRootImpl() {
+		init();
+	}
+
 	File file;
 
-	public ContentRootImpl(String... rootPath) {
-		for (String s : rootPath) {
-			this.rootPath = s;
-			break;
-		}
-
+	public ContentRootImpl(String rootPath) {
+		this.rootPath = rootPath;
 		init();
 	}
 
