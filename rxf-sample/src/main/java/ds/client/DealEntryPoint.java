@@ -1,5 +1,9 @@
 package ds.client;
 
+import java.util.List;
+
+import rxf.shared.KernelFactory;
+
 import com.google.gwt.activity.shared.ActivityManager;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
@@ -10,6 +14,8 @@ import com.google.gwt.place.shared.PlaceController;
 import com.google.gwt.place.shared.PlaceHistoryHandler;
 import com.google.gwt.place.shared.PlaceHistoryMapper;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
@@ -27,13 +33,29 @@ import ds.shared.activity.DealActivityMapper;
 import ds.shared.place.DealPlaceHistoryMapper;
 import ds.shared.place.HomePlace;
 import ds.shared.rf.DealRequestFactory;
-import rxf.shared.KernelFactory;
+import ds.shared.rpc.SampleRemoteService;
+import ds.shared.rpc.SampleRemoteServiceAsync;
 
 public class DealEntryPoint implements EntryPoint {
 
 
   @Override
   public void onModuleLoad() {
+	  //RPC showoff, should be removed
+	  SampleRemoteServiceAsync service = GWT.create(SampleRemoteService.class);
+	  service.getAllNpoNames(new AsyncCallback<List<String>>() {
+		@Override
+		public void onSuccess(List<String> result) {
+			Window.alert(result.size() + " known NPOs");
+		}
+		
+		@Override
+		public void onFailure(Throwable caught) {
+			Window.alert("boom");
+		}
+	});
+	  
+	  
     //no gin magic for now, just wiring it up by hand
     EventBus eventBus = new SimpleEventBus();
     DealRequestFactory rf = GWT.create(DealRequestFactory.class);
