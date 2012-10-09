@@ -20,6 +20,8 @@ import one.xio.HttpHeaders;
 import one.xio.MimeType;
 import rxf.server.Rfc822HeaderState.HttpRequest;
 
+import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
+import com.google.gwt.user.client.rpc.RpcTokenException;
 import com.google.gwt.user.server.rpc.RPC;
 import com.google.gwt.user.server.rpc.RPCRequest;
 import com.google.gwt.user.server.rpc.SerializationPolicy;
@@ -120,14 +122,19 @@ public class GwtRpcVisitor extends Impl
 								(ByteBuffer) cursor.rewind()).toString();
 
 						RPCRequest rpcRequest = RPC.decodeRequest(reqPayload,
-								delegate.getClass(), null);
+								delegate.getClass(), GwtRpcVisitor.this);
 
-						payload = RPC.invokeAndEncodeResponse(delegate,
-								rpcRequest.getMethod(), rpcRequest
-										.getParameters(), rpcRequest
-										.getSerializationPolicy(), rpcRequest
-										.getFlags());
-
+						try {
+							payload = RPC.invokeAndEncodeResponse(delegate,
+									rpcRequest.getMethod(), rpcRequest
+											.getParameters(), rpcRequest
+											.getSerializationPolicy(),
+									rpcRequest.getFlags());
+						} catch (IncompatibleRemoteServiceException ex) {
+							payload = RPC.encodeResponseForFailure(null, ex);
+						} catch (RpcTokenException ex) {
+							payload = RPC.encodeResponseForFailure(null, ex);
+						}
 						ByteBuffer pbuf = (ByteBuffer) UTF8.encode(payload)
 								.rewind();
 						final int limit = pbuf.rewind().limit();
