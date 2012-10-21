@@ -29,6 +29,7 @@ public class WebServerTest extends TestCase {
 		webClient.setJavaScriptEnabled(true);
 		webClient.setThrowExceptionOnFailingStatusCode(true);
 		webClient.setThrowExceptionOnScriptError(true);
+		webClient.setTimeout(10000);
 
 		BlobAntiPatternObject.DEBUG_SENDJSON = true;
 		HttpMethod.killswitch = false;
@@ -80,6 +81,7 @@ public class WebServerTest extends TestCase {
 				.getPage("http://localhost:8080/?some=params&others=true");
 
 		assertEquals("Sample App", page.getTitleText());
+
 		HtmlPage page2 = webClient
 				.getPage("http://localhost:8080/index.html?some=params&others=true");
 		assertEquals("Sample App", page2.getTitleText());
@@ -88,11 +90,22 @@ public class WebServerTest extends TestCase {
 	public void testRequestFileWithFragment() throws Exception {
 		HtmlPage page = webClient
 				.getPage("http://localhost:8080/#startSomewhere");
-
 		assertEquals("Sample App", page.getTitleText());
+
 		HtmlPage page2 = webClient
 				.getPage("http://localhost:8080/index.html#startSomewhere");
 		assertEquals("Sample App", page2.getTitleText());
 	}
+
+	//I think this is failing from HtmlUnit not sending Accepts: headers
+	//	public void testRequestGzippedFile() throws Exception {
+	//		HtmlPage page = webClient.getPage("http://localhost:8080/gzipped/");
+	//		assertEquals("Sample App", page.getTitleText());
+	//
+	//		HtmlPage page2 = webClient
+	//				.getPage("http://localhost:8080/gzipped/index.html");
+	//		assertEquals("Sample App", page2.getTitleText());
+	//
+	//	}
 
 }
