@@ -120,7 +120,8 @@ public class ContentRootImpl extends Impl implements PreRead {
 
 		String accepts = req.headerString(Accept$2dEncoding);
 		String ceString = null;
-		String finalFname = fileScrub(rootPath + SLASHDOTSLASH + req.path());
+		String finalFname = fileScrub(rootPath + SLASHDOTSLASH
+				+ req.path().split("\\?")[0]);
 		file = new File(finalFname);
 		if (file.isDirectory()) {
 			file = new File((finalFname + "/index.html"));
