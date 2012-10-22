@@ -18,7 +18,7 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 public class WebServerTest extends TestCase {
 	private static final String host = "localhost";
-	private static final int port = 8080;
+	private int port;
 
 	private ScheduledExecutorService exec;
 	private ServerSocketChannel serverSocketChannel;
@@ -33,15 +33,18 @@ public class WebServerTest extends TestCase {
 
 		BlobAntiPatternObject.DEBUG_SENDJSON = true;
 		HttpMethod.killswitch = false;
+
+		serverSocketChannel = ServerSocketChannel.open();
+		final InetSocketAddress serverSocket = new InetSocketAddress(host, 0);
+		serverSocketChannel.socket().bind(serverSocket);
+		port = serverSocketChannel.socket().getLocalPort();
+		serverSocketChannel.configureBlocking(false);
+
 		exec = Executors.newScheduledThreadPool(2);
 		exec.submit(new Runnable() {
 			public void run() {
 				AsioVisitor topLevel = new ProtocolMethodDispatch();
 				try {
-					serverSocketChannel = ServerSocketChannel.open();
-					serverSocketChannel.socket().bind(
-							new InetSocketAddress(host, port));
-					serverSocketChannel.configureBlocking(false);
 
 					HttpMethod
 							.enqueue(serverSocketChannel, OP_ACCEPT, topLevel);
@@ -67,44 +70,46 @@ public class WebServerTest extends TestCase {
 	}
 
 	public void testRequestSlash() throws Exception {
-		HtmlPage page = webClient.getPage("http://localhost:8080/");
+		HtmlPage page = webClient.getPage("http://localhost:" + port + "/");
 		assertEquals("Sample App", page.getTitleText());
 	}
 
 	public void testRequestIndexHtml() throws Exception {
-		HtmlPage page = webClient.getPage("http://localhost:8080/index.html");
+		HtmlPage page = webClient.getPage("http://localhost:" + port
+				+ "/index.html");
 		assertEquals("Sample App", page.getTitleText());
 	}
 
 	public void testRequestFileWithQuerystring() throws Exception {
-		HtmlPage page = webClient
-				.getPage("http://localhost:8080/?some=params&others=true");
+		HtmlPage page = webClient.getPage("http://localhost:" + port
+				+ "/?some=params&others=true");
 
 		assertEquals("Sample App", page.getTitleText());
 
-		HtmlPage page2 = webClient
-				.getPage("http://localhost:8080/index.html?some=params&others=true");
+		HtmlPage page2 = webClient.getPage("http://localhost:" + port
+				+ "/index.html?some=params&others=true");
 		assertEquals("Sample App", page2.getTitleText());
 	}
 
 	public void testRequestFileWithFragment() throws Exception {
-		HtmlPage page = webClient
-				.getPage("http://localhost:8080/#startSomewhere");
+		HtmlPage page = webClient.getPage("http://localhost:" + port
+				+ "/#startSomewhere");
 		assertEquals("Sample App", page.getTitleText());
 
-		HtmlPage page2 = webClient
-				.getPage("http://localhost:8080/index.html#startSomewhere");
+		HtmlPage page2 = webClient.getPage("http://localhost:" + port
+				+ "/index.html#startSomewhere");
 		assertEquals("Sample App", page2.getTitleText());
 	}
 
 	//I think this is failing from HtmlUnit not sending Accepts: headers
 	public void testRequestGzippedFile() throws Exception {
-		HtmlPage page = webClient.getPage("http://localhost:8080/gzipped/");
+		HtmlPage page = webClient.getPage("http://localhost:" + port
+				+ "/gzipped/");
 		webClient.addRequestHeader("Accept-Encoding", "gzip, default");
 		assertEquals("Sample App", page.getTitleText());
 
-		HtmlPage page2 = webClient
-				.getPage("http://localhost:8080/gzipped/index.html");
+		HtmlPage page2 = webClient.getPage("http://localhost:" + port
+				+ "/gzipped/index.html");
 		assertEquals("Sample App", page2.getTitleText());
 
 	}
