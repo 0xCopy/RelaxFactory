@@ -98,14 +98,15 @@ public class WebServerTest extends TestCase {
 	}
 
 	//I think this is failing from HtmlUnit not sending Accepts: headers
-	//	public void testRequestGzippedFile() throws Exception {
-	//		HtmlPage page = webClient.getPage("http://localhost:8080/gzipped/");
-	//		assertEquals("Sample App", page.getTitleText());
-	//
-	//		HtmlPage page2 = webClient
-	//				.getPage("http://localhost:8080/gzipped/index.html");
-	//		assertEquals("Sample App", page2.getTitleText());
-	//
-	//	}
+	public void testRequestGzippedFile() throws Exception {
+		HtmlPage page = webClient.getPage("http://localhost:8080/gzipped/");
+		webClient.addRequestHeader("Accept-Encoding", "gzip, default");
+		assertEquals("Sample App", page.getTitleText());
+
+		HtmlPage page2 = webClient
+				.getPage("http://localhost:8080/gzipped/index.html");
+		assertEquals("Sample App", page2.getTitleText());
+
+	}
 
 }

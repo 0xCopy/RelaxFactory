@@ -91,8 +91,8 @@ public class ContentRootImpl extends Impl implements PreRead {
 		if (read == -1)
 			key.cancel();
 		Buffer flip = cursor.duplicate().flip();
-		req = (HttpRequest) ActionBuilder.get().state().$req().apply(
-				(ByteBuffer) flip);
+		req = (HttpRequest) ActionBuilder.get().state().addHeaderInterest(
+				Accept$2dEncoding).$req().apply((ByteBuffer) flip);
 		if (!BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, req
 				.headerBuf())) {
 			return;
@@ -126,11 +126,13 @@ public class ContentRootImpl extends Impl implements PreRead {
 		if (file.isDirectory()) {
 			file = new File((finalFname + "/index.html"));
 		}
+		finalFname = (file.getCanonicalPath());
 		if (null != accepts) {
 
 			for (CompressionTypes compType : CompressionTypes.values()) {
 				if (accepts.contains(compType.name())) {
-					File f = new File(finalFname + "." + compType.suffix);
+					File f = new File(file.getAbsoluteFile() + "."
+							+ compType.suffix);
 					if (f.isFile() && f.canRead()) {
 						if (BlobAntiPatternObject.DEBUG_SENDJSON) {
 							System.err.println("sending compressed archive: "
@@ -144,7 +146,6 @@ public class ContentRootImpl extends Impl implements PreRead {
 			}
 		}
 		boolean send200 = file.canRead() && file.isFile();
-		finalFname = (file.getCanonicalPath());
 
 		if (send200) {
 			final RandomAccessFile randomAccessFile = new RandomAccessFile(
