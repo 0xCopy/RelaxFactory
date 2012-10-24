@@ -122,6 +122,7 @@ public class DealSiteInit {
     BlobAntiPatternObject.EXECUTOR_SERVICE.schedule(new Runnable() {
       @Override
       public void run() {
+    	  registerurlExprAsFirst(HttpMethod.POST, Pattern.compile(Pattern.quote("/DealSite/rpc")), SampleRemoteServiceImpl.class);
         registerurlExprAsFirst(HttpMethod.GET, FRAGMENT, FragMent.class /*(fragment)*/);
 
         Pattern authpat = Pattern.compile("/rxf.server.Auth/.*");

@@ -64,7 +64,7 @@ public class ProtocolMethodDispatch extends Impl {
 	/**
 	 * the PUT protocol handlers, only static for the sake of javadocs
 	 */
-	public static Map<Pattern, Class<? extends Impl>> PUTmap = new LinkedHashMap<Pattern, Class<? extends Impl>>();
+	public static Map<Pattern, Class<? extends Impl>> POSTmap = new LinkedHashMap<Pattern, Class<? extends Impl>>();
 
 	/**
 	 * the GET protocol handlers, only static for the sake of javadocs
@@ -72,7 +72,7 @@ public class ProtocolMethodDispatch extends Impl {
 	public static Map<Pattern, Class<? extends Impl>> GETmap = new LinkedHashMap<Pattern, Class<? extends Impl>>();
 
 	static {
-		NAMESPACE.put(POST, PUTmap);
+		NAMESPACE.put(POST, POSTmap);
 		NAMESPACE.put(GET, GETmap);
 
 		/**
@@ -80,7 +80,7 @@ public class ProtocolMethodDispatch extends Impl {
 		 *
 		 * TODO: rf GET from query parameters
 		 */
-		PUTmap.put(Pattern.compile("^/gwtRequest"),
+		POSTmap.put(Pattern.compile("^/gwtRequest"),
 				GwtRequestFactoryVisitor.class);
 
 		/**

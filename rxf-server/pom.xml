@@ -58,6 +58,13 @@
             <scope>provided</scope>
         </dependency>
 
+        <dependency>
+            <groupId>com.colinalworth</groupId>
+            <artifactId>rpq</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <optional>true</optional>
+        </dependency>
+
 
         <dependency>
             <groupId>net.sf.jtidy</groupId>
