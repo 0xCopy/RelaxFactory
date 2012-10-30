@@ -5,6 +5,7 @@ import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 import static rxf.server.BlobAntiPatternObject.HEADER_TERMINATOR;
 import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -182,10 +183,13 @@ public class GwtRpcVisitor extends Impl
 			String path = new URL(moduleBaseURL).getPath();
 			fileName = SerializationPolicyLoader
 					.getSerializationPolicyFileName(path + strongName);
-			is = getClass().getResourceAsStream(fileName);
+			is = new File("./" + fileName).toURI().toURL().openStream();
 		} catch (MalformedURLException e1) {
 			System.out.println("ERROR: malformed moduleBaseURL: "
 					+ moduleBaseURL);
+			return null;
+		} catch (IOException e) {
+			e.printStackTrace();
 			return null;
 		}
 

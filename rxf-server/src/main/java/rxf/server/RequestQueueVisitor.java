@@ -5,6 +5,7 @@ import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 import static rxf.server.BlobAntiPatternObject.HEADER_TERMINATOR;
 import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -176,16 +177,19 @@ public class RequestQueueVisitor extends Impl
 		//TODO cache policies in weakrefmap? cleaner than reading from fs?
 
 		// Translate the module path to a path on the filesystem, and grab a stream
-		InputStream is;
+		InputStream is = null;
 		String fileName;
 		try {
 			String path = new URL(moduleBaseURL).getPath();
 			fileName = SerializationPolicyLoader
 					.getSerializationPolicyFileName(path + strongName);
-			is = getClass().getResourceAsStream(fileName);
+			is = new File("./" + fileName).toURI().toURL().openStream();
 		} catch (MalformedURLException e1) {
 			System.out.println("ERROR: malformed moduleBaseURL: "
 					+ moduleBaseURL);
+			return null;
+		} catch (IOException e) {
+			e.printStackTrace();
 			return null;
 		}
 
@@ -199,6 +203,12 @@ public class RequestQueueVisitor extends Impl
 		} catch (IOException e) {
 			System.out.println("ERROR: Could not read the policy file '"
 					+ fileName + "'");
+		} finally {
+			try {
+				is.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 
 		return serializationPolicy;
