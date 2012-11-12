@@ -5,16 +5,34 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.name.Names;
 import rxf.server.CouchService;
+import rxf.server.CouchServiceFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Module builder to facilitate declaring {@link CouchService} types and the entities they will manage.
+ * When created, will wire up the {@link CouchServiceFactory} to create requested service instances.
+ *
+ */
 public class CouchModuleBuilder {
 	public static final String NAMESPACE = "couch_namespace";
 	private final String ns;
 	private final List<Class<?>> entities = new ArrayList<Class<?>>();
 	private final List<Class<? extends CouchService<?>>> services = new ArrayList<Class<? extends CouchService<?>>>();
 
+	/**
+	 * Creates a new builds. No namespace has been declared, a String constant must be bound to 
+	 * {@literal @Named(} {@value #NAMESPACE}) to allow this to correctly create service instances.
+	 */
+	public CouchModuleBuilder() {
+		this(null);
+	}
+
+	/**
+	 * Creates a new builder, with the given namespace for all databases.
+	 * @param namespace
+	 */
 	public CouchModuleBuilder(String namespace) {
 		this.ns = namespace;
 	}
