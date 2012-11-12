@@ -122,9 +122,8 @@ public class RequestQueueVisitor extends Impl
 						String reqPayload = UTF8.decode(
 								(ByteBuffer) cursor.rewind()).toString();
 
-						RPCRequest rpcRequest = BatchServiceServlet
-								.decodeRequest(reqPayload, null,
-										RequestQueueVisitor.this);
+						RPCRequest rpcRequest = BatchInvoker.decodeRequest(
+								reqPayload, null, RequestQueueVisitor.this);
 
 						try {
 							payload = RPC.invokeAndEncodeResponse(invoker,
