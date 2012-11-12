@@ -55,7 +55,7 @@ public class Rfc822HeaderState {
 	}
 
 	@SuppressWarnings({"RedundantCast"})
-	public class HttpRequest extends Rfc822HeaderState {
+	public static class HttpRequest extends Rfc822HeaderState {
 		public HttpRequest(Rfc822HeaderState proto) {
 			super(proto);
 			String protocol = protocol();
@@ -108,7 +108,7 @@ public class Rfc822HeaderState {
 	}
 
 	@SuppressWarnings({"RedundantCast"})
-	public class HttpResponse extends Rfc822HeaderState {
+	public static class HttpResponse extends Rfc822HeaderState {
 
 		public HttpResponse(Rfc822HeaderState proto) {
 			super(proto);
