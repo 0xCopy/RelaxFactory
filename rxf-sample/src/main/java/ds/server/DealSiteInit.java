@@ -9,6 +9,7 @@ import rxf.server.BlobAntiPatternObject;
 import rxf.server.CouchLocator;
 import rxf.server.CouchServiceFactory;
 import rxf.server.CouchTx;
+import rxf.server.guice.RelaxFactoryServer;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -36,21 +37,22 @@ import static rxf.server.CouchNamespace.NAMESPACE;
 public class DealSiteInit {
 
   public static final Pattern FRAGMENT = Pattern.compile(".*_escaped_fragment_=([^&]+)");
-
-
-  public static void registerurlExprAsFirst(HttpMethod method, Pattern passthroughExpr, Class<? extends Impl> value) {
-    Map<Pattern, Class<? extends Impl>> linkedHashMap = new LinkedHashMap<Pattern, Class<? extends Impl>>();
-    linkedHashMap.put(passthroughExpr, value);
-    Map<Pattern, Class<? extends Impl>> patternImplMap = NAMESPACE.get(method);
-    if (null != patternImplMap) {
-      linkedHashMap.putAll(patternImplMap);
-    }
-    NAMESPACE.put(method, linkedHashMap);
-  }
+//
+//
+//  public static void registerurlExprAsFirst(HttpMethod method, Pattern passthroughExpr, Class<? extends Impl> value) {
+//    Map<Pattern, Class<? extends Impl>> linkedHashMap = new LinkedHashMap<Pattern, Class<? extends Impl>>();
+//    linkedHashMap.put(passthroughExpr, value);
+//    Map<Pattern, Class<? extends Impl>> patternImplMap = NAMESPACE.get(method);
+//    if (null != patternImplMap) {
+//      linkedHashMap.putAll(patternImplMap);
+//    }
+//    NAMESPACE.put(method, linkedHashMap);
+//  }
 
   public static void main(String... args) throws Exception {
     // Create an injector to kick Guice into taking over RF for services
     Injector injector = Guice.createInjector(new DealModule());
+    RelaxFactoryServer server = injector.getInstance(RelaxFactoryServer.class);
 
     BlobAntiPatternObject.EXECUTOR_SERVICE.schedule(new Runnable() {
       public void run() {
@@ -119,19 +121,20 @@ public class DealSiteInit {
       }
     }, 5, TimeUnit.SECONDS);
 
-    BlobAntiPatternObject.EXECUTOR_SERVICE.schedule(new Runnable() {
-      @Override
-      public void run() {
-    	  registerurlExprAsFirst(HttpMethod.POST, Pattern.compile(Pattern.quote("/DealSite/rpc")), SampleRemoteServiceImpl.class);
-        registerurlExprAsFirst(HttpMethod.GET, FRAGMENT, FragMent.class /*(fragment)*/);
-
-        Pattern authpat = Pattern.compile("/rxf.server.Auth/.*");
-        registerurlExprAsFirst(HttpMethod.GET, authpat, OAuthHandler.class /*(fragment)*/);
-        registerurlExprAsFirst(HttpMethod.POST, authpat, OAuthHandler.class /*(fragment)*/);
-
-      }
-    }, 250, TimeUnit.MILLISECONDS);
-    BlobAntiPatternObject.startServer(args);
+//    BlobAntiPatternObject.EXECUTOR_SERVICE.schedule(new Runnable() {
+//      @Override
+//      public void run() {
+//    	  registerurlExprAsFirst(HttpMethod.POST, Pattern.compile(Pattern.quote("/DealSite/rpc")), SampleRemoteServiceImpl.class);
+//        registerurlExprAsFirst(HttpMethod.GET, FRAGMENT, FragMent.class /*(fragment)*/);
+//
+//        Pattern authpat = Pattern.compile("/rxf.server.Auth/.*");
+//        registerurlExprAsFirst(HttpMethod.GET, authpat, OAuthHandler.class /*(fragment)*/);
+//        registerurlExprAsFirst(HttpMethod.POST, authpat, OAuthHandler.class /*(fragment)*/);
+//
+//      }
+//    }, 250, TimeUnit.MILLISECONDS);
+//    BlobAntiPatternObject.startServer(args);
+    server.start();
 
   }
 

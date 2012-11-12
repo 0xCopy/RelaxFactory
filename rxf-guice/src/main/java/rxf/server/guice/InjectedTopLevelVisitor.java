@@ -30,7 +30,8 @@ import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 
 public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
-	private final Map<HttpMethod, Map<String, Key<? extends AsioVisitor>>> bindings = new EnumMap<HttpMethod, Map<String, Key<? extends AsioVisitor>>>(HttpMethod.class);
+	private final Map<HttpMethod, Map<String, Key<? extends AsioVisitor>>> bindings = new EnumMap<HttpMethod, Map<String, Key<? extends AsioVisitor>>>(
+			HttpMethod.class);
 
 	private Injector injector;
 
@@ -97,7 +98,7 @@ public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
 		}
 
 		Set<Entry<String, Key<? extends AsioVisitor>>> entries = bindings.get(
-				method.name()).entrySet();
+				method).entrySet();
 		String path = httpRequest.path();
 		for (Entry<String, Key<? extends AsioVisitor>> visitorEntry : entries) {
 			if (path.matches(visitorEntry.getKey())) {

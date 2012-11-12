@@ -66,7 +66,7 @@ public class RxfModule extends AbstractModule {
 	protected void configureHttpVisitors() {
 
 	}
-	
+
 	protected VisitorKeyBindingBuilder handle(final HttpMethod verb,
 			final String regex) {
 		return new VisitorKeyBindingBuilder() {

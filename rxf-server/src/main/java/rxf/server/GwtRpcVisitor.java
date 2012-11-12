@@ -40,10 +40,10 @@ public class GwtRpcVisitor extends Impl
 			PreRead,
 			SerializationPolicyProvider {
 
-	HttpRequest req;
-	ByteBuffer cursor = null;
+	private HttpRequest req;
+	private ByteBuffer cursor = null;
 	private SocketChannel channel;
-	String payload;
+	private String payload;
 
 	private final Object delegate;
 

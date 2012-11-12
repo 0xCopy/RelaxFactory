@@ -24,10 +24,10 @@ import static rxf.server.BlobAntiPatternObject.*;
 public class GwtRequestFactoryVisitor extends Impl implements PreRead {
 	public static SimpleRequestProcessor SIMPLE_REQUEST_PROCESSOR = new SimpleRequestProcessor(
 			ServiceLayer.create());
-	HttpRequest req;
-	ByteBuffer cursor = null;
+	private HttpRequest req;
+	private ByteBuffer cursor = null;
 	private SocketChannel channel;
-	String payload;
+	private String payload;
 
 	@Override
 	public void onRead(SelectionKey key) throws Exception {

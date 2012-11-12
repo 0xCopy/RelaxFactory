@@ -24,7 +24,6 @@ import rxf.server.Rfc822HeaderState.HttpRequest;
 
 import com.colinalworth.rpq.server.BatchInvoker;
 import com.colinalworth.rpq.server.BatchServiceLocator;
-import com.colinalworth.rpq.server.BatchServiceServlet;
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.RpcTokenException;
 import com.google.gwt.user.server.rpc.RPC;
@@ -43,10 +42,10 @@ public class RequestQueueVisitor extends Impl
 			PreRead,
 			SerializationPolicyProvider {
 
-	HttpRequest req;
-	ByteBuffer cursor = null;
+	private HttpRequest req;
+	private ByteBuffer cursor = null;
 	private SocketChannel channel;
-	String payload;
+	private String payload;
 
 	private final BatchInvoker invoker;
 
@@ -54,7 +53,10 @@ public class RequestQueueVisitor extends Impl
 		this(new BatchServiceLocator());
 	}
 	public RequestQueueVisitor(BatchServiceLocator locator) {
-		invoker = new BatchInvoker(locator);
+		this(new BatchInvoker(locator));
+	}
+	public RequestQueueVisitor(BatchInvoker invoker) {
+		this.invoker = invoker;
 	}
 
 	@Override
