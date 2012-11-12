@@ -4,6 +4,7 @@ import com.google.web.bindery.requestfactory.server.ServiceLayer;
 import com.google.web.bindery.requestfactory.server.SimpleRequestProcessor;
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpHeaders;
+import one.xio.HttpStatus;
 import one.xio.MimeType;
 import rxf.server.Rfc822HeaderState.HttpRequest;
 
@@ -97,6 +98,7 @@ public class GwtRequestFactoryVisitor extends Impl implements PreRead {
 								.rewind();
 						final int limit = pbuf.rewind().limit();
 						Rfc822HeaderState.HttpResponse res = req.$res();
+						res.status(HttpStatus.$200);
 						ByteBuffer as = res.headerString(
 								HttpHeaders.Content$2dType,
 								MimeType.json.contentType).headerString(
