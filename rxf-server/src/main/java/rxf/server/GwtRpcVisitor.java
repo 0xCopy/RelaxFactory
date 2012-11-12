@@ -85,8 +85,8 @@ public class GwtRpcVisitor extends Impl
 		if (read == -1)
 			key.cancel();
 		Buffer flip = cursor.duplicate().flip();
-		req = (HttpRequest) ActionBuilder.get().state().$req().apply(
-				(ByteBuffer) flip);
+		req = (HttpRequest) req.headerInterest(HttpHeaders.Content$2dLength)
+				.apply((ByteBuffer) flip);
 		if (!BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, req
 				.headerBuf())) {
 			return;
