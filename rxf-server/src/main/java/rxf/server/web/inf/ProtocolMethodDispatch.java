@@ -126,9 +126,9 @@ public class ProtocolMethodDispatch extends Impl {
 		HttpRequest httpRequest = null;
 		try {
 			//find the method to dispatch
-			Rfc822HeaderState state = ActionBuilder.get().state();
-			Rfc822HeaderState apply = state.apply((ByteBuffer) cursor.flip());
-			httpRequest = apply.$req();
+			Rfc822HeaderState state = new Rfc822HeaderState()
+					.apply((ByteBuffer) cursor.flip());
+			httpRequest = state.$req();
 			if (BlobAntiPatternObject.DEBUG_SENDJSON) {
 				System.err.println(BlobAntiPatternObject.deepToString(UTF8
 						.decode((ByteBuffer) httpRequest.headerBuf()

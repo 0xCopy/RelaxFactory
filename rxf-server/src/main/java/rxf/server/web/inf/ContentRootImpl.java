@@ -34,7 +34,6 @@ public class ContentRootImpl extends Impl implements PreRead {
 	public static final String DOUBLESEP = File.separator + File.separator;
 	private String rootPath = CouchNamespace.COUCH_DEFAULT_FS_ROOT;
 	private ByteBuffer cursor;
-	private HttpRequest request;
 	private SocketChannel channel;
 	private HttpRequest req;
 
@@ -91,7 +90,7 @@ public class ContentRootImpl extends Impl implements PreRead {
 		if (read == -1)
 			key.cancel();
 		Buffer flip = cursor.duplicate().flip();
-		req = (HttpRequest) ActionBuilder.get().state().addHeaderInterest(
+		req = (HttpRequest) new Rfc822HeaderState().addHeaderInterest(
 				Accept$2dEncoding).$req().apply((ByteBuffer) flip);
 		if (!BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, req
 				.headerBuf())) {
