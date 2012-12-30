@@ -492,7 +492,7 @@ public enum CouchMetaDriver {
 							if (BlobAntiPatternObject.suffixMatchChunks(
 									HEADER_TERMINATOR, response.headerBuf())) {
 								try {
-									if (DEBUG_SENDJSON) {
+									if (DEBUG_SENDJSON)
 										System.err
 												.println(deepToString(
 														"??? ",
@@ -500,9 +500,11 @@ public enum CouchMetaDriver {
 																.decode((ByteBuffer) flip
 																		.duplicate()
 																		.rewind())));
-									}
-									payload.set(UTF8.encode(response
-											.dequotedHeader(ETag.getHeader())));
+									String header1 = ETag.getHeader();
+									String str = response
+											.dequotedHeader(header1);
+									ByteBuffer encode = UTF8.encode(str);
+									payload.set(encode);
 								} catch (Exception e) {
 									if (DEBUG_SENDJSON) {
 										e.printStackTrace();
@@ -860,19 +862,18 @@ public enum CouchMetaDriver {
 						deliver();
 						recycleChannel(channel);
 						return;
-					}
-					/*
-					                final ByteBuffer tmp = (ByteBuffer) cursor.duplicate();
-					                final int position = tmp.position();
-					                tmp.flip();
-					                String decode = UTF8.decode(((ByteBuffer) tmp.position(position - CE_TERMINAL.length()))).toString();
-					                if (CE_TERMINAL.equals(decode.toString())) {
-					                list.add(cursor);
-					                deliver();
-					                recycleChannel(channel);
-					                return;
-					                }
-					 */
+					} /*
+						final ByteBuffer tmp = (ByteBuffer) cursor.duplicate();
+						final int position = tmp.position();
+						tmp.flip();
+						String decode = UTF8.decode(((ByteBuffer) tmp.position(position - CE_TERMINAL.length()))).toString();
+						if (CE_TERMINAL.equals(decode.toString())) {
+						list.add(cursor);
+						deliver();
+						recycleChannel(channel);
+						return;
+						}
+						 */
 					if (!cursor.hasRemaining()) {
 						list.add(cursor);
 						cursor = ByteBuffer
@@ -1138,7 +1139,7 @@ public enum CouchMetaDriver {
 	// TODO:
 	@DbTask({tx, future, oneWay})
 	@DbKeys(optional = {mimetypeEnum, mimetype}, value = {blob, db, docId, rev,
-			attachname,})
+			attachname})
 	BlobSend {
 		public ByteBuffer visit(DbKeysBuilder dbKeysBuilder,
 				ActionBuilder actionBuilder) throws Exception {

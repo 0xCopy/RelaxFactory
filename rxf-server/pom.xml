@@ -5,7 +5,7 @@
     <artifactId>rxf-server</artifactId>
     <parent>
         <groupId>rxf</groupId>
-        <version>0.9.0</version>
+        <version>0.9.1</version>
         <artifactId>relaxfactory</artifactId>
     </parent>
     <packaging>jar</packaging>
@@ -87,20 +87,7 @@
     </dependencies>
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <detail>true</detail>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
-                    <showDeprecation>true</showDeprecation>
-                    <showWarnings>true</showWarnings>
-                    <!--<executable>${env.JAVA_HOME_7}/bin/javac</executable>-->
-                    <!--<fork>true</fork>-->
-                </configuration>
-            </plugin>
-            <plugin>
+             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
                 <version>2.2</version>
@@ -113,7 +100,7 @@
                             <goal>exploded</goal>
                         </goals>
                         <configuration>
-                            <failOnMissingWebXml>false</failOnMissingWebXml>
+                            <!--<failOnMissingWebXml>false</failOnMissingWebXml>-->
                             <webappDirectory>${project.build.directory}/test-www</webappDirectory>
                             <warSourceDirectory>${basedir}/src/test/webapp</warSourceDirectory>
                         </configuration>
