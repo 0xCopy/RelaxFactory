@@ -159,7 +159,7 @@ public class BlobAntiPatternObject {
 
 	//test
 	public static void main(String... args) throws Exception {
-		GeoIpService.startGeoIpService();
+		//		GeoIpService.startGeoIpService();
 		startServer(args);
 	}
 

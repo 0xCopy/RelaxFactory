@@ -5,7 +5,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
-import junit.framework.Assert;
+import org.junit.Assert;
 import one.xio.AsioVisitor;
 import one.xio.HttpMethod;
 import org.junit.*;
@@ -19,6 +19,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 
 public class CouchServiceProviderTest {
@@ -89,23 +91,23 @@ public class CouchServiceProviderTest {
 	}
 
 	public static class GuiceTest {
-		String _rev, _id;
+		String _id;
 		String name;
 	}
 
 	@Test
 	public void testMakeSureServiceWorks() {
 		SimpleCouchService service = i.getInstance(SimpleCouchService.class);
-		Assert.assertNotNull(service);
+		assertNotNull(service);
 
 		GuiceTest instance = new GuiceTest();
 		instance.name = "blah";
 		CouchTx tx = service.persist(instance);
-		Assert.assertNotNull(tx);
+		assertNotNull(tx);
 
 		GuiceTest retrieve = service.find(tx.id());
-		Assert.assertNotNull(retrieve);
-		Assert.assertEquals(tx.id(), retrieve._id);
-		Assert.assertEquals("blah", retrieve.name);
+		assertNotNull(retrieve);
+		assertEquals(tx.id(), retrieve._id);
+		assertEquals("blah", retrieve.name);
 	}
 }

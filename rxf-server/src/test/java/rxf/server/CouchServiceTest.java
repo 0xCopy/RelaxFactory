@@ -1,12 +1,12 @@
 package rxf.server;
 
 import com.google.gson.JsonSyntaxException;
-import junit.framework.TestCase;
 import one.xio.AsioVisitor;
 import one.xio.HttpMethod;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import rxf.server.gen.CouchDriver;
 import rxf.server.gen.CouchDriver.DbDelete;
 import rxf.server.gen.CouchDriver.DocFetch;
 import rxf.server.web.inf.ProtocolMethodDispatch;
@@ -15,24 +15,22 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
-import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
+import static org.junit.Assert.*;
 import static rxf.server.BlobAntiPatternObject.GSON;
 
 /**
  * Tests out the db, cleaning up after itself. These must be run in order to work correctly and clean up.
  */
-public class CouchServiceTest extends TestCase {
-
+public class CouchServiceTest {
 	public static final String SOMEDBPREFIX = "test_somedb_";
 	public static final String SOMEDB = SOMEDBPREFIX
 			+ System.currentTimeMillis(); //ordered names of testdbs for failure postmortem....
-	public static final String[] A = new String[]{};
-	public ScheduledExecutorService exec;
+	public static final String DESIGN_SAMPLE = "_design/sample";
+	public static ScheduledExecutorService exec;
 
 	@BeforeClass
-	public void setUp() throws Exception {
+	static public void setUp() throws Exception {
 		BlobAntiPatternObject.DEBUG_SENDJSON = true;
 		HttpMethod.killswitch = false;
 		exec = Executors.newScheduledThreadPool(2);
@@ -40,24 +38,24 @@ public class CouchServiceTest extends TestCase {
 			public void run() {
 				AsioVisitor topLevel = new ProtocolMethodDispatch();
 				try {
-					HttpMethod.init(topLevel/*, 1000*/);
-
+					HttpMethod.init(topLevel);
 				} catch (Exception e) {
 					fail();
 				}
 			}
 		});
 		nukeTestDbs();
-		EXECUTOR_SERVICE.schedule(new Runnable() {
-			public void run() {
-				fail();
-			}
-		}, 5, TimeUnit.SECONDS);
+
+		{
+			CouchTx tx = CouchDriver.DbCreate.$().db(SOMEDB).to().fire().tx();
+			assertNotNull(tx);
+			assertTrue(tx.ok());
+			assertNull(tx.getError());
+		}
+
 	}
 
 	static void nukeTestDbs() {
-		//REALLY NUKE THE OLD TESTS
-
 		try {
 			String json = DocFetch.$().db("").docId("_all_dbs").to().fire()
 					.json();
@@ -73,16 +71,12 @@ public class CouchServiceTest extends TestCase {
 	}
 
 	@AfterClass
-	public void tearDown() throws Exception {
-
-		//    DbDelete.$().db(SOMEDB).to().fire().oneWay();
+	static public void tearDown() throws Exception {
 
 		try {
 			HttpMethod.killswitch = true;
 			HttpMethod.getSelector().close();
-			//      HttpMethod.broke = null;
 			exec.shutdown();
-			//Thread.sleep(4000);//more than 3 seconds, standard timeout
 		} catch (Exception ignore) {
 		}
 	}
@@ -118,9 +112,9 @@ public class CouchServiceTest extends TestCase {
 		String id = tx.id();
 
 		CSFTest obj = service.find(id);
-		junit.framework.Assert.assertNotNull(obj);
-		junit.framework.Assert.assertEquals("abc", obj.model);
-		junit.framework.Assert.assertEquals("def", obj.brand);
+		org.junit.Assert.assertNotNull(obj);
+		org.junit.Assert.assertEquals("abc", obj.model);
+		org.junit.Assert.assertEquals("def", obj.brand);
 
 	}
 
@@ -147,23 +141,23 @@ public class CouchServiceTest extends TestCase {
 
 			CouchTx tx = service.persist(new CSFTest());
 
-			junit.framework.Assert.assertNotNull(tx);
-			junit.framework.Assert.assertTrue(tx.ok());
-			junit.framework.Assert.assertNull(tx.getError());
+			org.junit.Assert.assertNotNull(tx);
+			org.junit.Assert.assertTrue(tx.ok());
+			org.junit.Assert.assertNull(tx.getError());
 
 			CSFTest obj = service.find(tx.id());
-			junit.framework.Assert.assertNull(obj.brand);
-			junit.framework.Assert.assertNull(obj.model);
+			org.junit.Assert.assertNull(obj.brand);
+			org.junit.Assert.assertNull(obj.model);
 			obj.brand = "Best";
 			obj.model = "Sample";
 
 			CouchTx tx2 = service.persist(obj);
-			junit.framework.Assert.assertEquals(tx.id(), tx2.id());
-			junit.framework.Assert.assertFalse(tx.rev().equals(tx2.rev()));
+			org.junit.Assert.assertEquals(tx.id(), tx2.id());
+			org.junit.Assert.assertFalse(tx.rev().equals(tx2.rev()));
 
 			CSFTest obj2 = service.find(tx.id());
-			junit.framework.Assert.assertEquals("Best", obj2.brand);
-			junit.framework.Assert.assertEquals("Sample", obj2.model);
+			org.junit.Assert.assertEquals("Best", obj2.brand);
+			org.junit.Assert.assertEquals("Sample", obj2.model);
 		} catch (Exception e) {
 			fail();
 		}
@@ -185,16 +179,16 @@ public class CouchServiceTest extends TestCase {
 			service.persist(b);
 
 			List<CSFTest> results = service.getItemsWithBrand("something");
-			junit.framework.Assert.assertNotNull(results);
-			junit.framework.Assert.assertEquals(1, results.size());
-			junit.framework.Assert.assertEquals("something",
-					results.get(0).brand);
+			org.junit.Assert.assertNotNull(results);
+			org.junit.Assert.assertEquals(1, results.size());
+			org.junit.Assert.assertEquals("something", results.get(0).brand);
 
 		} catch (Exception e) {
 			fail();
 		}
 	}
 
+	@Test
 	public void testSimpleFinderEmptyRowset() {
 		try {
 			SimpleCouchService service = null;
@@ -211,7 +205,7 @@ public class CouchServiceTest extends TestCase {
 
 			List<CSFTest> noResults = service.getItemsWithBrand("a");
 			assert (null == noResults || noResults.isEmpty());
-			junit.framework.Assert.assertEquals(0, noResults.size());
+			org.junit.Assert.assertEquals(0, noResults.size());
 		} catch (Exception e) {
 			fail();
 		}
@@ -231,6 +225,7 @@ public class CouchServiceTest extends TestCase {
 		List<CSFTest> all();
 	}
 
+	@Test
 	public void testMultiParamFinder() throws Exception {
 		SlightlyComplexCouchService service = CouchServiceFactory.get(
 				SlightlyComplexCouchService.class, SOMEDB);
@@ -248,6 +243,7 @@ public class CouchServiceTest extends TestCase {
 		assertEquals("-model9", loaded.get(4).model);
 	}
 
+	@Test
 	public void testKeysFinder() throws Exception {
 		SlightlyComplexCouchService service = CouchServiceFactory.get(
 				SlightlyComplexCouchService.class, SOMEDB);
@@ -263,6 +259,7 @@ public class CouchServiceTest extends TestCase {
 		assertEquals(2, loaded.size());
 	}
 
+	@Test
 	public void testNonPrimitiveKeyFinder() throws Exception {
 		SlightlyComplexCouchService service = CouchServiceFactory.get(
 				SlightlyComplexCouchService.class, SOMEDB);
@@ -314,7 +311,9 @@ public class CouchServiceTest extends TestCase {
 		//    assertNotNull(loaded.get(0)._id);
 	}
 
+	@Test
 	public void testNoArgMethod() throws Exception {
+		nukeTestDbs();
 		SlightlyComplexCouchService service = CouchServiceFactory.get(
 				SlightlyComplexCouchService.class, SOMEDB);
 		for (int i = 0; i < 10; i++) {

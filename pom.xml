@@ -17,7 +17,7 @@
         <gwt-maven-plugin.compileReport>false</gwt-maven-plugin.compileReport>
         <gwt-maven-plugin.soycDetailed>false</gwt-maven-plugin.soycDetailed>
         <gwt-maven-plugin.strict>false</gwt-maven-plugin.strict>
-        <one.xio.version>1.10</one.xio.version>
+        <one.xio.version>1.10.1</one.xio.version>
     </properties>
     <profiles>
         <profile>
@@ -127,7 +127,7 @@
         <dependency>
             <groupId>javax.validation</groupId>
             <artifactId>validation-api</artifactId>
-            <version>1.0.0.GA</version>
+            <version>1.1.0.Beta2</version>
         </dependency>
 
         <dependency>
@@ -155,8 +155,8 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <configuration>
-                        <source>1.7</source>
-                        <target>1.7</target>
+                        <source>${java.specification.version}</source>
+                        <target>${java.specification.version}</target>
                     </configuration>
                 </plugin>
 
@@ -241,7 +241,7 @@
                 <artifactId>maven-pmd-plugin</artifactId>
                 <version>2.7.1</version>
                 <configuration>
-                    <targetJdk>${java.version}</targetJdk>
+                    <targetJdk>${java.specification.version}</targetJdk>
                     <rulesets>
                         <ruleset>/rulesets/basic.xml</ruleset>
                         <ruleset>/rulesets/braces.xml</ruleset>

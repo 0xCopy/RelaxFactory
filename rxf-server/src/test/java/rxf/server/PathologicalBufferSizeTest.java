@@ -1,12 +1,9 @@
 package rxf.server;
 
 import com.google.gson.JsonSyntaxException;
-import junit.framework.TestCase;
 import one.xio.AsioVisitor;
 import one.xio.HttpMethod;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import rxf.server.gen.CouchDriver.*;
 import rxf.server.gen.CouchDriver.ViewFetch.ViewFetchTerminalBuilder;
 import rxf.server.web.inf.ProtocolMethodDispatch;
@@ -15,22 +12,40 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
+import static org.junit.Assert.*;
 import static rxf.server.BlobAntiPatternObject.GSON;
 
 /**
  * Tests out the db, cleaning up after itself. These must be run in order to work correctly and clean up.
  */
-public class PathologicalBufferSizeTest extends TestCase {
+public class PathologicalBufferSizeTest {
 
 	public static final String SOMEDBPREFIX = "test_somedb_";
 	public static final String SOMEDB = SOMEDBPREFIX
 			+ System.currentTimeMillis(); //ordered names of testdbs for failure postmortem....
 	public static final String DESIGN_SAMPLE = "_design/sample";
 	public static final String[] A = new String[]{};
-	public ScheduledExecutorService exec;
+	public static ScheduledExecutorService exec;
+
+	static void nukeTestDbs() {
+		//REALLY NUKE THE OLD TESTS
+
+		try {
+			String json = DocFetch.$().db("").docId("_all_dbs").to().fire()
+					.json();
+			String[] strings = GSON.fromJson(json, String[].class);
+			for (String s : strings) {
+				if (s.startsWith(SOMEDBPREFIX))
+					DbDelete.$().db(s).to().fire().tx();
+			}
+		} catch (JsonSyntaxException e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
 
 	@BeforeClass
-	public void setUp() throws Exception {
+	static public void setUp() throws Exception {
 		BlobAntiPatternObject.DEBUG_SENDJSON = true;
 		HttpMethod.killswitch = false;
 		exec = Executors.newScheduledThreadPool(2);
@@ -56,45 +71,15 @@ public class PathologicalBufferSizeTest extends TestCase {
 
 	}
 
-	static void nukeTestDbs() {
-		//REALLY NUKE THE OLD TESTS
-
-		try {
-			String json = DocFetch.$().db("").docId("_all_dbs").to().fire()
-					.json();
-			String[] strings = GSON.fromJson(json, String[].class);
-			for (String s : strings) {
-				if (s.startsWith(SOMEDBPREFIX))
-					DbDelete.$().db(s).to().fire().tx();
-			}
-		} catch (JsonSyntaxException e) {
-			e.printStackTrace();
-			fail();
-		}
-	}
-
 	@AfterClass
-	public void tearDown() throws Exception {
-
-		//    DbDelete.$().db(SOMEDB).to().fire().oneWay();
+	static public void tearDown() throws Exception {
 
 		try {
 			HttpMethod.killswitch = true;
 			HttpMethod.getSelector().close();
-			//      HttpMethod.broke = null;
 			exec.shutdown();
-			//Thread.sleep(4000);//more than 3 seconds, standard timeout
 		} catch (Exception ignore) {
 		}
-	}
-	/*
-	  public static final String DB = "rxf_csftest";*/
-
-	public static class CSFTest {
-		public String _id, _rev;
-
-		public String model;
-		public String brand;
 	}
 
 	@Test(timeout = 1000)
@@ -102,8 +87,8 @@ public class PathologicalBufferSizeTest extends TestCase {
 		CouchTx tx = DocPersist.$().db(SOMEDB).validjson("{}").to().fire().tx();
 
 		String data = DocFetch.$().db(SOMEDB).docId(tx.id()).to().fire().json();
-		Map<String, Object> obj = GSON.<Map<String, Object>> fromJson(data,
-				Map.class);
+		Map<String, Object> obj = BlobAntiPatternObject.GSON
+				.<Map<String, Object>> fromJson(data, Map.class);
 		obj.put("abc", "123");
 		data = GSON.toJson(obj);
 		CouchTx updateTx = DocPersist.$().db(SOMEDB).validjson(data).to()
@@ -120,6 +105,7 @@ public class PathologicalBufferSizeTest extends TestCase {
 		assertTrue(data.contains("created"));
 	}
 
+	@Test
 	public void testMissingDocLowLevelFailure() {
 		CouchTx tx = DocPersist.$().db("dne_dne").validjson("{}").to().fire()
 				.tx();
@@ -231,6 +217,12 @@ public class PathologicalBufferSizeTest extends TestCase {
 		designDoc = DesignDocFetch.$().db(SOMEDB).designDocId(DESIGN_SAMPLE)
 				.to().fire().json();
 		assertNull(designDoc);
+	}
+
+	public static class CSFTest {
+		public String _id, _rev;
+		public String model;
+		public String brand;
 	}
 
 }

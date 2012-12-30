@@ -66,7 +66,7 @@
         </dependency>
 
 
-        <dependency>
+     <!--   <dependency>
             <groupId>net.sf.jtidy</groupId>
             <artifactId>jtidy</artifactId>
             <version>r938</version>
@@ -75,13 +75,13 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
-            <version>1.4</version>
-        </dependency>
+            <version>1.4.1</version>
+        </dependency>-->
 
         <dependency>
             <groupId>net.sourceforge.htmlunit</groupId>
             <artifactId>htmlunit</artifactId>
-            <version>2.10</version>
+            <version>2.12-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -90,7 +90,7 @@
              <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>2.2</version>
+                <version>2.3</version>
                 <!-- <configuration> <webXml>target/web.xml</webXml> </configuration> -->
                 <executions>
                     <execution>
@@ -108,7 +108,7 @@
                 </executions>
             </plugin>
 
-            <plugin>
+          <!--  <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.3</version>
@@ -118,16 +118,16 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>rxf.rxf.server.BlobAntiPatternObject</mainClass>
+                            <mainClass>rxf.server.BlobAntiPatternObject</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
-            </plugin>
+            </plugin>-->
 
-            <plugin>
+      <!--      <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
-                <version>1.2</version>
+                <version>1.2.1</version>
                 <executions>
                     <execution>
                         <phase>process-classes</phase>
@@ -162,7 +162,7 @@
                 </dependencies>
             </plugin>
 
-
+-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -172,7 +172,7 @@
             </plugin>
         </plugins>
         <outputDirectory>${project.build.directory}/${project.build.finalName}/WEB-INF/classes</outputDirectory>
-    </build>
+    </build><!--
     <reporting>
         <plugins>
             <plugin>
@@ -188,5 +188,5 @@
                 </reportSets>
             </plugin>
         </plugins>
-    </reporting>
+    </reporting>-->
 </project>

@@ -1,31 +1,32 @@
 package rxf.server;
 
-import static java.nio.channels.SelectionKey.OP_ACCEPT;
+import com.gargoylesoftware.htmlunit.BrowserVersion;
+import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import one.xio.AsioVisitor;
+import one.xio.HttpMethod;
+import org.junit.*;
+import rxf.server.web.inf.ProtocolMethodDispatch;
 
 import java.net.InetSocketAddress;
 import java.nio.channels.ServerSocketChannel;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import junit.framework.TestCase;
-import one.xio.AsioVisitor;
-import one.xio.HttpMethod;
-import rxf.server.web.inf.ProtocolMethodDispatch;
+import static java.nio.channels.SelectionKey.OP_ACCEPT;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
-import com.gargoylesoftware.htmlunit.BrowserVersion;
-import com.gargoylesoftware.htmlunit.WebClient;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
-
-public class WebServerTest extends TestCase {
+public class WebServerTest {
 	private static final String host = "localhost";
-	private int port;
+	private static int port;
+	private static ScheduledExecutorService exec;
+	private static ServerSocketChannel serverSocketChannel;
+	private static WebClient webClient;
 
-	private ScheduledExecutorService exec;
-	private ServerSocketChannel serverSocketChannel;
-	private WebClient webClient;
-
-	public void setUp() throws Exception {
-		webClient = new WebClient(BrowserVersion.FIREFOX_3);
+	@BeforeClass
+	static public void setUp() throws Exception {
+		webClient = new WebClient(BrowserVersion.FIREFOX_3_6);
 		webClient.setJavaScriptEnabled(true);
 		webClient.setThrowExceptionOnFailingStatusCode(true);
 		webClient.setThrowExceptionOnScriptError(true);
@@ -57,7 +58,8 @@ public class WebServerTest extends TestCase {
 		});
 	}
 
-	public void tearDown() throws Exception {
+	@AfterClass
+	static public void tearDown() throws Exception {
 		try {
 			HttpMethod.killswitch = true;
 			HttpMethod.getSelector().close();
@@ -68,18 +70,18 @@ public class WebServerTest extends TestCase {
 			fail(ignore.getMessage());
 		}
 	}
-
+	@Test
 	public void testRequestSlash() throws Exception {
 		HtmlPage page = webClient.getPage("http://localhost:" + port + "/");
 		assertEquals("Sample App", page.getTitleText());
 	}
-
+	@Test
 	public void testRequestIndexHtml() throws Exception {
 		HtmlPage page = webClient.getPage("http://localhost:" + port
 				+ "/index.html");
 		assertEquals("Sample App", page.getTitleText());
 	}
-
+	@Test
 	public void testRequestFileWithQuerystring() throws Exception {
 		HtmlPage page = webClient.getPage("http://localhost:" + port
 				+ "/?some=params&others=true");
@@ -90,7 +92,7 @@ public class WebServerTest extends TestCase {
 				+ "/index.html?some=params&others=true");
 		assertEquals("Sample App", page2.getTitleText());
 	}
-
+	@Test
 	public void testRequestFileWithFragment() throws Exception {
 		HtmlPage page = webClient.getPage("http://localhost:" + port
 				+ "/#startSomewhere");
@@ -102,6 +104,7 @@ public class WebServerTest extends TestCase {
 	}
 
 	//I think this is failing from HtmlUnit not sending Accepts: headers
+	@Test
 	public void testRequestGzippedFile() throws Exception {
 		HtmlPage page = webClient.getPage("http://localhost:" + port
 				+ "/gzipped/");

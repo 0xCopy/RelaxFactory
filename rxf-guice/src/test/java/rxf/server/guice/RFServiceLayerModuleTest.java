@@ -6,7 +6,7 @@ import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.google.web.bindery.requestfactory.server.ServiceLayerDecorator;
 import com.google.web.bindery.requestfactory.shared.*;
 import com.google.web.bindery.requestfactory.vm.RequestFactorySource;
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.junit.Test;
 import rxf.server.GwtRequestFactoryVisitor;
 

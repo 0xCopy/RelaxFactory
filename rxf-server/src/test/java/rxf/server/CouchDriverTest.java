@@ -1,12 +1,9 @@
 package rxf.server;
 
 import com.google.gson.JsonSyntaxException;
-import junit.framework.TestCase;
 import one.xio.AsioVisitor;
 import one.xio.HttpMethod;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import rxf.server.gen.CouchDriver.*;
 import rxf.server.gen.CouchDriver.ViewFetch.ViewFetchTerminalBuilder;
 import rxf.server.web.inf.ProtocolMethodDispatch;
@@ -16,21 +13,22 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static rxf.server.BlobAntiPatternObject.GSON;
+import static org.junit.Assert.*;
+import static rxf.server.BlobAntiPatternObject.*;
 
 /**
  * Tests out the db, cleaning up after itself. These must be run in order to work correctly and clean up.
  */
-public class CouchDriverTest extends TestCase {
+public class CouchDriverTest {
 
 	public static final String SOMEDBPREFIX = "test_somedb_";
 	public static final String SOMEDB = SOMEDBPREFIX
 			+ System.currentTimeMillis(); //ordered names of testdbs for failure postmortem....
 	public static final String DESIGN_SAMPLE = "_design/sample";
-	public ScheduledExecutorService exec;
+	public static ScheduledExecutorService exec;
 
 	@BeforeClass
-	public void setUp() throws Exception {
+	static public void setUp() throws Exception {
 		BlobAntiPatternObject.DEBUG_SENDJSON = true;
 		HttpMethod.killswitch = false;
 		exec = Executors.newScheduledThreadPool(2);
@@ -73,7 +71,7 @@ public class CouchDriverTest extends TestCase {
 	}
 
 	@AfterClass
-	public void tearDown() throws Exception {
+	static public void tearDown() throws Exception {
 
 		//    DbDelete.$().db(SOMEDB).to().fire().oneWay();
 
@@ -89,11 +87,29 @@ public class CouchDriverTest extends TestCase {
 	/*
 	  public static final String DB = "rxf_csftest";*/
 
-	public static class CSFTest {
-		public String _id, _rev;
+	/**
+	 * tests for couchdb version > 1.1.0
+	 *
+	 * this needs to go into the runtime bootstrap stuff as well.
+	 *
+	 * old versions use errant "Etag" header which is not the same as ETag
+	 *
+	 */
+	@Test(timeout = 1000)
+	public void testCouchVersionAbove_1_1_1() {
 
-		public String model;
-		public String brand;
+		String json = DocFetch.$().db("").docId("").to().fire().json();
+		Map map = GSON.fromJson(json, Map.class);
+		String version = String.valueOf(map.get("version"));
+		String[] split = version.split("\\.");
+
+		int v = 0;
+		for (int i = 0; i < split.length; i++) {
+			String s = split[i] + "e" + (split.length - i - 1);
+			double acc = Double.parseDouble(s);
+			v += acc;
+		}
+		assertTrue(v > 111);
 	}
 
 	@Test(timeout = 1000)
@@ -119,6 +135,7 @@ public class CouchDriverTest extends TestCase {
 		assertTrue(data.contains("created"));
 	}
 
+	@Test
 	public void testMissingDocLowLevelFailure() {
 
 		CouchTx tx = DocPersist.$().db("dne_dne").validjson("{}").to().fire()
