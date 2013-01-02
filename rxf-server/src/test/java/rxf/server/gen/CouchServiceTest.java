@@ -1,4 +1,4 @@
-package rxf.server;
+package rxf.server.gen;
 
 import com.google.gson.JsonSyntaxException;
 import one.xio.AsioVisitor;
@@ -6,7 +6,9 @@ import one.xio.HttpMethod;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import rxf.server.gen.CouchDriver;
+import rxf.server.BlobAntiPatternObject;
+import rxf.server.*;
+import rxf.server.CouchTx;
 import rxf.server.gen.CouchDriver.DbDelete;
 import rxf.server.gen.CouchDriver.DocFetch;
 import rxf.server.web.inf.ProtocolMethodDispatch;
@@ -81,22 +83,6 @@ public class CouchServiceTest {
 		}
 	}
 
-	public static class CSFTest {
-		public String _id, _rev;
-
-		public String model;
-		public String brand;
-	}
-
-	public interface SimpleCouchService extends CouchService<CSFTest> {
-		@View(map = "function(doc){emit(doc.brand, doc); }")
-		List<CSFTest> getItemsWithBrand(@Key String brand);
-	}
-
-	public interface TrivialCouchService extends CouchService<CSFTest> {
-
-	}
-
 	@Test(timeout = 1000)
 	public void testTrivialFetchDoc() throws InterruptedException,
 			ExecutionException {
@@ -117,20 +103,6 @@ public class CouchServiceTest {
 		org.junit.Assert.assertEquals("def", obj.brand);
 
 	}
-
-	//  public void testRevisionAndDelete() {
-	//    String rev = null;
-	//    try {
-	//      rev = RevisionFetch.$().db(SOMEDB).docId(DESIGN_SAMPLE).to().fire().json();
-	//      CouchTx tx = DocDelete.$().db(SOMEDB).docId(DESIGN_SAMPLE).rev(rev).to().fire().tx();
-	//      assert tx.ok();
-	//    } catch (Exception e) {
-	//      e.printStackTrace();
-	//      fail(rev);
-	//    }
-	//    String designDoc = DesignDocFetch.$().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
-	//    assertNull(designDoc);
-	//  }
 
 	@Test(timeout = 1000)
 	public void testTrivialFinders() {
@@ -211,19 +183,19 @@ public class CouchServiceTest {
 		}
 	}
 
-	public interface SlightlyComplexCouchService extends CouchService<CSFTest> {
-		@View(map = "function(doc){emit(doc.model.slice(0,4), doc);}")
-		List<CSFTest> load(@Key String key, @Limit int limit, @Skip int skip);
-
-		@View(map = "function(doc){emit(doc.model, doc);}")
-		List<CSFTest> anyMatching(@Keys String... keys);
-
-		@View(map = "function(doc){emit({model:doc.model, brand:doc.brand}, doc);}")
-		List<CSFTest> matchingTuples(@Key CSFTest obj);
-
-		@View(map = "function(doc){emit(doc.id,doc);}")
-		List<CSFTest> all();
-	}
+	//  public void testRevisionAndDelete() {
+	//    String rev = null;
+	//    try {
+	//      rev = RevisionFetch.$().db(SOMEDB).docId(DESIGN_SAMPLE).to().fire().json();
+	//      CouchTx tx = DocDelete.$().db(SOMEDB).docId(DESIGN_SAMPLE).rev(rev).to().fire().tx();
+	//      assert tx.ok();
+	//    } catch (Exception e) {
+	//      e.printStackTrace();
+	//      fail(rev);
+	//    }
+	//    String designDoc = DesignDocFetch.$().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
+	//    assertNull(designDoc);
+	//  }
 
 	@Test
 	public void testMultiParamFinder() throws Exception {
@@ -274,9 +246,9 @@ public class CouchServiceTest {
 		sample.brand = "-brand4";
 		sample.model = "-model4";
 		List<CSFTest> loaded = service.matchingTuples(sample);
-		//returns null, whoops
-		//turns out to be a json exception:
-		/*
+		/* returns null, whoops
+		 turns out to be a json exception:
+
 		  com.google.gson.JsonSyntaxException: java.lang.IllegalStateException: Expected a string but was BEGIN_OBJECT at line 2 column 49
 		  at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:180)
 		  at com.google.gson.internal.bind.TypeAdapterRuntimeTypeWrapper.read(TypeAdapterRuntimeTypeWrapper.java:40)
@@ -310,7 +282,6 @@ public class CouchServiceTest {
 		//    assertEquals(1, loaded.size());
 		//    assertNotNull(loaded.get(0)._id);
 	}
-
 	@Test
 	public void testNoArgMethod() throws Exception {
 		nukeTestDbs();
@@ -326,5 +297,34 @@ public class CouchServiceTest {
 		List<CSFTest> loaded = service.all();
 		assertNotNull(loaded);
 		assertEquals(10, loaded.size());
+	}
+
+	public interface SimpleCouchService extends CouchService<CSFTest> {
+		@View(map = "function(doc){emit(doc.brand, doc); }")
+		List<CSFTest> getItemsWithBrand(@Key String brand);
+	}
+
+	public interface TrivialCouchService extends CouchService<CSFTest> {
+
+	}
+
+	public interface SlightlyComplexCouchService extends CouchService<CSFTest> {
+		@View(map = "function(doc){emit(doc.model.slice(0,4), doc);}")
+		List<CSFTest> load(@Key String key, @Limit int limit, @Skip int skip);
+
+		@View(map = "function(doc){emit(doc.model, doc);}")
+		List<CSFTest> anyMatching(@Keys String... keys);
+
+		@View(map = "function(doc){emit({model:doc.model, brand:doc.brand}, doc);}")
+		List<CSFTest> matchingTuples(@Key CSFTest obj);
+
+		@View(map = "function(doc){emit(doc.id,doc);}")
+		List<CSFTest> all();
+	}
+
+	public static class CSFTest {
+		public String _id, _rev;
+		public String model;
+		public String brand;
 	}
 }

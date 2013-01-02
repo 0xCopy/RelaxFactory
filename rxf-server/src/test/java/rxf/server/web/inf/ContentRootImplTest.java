@@ -1,12 +1,14 @@
-package rxf.server;
+package rxf.server.web.inf;
 
 import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import one.xio.AsioVisitor;
 import one.xio.HttpMethod;
-import org.junit.*;
-import rxf.server.web.inf.ProtocolMethodDispatch;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import rxf.server.BlobAntiPatternObject;
 
 import java.net.InetSocketAddress;
 import java.nio.channels.ServerSocketChannel;
@@ -15,9 +17,9 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import static java.nio.channels.SelectionKey.OP_ACCEPT;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
-public class WebServerTest {
+public class ContentRootImplTest {
 	private static final String host = "localhost";
 	private static int port;
 	private static ScheduledExecutorService exec;
