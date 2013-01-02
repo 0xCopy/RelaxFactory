@@ -14,10 +14,11 @@ import com.google.inject.Singleton;
 import com.google.inject.internal.UniqueAnnotations;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+import rxf.server.BlobAntiPatternObject;
 
 /**
  * Guice bindings to configure RelaxFactory with injection for each visitor impl. Binds
- * a singleton instance of {@link RelaxFactoryServer} which can then be manipulated
+ * a singleton instance of {@link rxf.server.BlobAntiPatternObject.RelaxFactoryServer} which can then be manipulated
  * elsewhere.
  *
  */
@@ -56,9 +57,10 @@ public class RxfModule extends AbstractModule {
 
 	@Provides
 	@Singleton
-	protected RelaxFactoryServer provideServer(@Named("port") Integer port,
-			@Named("hostname") String hostname) throws UnknownHostException {
-		RelaxFactoryServer server = new RelaxFactoryServerImpl();
+	protected BlobAntiPatternObject.RelaxFactoryServer provideServer(
+			@Named("port") Integer port, @Named("hostname") String hostname)
+			throws UnknownHostException {
+		BlobAntiPatternObject.RelaxFactoryServer server = new BlobAntiPatternObject.RelaxFactoryServerImpl();
 		server.init(hostname, port, topLevel);
 		return server;
 	}

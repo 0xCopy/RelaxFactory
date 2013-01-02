@@ -4,7 +4,6 @@ import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
 import one.xio.AsioVisitor;
-import one.xio.HttpHeaders;
 import one.xio.HttpMethod;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -14,11 +13,12 @@ import rxf.server.DateHeaderParser;
 
 import java.net.InetSocketAddress;
 import java.nio.channels.ServerSocketChannel;
-import java.util.Date;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 import static java.nio.channels.SelectionKey.OP_ACCEPT;
+import static one.xio.HttpHeaders.If$2dModified$2dSince;
+import static one.xio.HttpHeaders.If$2dUnmodified$2dSince;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -91,21 +91,50 @@ public class ContentRootImplTest {
 
 	@Test
 	public void testRequest304() throws Exception {
-		final String oldDate = DateHeaderParser.formatHttpHeaderDate(new Date(
-				"Jan 1 1990"));
 
 		String url = "http://localhost:" + port + "/index.html";
-
 		GetMethodWebRequest req = new GetMethodWebRequest(url);
-		/*fail?       */req.setHeaderField(HttpHeaders.If$2dModified$2dSince
-				.getHeader(), oldDate);
-		// fai;l?        req.getHeaders().put(HttpHeaders.If$2dModified$2dSince.getHeader(), oldDate);
-		//        wc.setHeaderField(HttpHeaders.If$2dModified$2dSince.getHeader(), oldDate);
-
+		req.setHeaderField(If$2dModified$2dSince.getHeader(), DateHeaderParser
+				.formatHttpHeaderDate());
 		WebResponse res = wc.getResponse(req);
 		int responseCode = res.getResponseCode();
 		res.close();
 		assertEquals(responseCode, 304);
+
+		req
+				.setHeaderField(If$2dModified$2dSince.getHeader(),
+						DateHeaderParser.formatHttpHeaderDate(DateHeaderParser
+								.parseDate("01/08/1990")));
+
+		res = wc.getResponse(req);
+		responseCode = res.getResponseCode();
+		res.close();
+		assertEquals(responseCode, 200);
+	}
+
+	@Test
+	public void testRequest412() throws Exception {
+
+		String url = "http://localhost:" + port + "/index.html";
+		GetMethodWebRequest req = new GetMethodWebRequest(url);
+		req.setHeaderField(If$2dUnmodified$2dSince.getHeader(),
+				DateHeaderParser.formatHttpHeaderDate());
+		WebResponse res = wc.getResponse(req);
+		int responseCode = res.getResponseCode();
+		res.close();
+		assertEquals(responseCode, 200);
+
+		req.setHeaderField(If$2dUnmodified$2dSince.getHeader(),
+				DateHeaderParser.formatHttpHeaderDate(DateHeaderParser
+						.parseDate("01/08/1990")));
+
+		try {
+			res = wc.getResponse(req);
+		} catch (Exception e) {
+			res.close();
+			return;
+		}
+		fail();
 	}
 
 	@Test

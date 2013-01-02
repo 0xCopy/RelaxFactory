@@ -1,10 +1,8 @@
 package rxf.server;
 
-import com.google.gson.FieldNamingPolicy;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import one.xio.AsioVisitor;
 import one.xio.HttpMethod;
+import rxf.server.gen.CouchDriver;
 import rxf.server.web.inf.ProtocolMethodDispatch;
 
 import java.io.IOException;
@@ -15,7 +13,6 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
@@ -24,7 +21,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static java.nio.channels.SelectionKey.OP_ACCEPT;
-import static one.xio.HttpMethod.UTF8;
 import static one.xio.HttpMethod.wheresWaldo;
 import static rxf.server.CouchNamespace.COUCH_DEFAULT_ORGNAME;
 
@@ -36,25 +32,15 @@ import static rxf.server.CouchNamespace.COUCH_DEFAULT_ORGNAME;
  * Time: 11:55 PM
  */
 public class BlobAntiPatternObject {
-	public static final ScheduledExecutorService EXECUTOR_SERVICE = Executors
-			.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() + 3);
-	public static final String YYYY_MM_DD_T_HH_MM_SS_SSSZ = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
-	public static final Gson GSON = new GsonBuilder().setDateFormat(
-			YYYY_MM_DD_T_HH_MM_SS_SSSZ).setFieldNamingPolicy(
-			FieldNamingPolicy.IDENTITY).setPrettyPrinting().create();
-	public static final Charset ISO88591 = Charset.forName("ISO-8859-1");
-	public static final String MYGEOIPSTRING = "mygeoipstring";
-
-	public static final String COOKIE = "Cookie";
-
-	private static final TimeUnit defaultCollectorTimeUnit = TimeUnit.SECONDS;
 
 	public static boolean DEBUG_SENDJSON = System.getenv().containsKey(
 			"DEBUG_SENDJSON");
-	public static final InetSocketAddress COUCHADDR;
-	public static InetAddress LOOPBACK = null;
-	public static final byte[] HEADER_TERMINATOR = "\r\n\r\n".getBytes(UTF8);
-
+	public static InetAddress LOOPBACK;
+	public static int receiveBufferSize;
+	public static int sendBufferSize;
+	public static InetSocketAddress COUCHADDR;
+	public static ScheduledExecutorService EXECUTOR_SERVICE = Executors
+			.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() + 3);
 	static {
 		try {
 			try {
@@ -72,9 +58,9 @@ public class BlobAntiPatternObject {
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
-		COUCHADDR = new InetSocketAddress(LOOPBACK, 5984);
+		BlobAntiPatternObject.COUCHADDR = new InetSocketAddress(
+				BlobAntiPatternObject.LOOPBACK, 5984);
 	}
-
 	public static SocketChannel createCouchConnection() {
 		while (!HttpMethod.killswitch) {
 			try {
@@ -108,9 +94,6 @@ public class BlobAntiPatternObject {
 		}
 	}
 
-	private static int receiveBufferSize;
-	private static int sendBufferSize;
-
 	public static int getReceiveBufferSize() {
 		if (0 == receiveBufferSize)
 			try {
@@ -124,6 +107,10 @@ public class BlobAntiPatternObject {
 		return receiveBufferSize;
 	}
 
+	public static void setReceiveBufferSize(int receiveBufferSize) {
+		receiveBufferSize = receiveBufferSize;
+	}
+
 	public static int getSendBufferSize() {
 		if (0 == sendBufferSize)
 			try {
@@ -134,6 +121,10 @@ public class BlobAntiPatternObject {
 			} catch (IOException ignored) {
 			}
 		return sendBufferSize;
+	}
+
+	public static void setSendBufferSize(int sendBufferSize) {
+		sendBufferSize = sendBufferSize;
 	}
 
 	public static String inferRevision(Map map) {
@@ -173,8 +164,8 @@ public class BlobAntiPatternObject {
 			for (String arg : args) {
 				json += arg;
 			}
-			final Properties properties = BlobAntiPatternObject.GSON.fromJson(
-					json, Properties.class);
+			final Properties properties = CouchDriver.GSON.fromJson(json,
+					Properties.class);
 			topLevel = new ProtocolMethodDispatch();
 			serverSocketChannel = ServerSocketChannel.open();
 			port = properties.getProperty("port", "8080");
@@ -189,7 +180,9 @@ public class BlobAntiPatternObject {
 	}
 
 	public static TimeUnit getDefaultCollectorTimeUnit() {
-		return DEBUG_SENDJSON ? TimeUnit.HOURS : defaultCollectorTimeUnit;
+		return DEBUG_SENDJSON
+				? TimeUnit.HOURS
+				: CouchDriver.defaultCollectorTimeUnit;
 	}
 
 	public static ByteBuffer avoidStarvation(ByteBuffer buf) {
@@ -242,12 +235,70 @@ public class BlobAntiPatternObject {
 		return !mismatch;
 	}
 
-	public static void setReceiveBufferSize(int receiveBufferSize) {
-		BlobAntiPatternObject.receiveBufferSize = receiveBufferSize;
+	/**
+	 * @todo move to -server
+	 *
+	 */
+	public static interface RelaxFactoryServer {
+		void init(String hostname, int port, AsioVisitor topLevel)
+				throws UnknownHostException;
+		void start() throws IOException;
+		void stop() throws IOException;
+
+		/**
+		 * Returns the port the server has started on. Useful in the case where
+		 * {@link #init(String, int, one.xio.AsioVisitor)} was invoked with 0, {@link #start()} called,
+		 * and the server selected its own port.
+		 * @return
+		 */
+		int getPort();
 	}
 
-	public static void setSendBufferSize(int sendBufferSize) {
-		BlobAntiPatternObject.sendBufferSize = sendBufferSize;
-	}
+	/**
+	 * @todo move to -server
+	 *
+	 */
+	public static class RelaxFactoryServerImpl implements RelaxFactoryServer {
 
+		private AsioVisitor topLevel;
+		private int port;
+		private InetAddress hostname;
+
+		private ServerSocketChannel serverSocketChannel;
+		@Override
+		public void init(String hostname, int port, AsioVisitor topLevel)
+				throws UnknownHostException {
+			assert topLevel == null && serverSocketChannel == null : "Can't call init twice";
+			this.topLevel = topLevel;
+			this.port = port;
+			this.hostname = InetAddress.getByName(hostname);
+		}
+
+		@Override
+		public void start() throws IOException {
+			assert serverSocketChannel == null : "Can't start already started server";
+			serverSocketChannel = ServerSocketChannel.open();
+			InetSocketAddress addr = new InetSocketAddress(hostname, port);
+			serverSocketChannel.socket().bind(addr);
+			port = serverSocketChannel.socket().getLocalPort();
+			System.out.println(hostname.getHostAddress() + ":" + port);
+			serverSocketChannel.configureBlocking(false);
+
+			HttpMethod.enqueue(serverSocketChannel, OP_ACCEPT, topLevel);
+			HttpMethod.init(topLevel);
+		}
+
+		@Override
+		public int getPort() {
+			return port;
+		}
+
+		@Override
+		public void stop() throws IOException {
+			HttpMethod.killswitch = true;
+			HttpMethod.getSelector().close();
+			serverSocketChannel.close();
+		}
+
+	}
 }

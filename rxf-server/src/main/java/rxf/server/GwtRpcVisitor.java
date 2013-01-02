@@ -2,7 +2,7 @@ package rxf.server;
 
 import static one.xio.HttpMethod.UTF8;
 import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
-import static rxf.server.BlobAntiPatternObject.HEADER_TERMINATOR;
+import static rxf.server.driver.CouchMetaDriver.HEADER_TERMINATOR;
 import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
 
 import java.io.File;

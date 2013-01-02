@@ -7,6 +7,7 @@ import one.xio.HttpHeaders;
 import one.xio.HttpStatus;
 import one.xio.MimeType;
 import rxf.server.Rfc822HeaderState.HttpRequest;
+import rxf.server.driver.CouchMetaDriver;
 
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
@@ -58,8 +59,8 @@ public class GwtRequestFactoryVisitor extends Impl implements PreRead {
 		Buffer flip = cursor.duplicate().flip();
 		req = (HttpRequest) req.headerInterest(HttpHeaders.Content$2dLength)
 				.apply((ByteBuffer) flip);
-		if (!BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, req
-				.headerBuf())) {
+		if (!BlobAntiPatternObject.suffixMatchChunks(
+				CouchMetaDriver.HEADER_TERMINATOR, req.headerBuf())) {
 			return;
 		}
 		cursor = ((ByteBuffer) cursor).slice();

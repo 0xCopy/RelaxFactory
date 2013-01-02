@@ -18,7 +18,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 import static org.junit.Assert.*;
-import static rxf.server.BlobAntiPatternObject.GSON;
+import static rxf.server.gen.CouchDriver.GSON;
 
 /**
  * Tests out the db, cleaning up after itself. These must be run in order to work correctly and clean up.
@@ -92,8 +92,8 @@ public class PathologicalBufferSizeTest {
 		CouchTx tx = DocPersist.$().db(SOMEDB).validjson("{}").to().fire().tx();
 
 		String data = DocFetch.$().db(SOMEDB).docId(tx.id()).to().fire().json();
-		Map<String, Object> obj = BlobAntiPatternObject.GSON
-				.<Map<String, Object>> fromJson(data, Map.class);
+		Map<String, Object> obj = GSON.<Map<String, Object>> fromJson(data,
+				Map.class);
 		obj.put("abc", "123");
 		data = GSON.toJson(obj);
 		CouchTx updateTx = DocPersist.$().db(SOMEDB).validjson(data).to()

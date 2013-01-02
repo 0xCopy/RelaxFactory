@@ -1,6 +1,7 @@
 package rxf.server.gen;
-//generated
-
+import com.google.gson.FieldNamingPolicy;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import rxf.server.*;
 import rxf.server.an.DbKeys;
 
@@ -8,46 +9,44 @@ import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static rxf.server.BlobAntiPatternObject.avoidStarvation;
 
+//generated
 /**
  * generated drivers
  */
 public interface CouchDriver {
+
+	TimeUnit defaultCollectorTimeUnit = TimeUnit.SECONDS;
+	Gson GSON = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+			.setFieldNamingPolicy(FieldNamingPolicy.IDENTITY)
+			.setPrettyPrinting().create();
 	java.nio.ByteBuffer DbCreate(java.lang.String db);
-
 	java.nio.ByteBuffer DbDelete(java.lang.String db);
-
 	java.nio.ByteBuffer DocFetch(java.lang.String db, java.lang.String docId);
-
 	java.nio.ByteBuffer RevisionFetch(java.lang.String db,
 			java.lang.String docId);
-
 	java.nio.ByteBuffer DocPersist(java.lang.String db,
 			java.lang.String validjson);
-
 	java.nio.ByteBuffer DocDelete(java.lang.String db, java.lang.String docId,
 			java.lang.String rev);
-
 	java.nio.ByteBuffer DesignDocFetch(java.lang.String db,
 			java.lang.String designDocId);
-
 	java.nio.ByteBuffer ViewFetch(java.lang.String db, java.lang.String view);
-
 	java.nio.ByteBuffer JsonSend(java.lang.String opaque,
 			java.lang.String validjson);
-
 	java.nio.ByteBuffer BlobSend(java.nio.ByteBuffer blob, java.lang.String db,
 			java.lang.String docId, java.lang.String rev,
 			java.lang.String attachname);
 	//generated items
 
-	public class DbCreate extends DbKeysBuilder {
+	class DbCreate extends DbKeysBuilder {
 		private DbCreate() {
 		}
 
-		public static DbCreate
+		static public DbCreate
 
 		$() {
 			return new DbCreate();
@@ -55,7 +54,6 @@ public interface CouchDriver {
 
 		public interface DbCreateTerminalBuilder extends TerminalBuilder {
 			CouchTx tx();
-
 			void oneWay();
 		}
 
@@ -68,7 +66,7 @@ public interface CouchDriver {
 				return new DbCreateTerminalBuilder() {
 					public CouchTx tx() {
 						try {
-							return (CouchTx) rxf.server.BlobAntiPatternObject.GSON
+							return (CouchTx) GSON
 									.fromJson(
 											one.xio.HttpMethod.UTF8
 													.decode(
@@ -81,7 +79,6 @@ public interface CouchDriver {
 						}
 						return null;
 					}
-
 					public void oneWay() {
 						final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder
 								.get();
@@ -123,20 +120,18 @@ public interface CouchDriver {
 			throw new IllegalArgumentException("required parameters are: [db]");
 		}
 
-		private static final int parmsCount = 1;
-
+		static private final int parmsCount = 1;
 		public DbCreate db(java.lang.String stringParam) {
 			parms.put(DbKeys.etype.db, stringParam);
 			return this;
 		}
 
 	}
-
-	public class DbDelete extends DbKeysBuilder {
+	class DbDelete extends DbKeysBuilder {
 		private DbDelete() {
 		}
 
-		public static DbDelete
+		static public DbDelete
 
 		$() {
 			return new DbDelete();
@@ -144,7 +139,6 @@ public interface CouchDriver {
 
 		public interface DbDeleteTerminalBuilder extends TerminalBuilder {
 			CouchTx tx();
-
 			void oneWay();
 		}
 
@@ -157,7 +151,7 @@ public interface CouchDriver {
 				return new DbDeleteTerminalBuilder() {
 					public CouchTx tx() {
 						try {
-							return (CouchTx) rxf.server.BlobAntiPatternObject.GSON
+							return (CouchTx) GSON
 									.fromJson(
 											one.xio.HttpMethod.UTF8
 													.decode(
@@ -170,7 +164,6 @@ public interface CouchDriver {
 						}
 						return null;
 					}
-
 					public void oneWay() {
 						final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder
 								.get();
@@ -212,20 +205,18 @@ public interface CouchDriver {
 			throw new IllegalArgumentException("required parameters are: [db]");
 		}
 
-		private static final int parmsCount = 1;
-
+		static private final int parmsCount = 1;
 		public DbDelete db(java.lang.String stringParam) {
 			parms.put(DbKeys.etype.db, stringParam);
 			return this;
 		}
 
 	}
-
-	public class DocFetch extends DbKeysBuilder {
+	class DocFetch extends DbKeysBuilder {
 		private DocFetch() {
 		}
 
-		public static DocFetch
+		static public DocFetch
 
 		$() {
 			return new DocFetch();
@@ -233,9 +224,7 @@ public interface CouchDriver {
 
 		public interface DocFetchTerminalBuilder extends TerminalBuilder {
 			java.nio.ByteBuffer pojo();
-
 			Future<ByteBuffer> future();
-
 			String json();
 		}
 
@@ -255,7 +244,6 @@ public interface CouchDriver {
 						}
 						return null;
 					}
-
 					public Future<ByteBuffer> future() {
 						try {
 							BlobAntiPatternObject.EXECUTOR_SERVICE
@@ -264,7 +252,6 @@ public interface CouchDriver {
 												.get();
 										final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder
 												.get();
-
 										public java.nio.ByteBuffer call()
 												throws Exception {
 											DbKeysBuilder.currentKeys
@@ -281,7 +268,6 @@ public interface CouchDriver {
 						}
 						return null;
 					}
-
 					public String json() {
 						try {
 							ByteBuffer visit = rxf.server.driver.CouchMetaDriver.DocFetch
@@ -314,25 +300,22 @@ public interface CouchDriver {
 					"required parameters are: [db, docId]");
 		}
 
-		private static final int parmsCount = 2;
-
+		static private final int parmsCount = 2;
 		public DocFetch db(java.lang.String stringParam) {
 			parms.put(DbKeys.etype.db, stringParam);
 			return this;
 		}
-
 		public DocFetch docId(java.lang.String stringParam) {
 			parms.put(DbKeys.etype.docId, stringParam);
 			return this;
 		}
 
 	}
-
-	public class RevisionFetch extends DbKeysBuilder {
+	class RevisionFetch extends DbKeysBuilder {
 		private RevisionFetch() {
 		}
 
-		public static RevisionFetch
+		static public RevisionFetch
 
 		$() {
 			return new RevisionFetch();
@@ -340,7 +323,6 @@ public interface CouchDriver {
 
 		public interface RevisionFetchTerminalBuilder extends TerminalBuilder {
 			String json();
-
 			Future<ByteBuffer> future();
 		}
 
@@ -364,7 +346,6 @@ public interface CouchDriver {
 						}
 						return null;
 					}
-
 					public Future<ByteBuffer> future() {
 						try {
 							BlobAntiPatternObject.EXECUTOR_SERVICE
@@ -373,7 +354,6 @@ public interface CouchDriver {
 												.get();
 										final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder
 												.get();
-
 										public java.nio.ByteBuffer call()
 												throws Exception {
 											DbKeysBuilder.currentKeys
@@ -410,25 +390,22 @@ public interface CouchDriver {
 					"required parameters are: [db, docId]");
 		}
 
-		private static final int parmsCount = 2;
-
+		static private final int parmsCount = 2;
 		public RevisionFetch db(java.lang.String stringParam) {
 			parms.put(DbKeys.etype.db, stringParam);
 			return this;
 		}
-
 		public RevisionFetch docId(java.lang.String stringParam) {
 			parms.put(DbKeys.etype.docId, stringParam);
 			return this;
 		}
 
 	}
-
-	public class DocPersist extends DbKeysBuilder {
+	class DocPersist extends DbKeysBuilder {
 		private DocPersist() {
 		}
 
-		public static DocPersist
+		static public DocPersist
 
 		$() {
 			return new DocPersist();
@@ -436,9 +413,7 @@ public interface CouchDriver {
 
 		public interface DocPersistTerminalBuilder extends TerminalBuilder {
 			CouchTx tx();
-
 			void oneWay();
-
 			Future<ByteBuffer> future();
 		}
 
@@ -451,7 +426,7 @@ public interface CouchDriver {
 				return new DocPersistTerminalBuilder() {
 					public CouchTx tx() {
 						try {
-							return (CouchTx) rxf.server.BlobAntiPatternObject.GSON
+							return (CouchTx) GSON
 									.fromJson(
 											one.xio.HttpMethod.UTF8
 													.decode(
@@ -464,7 +439,6 @@ public interface CouchDriver {
 						}
 						return null;
 					}
-
 					public void oneWay() {
 						final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder
 								.get();
@@ -488,7 +462,6 @@ public interface CouchDriver {
 									}
 								});
 					}
-
 					public Future<ByteBuffer> future() {
 						try {
 							BlobAntiPatternObject.EXECUTOR_SERVICE
@@ -497,7 +470,6 @@ public interface CouchDriver {
 												.get();
 										final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder
 												.get();
-
 										public java.nio.ByteBuffer call()
 												throws Exception {
 											DbKeysBuilder.currentKeys
@@ -534,35 +506,30 @@ public interface CouchDriver {
 					"required parameters are: [db, validjson]");
 		}
 
-		private static final int parmsCount = 2;
-
+		static private final int parmsCount = 2;
 		public DocPersist db(java.lang.String stringParam) {
 			parms.put(DbKeys.etype.db, stringParam);
 			return this;
 		}
-
 		public DocPersist validjson(java.lang.String stringParam) {
 			parms.put(DbKeys.etype.validjson, stringParam);
 			return this;
 		}
-
 		public DocPersist docId(java.lang.String stringParam) {
 			parms.put(DbKeys.etype.docId, stringParam);
 			return this;
 		}
-
 		public DocPersist rev(java.lang.String stringParam) {
 			parms.put(DbKeys.etype.rev, stringParam);
 			return this;
 		}
 
 	}
-
-	public class DocDelete extends DbKeysBuilder {
+	class DocDelete extends DbKeysBuilder {
 		private DocDelete() {
 		}
 
-		public static DocDelete
+		static public DocDelete
 
 		$() {
 			return new DocDelete();
@@ -570,9 +537,7 @@ public interface CouchDriver {
 
 		public interface DocDeleteTerminalBuilder extends TerminalBuilder {
 			CouchTx tx();
-
 			void oneWay();
-
 			Future<ByteBuffer> future();
 		}
 
@@ -585,7 +550,7 @@ public interface CouchDriver {
 				return new DocDeleteTerminalBuilder() {
 					public CouchTx tx() {
 						try {
-							return (CouchTx) rxf.server.BlobAntiPatternObject.GSON
+							return (CouchTx) GSON
 									.fromJson(
 											one.xio.HttpMethod.UTF8
 													.decode(
@@ -598,7 +563,6 @@ public interface CouchDriver {
 						}
 						return null;
 					}
-
 					public void oneWay() {
 						final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder
 								.get();
@@ -622,7 +586,6 @@ public interface CouchDriver {
 									}
 								});
 					}
-
 					public Future<ByteBuffer> future() {
 						try {
 							BlobAntiPatternObject.EXECUTOR_SERVICE
@@ -631,7 +594,6 @@ public interface CouchDriver {
 												.get();
 										final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder
 												.get();
-
 										public java.nio.ByteBuffer call()
 												throws Exception {
 											DbKeysBuilder.currentKeys
@@ -667,30 +629,26 @@ public interface CouchDriver {
 					"required parameters are: [db, docId, rev]");
 		}
 
-		private static final int parmsCount = 3;
-
+		static private final int parmsCount = 3;
 		public DocDelete db(java.lang.String stringParam) {
 			parms.put(DbKeys.etype.db, stringParam);
 			return this;
 		}
-
 		public DocDelete docId(java.lang.String stringParam) {
 			parms.put(DbKeys.etype.docId, stringParam);
 			return this;
 		}
-
 		public DocDelete rev(java.lang.String stringParam) {
 			parms.put(DbKeys.etype.rev, stringParam);
 			return this;
 		}
 
 	}
-
-	public class DesignDocFetch extends DbKeysBuilder {
+	class DesignDocFetch extends DbKeysBuilder {
 		private DesignDocFetch() {
 		}
 
-		public static DesignDocFetch
+		static public DesignDocFetch
 
 		$() {
 			return new DesignDocFetch();
@@ -698,9 +656,7 @@ public interface CouchDriver {
 
 		public interface DesignDocFetchTerminalBuilder extends TerminalBuilder {
 			java.nio.ByteBuffer pojo();
-
 			Future<ByteBuffer> future();
-
 			String json();
 		}
 
@@ -720,7 +676,6 @@ public interface CouchDriver {
 						}
 						return null;
 					}
-
 					public Future<ByteBuffer> future() {
 						try {
 							BlobAntiPatternObject.EXECUTOR_SERVICE
@@ -729,7 +684,6 @@ public interface CouchDriver {
 												.get();
 										final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder
 												.get();
-
 										public java.nio.ByteBuffer call()
 												throws Exception {
 											DbKeysBuilder.currentKeys
@@ -746,7 +700,6 @@ public interface CouchDriver {
 						}
 						return null;
 					}
-
 					public String json() {
 						try {
 							ByteBuffer visit = rxf.server.driver.CouchMetaDriver.DesignDocFetch
@@ -780,25 +733,22 @@ public interface CouchDriver {
 					"required parameters are: [db, designDocId]");
 		}
 
-		private static final int parmsCount = 2;
-
+		static private final int parmsCount = 2;
 		public DesignDocFetch db(java.lang.String stringParam) {
 			parms.put(DbKeys.etype.db, stringParam);
 			return this;
 		}
-
 		public DesignDocFetch designDocId(java.lang.String stringParam) {
 			parms.put(DbKeys.etype.designDocId, stringParam);
 			return this;
 		}
 
 	}
-
-	public class ViewFetch extends DbKeysBuilder {
+	class ViewFetch extends DbKeysBuilder {
 		private ViewFetch() {
 		}
 
-		public static ViewFetch
+		static public ViewFetch
 
 		$() {
 			return new ViewFetch();
@@ -806,9 +756,7 @@ public interface CouchDriver {
 
 		public interface ViewFetchTerminalBuilder extends TerminalBuilder {
 			rxf.server.CouchResultSet rows();
-
 			Future<ByteBuffer> future();
-
 			void continuousFeed();
 
 		}
@@ -822,7 +770,7 @@ public interface CouchDriver {
 				return new ViewFetchTerminalBuilder() {
 					public rxf.server.CouchResultSet rows() {
 						try {
-							return BlobAntiPatternObject.GSON
+							return GSON
 									.fromJson(
 											one.xio.HttpMethod.UTF8
 													.decode(
@@ -849,7 +797,6 @@ public interface CouchDriver {
 						}
 						return null;
 					}
-
 					public Future<ByteBuffer> future() {
 						try {
 							BlobAntiPatternObject.EXECUTOR_SERVICE
@@ -858,7 +805,6 @@ public interface CouchDriver {
 												.get();
 										final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder
 												.get();
-
 										public java.nio.ByteBuffer call()
 												throws Exception {
 											DbKeysBuilder.currentKeys
@@ -875,7 +821,6 @@ public interface CouchDriver {
 						}
 						return null;
 					}
-
 					public void continuousFeed() {
 						throw new AbstractMethodError();
 					}
@@ -898,30 +843,26 @@ public interface CouchDriver {
 					"required parameters are: [db, view]");
 		}
 
-		private static final int parmsCount = 2;
-
+		static private final int parmsCount = 2;
 		public ViewFetch db(java.lang.String stringParam) {
 			parms.put(DbKeys.etype.db, stringParam);
 			return this;
 		}
-
 		public ViewFetch view(java.lang.String stringParam) {
 			parms.put(DbKeys.etype.view, stringParam);
 			return this;
 		}
-
 		public ViewFetch type(java.lang.Class classParam) {
 			parms.put(DbKeys.etype.type, classParam);
 			return this;
 		}
 
 	}
-
-	public class JsonSend extends DbKeysBuilder {
+	class JsonSend extends DbKeysBuilder {
 		private JsonSend() {
 		}
 
-		public static JsonSend
+		static public JsonSend
 
 		$() {
 			return new JsonSend();
@@ -929,15 +870,10 @@ public interface CouchDriver {
 
 		public interface JsonSendTerminalBuilder extends TerminalBuilder {
 			CouchTx tx();
-
 			void oneWay();
-
 			rxf.server.CouchResultSet rows();
-
 			String json();
-
 			Future<ByteBuffer> future();
-
 			void continuousFeed();
 
 		}
@@ -951,7 +887,7 @@ public interface CouchDriver {
 				return new JsonSendTerminalBuilder() {
 					public CouchTx tx() {
 						try {
-							return (CouchTx) rxf.server.BlobAntiPatternObject.GSON
+							return (CouchTx) GSON
 									.fromJson(
 											one.xio.HttpMethod.UTF8
 													.decode(
@@ -964,7 +900,6 @@ public interface CouchDriver {
 						}
 						return null;
 					}
-
 					public void oneWay() {
 						final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder
 								.get();
@@ -988,10 +923,9 @@ public interface CouchDriver {
 									}
 								});
 					}
-
 					public rxf.server.CouchResultSet rows() {
 						try {
-							return BlobAntiPatternObject.GSON
+							return GSON
 									.fromJson(
 											one.xio.HttpMethod.UTF8
 													.decode(
@@ -1018,7 +952,6 @@ public interface CouchDriver {
 						}
 						return null;
 					}
-
 					public String json() {
 						try {
 							ByteBuffer visit = rxf.server.driver.CouchMetaDriver.JsonSend
@@ -1032,7 +965,6 @@ public interface CouchDriver {
 						}
 						return null;
 					}
-
 					public Future<ByteBuffer> future() {
 						try {
 							BlobAntiPatternObject.EXECUTOR_SERVICE
@@ -1041,7 +973,6 @@ public interface CouchDriver {
 												.get();
 										final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder
 												.get();
-
 										public java.nio.ByteBuffer call()
 												throws Exception {
 											DbKeysBuilder.currentKeys
@@ -1058,7 +989,6 @@ public interface CouchDriver {
 						}
 						return null;
 					}
-
 					public void continuousFeed() {
 						throw new AbstractMethodError();
 					}
@@ -1081,30 +1011,26 @@ public interface CouchDriver {
 					"required parameters are: [opaque, validjson]");
 		}
 
-		private static final int parmsCount = 2;
-
+		static private final int parmsCount = 2;
 		public JsonSend opaque(java.lang.String stringParam) {
 			parms.put(DbKeys.etype.opaque, stringParam);
 			return this;
 		}
-
 		public JsonSend validjson(java.lang.String stringParam) {
 			parms.put(DbKeys.etype.validjson, stringParam);
 			return this;
 		}
-
 		public JsonSend type(java.lang.Class classParam) {
 			parms.put(DbKeys.etype.type, classParam);
 			return this;
 		}
 
 	}
-
-	public class BlobSend extends DbKeysBuilder {
+	class BlobSend extends DbKeysBuilder {
 		private BlobSend() {
 		}
 
-		public static BlobSend
+		static public BlobSend
 
 		$() {
 			return new BlobSend();
@@ -1112,9 +1038,7 @@ public interface CouchDriver {
 
 		public interface BlobSendTerminalBuilder extends TerminalBuilder {
 			CouchTx tx();
-
 			Future<ByteBuffer> future();
-
 			void oneWay();
 		}
 
@@ -1127,7 +1051,7 @@ public interface CouchDriver {
 				return new BlobSendTerminalBuilder() {
 					public CouchTx tx() {
 						try {
-							return (CouchTx) rxf.server.BlobAntiPatternObject.GSON
+							return (CouchTx) GSON
 									.fromJson(
 											one.xio.HttpMethod.UTF8
 													.decode(
@@ -1140,7 +1064,6 @@ public interface CouchDriver {
 						}
 						return null;
 					}
-
 					public Future<ByteBuffer> future() {
 						try {
 							BlobAntiPatternObject.EXECUTOR_SERVICE
@@ -1149,7 +1072,6 @@ public interface CouchDriver {
 												.get();
 										final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder
 												.get();
-
 										public java.nio.ByteBuffer call()
 												throws Exception {
 											DbKeysBuilder.currentKeys
@@ -1166,7 +1088,6 @@ public interface CouchDriver {
 						}
 						return null;
 					}
-
 					public void oneWay() {
 						final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder
 								.get();
@@ -1209,38 +1130,31 @@ public interface CouchDriver {
 					"required parameters are: [blob, db, docId, rev, attachname]");
 		}
 
-		private static final int parmsCount = 5;
-
+		static private final int parmsCount = 5;
 		public BlobSend blob(java.nio.ByteBuffer bytebufferParam) {
 			parms.put(DbKeys.etype.blob, bytebufferParam);
 			return this;
 		}
-
 		public BlobSend db(java.lang.String stringParam) {
 			parms.put(DbKeys.etype.db, stringParam);
 			return this;
 		}
-
 		public BlobSend docId(java.lang.String stringParam) {
 			parms.put(DbKeys.etype.docId, stringParam);
 			return this;
 		}
-
 		public BlobSend rev(java.lang.String stringParam) {
 			parms.put(DbKeys.etype.rev, stringParam);
 			return this;
 		}
-
 		public BlobSend attachname(java.lang.String stringParam) {
 			parms.put(DbKeys.etype.attachname, stringParam);
 			return this;
 		}
-
 		public BlobSend mimetypeEnum(one.xio.MimeType mimetypeParam) {
 			parms.put(DbKeys.etype.mimetypeEnum, mimetypeParam);
 			return this;
 		}
-
 		public BlobSend mimetype(java.lang.String stringParam) {
 			parms.put(DbKeys.etype.mimetype, stringParam);
 			return this;

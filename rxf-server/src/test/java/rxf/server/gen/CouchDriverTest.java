@@ -19,7 +19,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
-import static rxf.server.BlobAntiPatternObject.GSON;
+import static rxf.server.gen.CouchDriver.GSON;
 
 /**
  * Tests out the db, cleaning up after itself. These must be run in order to work correctly and clean up.

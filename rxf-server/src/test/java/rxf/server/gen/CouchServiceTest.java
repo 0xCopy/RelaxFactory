@@ -6,7 +6,6 @@ import one.xio.HttpMethod;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import rxf.server.BlobAntiPatternObject;
 import rxf.server.*;
 import rxf.server.CouchTx;
 import rxf.server.gen.CouchDriver.DbDelete;
@@ -19,7 +18,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 import static org.junit.Assert.*;
-import static rxf.server.BlobAntiPatternObject.GSON;
+import static rxf.server.gen.CouchDriver.GSON;
 
 /**
  * Tests out the db, cleaning up after itself. These must be run in order to work correctly and clean up.

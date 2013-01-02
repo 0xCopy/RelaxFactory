@@ -17,72 +17,75 @@ import java.util.TimeZone;
  * @overhauled Jim Northrup
  */
 public enum DateHeaderParser {
-    SHORT(DateFormat.getDateInstance(DateFormat.SHORT)), MED(DateFormat.getDateInstance(DateFormat.MEDIUM)), LONG(DateFormat.getDateInstance(DateFormat.LONG)), FULL(DateFormat.getDateInstance(DateFormat.FULL)),
-    /**
-     * Date format pattern used to parse HTTP date headers in RFC 1123 format.
-     */
-    RFC1123("EEE, dd MMM yyyy HH:mm:ss z"),
+	RFC1123("EEE, dd MMM yyyy HH:mm:ss z"),
+	/**
+	 * Date format pattern used to parse HTTP date headers in RFC 1123 format.
+	 */
 
-    /**
-     * Date format pattern used to parse HTTP date headers in RFC 1036 format.
-     */
-    RFC1036("EEEE, dd-MMM-yy HH:mm:ss z"),
+	/**
+	 * Date format pattern used to parse HTTP date headers in RFC 1036 format.
+	 */
+	RFC1036("EEEE, dd-MMM-yy HH:mm:ss z"),
 
-    /**
-     * Date format pattern used to parse HTTP date headers in ANSI C
-     * <code>asctime()</code> format.
-     */
-    ISO8601("yyyy-MM-dd'T'HH:mm:ssz"),
-    ISOMS("yyyy-MM-dd'T'HH:mm:ss.SSS zzz"),
-    ASCTIME("EEE MMM d HH:mm:ss yyyy"),;
-    private final DateFormat format;
+	/**
+	 * Date format pattern used to parse HTTP date headers in ANSI C
+	 * <code>asctime()</code> format.
+	 */
+	ISO8601("yyyy-MM-dd'T'HH:mm:ssz"), ISOMS("yyyy-MM-dd'T'HH:mm:ss.SSS zzz"), SHORT(
+			DateFormat.getDateInstance(DateFormat.SHORT)), MED(DateFormat
+			.getDateInstance(DateFormat.MEDIUM)), LONG(DateFormat
+			.getDateInstance(DateFormat.LONG)), FULL(DateFormat
+			.getDateInstance(DateFormat.FULL)), ASCTIME(
+			"EEE MMM d HH:mm:ss yyyy"), ;
+	private final DateFormat format;
 
-    DateHeaderParser(String fmt) {
+	DateHeaderParser(String fmt) {
 
-        this(new SimpleDateFormat(fmt, Locale.getDefault()));
+		this(new SimpleDateFormat(fmt, Locale.getDefault()));
 
-    }
+	}
 
-    DateHeaderParser(DateFormat dateFormat) {
-        format = dateFormat;
-        format.setLenient(true);
-        //for unit tests we want GMT as predictable.  for other println's we want local tz
-        if (BlobAntiPatternObject.DEBUG_SENDJSON)
-            format.setTimeZone(TimeZone.getTimeZone("GMT"));
-    }
+	DateHeaderParser(DateFormat dateFormat) {
+		format = dateFormat;
+		format.setLenient(true);
+		//for unit tests we want GMT as predictable.  for other println's we want local tz
+		if (BlobAntiPatternObject.DEBUG_SENDJSON)
+			format.setTimeZone(TimeZone.getTimeZone("GMT"));
+	}
 
-    /**
-     * Parses the date value using the given date formats.
-     *
-     * @param dateValue the date value to parse
-     * @return the parsed date
-     */
-    public static Date parseDate(CharSequence dateValue) {
+	/**
+	 * Parses the date value using the given date formats.
+	 *
+	 * @param dateValue the date value to parse
+	 * @return the parsed date
+	 */
+	public static Date parseDate(CharSequence dateValue) {
 
-        char c = dateValue.charAt(0);
-        switch (c) {
-            case '\'':
-            case '"':
+		char c = dateValue.charAt(0);
+		switch (c) {
+			case '\'' :
+			case '"' :
 
-                dateValue = dateValue.subSequence(1, dateValue.length() - 1);
-            default:
-                break;
-        }
-        String source = dateValue.toString();
-        for (DateHeaderParser dateHeaderParser : values()) {
-            try {
-                return dateHeaderParser.format.parse(source);
-            } catch (ParseException e) {
-                if (BlobAntiPatternObject.DEBUG_SENDJSON) {
-                    System.err.println(".--" + dateHeaderParser.name() + " failed parse: " + source);
+				dateValue = dateValue.subSequence(1, dateValue.length() - 1);
+			default :
+				break;
+		}
+		String source = dateValue.toString();
+		for (DateHeaderParser dateHeaderParser : values()) {
+			try {
+				return dateHeaderParser.format.parse(source);
+			} catch (ParseException e) {
+				if (BlobAntiPatternObject.DEBUG_SENDJSON) {
+					System.err.println(".--" + dateHeaderParser.name()
+							+ " failed parse: " + source);
 
-                }
-            }
-        }
-        return null;
-    }
+				}
+			}
+		}
+		return null;
+	}
 
-    public static String formatHttpHeaderDate(Date fdate) {
-        return RFC1123.format.format(fdate);
-    }
+	public static String formatHttpHeaderDate(Date... fdate) {
+		return RFC1123.format.format(fdate.length > 0 ? fdate[0] : new Date());
+	}
 }

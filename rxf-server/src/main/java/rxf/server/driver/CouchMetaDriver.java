@@ -863,7 +863,7 @@ public enum CouchMetaDriver {
 						recycleChannel(channel);
 						return;
 					} /*
-						final ByteBuffer tmp = (ByteBuffer) cursor.duplicate();
+						  final ByteBuffer tmp = (ByteBuffer) cursor.duplicate();
 						final int position = tmp.position();
 						tmp.flip();
 						String decode = UTF8.decode(((ByteBuffer) tmp.position(position - CE_TERMINAL.length()))).toString();
@@ -954,7 +954,6 @@ public enum CouchMetaDriver {
 		}
 	},
 	//training day for the Terminal rewrites
-
 	@DbTask({tx, oneWay, rows, json, future, continuousFeed})
 	@DbKeys(value = {opaque, validjson}, optional = type)
 	JsonSend {
@@ -1289,14 +1288,12 @@ public enum CouchMetaDriver {
 		}
 
 	};
-
+	public static final byte[] HEADER_TERMINATOR = "\r\n\r\n".getBytes(UTF8);
 	public static final byte[] CE_TERMINAL = "\n0\r\n\r\n".getBytes(UTF8);
-
 	//"premature optimization" s/mature/view/
 	public static final String[] STATIC_VF_HEADERS = Rfc822HeaderState
 			.staticHeaderStrings(new HttpHeaders[]{ETag, Content$2dLength,
 					Transfer$2dEncoding});
-
 	//"premature optimization" s/mature/view/
 	public static final String[] STATIC_JSON_SEND_HEADERS = Rfc822HeaderState
 			.staticHeaderStrings(new HttpHeaders[]{ETag, Content$2dLength,
@@ -1304,15 +1301,52 @@ public enum CouchMetaDriver {
 	//"premature optimization" s/mature/view/
 	public static final String[] STATIC_CONTENT_LENGTH_ARR = Rfc822HeaderState
 			.staticHeaderStrings(new HttpHeaders[]{Content$2dLength});
-
 	public static final String HEADER = ETag.getHeader();
-
 	public static final String[] EMPTY = new String[0];
+	public static final String PCOUNT = "-0xdeadbeef.2";
+	public static final String GENERATED_METHODS = "/*generated methods vsd78vs0fd078fv0sa78*/";
+	public static final String IFACE_FIRE_TARGETS = "/*fire interface ijnoifnj453oijnfiojn h*/";
+	public static final String FIRE_METHODS = "/*embedded fire terminals j63l4k56jn4k3jn5l63l456jn*/";
 
 	public static String scrub(String scrubMe) {
 
 		return null == scrubMe ? null : scrubMe.trim().replace("//", "/")
 				.replace("..", ".");
+	}
+
+	public static void main(String... args) throws NoSuchFieldException {
+		Field[] fields = CouchMetaDriver.class.getFields();
+		@Language("JAVA")
+		String s = "package rxf.server.gen;\n//generated\n  \n\nimport rxf.server.*;\nimport rxf.server.an.*;\nimport rxf.server.driver.*;\nimport java.lang.reflect.ParameterizedType;\nimport java.lang.reflect.*;\nimport java.nio.*;\nimport java.nio.channels.*;\n\nimport java.util.concurrent.*;\n\n\nimport static rxf.server.BlobAntiPatternObject.*;\n/**\n * generated drivers\n */\npublic interface CouchDriver{\n"
+				+ "\n"
+				+ "\n"
+				+ "    TimeUnit defaultCollectorTimeUnit = TimeUnit.SECONDS;\n"
+				+ "    Gson GSON = new GsonBuilder().setDateFormat(\n"
+				+ "            \"yyyy-MM-dd'T'HH:mm:ss.SSSZ\").setFieldNamingPolicy(\n"
+				+ "\t\t\tFieldNamingPolicy.IDENTITY).setPrettyPrinting().create();";
+		String s1 = "//generated items\n";
+		for (Field field : fields)
+			if (field.getType().isAssignableFrom(CouchMetaDriver.class)) {
+				CouchMetaDriver couchDriver = CouchMetaDriver.valueOf(field
+						.getName());
+				DbKeys dbKeys = field.getAnnotation(DbKeys.class);
+				etype[] value = dbKeys.value();
+
+				s += ByteBuffer.class.getCanonicalName();
+				s += ' ' + couchDriver.name() + '(';
+				Iterator<etype> iterator = Arrays.asList(value).iterator();
+				while (iterator.hasNext()) {
+					etype etype = iterator.next();
+					s += " " + etype.clazz.getCanonicalName() + " "
+							+ etype.name();
+					if (iterator.hasNext())
+						s += ',';
+				}
+				s += " );\n";
+				s1 += "\n" + couchDriver.builder();
+			}
+		s += s1 + "}";
+		System.out.println(s);
 	}
 
 	public ByteBuffer visit() throws Exception {
@@ -1332,11 +1366,6 @@ public enum CouchMetaDriver {
 		throw new AbstractMethodError();
 	}
 
-	public static final String PCOUNT = "-0xdeadbeef.2";
-	public static final String GENERATED_METHODS = "/*generated methods vsd78vs0fd078fv0sa78*/";
-	public static final String IFACE_FIRE_TARGETS = "/*fire interface ijnoifnj453oijnfiojn h*/";
-	public static final String FIRE_METHODS = "/*embedded fire terminals j63l4k56jn4k3jn5l63l456jn*/";
-
 	public String builder() throws NoSuchFieldException {
 		Field field = CouchMetaDriver.class.getField(name());
 
@@ -1351,7 +1380,7 @@ public enum CouchMetaDriver {
 
 			String rtypeTypeParams = "";
 			String rtypeBounds = "";
-			s = "public class _ename_"
+			s = "class _ename_"
 					+ rtypeTypeParams
 					+ " extends DbKeysBuilder  {\n  private _ename_() {\n  }\n\n  static public "
 					+ rtypeBounds
@@ -1420,35 +1449,6 @@ public enum CouchMetaDriver {
 				clazz.getSimpleName().toLowerCase() + "Param").replace(
 				"_ename_", name());
 		return s1;
-	}
-
-	public static void main(String... args) throws NoSuchFieldException {
-		Field[] fields = CouchMetaDriver.class.getFields();
-		@Language("JAVA")
-		String s = "package rxf.server.gen;\n//generated\n  \n\nimport rxf.server.*;\nimport rxf.server.an.*;\nimport rxf.server.driver.*;\nimport java.lang.reflect.ParameterizedType;\nimport java.lang.reflect.Type;\nimport java.nio.ByteBuffer;\nimport java.nio.channels.SelectionKey;\nimport java.util.concurrent.Callable;\nimport java.util.concurrent.Future;\n\n\nimport static rxf.server.BlobAntiPatternObject.*;\n/**\n * generated drivers\n */\npublic interface CouchDriver{";
-		String s1 = "//generated items\n";
-		for (Field field : fields)
-			if (field.getType().isAssignableFrom(CouchMetaDriver.class)) {
-				CouchMetaDriver couchDriver = CouchMetaDriver.valueOf(field
-						.getName());
-				DbKeys dbKeys = field.getAnnotation(DbKeys.class);
-				etype[] value = dbKeys.value();
-
-				s += ByteBuffer.class.getCanonicalName();
-				s += ' ' + couchDriver.name() + '(';
-				Iterator<etype> iterator = Arrays.asList(value).iterator();
-				while (iterator.hasNext()) {
-					etype etype = iterator.next();
-					s += " " + etype.clazz.getCanonicalName() + " "
-							+ etype.name();
-					if (iterator.hasNext())
-						s += ',';
-				}
-				s += " );\n";
-				s1 += "\n" + couchDriver.builder();
-			}
-		s += s1 + "}";
-		System.out.println(s);
 	}
 
 }

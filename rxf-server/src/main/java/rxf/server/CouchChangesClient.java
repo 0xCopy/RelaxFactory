@@ -2,6 +2,7 @@ package rxf.server;
 
 import one.xio.AsioVisitor;
 import one.xio.HttpMethod;
+import rxf.server.gen.CouchDriver;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -215,8 +216,8 @@ public class CouchChangesClient extends AsioVisitor.Impl {
 				ByteBuffer handoff = (ByteBuffer) buffer.slice().limit(integer);
 				final String trim = UTF8.decode(handoff).toString().trim();
 				//        System.err.println("RecordId: " + trim);
-				final LinkedHashMap couchChange = BlobAntiPatternObject.GSON
-						.fromJson(trim, LinkedHashMap.class);
+				final LinkedHashMap couchChange = CouchDriver.GSON.fromJson(
+						trim, LinkedHashMap.class);
 
 				EXECUTOR_SERVICE.submit(getDocUpdateHandler(couchChange));
 				buffer.position(handoff.limit() + ENDL.length);

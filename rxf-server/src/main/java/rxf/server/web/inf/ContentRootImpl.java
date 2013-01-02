@@ -18,7 +18,7 @@ import java.nio.channels.SocketChannel;
 import static java.lang.Math.min;
 import static java.nio.channels.SelectionKey.*;
 import static one.xio.HttpHeaders.*;
-import static rxf.server.BlobAntiPatternObject.HEADER_TERMINATOR;
+import static rxf.server.driver.CouchMetaDriver.HEADER_TERMINATOR;
 import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
 
 /**
@@ -47,8 +47,8 @@ public class ContentRootImpl extends Impl implements PreRead {
 	}
 
 	public static String fileScrub(String scrubMe) {
-		char inverseChar = '/' == File.separatorChar ? '\\' : '/';
-		return null == scrubMe ? null : scrubMe.trim().replace(inverseChar,
+		char inverseChar = ('/' == File.separatorChar) ? '\\' : '/';
+		return (null == scrubMe) ? null : scrubMe.trim().replace(inverseChar,
 				File.separatorChar).replace(DOUBLESEP, "" + File.separator)
 				.replace("..", ".");
 	}
@@ -90,8 +90,8 @@ public class ContentRootImpl extends Impl implements PreRead {
 		Buffer flip = cursor.duplicate().flip();
 
 		req = (HttpRequest) new Rfc822HeaderState().addHeaderInterest(
-				Accept$2dEncoding, If$2dModified$2dSince).$req().apply(
-				(ByteBuffer) flip);
+				Accept$2dEncoding, If$2dModified$2dSince,
+				If$2dUnmodified$2dSince).$req().apply((ByteBuffer) flip);
 		if (!BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, req
 				.headerBuf())) {
 			return;
@@ -118,14 +118,31 @@ public class ContentRootImpl extends Impl implements PreRead {
 		HttpResponse res = req.$res();
 		if (null != since) {
 			java.util.Date cachedDate = DateHeaderParser.parseDate(since);
-			if (!fdate.before(cachedDate)) {
+
+			if (cachedDate.after(fdate)) {
 
 				res.status(HttpStatus.$304).headerString(Connection, "close")
-						.headerString(Date,
+						.headerString(Last$2dModified,
 								DateHeaderParser.formatHttpHeaderDate(fdate));
 				int write = channel.write(res.as(ByteBuffer.class));
 				key.interestOps(OP_READ).attach(null);
 				return;
+			}
+		} else {
+			since = req.headerString(If$2dUnmodified$2dSince);
+
+			if (null != since) {
+				java.util.Date cachedDate = DateHeaderParser.parseDate(since);
+
+				if (cachedDate.before(fdate)) {
+
+					res.status(HttpStatus.$412).headerString(Connection,
+							"close").headerString(Last$2dModified,
+							DateHeaderParser.formatHttpHeaderDate(fdate));
+					int write = channel.write(res.as(ByteBuffer.class));
+					key.interestOps(OP_READ).attach(null);
+					return;
+				}
 			}
 		}
 		String ceString = null;
@@ -161,7 +178,7 @@ public class ContentRootImpl extends Impl implements PreRead {
 			long length = randomAccessFile.length();
 
 			res.status(HttpStatus.$200).headerString(Content$2dType,
-					(null == mimeType ? MimeType.bin : mimeType).contentType)
+					((null == mimeType) ? MimeType.bin : mimeType).contentType)
 					.headerString(Content$2dLength, String.valueOf(length))
 					.headerString(Connection, "close").headerString(Date,
 							DateHeaderParser.formatHttpHeaderDate(fdate));;

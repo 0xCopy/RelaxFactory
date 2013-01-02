@@ -174,7 +174,8 @@ public class CouchServiceFactory {
 										queryBuilder.toString());
 							}
 						}
-						final String stringParam = GSON.toJson(design);
+						final String stringParam = CouchDriver.GSON
+								.toJson(design);
 						final JsonSendTerminalBuilder fire = JsonSend.$()
 								.opaque(getPathPrefix())
 								/*.docId(design.id)*/.validjson(stringParam)
@@ -205,8 +206,9 @@ public class CouchServiceFactory {
 						if (args != null) {//apparently args is null for a zero-arg method
 							jsonArgs = new String[args.length];
 							for (int i = 0; i < args.length; i++) {
-								jsonArgs[i] = URLEncoder.encode(GSON
-										.toJson(args[i]), "UTF-8");
+								jsonArgs[i] = URLEncoder.encode(
+										CouchDriver.GSON.toJson(args[i]),
+										"UTF-8");
 							}
 						}
 						/*       dont forget to uncomment this after new CouchResult gen*/
@@ -234,7 +236,7 @@ public class CouchServiceFactory {
 				//persist or find by key
 				if ("persist".equals(method.getName())) {
 					//again, no point, see above with DocPersist
-					String stringParam = GSON.toJson(args[0]);
+					String stringParam = CouchDriver.GSON.toJson(args[0]);
 					final DocPersistActionBuilder to = DocPersist.$().db(
 							getPathPrefix()).validjson(stringParam).to();
 					DocPersistTerminalBuilder fire = to.fire();
@@ -244,7 +246,7 @@ public class CouchServiceFactory {
 					assert "find".equals(method.getName());
 					String doc = CouchDriver.DocFetch.$().db(getPathPrefix())
 							.docId((String) args[0]).to().fire().json();
-					return (E) GSON.fromJson(doc, entityType);
+					return (E) CouchDriver.GSON.fromJson(doc, entityType);
 				}
 			}
 		}

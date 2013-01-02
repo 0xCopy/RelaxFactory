@@ -21,7 +21,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import static java.lang.Math.abs;
 import static one.xio.HttpHeaders.Set$2dCookie;
 import static one.xio.HttpMethod.UTF8;
-import static rxf.server.BlobAntiPatternObject.COOKIE;
 
 /**
  * this is a utility class to parse a HttpRequest header or
@@ -403,7 +402,8 @@ public class Rfc822HeaderState {
 	 */
 	public Rfc822HeaderState cookies(String... cookies) {
 		this.cookies.set(cookies);
-		List<String> headersNamed = getHeadersNamed(COOKIE);
+		List<String> headersNamed = getHeadersNamed(HttpHeaders.Cookie
+				.getHeader());
 		cookieStrings.set(new LinkedHashMap<String, String>());
 		Arrays.sort(cookies);
 		for (String cookie : headersNamed) {
@@ -780,7 +780,8 @@ public class Rfc822HeaderState {
 		}
 		for (Entry<String, String> stringStringEntry : cookieStrings()
 				.entrySet()) {
-			protocol += COOKIE + ": " + stringStringEntry.getKey() + "="
+			protocol += HttpHeaders.Cookie.getHeader() + ": "
+					+ stringStringEntry.getKey() + "="
 					+ stringStringEntry.getValue() + "\r\n";
 		}
 

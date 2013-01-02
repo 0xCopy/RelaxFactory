@@ -72,7 +72,7 @@ public class Login {
                 if (null != version1) l.add(version1);
             }
             try {
-                return CouchDriver.DocPersist.$().validjson(BlobAntiPatternObject.GSON.toJson(entity)).db(l.get(0)).to().fire().tx();
+                return CouchDriver.DocPersist.$().validjson(GSON.toJson(entity)).db(l.get(0)).to().fire().tx();
 
             } catch (Exception e) {
                 e.printStackTrace();

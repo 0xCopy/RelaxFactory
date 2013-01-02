@@ -41,7 +41,7 @@ public enum DbTerminal {
 			@Language("JAVA")
 			String s = "{\n"
 					+ "            try {\n"
-					+ "              return    BlobAntiPatternObject.GSON.fromJson(one.xio.HttpMethod.UTF8.decode(avoidStarvation("
+					+ "              return    GSON.fromJson(one.xio.HttpMethod.UTF8.decode(avoidStarvation("
 					+ visitor
 					+ ".visit())).toString(),\n"
 					+ "                  new java.lang.reflect.ParameterizedType() {\n"
@@ -104,7 +104,7 @@ public enum DbTerminal {
 					+ " CouchTx tx()"
 					+ (implementation
 							? "{try {\n"
-									+ "        return (CouchTx)rxf.server.BlobAntiPatternObject.GSON.fromJson(one.xio.HttpMethod.UTF8.decode("
+									+ "        return (CouchTx)GSON.fromJson(one.xio.HttpMethod.UTF8.decode("
 									+ " rxf.server.driver.CouchMetaDriver."
 									+ couchDriver
 									+ ".visit()).toString(),CouchTx.class);\n"
