@@ -1,17 +1,20 @@
 package rxf.server.web.inf;
 
-import com.gargoylesoftware.htmlunit.BrowserVersion;
-import com.gargoylesoftware.htmlunit.WebClient;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebResponse;
 import one.xio.AsioVisitor;
+import one.xio.HttpHeaders;
 import one.xio.HttpMethod;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import rxf.server.BlobAntiPatternObject;
+import rxf.server.DateHeaderParser;
 
 import java.net.InetSocketAddress;
 import java.nio.channels.ServerSocketChannel;
+import java.util.Date;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -21,18 +24,15 @@ import static org.junit.Assert.fail;
 
 public class ContentRootImplTest {
 	private static final String host = "localhost";
+	public static String base;
+	public static WebConversation wc;
 	private static int port;
 	private static ScheduledExecutorService exec;
 	private static ServerSocketChannel serverSocketChannel;
-	private static WebClient webClient;
 
 	@BeforeClass
 	static public void setUp() throws Exception {
-		webClient = new WebClient(BrowserVersion.FIREFOX_3_6);
-		webClient.setJavaScriptEnabled(true);
-		webClient.setThrowExceptionOnFailingStatusCode(true);
-		webClient.setThrowExceptionOnScriptError(true);
-		webClient.setTimeout(10000);
+		wc = new WebConversation();
 
 		BlobAntiPatternObject.DEBUG_SENDJSON = true;
 		HttpMethod.killswitch = false;
@@ -58,6 +58,7 @@ public class ContentRootImplTest {
 				}
 			}
 		});
+		base = "http://localhost:" + port;
 	}
 
 	@AfterClass
@@ -72,51 +73,76 @@ public class ContentRootImplTest {
 			fail(ignore.getMessage());
 		}
 	}
+
 	@Test
 	public void testRequestSlash() throws Exception {
-		HtmlPage page = webClient.getPage("http://localhost:" + port + "/");
-		assertEquals("Sample App", page.getTitleText());
+		GetMethodWebRequest req = new GetMethodWebRequest(base + '/');
+		WebResponse res = wc.getResponse(req);
+		assertEquals("Sample App", res.getTitle());
 	}
+
 	@Test
 	public void testRequestIndexHtml() throws Exception {
-		HtmlPage page = webClient.getPage("http://localhost:" + port
-				+ "/index.html");
-		assertEquals("Sample App", page.getTitleText());
+
+		GetMethodWebRequest req = new GetMethodWebRequest(base + "/index.html");
+		WebResponse res = wc.getResponse(req);
+		assertEquals("Sample App", res.getTitle());
 	}
+
+	@Test
+	public void testRequest304() throws Exception {
+		final String oldDate = DateHeaderParser.formatHttpHeaderDate(new Date(
+				"Jan 1 1990"));
+
+		String url = "http://localhost:" + port + "/index.html";
+
+		GetMethodWebRequest req = new GetMethodWebRequest(url);
+		/*fail?       */req.setHeaderField(HttpHeaders.If$2dModified$2dSince
+				.getHeader(), oldDate);
+		// fai;l?        req.getHeaders().put(HttpHeaders.If$2dModified$2dSince.getHeader(), oldDate);
+		//        wc.setHeaderField(HttpHeaders.If$2dModified$2dSince.getHeader(), oldDate);
+
+		WebResponse res = wc.getResponse(req);
+		int responseCode = res.getResponseCode();
+		res.close();
+		assertEquals(responseCode, 304);
+	}
+
 	@Test
 	public void testRequestFileWithQuerystring() throws Exception {
-		HtmlPage page = webClient.getPage("http://localhost:" + port
+		GetMethodWebRequest req = new GetMethodWebRequest(base
 				+ "/?some=params&others=true");
-
-		assertEquals("Sample App", page.getTitleText());
-
-		HtmlPage page2 = webClient.getPage("http://localhost:" + port
+		WebResponse res = wc.getResponse(req);
+		assertEquals("Sample App", res.getTitle());
+		req = new GetMethodWebRequest(base
 				+ "/index.html?some=params&others=true");
-		assertEquals("Sample App", page2.getTitleText());
+		res = wc.getResponse(req);
+		assertEquals("Sample App", res.getTitle());
+
 	}
+
 	@Test
 	public void testRequestFileWithFragment() throws Exception {
-		HtmlPage page = webClient.getPage("http://localhost:" + port
-				+ "/#startSomewhere");
-		assertEquals("Sample App", page.getTitleText());
+		GetMethodWebRequest req = new GetMethodWebRequest(base + "/#true");
+		WebResponse res = wc.getResponse(req);
+		assertEquals("Sample App", res.getTitle());
+		req = new GetMethodWebRequest(base + "/index.html#true");
+		res = wc.getResponse(req);
+		assertEquals("Sample App", res.getTitle());
 
-		HtmlPage page2 = webClient.getPage("http://localhost:" + port
-				+ "/index.html#startSomewhere");
-		assertEquals("Sample App", page2.getTitleText());
 	}
 
 	//I think this is failing from HtmlUnit not sending Accepts: headers
 	@Test
 	public void testRequestGzippedFile() throws Exception {
-		HtmlPage page = webClient.getPage("http://localhost:" + port
-				+ "/gzipped/");
-		webClient.addRequestHeader("Accept-Encoding", "gzip, default");
-		assertEquals("Sample App", page.getTitleText());
-
-		HtmlPage page2 = webClient.getPage("http://localhost:" + port
-				+ "/gzipped/index.html");
-		assertEquals("Sample App", page2.getTitleText());
-
+		GetMethodWebRequest req = new GetMethodWebRequest(base + "/gzipped/");
+		req.setHeaderField("Accept-Encoding", "gzip, deflate");
+		WebResponse res = wc.getResponse(req);
+		assertEquals("Sample App", res.getTitle());
+		req = new GetMethodWebRequest(base + "/gzipped/index.html");
+		req.setHeaderField("Accept-Encoding", "gzip, deflate");
+		res = wc.getResponse(req);
+		assertEquals("Sample App", res.getTitle());
 	}
 
 }

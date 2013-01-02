@@ -82,4 +82,7 @@ public enum DateHeaderParser {
         return null;
     }
 
+    public static String formatHttpHeaderDate(Date fdate) {
+        return RFC1123.format.format(fdate);
+    }
 }

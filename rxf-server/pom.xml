@@ -58,6 +58,11 @@
             <version>2.12-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.httpunit</groupId>
+            <artifactId>httpunit</artifactId>
+            <version>1.7.1-SNAPSHOT</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

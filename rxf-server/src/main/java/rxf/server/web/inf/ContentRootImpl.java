@@ -18,7 +18,6 @@ import java.nio.channels.SocketChannel;
 import static java.lang.Math.min;
 import static java.nio.channels.SelectionKey.*;
 import static one.xio.HttpHeaders.*;
-import static one.xio.HttpMethod.UTF8;
 import static rxf.server.BlobAntiPatternObject.HEADER_TERMINATOR;
 import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
 
@@ -32,6 +31,7 @@ public class ContentRootImpl extends Impl implements PreRead {
 	public static final String SLASHDOTSLASH = File.separator + "."
 			+ File.separator;
 	public static final String DOUBLESEP = File.separator + File.separator;
+	File file;
 	private String rootPath = CouchNamespace.COUCH_DEFAULT_FS_ROOT;
 	private ByteBuffer cursor;
 	private SocketChannel channel;
@@ -41,15 +41,13 @@ public class ContentRootImpl extends Impl implements PreRead {
 		init();
 	}
 
-	File file;
-
 	public ContentRootImpl(String rootPath) {
 		this.rootPath = rootPath;
 		init();
 	}
 
 	public static String fileScrub(String scrubMe) {
-		final char inverseChar = '/' == File.separatorChar ? '\\' : '/';
+		char inverseChar = '/' == File.separatorChar ? '\\' : '/';
 		return null == scrubMe ? null : scrubMe.trim().replace(inverseChar,
 				File.separatorChar).replace(DOUBLESEP, "" + File.separator)
 				.replace("..", ".");
@@ -90,35 +88,20 @@ public class ContentRootImpl extends Impl implements PreRead {
 		if (read == -1)
 			key.cancel();
 		Buffer flip = cursor.duplicate().flip();
+
 		req = (HttpRequest) new Rfc822HeaderState().addHeaderInterest(
-				Accept$2dEncoding).$req().apply((ByteBuffer) flip);
+				Accept$2dEncoding, If$2dModified$2dSince).$req().apply(
+				(ByteBuffer) flip);
 		if (!BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, req
 				.headerBuf())) {
 			return;
 		}
 		cursor = ((ByteBuffer) flip).slice();
-		/*  int remaining = Integer.parseInt(req.headerString(HttpHeaders.Content$2dLength));
-		      final Impl prev = this;
-		      if (cursor.remaining() != remaining) key.attach(new Impl() {
-		        @Override
-		        public void onRead(SelectionKey key) throws Exception {
-		          int read1 = channel.read(cursor);
-		          if (read1 == -1)
-		            key.cancel();
-		          if (!cursor.hasRemaining()) {
-		            key.interestOps(SelectionKey.OP_WRITE).attach(prev);
-		            return;
-		          }
-		        }
-
-		      });*/
 		key.interestOps(SelectionKey.OP_WRITE);
 	}
 
 	public void onWrite(SelectionKey key) throws Exception {
 
-		String accepts = req.headerString(Accept$2dEncoding);
-		String ceString = null;
 		String finalFname = fileScrub(rootPath + SLASHDOTSLASH
 				+ req.path().split("\\?")[0]);
 		file = new File(finalFname);
@@ -126,6 +109,26 @@ public class ContentRootImpl extends Impl implements PreRead {
 			file = new File((finalFname + "/index.html"));
 		}
 		finalFname = (file.getCanonicalPath());
+
+		java.util.Date fdate = new java.util.Date(file.lastModified());
+
+		String since = req.headerString(If$2dModified$2dSince);
+		String accepts = req.headerString(Accept$2dEncoding);
+
+		HttpResponse res = req.$res();
+		if (null != since) {
+			java.util.Date cachedDate = DateHeaderParser.parseDate(since);
+			if (!fdate.before(cachedDate)) {
+
+				res.status(HttpStatus.$304).headerString(Connection, "close")
+						.headerString(Date,
+								DateHeaderParser.formatHttpHeaderDate(fdate));
+				int write = channel.write(res.as(ByteBuffer.class));
+				key.interestOps(OP_READ).attach(null);
+				return;
+			}
+		}
+		String ceString = null;
 		if (null != accepts) {
 
 			for (CompressionTypes compType : CompressionTypes.values()) {
@@ -157,14 +160,14 @@ public class ContentRootImpl extends Impl implements PreRead {
 			MimeType mimeType = MimeType.valueOf(substring);
 			long length = randomAccessFile.length();
 
-			final HttpResponse responseHeader = new Rfc822HeaderState().$res();
-
-			responseHeader.status(HttpStatus.$200).headerString(Content$2dType,
+			res.status(HttpStatus.$200).headerString(Content$2dType,
 					(null == mimeType ? MimeType.bin : mimeType).contentType)
-					.headerString(Content$2dLength, String.valueOf(length));
+					.headerString(Content$2dLength, String.valueOf(length))
+					.headerString(Connection, "close").headerString(Date,
+							DateHeaderParser.formatHttpHeaderDate(fdate));;
 			if (null != ceString)
-				responseHeader.headerString(Content$2dEncoding, ceString);
-			ByteBuffer response = responseHeader.as(ByteBuffer.class);
+				res.headerString(Content$2dEncoding, ceString);
+			ByteBuffer response = res.as(ByteBuffer.class);
 			int write = channel.write(response);
 			final int sendBufferSize = BlobAntiPatternObject
 					.getSendBufferSize();
@@ -183,8 +186,7 @@ public class ContentRootImpl extends Impl implements PreRead {
 						fileChannel.close();
 						randomAccessFile.close();
 						key.selector().wakeup();
-						key.interestOps(OP_READ);
-						key.attach(null);
+						key.interestOps(OP_READ).attach(null);
 					}
 				}
 			});
@@ -193,11 +195,10 @@ public class ContentRootImpl extends Impl implements PreRead {
 			key.interestOps(OP_WRITE).attach(new Impl() {
 
 				public void onWrite(SelectionKey key) throws Exception {
-
-					String response = "HTTP/1.1 404 Not Found\n"
-							+ "Content-Length: 0\n\n";
-					System.err.println("!!! " + file.getAbsolutePath());
-					int write = channel.write(UTF8.encode(response));
+					int write = channel
+							.write(req.$res().status(HttpStatus.$404)
+									.headerString(Content$2dLength, "0").as(
+											ByteBuffer.class));
 					key.selector().wakeup();
 					key.interestOps(OP_READ).attach(null);
 				}
