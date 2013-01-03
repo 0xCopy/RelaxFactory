@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>rxf</groupId>
     <artifactId>relaxfactory</artifactId>
-    <version>0.9.1</version>
+    <version>0.10.0</version>
     <packaging>pom</packaging>
     <properties>
         <gwt.draftCompile>false</gwt.draftCompile>
@@ -17,7 +17,7 @@
         <gwt-maven-plugin.compileReport>false</gwt-maven-plugin.compileReport>
         <gwt-maven-plugin.soycDetailed>false</gwt-maven-plugin.soycDetailed>
         <gwt-maven-plugin.strict>false</gwt-maven-plugin.strict>
-        <one.xio.version>1.10.1</one.xio.version>
+        <!--<one.xio.version>1.10.1</one.xio.version>-->
     </properties>
     <profiles>
         <profile>
