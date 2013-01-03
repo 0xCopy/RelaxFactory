@@ -21,7 +21,7 @@ public enum DbTerminal {
 					+ (implementation
 							? "{\n    final DbKeysBuilder dbKeysBuilder=(DbKeysBuilder)DbKeysBuilder.get();\n"
 									+ "final ActionBuilder actionBuilder=(ActionBuilder )ActionBuilder.get();"
-									+ "\ndbKeysBuilder.validate();\n BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable(){"
+									+ "\ndbKeysBuilder.validate();\n BlobAntiPatternRelic.EXECUTOR_SERVICE.submit(new Runnable(){"
 									+ "\npublic void run(){\n"
 									+ "    try{\n\n      DbKeysBuilder.currentKeys.set(dbKeysBuilder);   \n      ActionBuilder.currentAction.set(actionBuilder); \nrxf.server.driver.CouchMetaDriver."
 									+ couchDriver
@@ -109,7 +109,7 @@ public enum DbTerminal {
 									+ couchDriver
 									+ ".visit()).toString(),CouchTx.class);\n"
 									+ "      } catch (Exception e) {\n"
-									+ "        if(rxf.server.BlobAntiPatternObject.DEBUG_SENDJSON)e.printStackTrace();   \n"
+									+ "        if(rxf.server.BlobAntiPatternRelic.DEBUG_SENDJSON)e.printStackTrace();   \n"
 									+ "      } return null;} "
 							: ";");
 		}
@@ -123,7 +123,7 @@ public enum DbTerminal {
 			return (implementation ? "public " : "")
 					+ "Future<ByteBuffer>future()"
 					+ (implementation
-							? "{\n    try{\n    BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>(){\nfinal DbKeysBuilder dbKeysBuilder=(DbKeysBuilder)DbKeysBuilder.get();\n"
+							? "{\n    try{\n    BlobAntiPatternRelic.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>(){\nfinal DbKeysBuilder dbKeysBuilder=(DbKeysBuilder)DbKeysBuilder.get();\n"
 									+ "final ActionBuilder actionBuilder=(ActionBuilder)ActionBuilder.get();\n"
 									+ "public "
 									+ ByteBuffer.class.getCanonicalName()

@@ -5,7 +5,7 @@ import one.xio.AsioVisitor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import rxf.server.BlobAntiPatternObject;
+import rxf.server.BlobAntiPatternRelic;
 import rxf.server.CouchResultSet;
 import rxf.server.CouchTx;
 import rxf.server.RelaxFactoryServerImpl;
@@ -51,8 +51,8 @@ public class PathologicalBufferSizeTest {
 
 	@BeforeClass
 	static public void setUp() throws Exception {
-		BlobAntiPatternObject.setDEBUG_SENDJSON(true);
-		RelaxFactoryServerImpl.killswitch = false;
+		RelaxFactoryServerImpl.setDEBUG_SENDJSON(true);
+		RelaxFactoryServerImpl.setKillswitch(false);
 		exec = Executors.newScheduledThreadPool(2);
 		exec.submit(new Runnable() {
 			public void run() {
@@ -65,8 +65,8 @@ public class PathologicalBufferSizeTest {
 			}
 		});
 		nukeTestDbs();
-		BlobAntiPatternObject.setReceiveBufferSize(4);
-		BlobAntiPatternObject.setSendBufferSize(67);
+		BlobAntiPatternRelic.setReceiveBufferSize(4);
+		BlobAntiPatternRelic.setSendBufferSize(67);
 		{
 			CouchTx tx = DbCreate.$().db(SOMEDB).to().fire().tx();
 			assertNotNull(tx);
@@ -80,7 +80,7 @@ public class PathologicalBufferSizeTest {
 	static public void tearDown() throws Exception {
 
 		try {
-			RelaxFactoryServerImpl.killswitch = true;
+			RelaxFactoryServerImpl.setKillswitch(true);
 			RelaxFactoryServerImpl.getSelector().close();
 			exec.shutdown();
 		} catch (Exception ignore) {

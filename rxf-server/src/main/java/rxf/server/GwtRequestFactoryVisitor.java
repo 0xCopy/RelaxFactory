@@ -15,7 +15,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
 import static rxf.server.RelaxFactoryServerImpl.UTF8;
-import static rxf.server.BlobAntiPatternObject.*;
+import static rxf.server.BlobAntiPatternRelic.*;
 
 /**
  * User: jim
@@ -59,7 +59,7 @@ public class GwtRequestFactoryVisitor extends Impl implements PreRead {
 		Buffer flip = cursor.duplicate().flip();
 		req = (HttpRequest) req.headerInterest(HttpHeaders.Content$2dLength)
 				.apply((ByteBuffer) flip);
-		if (!BlobAntiPatternObject.suffixMatchChunks(
+		if (!BlobAntiPatternRelic.suffixMatchChunks(
 				CouchMetaDriver.HEADER_TERMINATOR, req.headerBuf())) {
 			return;
 		}
@@ -88,7 +88,7 @@ public class GwtRequestFactoryVisitor extends Impl implements PreRead {
 	public void onWrite(final SelectionKey key) throws Exception {
 		if (payload == null) {
 			key.interestOps(0);
-			getEXECUTOR_SERVICE().submit(new Runnable() {
+			RelaxFactoryServerImpl.getEXECUTOR_SERVICE().submit(new Runnable() {
 				@Override
 				public void run() {
 					try {

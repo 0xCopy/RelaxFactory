@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static java.nio.channels.SelectionKey.*;
 import static one.xio.HttpHeaders.*;
 import static one.xio.HttpMethod.*;
-import static rxf.server.BlobAntiPatternObject.*;
+import static rxf.server.BlobAntiPatternRelic.*;
 import static rxf.server.DbTerminal.*;
 import static rxf.server.an.DbKeys.etype.*;
 
@@ -116,21 +116,24 @@ public enum CouchMetaDriver {
 										.duplicate().flip();
 								response.apply((ByteBuffer) flip);
 
-								if (BlobAntiPatternObject
+								if (BlobAntiPatternRelic
 										.suffixMatchChunks(HEADER_TERMINATOR,
 												response.headerBuf())) {
 									cursor = (ByteBuffer) flip.slice();
 									header = null;
 
-									if (isDEBUG_SENDJSON()) {
+									if (RelaxFactoryServerImpl
+											.isDEBUG_SENDJSON()) {
 										System.err
 												.println(deepToString(
 														response.statusEnum(),
 														response,
-														RelaxFactoryServerImpl.UTF8
-																.decode((ByteBuffer) cursor
-																		.duplicate()
-																		.rewind())));
+														RelaxFactoryServerImpl
+																.getUTF8()
+																.decode(
+																		(ByteBuffer) cursor
+																				.duplicate()
+																				.rewind())));
 									}
 
 									HttpStatus httpStatus = response
@@ -175,23 +178,24 @@ public enum CouchMetaDriver {
 						private void deliver() {
 							payload.set(cursor);
 							recycleChannel(channel);
-							getEXECUTOR_SERVICE().submit(new Runnable() {
+							RelaxFactoryServerImpl.getEXECUTOR_SERVICE()
+									.submit(new Runnable() {
 
-								public void run() {
+										public void run() {
 
-									try {
-										cyclicBarrier.await();
-									} catch (Throwable e) {
-										e.printStackTrace();
-									}
-								}
-							});
+											try {
+												cyclicBarrier.await();
+											} catch (Throwable e) {
+												e.printStackTrace();
+											}
+										}
+									});
 						}
 					});
 			try {
 				cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
 			} catch (Exception e) {
-				if (isDEBUG_SENDJSON()) {
+				if (RelaxFactoryServerImpl.isDEBUG_SENDJSON()) {
 					System.err.println("!!! " + deepToString(this, e)
 							+ "\n\tfrom");
 					dbKeysBuilder.trace().printStackTrace();
@@ -252,21 +256,24 @@ public enum CouchMetaDriver {
 										.duplicate().flip();
 								response.apply((ByteBuffer) flip);
 
-								if (BlobAntiPatternObject
+								if (BlobAntiPatternRelic
 										.suffixMatchChunks(HEADER_TERMINATOR,
 												response.headerBuf())) {
 									cursor = (ByteBuffer) flip.slice();
 									header = null;
 
-									if (isDEBUG_SENDJSON()) {
+									if (RelaxFactoryServerImpl
+											.isDEBUG_SENDJSON()) {
 										System.err
 												.println(deepToString(
 														response.statusEnum(),
 														response,
-														RelaxFactoryServerImpl.UTF8
-																.decode((ByteBuffer) cursor
-																		.duplicate()
-																		.rewind())));
+														RelaxFactoryServerImpl
+																.getUTF8()
+																.decode(
+																		(ByteBuffer) cursor
+																				.duplicate()
+																				.rewind())));
 									}
 
 									HttpStatus httpStatus = response
@@ -310,22 +317,23 @@ public enum CouchMetaDriver {
 						private void deliver() {
 							recycleChannel(channel);
 							payload.set(cursor);
-							getEXECUTOR_SERVICE().submit(new Runnable() {
+							RelaxFactoryServerImpl.getEXECUTOR_SERVICE()
+									.submit(new Runnable() {
 
-								public void run() {
-									try {
-										cyclicBarrier.await();
-									} catch (Throwable e) {
-										e.printStackTrace();
-									}
-								}
-							});
+										public void run() {
+											try {
+												cyclicBarrier.await();
+											} catch (Throwable e) {
+												e.printStackTrace();
+											}
+										}
+									});
 						}
 					});
 			try {
 				cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
 			} catch (Exception e) {
-				if (isDEBUG_SENDJSON()) {
+				if (RelaxFactoryServerImpl.isDEBUG_SENDJSON()) {
 					System.err.println("!!! " + deepToString(this, e)
 							+ "\n\tfrom");
 					dbKeysBuilder.trace().printStackTrace();
@@ -402,22 +410,25 @@ public enum CouchMetaDriver {
 										.duplicate().flip();
 								response.apply((ByteBuffer) flip);
 
-								if (BlobAntiPatternObject
+								if (BlobAntiPatternRelic
 										.suffixMatchChunks(HEADER_TERMINATOR,
 												response.headerBuf())) {
 									cursor = (ByteBuffer) flip.slice();
 									header = null;
 
-									if (isDEBUG_SENDJSON()) {
+									if (RelaxFactoryServerImpl
+											.isDEBUG_SENDJSON()) {
 										System.err
 												.println(deepToString(
 														response.statusEnum(),
 														response,
 														this,
-														RelaxFactoryServerImpl.UTF8
-																.decode((ByteBuffer) cursor
-																		.duplicate()
-																		.rewind())));
+														RelaxFactoryServerImpl
+																.getUTF8()
+																.decode(
+																		(ByteBuffer) cursor
+																				.duplicate()
+																				.rewind())));
 									}
 
 									HttpStatus httpStatus = response
@@ -461,24 +472,25 @@ public enum CouchMetaDriver {
 							assert null != cursor;
 							payload.set((ByteBuffer) cursor.rewind());
 
-							getEXECUTOR_SERVICE().submit(new Runnable() {
+							RelaxFactoryServerImpl.getEXECUTOR_SERVICE()
+									.submit(new Runnable() {
 
-								public void run() {
-									try {
-										cyclicBarrier.await();
-										recycleChannel(channel);
+										public void run() {
+											try {
+												cyclicBarrier.await();
+												recycleChannel(channel);
 
-									} catch (Throwable e) {
-										e.printStackTrace();
-									}
-								}
-							});
+											} catch (Throwable e) {
+												e.printStackTrace();
+											}
+										}
+									});
 						}
 					});
 			try {
 				cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
 			} catch (Throwable e) {
-				if (isDEBUG_SENDJSON()) {
+				if (RelaxFactoryServerImpl.isDEBUG_SENDJSON()) {
 					System.err.println("!!! " + deepToString(this, e)
 							+ "\n\tfrom");
 					dbKeysBuilder.trace().printStackTrace();
@@ -547,27 +559,30 @@ public enum CouchMetaDriver {
 											.duplicate().flip();
 									response.apply((ByteBuffer) flip);
 
-									if (BlobAntiPatternObject
-											.suffixMatchChunks(
-													HEADER_TERMINATOR, response
-															.headerBuf())) {
+									if (BlobAntiPatternRelic.suffixMatchChunks(
+											HEADER_TERMINATOR, response
+													.headerBuf())) {
 										try {
-											if (isDEBUG_SENDJSON())
+											if (RelaxFactoryServerImpl
+													.isDEBUG_SENDJSON())
 												System.err
 														.println(deepToString(
 																"??? ",
-																RelaxFactoryServerImpl.UTF8
-																		.decode((ByteBuffer) flip
-																				.duplicate()
-																				.rewind())));
+																RelaxFactoryServerImpl
+																		.getUTF8()
+																		.decode(
+																				(ByteBuffer) flip
+																						.duplicate()
+																						.rewind())));
 											String header1 = ETag.getHeader();
 											String str = response
 													.dequotedHeader(header1);
-											ByteBuffer encode = RelaxFactoryServerImpl.UTF8
-													.encode(str);
+											ByteBuffer encode = RelaxFactoryServerImpl
+													.getUTF8().encode(str);
 											payload.set(encode);
 										} catch (Exception e) {
-											if (isDEBUG_SENDJSON()) {
+											if (RelaxFactoryServerImpl
+													.isDEBUG_SENDJSON()) {
 												e.printStackTrace();
 												Throwable trace = dbKeysBuilder
 														.trace();
@@ -579,24 +594,26 @@ public enum CouchMetaDriver {
 											}
 
 										}
-										getEXECUTOR_SERVICE().submit(
-												new Callable() {
-													public Object call()
-															throws Exception {
-														try {
-															//assumes quoted
-															cyclicBarrier
-																	.await();
-														} catch (Exception e) {
-															cyclicBarrier
-																	.reset();
-															channel.close();
-														} finally {
-															recycleChannel(channel);
-														}
-														return null;
-													}
-												});
+										RelaxFactoryServerImpl
+												.getEXECUTOR_SERVICE().submit(
+														new Callable() {
+															public Object call()
+																	throws Exception {
+																try {
+																	//assumes quoted
+																	cyclicBarrier
+																			.await();
+																} catch (Exception e) {
+																	cyclicBarrier
+																			.reset();
+																	channel
+																			.close();
+																} finally {
+																	recycleChannel(channel);
+																}
+																return null;
+															}
+														});
 									}
 								} else {
 									cyclicBarrier.reset();
@@ -608,7 +625,7 @@ public enum CouchMetaDriver {
 			try {
 				cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
 			} catch (Exception e) {
-				if (isDEBUG_SENDJSON()) {
+				if (RelaxFactoryServerImpl.isDEBUG_SENDJSON()) {
 					System.err.println("!!! " + deepToString(this, e)
 							+ "\n\tfrom");
 					dbKeysBuilder.trace().printStackTrace();
@@ -701,21 +718,24 @@ public enum CouchMetaDriver {
 										.duplicate().flip();
 								response.apply((ByteBuffer) flip);
 
-								if (BlobAntiPatternObject
+								if (BlobAntiPatternRelic
 										.suffixMatchChunks(HEADER_TERMINATOR,
 												response.headerBuf())) {
 									cursor = (ByteBuffer) flip.slice();
 									header = null;
 
-									if (isDEBUG_SENDJSON()) {
+									if (RelaxFactoryServerImpl
+											.isDEBUG_SENDJSON()) {
 										System.err
 												.println(deepToString(
 														response.statusEnum(),
 														response,
-														RelaxFactoryServerImpl.UTF8
-																.decode((ByteBuffer) cursor
-																		.duplicate()
-																		.rewind())));
+														RelaxFactoryServerImpl
+																.getUTF8()
+																.decode(
+																		(ByteBuffer) cursor
+																				.duplicate()
+																				.rewind())));
 									}
 
 									int remaining = Integer.parseInt(response
@@ -746,22 +766,23 @@ public enum CouchMetaDriver {
 						private void deliver() {
 							payload.set(cursor);
 							recycleChannel(channel);
-							getEXECUTOR_SERVICE().submit(new Runnable() {
+							RelaxFactoryServerImpl.getEXECUTOR_SERVICE()
+									.submit(new Runnable() {
 
-								public void run() {
-									try {
-										cyclicBarrier.await();
-									} catch (Throwable e) {
-										e.printStackTrace();
-									}
-								}
-							});
+										public void run() {
+											try {
+												cyclicBarrier.await();
+											} catch (Throwable e) {
+												e.printStackTrace();
+											}
+										}
+									});
 						}
 					});
 			try {
 				cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
 			} catch (Exception e) {
-				if (isDEBUG_SENDJSON()) {
+				if (RelaxFactoryServerImpl.isDEBUG_SENDJSON()) {
 					System.err.println("!!! " + deepToString(this, e)
 							+ "\n\tfrom");
 					dbKeysBuilder.trace().printStackTrace();
@@ -811,13 +832,14 @@ public enum CouchMetaDriver {
 
 						private void simpleDeploy(ByteBuffer buffer) {
 							payload.set((ByteBuffer) buffer);
-							getEXECUTOR_SERVICE().submit(new Callable() {
-								public Object call() throws Exception {
-									cyclicBarrier.await();
-									recycleChannel(channel);
-									return null;
-								}
-							});
+							RelaxFactoryServerImpl.getEXECUTOR_SERVICE()
+									.submit(new Callable() {
+										public Object call() throws Exception {
+											cyclicBarrier.await();
+											recycleChannel(channel);
+											return null;
+										}
+									});
 						}
 
 						public void onWrite(SelectionKey key) throws Exception {
@@ -860,20 +882,23 @@ public enum CouchMetaDriver {
 								response.apply((ByteBuffer) flip);
 
 								ByteBuffer currentBuff = response.headerBuf();
-								if (BlobAntiPatternObject.suffixMatchChunks(
+								if (BlobAntiPatternRelic.suffixMatchChunks(
 										HEADER_TERMINATOR, currentBuff)) {
 									cursor = (ByteBuffer) flip.slice();
 									header = null;
 
-									if (isDEBUG_SENDJSON()) {
+									if (RelaxFactoryServerImpl
+											.isDEBUG_SENDJSON()) {
 										System.err
 												.println(deepToString(
 														response.statusEnum(),
 														response,
-														RelaxFactoryServerImpl.UTF8
-																.decode((ByteBuffer) cursor
-																		.duplicate()
-																		.rewind())));
+														RelaxFactoryServerImpl
+																.getUTF8()
+																.decode(
+																		(ByteBuffer) cursor
+																				.duplicate()
+																				.rewind())));
 									}
 
 									HttpStatus httpStatus = response
@@ -953,7 +978,7 @@ public enum CouchMetaDriver {
 									e.printStackTrace();
 								}
 							//token suffix check
-							boolean suffixMatches = BlobAntiPatternObject
+							boolean suffixMatches = BlobAntiPatternRelic
 									.suffixMatchChunks(CE_TERMINAL, cursor
 											.duplicate(),
 											list.toArray(new ByteBuffer[list
@@ -986,87 +1011,102 @@ public enum CouchMetaDriver {
 
 						private void deliver() {
 
-							getEXECUTOR_SERVICE().submit(new Callable() {
-								public Object call() throws Exception {
-									int sum = 0;
-									for (ByteBuffer byteBuffer : list) {
-										sum += byteBuffer.flip().limit();
-									}
-									ByteBuffer outbound = ByteBuffer
-											.allocate(sum);
-									for (ByteBuffer byteBuffer : list) {
-										ByteBuffer put = outbound
-												.put(byteBuffer);
-									}
-									if (isDEBUG_SENDJSON()) {
-										System.err
-												.println(RelaxFactoryServerImpl.UTF8
-														.decode((ByteBuffer) outbound
-																.duplicate()
-																.flip()));
-									}
-									ByteBuffer src = ((ByteBuffer) outbound
-											.rewind()).duplicate();
-									int endl = 0;
-									while (sum > 0 && src.hasRemaining()) {
-										if (isDEBUG_SENDJSON())
-											System.err
-													.println("outbound:----\n"
-															+ RelaxFactoryServerImpl.UTF8
-																	.decode(
-																			outbound
-																					.duplicate())
-																	.toString()
-															+ "\n----");
+							RelaxFactoryServerImpl.getEXECUTOR_SERVICE()
+									.submit(new Callable() {
+										public Object call() throws Exception {
+											int sum = 0;
+											for (ByteBuffer byteBuffer : list) {
+												sum += byteBuffer.flip()
+														.limit();
+											}
+											ByteBuffer outbound = ByteBuffer
+													.allocate(sum);
+											for (ByteBuffer byteBuffer : list) {
+												ByteBuffer put = outbound
+														.put(byteBuffer);
+											}
+											if (RelaxFactoryServerImpl
+													.isDEBUG_SENDJSON()) {
+												System.err
+														.println(RelaxFactoryServerImpl
+																.getUTF8()
+																.decode(
+																		(ByteBuffer) outbound
+																				.duplicate()
+																				.flip()));
+											}
+											ByteBuffer src = ((ByteBuffer) outbound
+													.rewind()).duplicate();
+											int endl = 0;
+											while (sum > 0
+													&& src.hasRemaining()) {
+												if (RelaxFactoryServerImpl
+														.isDEBUG_SENDJSON())
+													System.err
+															.println("outbound:----\n"
+																	+ RelaxFactoryServerImpl
+																			.getUTF8()
+																			.decode(
+																					outbound
+																							.duplicate())
+																			.toString()
+																	+ "\n----");
 
-										byte b = 0;
-										boolean first = true;
-										while (src.hasRemaining()
-												&& ('\n' != (b = src.get()) || first))
-											if (first
-													&& !Character
-															.isWhitespace(b)) {
-												first = false;
+												byte b = 0;
+												boolean first = true;
+												while (src.hasRemaining()
+														&& ('\n' != (b = src
+																.get()) || first))
+													if (first
+															&& !Character
+																	.isWhitespace(b)) {
+														first = false;
+													}
+
+												int i = Integer
+														.parseInt(
+																RelaxFactoryServerImpl
+																		.getUTF8()
+																		.decode(
+																				(ByteBuffer) src
+																						.duplicate()
+																						.flip())
+																		.toString()
+																		.trim(),
+																0x10);
+												src = ((ByteBuffer) src
+														.compact().position(i))
+														.slice();
+												endl += i;
+												sum -= i;
+												if (0 == i)
+													break;
 											}
 
-										int i = Integer
-												.parseInt(
-														RelaxFactoryServerImpl.UTF8
+											ByteBuffer retval = (ByteBuffer) outbound
+													.clear().limit(endl);
+
+											if (RelaxFactoryServerImpl
+													.isDEBUG_SENDJSON()) {
+												System.err
+														.println(RelaxFactoryServerImpl
+																.getUTF8()
 																.decode(
-																		(ByteBuffer) src
-																				.duplicate()
-																				.flip())
-																.toString()
-																.trim(), 0x10);
-										src = ((ByteBuffer) src.compact()
-												.position(i)).slice();
-										endl += i;
-										sum -= i;
-										if (0 == i)
-											break;
-									}
+																		retval
+																				.duplicate()));
+											}
 
-									ByteBuffer retval = (ByteBuffer) outbound
-											.clear().limit(endl);
-
-									if (isDEBUG_SENDJSON()) {
-										System.err
-												.println(RelaxFactoryServerImpl.UTF8
-														.decode(retval
-																.duplicate()));
-									}
-
-									payload.set(retval);
-									cyclicBarrier.await();
-									return null;
-								}
-							});
+											payload.set(retval);
+											cyclicBarrier.await();
+											return null;
+										}
+									});
 						}
 					});
 			try {
 				cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
 			} catch (Exception e) {
-				if (isDEBUG_SENDJSON()) {
+				if (RelaxFactoryServerImpl.isDEBUG_SENDJSON()) {
 					System.err.println("!!! " + deepToString(this, e)
 							+ "\n\tfrom");
 					dbKeysBuilder.trace().printStackTrace();
@@ -1109,8 +1149,8 @@ public enum CouchMetaDriver {
 			validjson = validjson == null ? "{}" : validjson;
 
 			Rfc822HeaderState state = actionBuilder.state();
-			final byte[] outbound = validjson
-					.getBytes(RelaxFactoryServerImpl.UTF8);
+			final byte[] outbound = validjson.getBytes(RelaxFactoryServerImpl
+					.getUTF8());
 
 			HttpMethod method = 1 == slashCounter
 					|| !(lastSlashIndex < opaque.lastIndexOf('?') && lastSlashIndex != opaque
@@ -1123,10 +1163,10 @@ public enum CouchMetaDriver {
 							Accept, MimeType.json.contentType).headerString(
 							Content$2dType, MimeType.json.contentType).as(
 							ByteBuffer.class);
-			if (isDEBUG_SENDJSON()) {
+			if (RelaxFactoryServerImpl.isDEBUG_SENDJSON()) {
 				System.err.println(deepToString(opaque, validjson,
-						RelaxFactoryServerImpl.UTF8.decode(header.duplicate()),
-						state));
+						RelaxFactoryServerImpl.getUTF8().decode(
+								header.duplicate()), state));
 			}
 			final SocketChannel channel = createCouchConnection();
 			final String finalOpaque = opaque;
@@ -1196,21 +1236,24 @@ public enum CouchMetaDriver {
 										.duplicate().flip();
 								response.apply((ByteBuffer) flip);
 
-								if (BlobAntiPatternObject
+								if (BlobAntiPatternRelic
 										.suffixMatchChunks(HEADER_TERMINATOR,
 												response.headerBuf())) {
 									cursor = (ByteBuffer) flip.slice();
 									header = null;
 
-									if (isDEBUG_SENDJSON()) {
+									if (RelaxFactoryServerImpl
+											.isDEBUG_SENDJSON()) {
 										System.err
 												.println(deepToString(
 														response.statusEnum(),
 														response,
-														RelaxFactoryServerImpl.UTF8
-																.decode((ByteBuffer) cursor
-																		.duplicate()
-																		.rewind())));
+														RelaxFactoryServerImpl
+																.getUTF8()
+																.decode(
+																		(ByteBuffer) cursor
+																				.duplicate()
+																				.rewind())));
 									}
 
 									HttpStatus httpStatus = response
@@ -1254,19 +1297,20 @@ public enum CouchMetaDriver {
 						void deliver() throws BrokenBarrierException,
 								InterruptedException {
 							payload.set(cursor);
-							getEXECUTOR_SERVICE().submit(new Callable() {
-								public Object call() throws Exception {
-									cyclicBarrier.await();
-									return null;
-								}
-							});
+							RelaxFactoryServerImpl.getEXECUTOR_SERVICE()
+									.submit(new Callable() {
+										public Object call() throws Exception {
+											cyclicBarrier.await();
+											return null;
+										}
+									});
 							recycleChannel(channel);
 						}
 					});
 			try {
 				cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
 			} catch (Exception e) {
-				if (isDEBUG_SENDJSON()) {
+				if (RelaxFactoryServerImpl.isDEBUG_SENDJSON()) {
 					System.err.println("!!! " + deepToString(this, e)
 							+ "\n\tfrom");
 					dbKeysBuilder.trace().printStackTrace();
@@ -1310,8 +1354,8 @@ public enum CouchMetaDriver {
 					+ '/'
 					+ docId
 					+ '/'
-					+ URLEncoder.encode(attachname, RelaxFactoryServerImpl.UTF8
-							.displayName()) + "?rev=" + rev);
+					+ URLEncoder.encode(attachname, RelaxFactoryServerImpl
+							.getUTF8().displayName()) + "?rev=" + rev);
 
 			final String ctype = x;
 			final SocketChannel channel = createCouchConnection();
@@ -1389,7 +1433,7 @@ public enum CouchMetaDriver {
 									ByteBuffer flip = (ByteBuffer) cursor
 											.duplicate().flip();
 									response.apply(flip);
-									finish = BlobAntiPatternObject
+									finish = BlobAntiPatternRelic
 											.suffixMatchChunks(
 													HEADER_TERMINATOR, response
 															.headerBuf());
@@ -1422,7 +1466,7 @@ public enum CouchMetaDriver {
 			try {
 				cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
 			} catch (Exception e) {
-				if (isDEBUG_SENDJSON()) {
+				if (RelaxFactoryServerImpl.isDEBUG_SENDJSON()) {
 					System.err.println("!!! " + deepToString(this, e)
 							+ "\n\tfrom");
 					dbKeysBuilder.trace().printStackTrace();
@@ -1434,9 +1478,9 @@ public enum CouchMetaDriver {
 
 	};
 	public static final byte[] HEADER_TERMINATOR = "\r\n\r\n"
-			.getBytes(RelaxFactoryServerImpl.UTF8);
+			.getBytes(RelaxFactoryServerImpl.getUTF8());
 	public static final byte[] CE_TERMINAL = "\n0\r\n\r\n"
-			.getBytes(RelaxFactoryServerImpl.UTF8);
+			.getBytes(RelaxFactoryServerImpl.getUTF8());
 	//"premature optimization" s/mature/view/
 	public static final String[] STATIC_VF_HEADERS = Rfc822HeaderState
 			.staticHeaderStrings(new HttpHeaders[]{ETag, Content$2dLength,
@@ -1464,7 +1508,7 @@ public enum CouchMetaDriver {
 	public static void main(String... args) throws NoSuchFieldException {
 		Field[] fields = CouchMetaDriver.class.getFields();
 		@Language("JAVA")
-		String s = "package rxf.server.gen;\n//generated\n  \n\nimport rxf.server.*;\nimport rxf.server.an.*;\nimport rxf.server.driver.*;\nimport java.lang.reflect.ParameterizedType;\nimport java.lang.reflect.*;\nimport java.nio.*;\nimport java.nio.channels.*;\n\nimport java.util.concurrent.*;\n\n\nimport static rxf.server.BlobAntiPatternObject.*;\n/**\n * generated drivers\n */\npublic interface CouchDriver{\n"
+		String s = "package rxf.server.gen;\n//generated\n  \n\nimport java.util.concurrent.*; \n/**\n * generated drivers\n */\npublic interface CouchDriver{\n"
 				+ "\n"
 				+ "\n"
 				+ "    TimeUnit defaultCollectorTimeUnit = TimeUnit.SECONDS;\n"

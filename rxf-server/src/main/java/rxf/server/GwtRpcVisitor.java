@@ -1,9 +1,13 @@
 package rxf.server;
 
-import static rxf.server.RelaxFactoryServerImpl.UTF8;
-import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
-import static rxf.server.driver.CouchMetaDriver.HEADER_TERMINATOR;
-import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
+import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
+import com.google.gwt.user.client.rpc.RpcTokenException;
+import com.google.gwt.user.server.rpc.*;
+import one.xio.AsioVisitor.Impl;
+import one.xio.HttpHeaders;
+import one.xio.HttpStatus;
+import one.xio.MimeType;
+import rxf.server.Rfc822HeaderState.HttpRequest;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,19 +20,10 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.text.ParseException;
 
-import one.xio.AsioVisitor.Impl;
-import one.xio.HttpHeaders;
-import one.xio.HttpStatus;
-import one.xio.MimeType;
-import rxf.server.Rfc822HeaderState.HttpRequest;
-
-import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
-import com.google.gwt.user.client.rpc.RpcTokenException;
-import com.google.gwt.user.server.rpc.RPC;
-import com.google.gwt.user.server.rpc.RPCRequest;
-import com.google.gwt.user.server.rpc.SerializationPolicy;
-import com.google.gwt.user.server.rpc.SerializationPolicyLoader;
-import com.google.gwt.user.server.rpc.SerializationPolicyProvider;
+import static rxf.server.BlobAntiPatternRelic.getReceiveBufferSize;
+import static rxf.server.RelaxFactoryServerImpl.UTF8;
+import static rxf.server.RelaxFactoryServerImpl.getEXECUTOR_SERVICE;
+import static rxf.server.driver.CouchMetaDriver.HEADER_TERMINATOR;
 
 /**
  * User: jim
@@ -40,12 +35,11 @@ public class GwtRpcVisitor extends Impl
 			PreRead,
 			SerializationPolicyProvider {
 
+	private final Object delegate;
 	private HttpRequest req;
 	private ByteBuffer cursor = null;
 	private SocketChannel channel;
 	private String payload;
-
-	private final Object delegate;
 
 	public GwtRpcVisitor() {
 		this(null);
@@ -87,7 +81,7 @@ public class GwtRpcVisitor extends Impl
 		Buffer flip = cursor.duplicate().flip();
 		req = (HttpRequest) req.headerInterest(HttpHeaders.Content$2dLength)
 				.apply((ByteBuffer) flip);
-		if (!BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, req
+		if (!BlobAntiPatternRelic.suffixMatchChunks(HEADER_TERMINATOR, req
 				.headerBuf())) {
 			return;
 		}
@@ -116,7 +110,7 @@ public class GwtRpcVisitor extends Impl
 	public void onWrite(final SelectionKey key) throws Exception {
 		if (payload == null) {
 			key.interestOps(0);
-			EXECUTOR_SERVICE.submit(new Runnable() {
+			getEXECUTOR_SERVICE().submit(new Runnable() {
 				@Override
 				public void run() {
 					try {
@@ -165,10 +159,9 @@ public class GwtRpcVisitor extends Impl
 			return;
 		}
 		int write = channel.write(cursor);
-		if (!cursor.hasRemaining()) {
-			/*Socket socket = channel.socket();
-			   socket.getOutputStream().flush();
-			   socket.close();*/
+		if (!cursor.hasRemaining()) { /*Socket socket = channel.socket();
+										socket.getOutputStream().flush();
+										socket.close();*/
 			key.interestOps(SelectionKey.OP_READ).attach(null);
 		}
 

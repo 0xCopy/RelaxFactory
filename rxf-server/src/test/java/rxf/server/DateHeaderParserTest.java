@@ -29,7 +29,7 @@ public class DateHeaderParserTest {
 	};
 
 	static {
-		BlobAntiPatternObject.setDEBUG_SENDJSON(true);
+		RelaxFactoryServerImpl.setDEBUG_SENDJSON(true);
 	}
 	@Test
 	public void testIfModifiedStuff() {

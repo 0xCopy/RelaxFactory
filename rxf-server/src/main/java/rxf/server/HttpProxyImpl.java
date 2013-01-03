@@ -58,7 +58,7 @@ public class HttpProxyImpl extends Impl {
 					+ "Accept: image/*, text/*\r\n" + "Connection: close\r\n"
 					+ "\r\n";
 
-			final SocketChannel couchConnection = BlobAntiPatternObject
+			final SocketChannel couchConnection = BlobAntiPatternRelic
 					.createCouchConnection();
 			RelaxFactoryServerImpl.enqueue(couchConnection, OP_CONNECT
 					| OP_WRITE, new Impl() {
@@ -67,7 +67,7 @@ public class HttpProxyImpl extends Impl {
 						throws Exception {
 					SocketChannel channel = (SocketChannel) couchKey.channel();
 					final ByteBuffer dst = ByteBuffer
-							.allocateDirect(BlobAntiPatternObject
+							.allocateDirect(BlobAntiPatternRelic
 									.getReceiveBufferSize());
 					int read = channel.read(dst);
 					Rfc822HeaderState proxyState = new Rfc822HeaderState(
@@ -89,7 +89,7 @@ public class HttpProxyImpl extends Impl {
 					couchKey.interestOps(OP_READ).attach(new Impl() {
 						final ByteBuffer sharedBuf = ByteBuffer
 								.allocateDirect(Math.min(total,
-										BlobAntiPatternObject
+										BlobAntiPatternRelic
 												.getReceiveBufferSize()));
 						private Impl browserSlave = new Impl() {
 							@Override
@@ -132,7 +132,7 @@ public class HttpProxyImpl extends Impl {
 										.wakeup();
 
 							} else {
-								BlobAntiPatternObject
+								BlobAntiPatternRelic
 										.recycleChannel(couchConnection);
 							}
 						}

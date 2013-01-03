@@ -5,7 +5,6 @@ import one.xio.AsioVisitor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import rxf.server.BlobAntiPatternObject;
 import rxf.server.CouchResultSet;
 import rxf.server.CouchTx;
 import rxf.server.RelaxFactoryServerImpl;
@@ -34,8 +33,8 @@ public class CouchDriverTest {
 
 	@BeforeClass
 	static public void setUp() throws Exception {
-		BlobAntiPatternObject.setDEBUG_SENDJSON(true);
-		RelaxFactoryServerImpl.killswitch = false;
+		RelaxFactoryServerImpl.setDEBUG_SENDJSON(true);
+		RelaxFactoryServerImpl.setKillswitch(false);
 		exec = Executors.newScheduledThreadPool(2);
 		exec.submit(new Runnable() {
 			public void run() {
@@ -81,7 +80,7 @@ public class CouchDriverTest {
 		//    DbDelete.$().db(SOMEDB).to().fire().oneWay();
 
 		try {
-			RelaxFactoryServerImpl.killswitch = true;
+			RelaxFactoryServerImpl.setKillswitch(true);
 			RelaxFactoryServerImpl.getSelector().close();
 			//      HttpMethod.broke = null;
 			exec.shutdown();

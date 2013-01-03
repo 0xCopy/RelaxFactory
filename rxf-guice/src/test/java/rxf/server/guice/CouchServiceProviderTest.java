@@ -5,10 +5,8 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
-import org.junit.Assert;
 import one.xio.AsioVisitor;
 import org.junit.*;
-import rxf.server.BlobAntiPatternObject;
 import rxf.server.CouchService;
 import rxf.server.CouchTx;
 import rxf.server.RelaxFactoryServerImpl;
@@ -21,15 +19,17 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
+import static rxf.server.RelaxFactoryServerImpl.getEXECUTOR_SERVICE;
 
 public class CouchServiceProviderTest {
 	private static ScheduledExecutorService exec;
+	Injector i;
+	private String db;
 
 	@BeforeClass
 	public static void setUp() throws Exception {
-		BlobAntiPatternObject.setDEBUG_SENDJSON(true);
-		RelaxFactoryServerImpl.killswitch = false;
+		RelaxFactoryServerImpl.setDEBUG_SENDJSON(true);
+		RelaxFactoryServerImpl.setKillswitch(false);
 		exec = Executors.newScheduledThreadPool(2);
 		exec.submit(new Runnable() {
 			public void run() {
@@ -42,7 +42,7 @@ public class CouchServiceProviderTest {
 				}
 			}
 		});
-		EXECUTOR_SERVICE.schedule(new Runnable() {
+		getEXECUTOR_SERVICE().schedule(new Runnable() {
 			public void run() {
 				Assert.fail();
 			}
@@ -52,15 +52,12 @@ public class CouchServiceProviderTest {
 	@AfterClass
 	public static void tearDown() throws Exception {
 		try {
-			RelaxFactoryServerImpl.killswitch = true;
+			RelaxFactoryServerImpl.setKillswitch(true);
 			RelaxFactoryServerImpl.getSelector().close();
 			exec.shutdown();
 		} catch (Exception ignore) {
 		}
 	}
-
-	Injector i;
-	private String db;
 
 	@Before
 	public void before() {
@@ -77,24 +74,6 @@ public class CouchServiceProviderTest {
 		CouchDriver.DbDelete.$().db(db).to().fire().tx();
 	}
 
-	public static class TestModule extends AbstractModule {
-		@Override
-		protected void configure() {
-			install(new CouchModuleBuilder("test" + System.currentTimeMillis()
-					+ "_").withEntity(GuiceTest.class).withService(
-					SimpleCouchService.class).build());
-		}
-	}
-
-	public interface SimpleCouchService extends CouchService<GuiceTest> {
-
-	}
-
-	public static class GuiceTest {
-		String _id;
-		String name;
-	}
-
 	@Test
 	public void testMakeSureServiceWorks() {
 		SimpleCouchService service = i.getInstance(SimpleCouchService.class);
@@ -109,5 +88,23 @@ public class CouchServiceProviderTest {
 		assertNotNull(retrieve);
 		assertEquals(tx.id(), retrieve._id);
 		assertEquals("blah", retrieve.name);
+	}
+
+	public interface SimpleCouchService extends CouchService<GuiceTest> {
+
+	}
+
+	public static class TestModule extends AbstractModule {
+		@Override
+		protected void configure() {
+			install(new CouchModuleBuilder("test" + System.currentTimeMillis()
+					+ "_").withEntity(GuiceTest.class).withService(
+					SimpleCouchService.class).build());
+		}
+	}
+
+	public static class GuiceTest {
+		String _id;
+		String name;
 	}
 }

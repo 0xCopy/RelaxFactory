@@ -18,7 +18,7 @@ import java.util.Set;
 
 import one.xio.AsioVisitor;
 import one.xio.HttpMethod;
-import rxf.server.BlobAntiPatternObject;
+import rxf.server.BlobAntiPatternRelic;
 import rxf.server.PreRead;
 import rxf.server.RelaxFactoryServerImpl;
 import rxf.server.Rfc822HeaderState;
@@ -66,7 +66,7 @@ public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
 	public void onRead(SelectionKey key) throws Exception {
 		final SocketChannel channel = (SocketChannel) key.channel();
 
-		ByteBuffer cursor = ByteBuffer.allocateDirect(BlobAntiPatternObject
+		ByteBuffer cursor = ByteBuffer.allocateDirect(BlobAntiPatternRelic
 				.getReceiveBufferSize());
 		int read = channel.read(cursor);
 		if (-1 == read) {
@@ -81,8 +81,8 @@ public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
 			Rfc822HeaderState state = new Rfc822HeaderState()
 					.apply((ByteBuffer) cursor.flip());
 			httpRequest = state.$req();
-			if (BlobAntiPatternObject.isDEBUG_SENDJSON()) {
-				System.err.println(BlobAntiPatternObject.deepToString(UTF8
+			if (RelaxFactoryServerImpl.isDEBUG_SENDJSON()) {
+				System.err.println(BlobAntiPatternRelic.deepToString(UTF8
 						.decode((ByteBuffer) httpRequest.headerBuf()
 								.duplicate().rewind())));
 			}
@@ -103,7 +103,7 @@ public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
 		String path = httpRequest.path();
 		for (Entry<String, Key<? extends AsioVisitor>> visitorEntry : entries) {
 			if (path.matches(visitorEntry.getKey())) {
-				if (BlobAntiPatternObject.isDEBUG_SENDJSON()) {
+				if (RelaxFactoryServerImpl.isDEBUG_SENDJSON()) {
 					System.err.println("+?+?+? using "
 							+ visitorEntry.getValue());
 				}
@@ -133,7 +133,7 @@ public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
 				key.interestOps(OP_READ).attach(null);
 			}
 		});
-		System.err.println(BlobAntiPatternObject.deepToString("!!!1!1!!",
-				"404", path, "using", NAMESPACE));
+		System.err.println(BlobAntiPatternRelic.deepToString("!!!1!1!!", "404",
+				path, "using", NAMESPACE));
 	}
 }

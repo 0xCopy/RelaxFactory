@@ -114,7 +114,7 @@ public class ProtocolMethodDispatch extends Impl {
 	public void onRead(SelectionKey key) throws Exception {
 		SocketChannel channel = (SocketChannel) key.channel();
 
-		ByteBuffer cursor = ByteBuffer.allocateDirect(BlobAntiPatternObject
+		ByteBuffer cursor = ByteBuffer.allocateDirect(BlobAntiPatternRelic
 				.getReceiveBufferSize());
 		int read = channel.read(cursor);
 		if (-1 == read) {
@@ -129,10 +129,10 @@ public class ProtocolMethodDispatch extends Impl {
 			Rfc822HeaderState state = new Rfc822HeaderState()
 					.apply((ByteBuffer) cursor.flip());
 			httpRequest = state.$req();
-			if (BlobAntiPatternObject.isDEBUG_SENDJSON()) {
-				System.err.println(BlobAntiPatternObject
-						.deepToString(RelaxFactoryServerImpl.UTF8
-								.decode((ByteBuffer) httpRequest.headerBuf()
+			if (RelaxFactoryServerImpl.isDEBUG_SENDJSON()) {
+				System.err.println(BlobAntiPatternRelic
+						.deepToString(RelaxFactoryServerImpl.getUTF8().decode(
+								(ByteBuffer) httpRequest.headerBuf()
 										.duplicate().rewind())));
 			}
 			String method1 = httpRequest.method();
@@ -153,7 +153,7 @@ public class ProtocolMethodDispatch extends Impl {
 		for (Entry<Pattern, Class<? extends Impl>> visitorEntry : entries) {
 			Matcher matcher = visitorEntry.getKey().matcher(path);
 			if (matcher.find()) {
-				if (BlobAntiPatternObject.isDEBUG_SENDJSON()) {
+				if (RelaxFactoryServerImpl.isDEBUG_SENDJSON()) {
 					System.err.println("+?+?+? using " + matcher.toString());
 				}
 				Class<? extends Impl> value = visitorEntry.getValue();
@@ -172,8 +172,8 @@ public class ProtocolMethodDispatch extends Impl {
 			}
 
 		}
-		System.err.println(BlobAntiPatternObject.deepToString("!!!1!1!!",
-				"404", path, "using", NAMESPACE));
+		System.err.println(BlobAntiPatternRelic.deepToString("!!!1!1!!", "404",
+				path, "using", NAMESPACE));
 	}
 
 }

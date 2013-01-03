@@ -7,7 +7,6 @@ import one.xio.AsioVisitor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import rxf.server.BlobAntiPatternObject;
 import rxf.server.DateHeaderParser;
 import rxf.server.RelaxFactoryServerImpl;
 
@@ -34,8 +33,8 @@ public class ContentRootImplTest {
 	static public void setUp() throws Exception {
 		wc = new WebConversation();
 
-		BlobAntiPatternObject.setDEBUG_SENDJSON(true);
-		RelaxFactoryServerImpl.killswitch = false;
+		RelaxFactoryServerImpl.setDEBUG_SENDJSON(true);
+		RelaxFactoryServerImpl.setKillswitch(false);
 
 		serverSocketChannel = ServerSocketChannel.open();
 		final InetSocketAddress serverSocket = new InetSocketAddress(host, 0);
@@ -64,7 +63,7 @@ public class ContentRootImplTest {
 	@AfterClass
 	static public void tearDown() throws Exception {
 		try {
-			RelaxFactoryServerImpl.killswitch = true;
+			RelaxFactoryServerImpl.setKillswitch(true);
 			RelaxFactoryServerImpl.getSelector().close();
 			serverSocketChannel.close();
 

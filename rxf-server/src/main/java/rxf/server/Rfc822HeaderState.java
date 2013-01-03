@@ -27,7 +27,7 @@ import static rxf.server.RelaxFactoryServerImpl.UTF8;
  * $res header according to declared need of
  * header/cookies downstream.
  * <p/>
- * much of what is in {@link BlobAntiPatternObject} can
+ * much of what is in {@link BlobAntiPatternRelic} can
  * be teased into this class peicemeal.
  * <p/>
  * since java string parsing can be expensive and addHeaderInterest
@@ -816,7 +816,7 @@ public class Rfc822HeaderState {
 	 */
 	public String dequotedHeader(String headerKey) {
 		String s = headerString(headerKey);
-		return BlobAntiPatternObject.dequote(s);
+		return BlobAntiPatternRelic.dequote(s);
 	}
 
 	/**

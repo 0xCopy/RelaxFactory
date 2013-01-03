@@ -19,7 +19,7 @@ import static java.lang.Math.min;
 import static java.nio.channels.SelectionKey.*;
 import static one.xio.HttpHeaders.*;
 import static rxf.server.driver.CouchMetaDriver.HEADER_TERMINATOR;
-import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
+import static rxf.server.BlobAntiPatternRelic.getReceiveBufferSize;
 
 /**
  * User: jim
@@ -92,7 +92,7 @@ public class ContentRootImpl extends Impl implements PreRead {
 		req = (HttpRequest) new Rfc822HeaderState().addHeaderInterest(
 				Accept$2dEncoding, If$2dModified$2dSince,
 				If$2dUnmodified$2dSince).$req().apply((ByteBuffer) flip);
-		if (!BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, req
+		if (!BlobAntiPatternRelic.suffixMatchChunks(HEADER_TERMINATOR, req
 				.headerBuf())) {
 			return;
 		}
@@ -153,7 +153,7 @@ public class ContentRootImpl extends Impl implements PreRead {
 					File f = new File(file.getAbsoluteFile() + "."
 							+ compType.suffix);
 					if (f.isFile() && f.canRead()) {
-						if (BlobAntiPatternObject.isDEBUG_SENDJSON()) {
+						if (RelaxFactoryServerImpl.isDEBUG_SENDJSON()) {
 							System.err.println("sending compressed archive: "
 									+ f.getAbsolutePath());
 						}
@@ -186,8 +186,7 @@ public class ContentRootImpl extends Impl implements PreRead {
 				res.headerString(Content$2dEncoding, ceString);
 			ByteBuffer response = res.as(ByteBuffer.class);
 			int write = channel.write(response);
-			final int sendBufferSize = BlobAntiPatternObject
-					.getSendBufferSize();
+			final int sendBufferSize = BlobAntiPatternRelic.getSendBufferSize();
 			final long[] progress = {fileChannel.transferTo(0, sendBufferSize,
 					channel)};
 			key.interestOps(OP_WRITE | OP_CONNECT);

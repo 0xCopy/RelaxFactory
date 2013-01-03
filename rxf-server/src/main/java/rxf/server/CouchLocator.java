@@ -74,7 +74,7 @@ public abstract class CouchLocator<T> extends Locator<T, String>
 
 	public String getOrgName() {
 		return null == orgname
-				? BlobAntiPatternObject.getDefaultOrgName()
+				? BlobAntiPatternRelic.getDefaultOrgName()
 				: orgname;
 	}
 

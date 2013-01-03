@@ -5,23 +5,19 @@ import rxf.server.gen.CouchDriver;
 import rxf.server.web.inf.ProtocolMethodDispatch;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static java.nio.channels.SelectionKey.OP_ACCEPT;
-import static rxf.server.RelaxFactoryServerImpl.wheresWaldo;
 import static rxf.server.CouchNamespace.COUCH_DEFAULT_ORGNAME;
+import static rxf.server.RelaxFactoryServerImpl.wheresWaldo;
 
 /**
  * <a href='http://www.antipatterns.com/briefing/sld024.htm'> Blob Anti Pattern </a>
@@ -30,41 +26,13 @@ import static rxf.server.CouchNamespace.COUCH_DEFAULT_ORGNAME;
  * Date: 4/17/12
  * Time: 11:55 PM
  */
-public class BlobAntiPatternObject {
+public class BlobAntiPatternRelic {
 
-	public static boolean DEBUG_SENDJSON = System.getenv().containsKey(
-			"DEBUG_SENDJSON");
-	public static InetAddress LOOPBACK;
-	public static int receiveBufferSize;
-	public static int sendBufferSize;
-	public static InetSocketAddress COUCHADDR;
-	public static ScheduledExecutorService EXECUTOR_SERVICE = Executors
-			.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() + 3);
-	static {
-		try {
-			try {
-				BlobAntiPatternObject
-						.setLOOPBACK((InetAddress) InetAddress.class.getMethod(
-								"getLoopBackAddress").invoke(null));
-			} catch (NoSuchMethodException e) {
-				BlobAntiPatternObject.setLOOPBACK(InetAddress
-						.getByAddress(new byte[]{127, 0, 0, 1}));
-				System.err.println("java 6 LOOPBACK detected");
-			} catch (InvocationTargetException e) {
-				e.printStackTrace();
-			} catch (IllegalAccessException e) {
-				e.printStackTrace();
-			}
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		}
-		BlobAntiPatternObject.setCOUCHADDR(new InetSocketAddress(
-				BlobAntiPatternObject.getLOOPBACK(), 5984));
-	}
 	public static SocketChannel createCouchConnection() {
-		while (!RelaxFactoryServerImpl.killswitch) {
+		while (!RelaxFactoryServerImpl.isKillswitch()) {
 			try {
-				SocketChannel channel = SocketChannel.open(getCOUCHADDR());
+				SocketChannel channel = SocketChannel
+						.open(RelaxFactoryServerImpl.getCOUCHADDR());
 				channel.configureBlocking(false);
 				return channel;
 			} catch (IOException e) {
@@ -95,16 +63,16 @@ public class BlobAntiPatternObject {
 	}
 
 	public static int getReceiveBufferSize() {
-		if (0 == receiveBufferSize)
+		if (0 == RelaxFactoryServerImpl.getReceiveBufferSize())
 			try {
 				SocketChannel couchConnection = createCouchConnection();
-				receiveBufferSize = couchConnection.socket()
-						.getReceiveBufferSize();
+				RelaxFactoryServerImpl.setReceiveBufferSize(couchConnection
+						.socket().getReceiveBufferSize());
 				recycleChannel(couchConnection);
 			} catch (IOException ignored) {
 			}
 
-		return receiveBufferSize;
+		return RelaxFactoryServerImpl.getReceiveBufferSize();
 	}
 
 	public static void setReceiveBufferSize(int receiveBufferSize) {
@@ -112,15 +80,15 @@ public class BlobAntiPatternObject {
 	}
 
 	public static int getSendBufferSize() {
-		if (0 == sendBufferSize)
+		if (0 == RelaxFactoryServerImpl.getSendBufferSize())
 			try {
 				SocketChannel couchConnection = createCouchConnection();
-				sendBufferSize = couchConnection.socket()
-						.getReceiveBufferSize();
+				RelaxFactoryServerImpl.setSendBufferSize(couchConnection
+						.socket().getReceiveBufferSize());
 				recycleChannel(couchConnection);
 			} catch (IOException ignored) {
 			}
-		return sendBufferSize;
+		return RelaxFactoryServerImpl.getSendBufferSize();
 	}
 
 	public static void setSendBufferSize(int sendBufferSize) {
@@ -181,7 +149,7 @@ public class BlobAntiPatternObject {
 	}
 
 	public static TimeUnit getDefaultCollectorTimeUnit() {
-		return isDEBUG_SENDJSON()
+		return RelaxFactoryServerImpl.isDEBUG_SENDJSON()
 				? TimeUnit.HOURS
 				: CouchDriver.defaultCollectorTimeUnit;
 	}
@@ -236,36 +204,4 @@ public class BlobAntiPatternObject {
 		return !mismatch;
 	}
 
-	public static boolean isDEBUG_SENDJSON() {
-		return DEBUG_SENDJSON;
-	}
-
-	public static void setDEBUG_SENDJSON(boolean DEBUG_SENDJSON) {
-		BlobAntiPatternObject.DEBUG_SENDJSON = DEBUG_SENDJSON;
-	}
-
-	public static InetAddress getLOOPBACK() {
-		return LOOPBACK;
-	}
-
-	public static void setLOOPBACK(InetAddress LOOPBACK) {
-		BlobAntiPatternObject.LOOPBACK = LOOPBACK;
-	}
-
-	public static InetSocketAddress getCOUCHADDR() {
-		return COUCHADDR;
-	}
-
-	public static void setCOUCHADDR(InetSocketAddress COUCHADDR) {
-		BlobAntiPatternObject.COUCHADDR = COUCHADDR;
-	}
-
-	public static ScheduledExecutorService getEXECUTOR_SERVICE() {
-		return EXECUTOR_SERVICE;
-	}
-
-	public static void setEXECUTOR_SERVICE(
-			ScheduledExecutorService EXECUTOR_SERVICE) {
-		BlobAntiPatternObject.EXECUTOR_SERVICE = EXECUTOR_SERVICE;
-	}
 }

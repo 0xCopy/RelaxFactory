@@ -21,7 +21,7 @@ public abstract class DbKeysBuilder {
 
 	public DbKeysBuilder() {
 		currentKeys.set(this);
-		if (BlobAntiPatternObject.isDEBUG_SENDJSON()) {
+		if (RelaxFactoryServerImpl.isDEBUG_SENDJSON()) {
 			debug();
 		}
 

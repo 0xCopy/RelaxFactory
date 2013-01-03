@@ -31,8 +31,8 @@ public class CouchServiceTest {
 
 	@BeforeClass
 	static public void setUp() throws Exception {
-		BlobAntiPatternObject.setDEBUG_SENDJSON(true);
-		RelaxFactoryServerImpl.killswitch = false;
+		RelaxFactoryServerImpl.setDEBUG_SENDJSON(true);
+		RelaxFactoryServerImpl.setKillswitch(false);
 		exec = Executors.newScheduledThreadPool(2);
 		exec.submit(new Runnable() {
 			public void run() {
@@ -74,7 +74,7 @@ public class CouchServiceTest {
 	static public void tearDown() throws Exception {
 
 		try {
-			RelaxFactoryServerImpl.killswitch = true;
+			RelaxFactoryServerImpl.setKillswitch(true);
 			RelaxFactoryServerImpl.getSelector().close();
 			exec.shutdown();
 		} catch (Exception ignore) {

@@ -18,27 +18,28 @@ import java.util.concurrent.Executors;
 
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
-import static rxf.server.BlobAntiPatternObject.LOOPBACK;
-import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
+import static rxf.server.BlobAntiPatternRelic.getReceiveBufferSize;
 import static rxf.server.RelaxFactoryServerImpl.UTF8;
+import static rxf.server.RelaxFactoryServerImpl.getLOOPBACK;
 
 /**
  * revisit this with new API's, it's not expected to be current but non-trivial to get it right.
- *
+ * <p/>
  * User: jim
  * Date: 2/12/12
  * Time: 10:24 PM
  */
 public class CouchChangesClient extends AsioVisitor.Impl {
 
-	public String feedname = "example";
-	public Serializable port = 5984;
-
-	boolean active = false;
 	public final int POLL_HEARTBEAT_MS = 45000;
 	public final byte[] ENDL = new byte[]{/*'\n',*/'\r', '\n'};
+	public final ExecutorService EXECUTOR_SERVICE = Executors
+			.newCachedThreadPool();
+	public String feedname = "example";
+	public Serializable port = 5984;
 	public boolean scriptExit2 = false;
-	public String hostname = LOOPBACK.getHostAddress();
+	public String hostname = getLOOPBACK().getHostAddress();
+	boolean active = false;
 
 	public CouchChangesClient(String feedname) {
 		this.feedname = feedname;
@@ -159,8 +160,15 @@ public class CouchChangesClient extends AsioVisitor.Impl {
 		}
 	}
 
-	public final ExecutorService EXECUTOR_SERVICE = Executors
-			.newCachedThreadPool();
+	public Runnable getDocUpdateHandler(final LinkedHashMap couchChange) {
+
+		return new Runnable() {
+
+			public void run() {
+				System.err.println("+++ " + couchChange.get("id"));
+			}
+		};
+	}
 
 	public class UpdateStreamRecvTask implements Runnable {
 		Object[] slist;
@@ -225,16 +233,6 @@ public class CouchChangesClient extends AsioVisitor.Impl {
 			} while (buffer.hasRemaining());
 		}
 
-	}
-
-	public Runnable getDocUpdateHandler(final LinkedHashMap couchChange) {
-
-		return new Runnable() {
-
-			public void run() {
-				System.err.println("+++ " + couchChange.get("id"));
-			}
-		};
 	}
 
 }
