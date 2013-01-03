@@ -1,7 +1,6 @@
 package rxf.server;
 
 import one.xio.AsioVisitor;
-import one.xio.HttpMethod;
 import rxf.server.gen.CouchDriver;
 import rxf.server.web.inf.ProtocolMethodDispatch;
 
@@ -21,7 +20,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static java.nio.channels.SelectionKey.OP_ACCEPT;
-import static one.xio.HttpMethod.wheresWaldo;
+import static rxf.server.RelaxFactoryServerImpl.wheresWaldo;
 import static rxf.server.CouchNamespace.COUCH_DEFAULT_ORGNAME;
 
 /**
@@ -44,11 +43,12 @@ public class BlobAntiPatternObject {
 	static {
 		try {
 			try {
-				BlobAntiPatternObject.LOOPBACK = (InetAddress) InetAddress.class
-						.getMethod("getLoopBackAddress").invoke(null);
+				BlobAntiPatternObject
+						.setLOOPBACK((InetAddress) InetAddress.class.getMethod(
+								"getLoopBackAddress").invoke(null));
 			} catch (NoSuchMethodException e) {
-				BlobAntiPatternObject.LOOPBACK = InetAddress
-						.getByAddress(new byte[]{127, 0, 0, 1});
+				BlobAntiPatternObject.setLOOPBACK(InetAddress
+						.getByAddress(new byte[]{127, 0, 0, 1}));
 				System.err.println("java 6 LOOPBACK detected");
 			} catch (InvocationTargetException e) {
 				e.printStackTrace();
@@ -58,13 +58,13 @@ public class BlobAntiPatternObject {
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
-		BlobAntiPatternObject.COUCHADDR = new InetSocketAddress(
-				BlobAntiPatternObject.LOOPBACK, 5984);
+		BlobAntiPatternObject.setCOUCHADDR(new InetSocketAddress(
+				BlobAntiPatternObject.getLOOPBACK(), 5984));
 	}
 	public static SocketChannel createCouchConnection() {
-		while (!HttpMethod.killswitch) {
+		while (!RelaxFactoryServerImpl.killswitch) {
 			try {
-				SocketChannel channel = SocketChannel.open(COUCHADDR);
+				SocketChannel channel = SocketChannel.open(getCOUCHADDR());
 				channel.configureBlocking(false);
 				return channel;
 			} catch (IOException e) {
@@ -175,12 +175,13 @@ public class BlobAntiPatternObject {
 		serverSocketChannel.socket().bind(
 				new InetSocketAddress(hostname, Integer.parseInt(port)));
 		serverSocketChannel.configureBlocking(false);
-		HttpMethod.enqueue(serverSocketChannel, OP_ACCEPT, topLevel);
-		HttpMethod.init(topLevel, args);
+		RelaxFactoryServerImpl
+				.enqueue(serverSocketChannel, OP_ACCEPT, topLevel);
+		RelaxFactoryServerImpl.init(topLevel, args);
 	}
 
 	public static TimeUnit getDefaultCollectorTimeUnit() {
-		return DEBUG_SENDJSON
+		return isDEBUG_SENDJSON()
 				? TimeUnit.HOURS
 				: CouchDriver.defaultCollectorTimeUnit;
 	}
@@ -235,70 +236,36 @@ public class BlobAntiPatternObject {
 		return !mismatch;
 	}
 
-	/**
-	 * @todo move to -server
-	 *
-	 */
-	public static interface RelaxFactoryServer {
-		void init(String hostname, int port, AsioVisitor topLevel)
-				throws UnknownHostException;
-		void start() throws IOException;
-		void stop() throws IOException;
-
-		/**
-		 * Returns the port the server has started on. Useful in the case where
-		 * {@link #init(String, int, one.xio.AsioVisitor)} was invoked with 0, {@link #start()} called,
-		 * and the server selected its own port.
-		 * @return
-		 */
-		int getPort();
+	public static boolean isDEBUG_SENDJSON() {
+		return DEBUG_SENDJSON;
 	}
 
-	/**
-	 * @todo move to -server
-	 *
-	 */
-	public static class RelaxFactoryServerImpl implements RelaxFactoryServer {
+	public static void setDEBUG_SENDJSON(boolean DEBUG_SENDJSON) {
+		BlobAntiPatternObject.DEBUG_SENDJSON = DEBUG_SENDJSON;
+	}
 
-		private AsioVisitor topLevel;
-		private int port;
-		private InetAddress hostname;
+	public static InetAddress getLOOPBACK() {
+		return LOOPBACK;
+	}
 
-		private ServerSocketChannel serverSocketChannel;
-		@Override
-		public void init(String hostname, int port, AsioVisitor topLevel)
-				throws UnknownHostException {
-			assert topLevel == null && serverSocketChannel == null : "Can't call init twice";
-			this.topLevel = topLevel;
-			this.port = port;
-			this.hostname = InetAddress.getByName(hostname);
-		}
+	public static void setLOOPBACK(InetAddress LOOPBACK) {
+		BlobAntiPatternObject.LOOPBACK = LOOPBACK;
+	}
 
-		@Override
-		public void start() throws IOException {
-			assert serverSocketChannel == null : "Can't start already started server";
-			serverSocketChannel = ServerSocketChannel.open();
-			InetSocketAddress addr = new InetSocketAddress(hostname, port);
-			serverSocketChannel.socket().bind(addr);
-			port = serverSocketChannel.socket().getLocalPort();
-			System.out.println(hostname.getHostAddress() + ":" + port);
-			serverSocketChannel.configureBlocking(false);
+	public static InetSocketAddress getCOUCHADDR() {
+		return COUCHADDR;
+	}
 
-			HttpMethod.enqueue(serverSocketChannel, OP_ACCEPT, topLevel);
-			HttpMethod.init(topLevel);
-		}
+	public static void setCOUCHADDR(InetSocketAddress COUCHADDR) {
+		BlobAntiPatternObject.COUCHADDR = COUCHADDR;
+	}
 
-		@Override
-		public int getPort() {
-			return port;
-		}
+	public static ScheduledExecutorService getEXECUTOR_SERVICE() {
+		return EXECUTOR_SERVICE;
+	}
 
-		@Override
-		public void stop() throws IOException {
-			HttpMethod.killswitch = true;
-			HttpMethod.getSelector().close();
-			serverSocketChannel.close();
-		}
-
+	public static void setEXECUTOR_SERVICE(
+			ScheduledExecutorService EXECUTOR_SERVICE) {
+		BlobAntiPatternObject.EXECUTOR_SERVICE = EXECUTOR_SERVICE;
 	}
 }

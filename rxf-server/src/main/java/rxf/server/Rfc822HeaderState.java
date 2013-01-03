@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.lang.Math.abs;
 import static one.xio.HttpHeaders.Set$2dCookie;
-import static one.xio.HttpMethod.UTF8;
+import static rxf.server.RelaxFactoryServerImpl.UTF8;
 
 /**
  * this is a utility class to parse a HttpRequest header or
@@ -251,7 +251,6 @@ public class Rfc822HeaderState {
 	/**
 	 * the source route froom the active socket.
 	 * <p/>
-	 * this is necessary to look up {@link GeoIpService } queries among other things
 	 */
 	private AtomicReference<InetAddress> sourceRoute = new AtomicReference<InetAddress>();
 
@@ -319,8 +318,6 @@ public class Rfc822HeaderState {
 	/**
 	 * assigns a state parser to a  {@link SelectionKey} and attempts to grab the source route froom the active socket.
 	 * <p/>
-	 * this is necessary to look up {@link GeoIpService } queries among other things
-	 *
 	 * @param key a NIO select key
 	 * @return self
 	 * @throws IOException
@@ -759,7 +756,7 @@ public class Rfc822HeaderState {
 	 */
 	public ByteBuffer asResponseHeaderByteBuffer() {
 		String protocol = asResponseHeaderString();
-		return ByteBuffer.wrap(protocol.getBytes(HttpMethod.UTF8));
+		return ByteBuffer.wrap(protocol.getBytes(UTF8));
 	}
 
 	/**
@@ -798,7 +795,7 @@ public class Rfc822HeaderState {
 	 */
 	public ByteBuffer asRequestHeaderByteBuffer() {
 		String protocol = asRequestHeaderString();
-		return ByteBuffer.wrap(protocol.getBytes(HttpMethod.UTF8));
+		return ByteBuffer.wrap(protocol.getBytes(UTF8));
 	}
 
 	/**

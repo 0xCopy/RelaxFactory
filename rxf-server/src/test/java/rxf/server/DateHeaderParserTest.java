@@ -29,7 +29,7 @@ public class DateHeaderParserTest {
 	};
 
 	static {
-		BlobAntiPatternObject.DEBUG_SENDJSON = true;
+		BlobAntiPatternObject.setDEBUG_SENDJSON(true);
 	}
 	@Test
 	public void testIfModifiedStuff() {

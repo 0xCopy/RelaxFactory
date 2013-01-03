@@ -14,7 +14,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
-import static one.xio.HttpMethod.UTF8;
+import static rxf.server.RelaxFactoryServerImpl.UTF8;
 import static rxf.server.BlobAntiPatternObject.*;
 
 /**
@@ -88,7 +88,7 @@ public class GwtRequestFactoryVisitor extends Impl implements PreRead {
 	public void onWrite(final SelectionKey key) throws Exception {
 		if (payload == null) {
 			key.interestOps(0);
-			EXECUTOR_SERVICE.submit(new Runnable() {
+			getEXECUTOR_SERVICE().submit(new Runnable() {
 				@Override
 				public void run() {
 					try {

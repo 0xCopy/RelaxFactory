@@ -1,12 +1,10 @@
 package rxf.server;
 
 import one.xio.AsioVisitor;
-import one.xio.HttpMethod;
 import rxf.server.gen.CouchDriver;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectableChannel;
@@ -18,13 +16,15 @@ import java.util.LinkedList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static java.nio.channels.SelectionKey.*;
-import static one.xio.HttpMethod.UTF8;
+import static java.nio.channels.SelectionKey.OP_READ;
+import static java.nio.channels.SelectionKey.OP_WRITE;
 import static rxf.server.BlobAntiPatternObject.LOOPBACK;
 import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
+import static rxf.server.RelaxFactoryServerImpl.UTF8;
 
 /**
- * Created by IntelliJ IDEA.
+ * revisit this with new API's, it's not expected to be current but non-trivial to get it right.
+ *
  * User: jim
  * Date: 2/12/12
  * Time: 10:24 PM
@@ -237,27 +237,4 @@ public class CouchChangesClient extends AsioVisitor.Impl {
 		};
 	}
 
-	static public void main(String... args) throws IOException {
-		CouchChangesClient couchChangesClient = new CouchChangesClient();
-
-		int i = 0;
-		if (i < args.length)
-			couchChangesClient.feedname = args[i++];
-		if (i < args.length)
-			couchChangesClient.hostname = args[i++];
-		if (i < args.length)
-			couchChangesClient.port = args[i++];
-
-		InetSocketAddress remote = new InetSocketAddress(
-				couchChangesClient.hostname, (Integer) couchChangesClient.port);
-		SocketChannel channel = SocketChannel.open();
-		channel.configureBlocking(false);
-		channel.connect(remote);
-
-		String feedString = couchChangesClient.getFeedString();
-		System.err.println("feedstring: " + feedString);
-		HttpMethod.enqueue(channel, OP_CONNECT | OP_WRITE, couchChangesClient,
-				feedString);
-		HttpMethod.init(HttpMethod.$, args); // no http
-	}
 }

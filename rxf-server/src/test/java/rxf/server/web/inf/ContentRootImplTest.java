@@ -4,12 +4,12 @@ import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
 import one.xio.AsioVisitor;
-import one.xio.HttpMethod;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import rxf.server.BlobAntiPatternObject;
 import rxf.server.DateHeaderParser;
+import rxf.server.RelaxFactoryServerImpl;
 
 import java.net.InetSocketAddress;
 import java.nio.channels.ServerSocketChannel;
@@ -34,8 +34,8 @@ public class ContentRootImplTest {
 	static public void setUp() throws Exception {
 		wc = new WebConversation();
 
-		BlobAntiPatternObject.DEBUG_SENDJSON = true;
-		HttpMethod.killswitch = false;
+		BlobAntiPatternObject.setDEBUG_SENDJSON(true);
+		RelaxFactoryServerImpl.killswitch = false;
 
 		serverSocketChannel = ServerSocketChannel.open();
 		final InetSocketAddress serverSocket = new InetSocketAddress(host, 0);
@@ -49,9 +49,9 @@ public class ContentRootImplTest {
 				AsioVisitor topLevel = new ProtocolMethodDispatch();
 				try {
 
-					HttpMethod
-							.enqueue(serverSocketChannel, OP_ACCEPT, topLevel);
-					HttpMethod.init(topLevel/*, 1000*/);
+					RelaxFactoryServerImpl.enqueue(serverSocketChannel,
+							OP_ACCEPT, topLevel);
+					RelaxFactoryServerImpl.init(topLevel/*, 1000*/);
 
 				} catch (Exception e) {
 					System.out.println("failed startup");
@@ -64,8 +64,8 @@ public class ContentRootImplTest {
 	@AfterClass
 	static public void tearDown() throws Exception {
 		try {
-			HttpMethod.killswitch = true;
-			HttpMethod.getSelector().close();
+			RelaxFactoryServerImpl.killswitch = true;
+			RelaxFactoryServerImpl.getSelector().close();
 			serverSocketChannel.close();
 
 			exec.shutdown();

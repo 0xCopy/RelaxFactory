@@ -21,7 +21,7 @@ public abstract class DbKeysBuilder {
 
 	public DbKeysBuilder() {
 		currentKeys.set(this);
-		if (BlobAntiPatternObject.DEBUG_SENDJSON) {
+		if (BlobAntiPatternObject.isDEBUG_SENDJSON()) {
 			debug();
 		}
 

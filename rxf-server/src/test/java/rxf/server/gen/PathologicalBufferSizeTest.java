@@ -2,13 +2,13 @@ package rxf.server.gen;
 
 import com.google.gson.JsonSyntaxException;
 import one.xio.AsioVisitor;
-import one.xio.HttpMethod;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import rxf.server.BlobAntiPatternObject;
 import rxf.server.CouchResultSet;
 import rxf.server.CouchTx;
+import rxf.server.RelaxFactoryServerImpl;
 import rxf.server.gen.CouchDriver.*;
 import rxf.server.gen.CouchDriver.ViewFetch.ViewFetchTerminalBuilder;
 import rxf.server.web.inf.ProtocolMethodDispatch;
@@ -51,14 +51,14 @@ public class PathologicalBufferSizeTest {
 
 	@BeforeClass
 	static public void setUp() throws Exception {
-		BlobAntiPatternObject.DEBUG_SENDJSON = true;
-		HttpMethod.killswitch = false;
+		BlobAntiPatternObject.setDEBUG_SENDJSON(true);
+		RelaxFactoryServerImpl.killswitch = false;
 		exec = Executors.newScheduledThreadPool(2);
 		exec.submit(new Runnable() {
 			public void run() {
 				AsioVisitor topLevel = new ProtocolMethodDispatch();
 				try {
-					HttpMethod.init(topLevel/*, 1000*/);
+					RelaxFactoryServerImpl.init(topLevel/*, 1000*/);
 				} catch (Exception e) {
 					fail();
 				}
@@ -80,8 +80,8 @@ public class PathologicalBufferSizeTest {
 	static public void tearDown() throws Exception {
 
 		try {
-			HttpMethod.killswitch = true;
-			HttpMethod.getSelector().close();
+			RelaxFactoryServerImpl.killswitch = true;
+			RelaxFactoryServerImpl.getSelector().close();
 			exec.shutdown();
 		} catch (Exception ignore) {
 		}

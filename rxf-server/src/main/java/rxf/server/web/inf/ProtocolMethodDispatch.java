@@ -107,7 +107,7 @@ public class ProtocolMethodDispatch extends Impl {
 		ServerSocketChannel channel = (ServerSocketChannel) key.channel();
 		SocketChannel accept = channel.accept();
 		accept.configureBlocking(false);
-		HttpMethod.enqueue(accept, OP_READ, this);
+		RelaxFactoryServerImpl.enqueue(accept, OP_READ, this);
 
 	}
 
@@ -129,10 +129,11 @@ public class ProtocolMethodDispatch extends Impl {
 			Rfc822HeaderState state = new Rfc822HeaderState()
 					.apply((ByteBuffer) cursor.flip());
 			httpRequest = state.$req();
-			if (BlobAntiPatternObject.DEBUG_SENDJSON) {
-				System.err.println(BlobAntiPatternObject.deepToString(UTF8
-						.decode((ByteBuffer) httpRequest.headerBuf()
-								.duplicate().rewind())));
+			if (BlobAntiPatternObject.isDEBUG_SENDJSON()) {
+				System.err.println(BlobAntiPatternObject
+						.deepToString(RelaxFactoryServerImpl.UTF8
+								.decode((ByteBuffer) httpRequest.headerBuf()
+										.duplicate().rewind())));
 			}
 			String method1 = httpRequest.method();
 			method = HttpMethod.valueOf(method1);
@@ -152,7 +153,7 @@ public class ProtocolMethodDispatch extends Impl {
 		for (Entry<Pattern, Class<? extends Impl>> visitorEntry : entries) {
 			Matcher matcher = visitorEntry.getKey().matcher(path);
 			if (matcher.find()) {
-				if (BlobAntiPatternObject.DEBUG_SENDJSON) {
+				if (BlobAntiPatternObject.isDEBUG_SENDJSON()) {
 					System.err.println("+?+?+? using " + matcher.toString());
 				}
 				Class<? extends Impl> value = visitorEntry.getValue();

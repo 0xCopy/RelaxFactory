@@ -2,7 +2,7 @@ package rxf.server.guice;
 
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
-import static one.xio.HttpMethod.UTF8;
+import static rxf.server.RelaxFactoryServerImpl.UTF8;
 import static rxf.server.CouchNamespace.NAMESPACE;
 
 import java.io.IOException;
@@ -20,6 +20,7 @@ import one.xio.AsioVisitor;
 import one.xio.HttpMethod;
 import rxf.server.BlobAntiPatternObject;
 import rxf.server.PreRead;
+import rxf.server.RelaxFactoryServerImpl;
 import rxf.server.Rfc822HeaderState;
 import rxf.server.Rfc822HeaderState.HttpRequest;
 
@@ -58,7 +59,7 @@ public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
 		ServerSocketChannel channel = (ServerSocketChannel) key.channel();
 		SocketChannel accept = channel.accept();
 		accept.configureBlocking(false);
-		HttpMethod.enqueue(accept, OP_READ, this);
+		RelaxFactoryServerImpl.enqueue(accept, OP_READ, this);
 
 	}
 
@@ -80,7 +81,7 @@ public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
 			Rfc822HeaderState state = new Rfc822HeaderState()
 					.apply((ByteBuffer) cursor.flip());
 			httpRequest = state.$req();
-			if (BlobAntiPatternObject.DEBUG_SENDJSON) {
+			if (BlobAntiPatternObject.isDEBUG_SENDJSON()) {
 				System.err.println(BlobAntiPatternObject.deepToString(UTF8
 						.decode((ByteBuffer) httpRequest.headerBuf()
 								.duplicate().rewind())));
@@ -102,7 +103,7 @@ public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
 		String path = httpRequest.path();
 		for (Entry<String, Key<? extends AsioVisitor>> visitorEntry : entries) {
 			if (path.matches(visitorEntry.getKey())) {
-				if (BlobAntiPatternObject.DEBUG_SENDJSON) {
+				if (BlobAntiPatternObject.isDEBUG_SENDJSON()) {
 					System.err.println("+?+?+? using "
 							+ visitorEntry.getValue());
 				}

@@ -1,7 +1,6 @@
 package rxf.server;
 
 import com.google.web.bindery.requestfactory.shared.Locator;
-import one.xio.HttpMethod;
 import rxf.server.gen.CouchDriver.DocFetch;
 import rxf.server.gen.CouchDriver.DocPersist;
 
@@ -45,7 +44,7 @@ public abstract class CouchLocator<T> extends Locator<T, String>
 			e.printStackTrace();
 		}
 		throw new UnsupportedOperationException("no default ctor "
-				+ HttpMethod.wheresWaldo(3));
+				+ RelaxFactoryServerImpl.wheresWaldo(3));
 	}
 
 	@Override

@@ -2,13 +2,13 @@ package rxf.server.gen;
 
 import com.google.gson.JsonSyntaxException;
 import one.xio.AsioVisitor;
-import one.xio.HttpMethod;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import rxf.server.BlobAntiPatternObject;
 import rxf.server.CouchResultSet;
 import rxf.server.CouchTx;
+import rxf.server.RelaxFactoryServerImpl;
 import rxf.server.gen.CouchDriver.*;
 import rxf.server.gen.CouchDriver.ViewFetch.ViewFetchTerminalBuilder;
 import rxf.server.web.inf.ProtocolMethodDispatch;
@@ -34,14 +34,14 @@ public class CouchDriverTest {
 
 	@BeforeClass
 	static public void setUp() throws Exception {
-		BlobAntiPatternObject.DEBUG_SENDJSON = true;
-		HttpMethod.killswitch = false;
+		BlobAntiPatternObject.setDEBUG_SENDJSON(true);
+		RelaxFactoryServerImpl.killswitch = false;
 		exec = Executors.newScheduledThreadPool(2);
 		exec.submit(new Runnable() {
 			public void run() {
 				AsioVisitor topLevel = new ProtocolMethodDispatch();
 				try {
-					HttpMethod.init(topLevel);
+					RelaxFactoryServerImpl.init(topLevel);
 				} catch (Exception e) {
 					fail();
 				}
@@ -81,8 +81,8 @@ public class CouchDriverTest {
 		//    DbDelete.$().db(SOMEDB).to().fire().oneWay();
 
 		try {
-			HttpMethod.killswitch = true;
-			HttpMethod.getSelector().close();
+			RelaxFactoryServerImpl.killswitch = true;
+			RelaxFactoryServerImpl.getSelector().close();
 			//      HttpMethod.broke = null;
 			exec.shutdown();
 			//Thread.sleep(4000);//more than 3 seconds, standard timeout

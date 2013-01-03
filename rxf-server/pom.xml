@@ -24,16 +24,23 @@
             <version>10.5.4</version>
             <scope>compile</scope>
         </dependency>
-        <dependency>
+<!--        <dependency>
             <groupId>1xio</groupId>
             <artifactId>1xio</artifactId>
             <version>${one.xio.version}</version>
-        </dependency>
+        </dependency>-->
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.3-SNAPSHOT</version>
         </dependency>
+        <!--
+              <dependency>
+                    <groupId>com.rubiconproject.oss</groupId>
+                    <artifactId>jchronic</artifactId>
+                    <version>0.2.6</version>
+                </dependency>
+                -->
         <dependency>
             <groupId>com.google.web.bindery</groupId>
             <artifactId>requestfactory-server</artifactId>

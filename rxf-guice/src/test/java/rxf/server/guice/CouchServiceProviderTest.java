@@ -7,11 +7,11 @@ import com.google.inject.Key;
 import com.google.inject.name.Names;
 import org.junit.Assert;
 import one.xio.AsioVisitor;
-import one.xio.HttpMethod;
 import org.junit.*;
 import rxf.server.BlobAntiPatternObject;
 import rxf.server.CouchService;
 import rxf.server.CouchTx;
+import rxf.server.RelaxFactoryServerImpl;
 import rxf.server.gen.CouchDriver;
 import rxf.server.web.inf.ProtocolMethodDispatch;
 
@@ -28,14 +28,14 @@ public class CouchServiceProviderTest {
 
 	@BeforeClass
 	public static void setUp() throws Exception {
-		BlobAntiPatternObject.DEBUG_SENDJSON = true;
-		HttpMethod.killswitch = false;
+		BlobAntiPatternObject.setDEBUG_SENDJSON(true);
+		RelaxFactoryServerImpl.killswitch = false;
 		exec = Executors.newScheduledThreadPool(2);
 		exec.submit(new Runnable() {
 			public void run() {
 				AsioVisitor topLevel = new ProtocolMethodDispatch();
 				try {
-					HttpMethod.init(topLevel/*, 1000*/);
+					RelaxFactoryServerImpl.init(topLevel/*, 1000*/);
 
 				} catch (Exception e) {
 					Assert.fail();
@@ -52,8 +52,8 @@ public class CouchServiceProviderTest {
 	@AfterClass
 	public static void tearDown() throws Exception {
 		try {
-			HttpMethod.killswitch = true;
-			HttpMethod.getSelector().close();
+			RelaxFactoryServerImpl.killswitch = true;
+			RelaxFactoryServerImpl.getSelector().close();
 			exec.shutdown();
 		} catch (Exception ignore) {
 		}
