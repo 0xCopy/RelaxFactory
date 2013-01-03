@@ -1,6 +1,9 @@
-package rxf.server;
+package rxf.server.rf;
 
 import com.google.web.bindery.requestfactory.shared.ServiceLocator;
+import rxf.server.CouchNamespace;
+import rxf.server.CouchService;
+import rxf.server.CouchServiceFactory;
 
 import java.util.concurrent.ExecutionException;
 
@@ -15,7 +18,7 @@ public class CouchServiceLocator implements ServiceLocator {
 		CouchService<?> ret = null;
 		try {
 			ret = CouchServiceFactory.get((Class<CouchService<?>>) aClass,
-					CouchNamespace.COUCH_DEFAULT_ORGNAME);
+                    CouchNamespace.COUCH_DEFAULT_ORGNAME);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		} catch (ExecutionException e) {

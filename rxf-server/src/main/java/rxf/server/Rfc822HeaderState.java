@@ -1,6 +1,5 @@
 package rxf.server;
 
-import com.google.web.bindery.requestfactory.server.SimpleRequestProcessor;
 import one.xio.HttpHeaders;
 import one.xio.HttpMethod;
 import one.xio.HttpStatus;
@@ -10,7 +9,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.SelectionKey;
+import java.nio.channels.*;
 import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.Map.Entry;
@@ -20,11 +19,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.lang.Math.abs;
 import static one.xio.HttpHeaders.Set$2dCookie;
-import static rxf.server.RelaxFactoryServer.App.get;
-import static rxf.server.RelaxFactoryServer.UTF8;
 import static rxf.server.RelaxFactoryServer.UTF8;
 
-import static rxf.server.RelaxFactoryServer.UTF8;
 /**
  * this is a utility class to parse a HttpRequest header or
  * $res header according to declared need of
@@ -51,138 +47,120 @@ import static rxf.server.RelaxFactoryServer.UTF8;
 public class Rfc822HeaderState {
 
 	public static final String[] EMPTY = new String[0];
+	/**
+	 * terminates header keys
+	 */
+	public static final String PREFIX = ": ";
+	public AtomicBoolean dirty = new AtomicBoolean();
+	public AtomicReference<String[]> headerInterest = new AtomicReference<String[]>(
+			EMPTY),
+			cookies = new AtomicReference<String[]>(EMPTY);
+	/**
+	 * parsed cookie values post-{@link #apply(ByteBuffer)}
+	 */
+	public AtomicReference<Map<String, String>> cookieStrings = new AtomicReference<Map<String, String>>();
+	/**
+	 * the source route froom the active socket.
+	 * <p/>
+	 */
+	private AtomicReference<InetAddress> sourceRoute = new AtomicReference<InetAddress>();
+	/**
+	 * stored buffer from which things are parsed and later grepped.
+	 * <p/>
+	 * NOT atomic.
+	 */
+	private ByteBuffer headerBuf;
+	/**
+	 * parsed valued post-{@link #apply(ByteBuffer)}
+	 */
+	private AtomicReference<Map<String, String>> headerStrings = new AtomicReference<Map<String, String>>();
+	/**
+	 * dual purpose HTTP protocol header token found on the first line of a HttpRequest/$res in the first position.
+	 * <p/>
+	 * contains either the method (HttpRequest) or a the "HTTP/1.1" string (the protocol) on responses.
+	 * <p/>
+	 * user is responsible for populating this on outbound addHeaderInterest
+	 */
+	private AtomicReference<String> methodProtocol = new AtomicReference<String>();
+	/**
+	 * dual purpose HTTP protocol header token found on the first line of a HttpRequest/$res in the second position
+	 * <p/>
+	 * contains either the path (HttpRequest) or a the numeric result code on responses.
+	 * <p/>
+	 * user is responsible for populating this on outbound addHeaderInterest
+	 */
+	private AtomicReference<String> pathRescode = new AtomicReference<String>();
+	/**
+	 * Dual purpose HTTP protocol header token found on the first line of a HttpRequest/$res in the third position.
+	 * <p/>
+	 * Contains either the protocol (HttpRequest) or a status line message ($res)
+	 */
+	private AtomicReference<String> protocolStatus = new AtomicReference<String>();
+	/**
+	 * passed in on 0.0.0.0 dispatch to tie the header state to an nio object, to provide a socketchannel handle, and to lookup up the incoming source route
+	 */
+	private AtomicReference<SelectionKey> sourceKey = new AtomicReference<SelectionKey>();
+
+	/**
+	 * copy ctor
+	 * <p/>
+	 * jrn: moved most things to atomic state soas to provide letter-envelope abstraction without
+	 * undue array[1] members to do the same thing.
+	 *
+	 * @param proto the original Rfc822HeaderState
+	 */
+	public Rfc822HeaderState(Rfc822HeaderState proto) {
+		cookies = proto.cookies;
+		cookieStrings = proto.cookieStrings;
+		dirty = proto.dirty;
+		headerBuf = proto.headerBuf;
+		headerInterest = proto.headerInterest;
+		headerStrings = proto.headerStrings;
+		methodProtocol = proto.methodProtocol;
+		pathRescode = proto.pathRescode;
+		//this.PREFIX                =proto.PREFIX                       ;
+		protocolStatus = proto.protocolStatus;
+		sourceKey = proto.sourceKey;
+		sourceRoute = proto.sourceRoute;
+	}
+
+	/**
+	 * default ctor populates {@link #headerInterest}
+	 *
+	 * @param headerInterest keys placed in     {@link #headerInterest} which will be parsed on {@link #apply(ByteBuffer)}
+	 */
+	public Rfc822HeaderState(String... headerInterest) {
+
+		this.headerInterest.set(headerInterest);
+	}
+
+	public static String[] staticHeaderStrings(HttpHeaders... replaceInterest) {
+		final String[] strings = new String[replaceInterest.length];
+		for (int i = 0; i < strings.length; i++) {
+			strings[i] = replaceInterest[i].getHeader();
+
+		}
+		return strings;
+	}
+
+	public static ByteBuffer moveCaretToDoubleEol(ByteBuffer buffer) {
+		int distance;
+		int eol = buffer.position();
+
+		do {
+			int prev = eol;
+			while (buffer.hasRemaining() && '\n' != buffer.get());
+			eol = buffer.position();
+			distance = abs(eol - prev);
+			if (2 == distance && '\r' == buffer.get(eol - 2)) {
+				break;
+			}
+		} while (buffer.hasRemaining() && 1 < distance);
+		return buffer;
+	}
 
 	public String headerString(HttpHeaders httpHeader) {
 		return headerString(httpHeader.getHeader()); //To change body of created methods use File | Settings | File Templates.
-	}
-
-	@SuppressWarnings({"RedundantCast"})
-	public static class HttpRequest extends Rfc822HeaderState {
-		public HttpRequest(Rfc822HeaderState proto) {
-			super(proto);
-			String protocol = protocol();
-			if (null != protocol && !protocol.startsWith("HTTP"))
-				protocol(null);
-		}
-
-		public String method() {
-			return methodProtocol(); //To change body of overridden methods use File | Settings | File Templates.
-		}
-
-		public HttpRequest method(HttpMethod method) {
-			return method(method.name()); //To change body of overridden methods use File | Settings | File Templates.
-		}
-
-		public HttpRequest method(String s) {
-			return (HttpRequest) methodProtocol(s);
-		}
-
-		public String path() {
-			return pathResCode(); //To change body of overridden methods use File | Settings | File Templates.
-		}
-
-		public HttpRequest path(String path) {
-			return (HttpRequest) pathResCode(path);
-		}
-
-		public String protocol() {
-			return protocolStatus(); //To change body of overridden methods use File | Settings | File Templates.
-		}
-
-		public HttpRequest protocol(String protocol) {
-			return (HttpRequest) protocolStatus(protocol); //To change body of overridden methods use File | Settings | File Templates.
-		}
-
-		@Override
-		public String toString() {
-			return asRequestHeaderString();
-		}
-
-		public <T> T as(Class<T> clazz) {
-			if (ByteBuffer.class.equals(clazz)) {
-				if (null == protocol())
-					protocol("HTTP/1.1");
-				return (T) asRequestHeaderByteBuffer();
-			}
-			return (T) super.as(clazz);
-		}
-
-	}
-
-	@SuppressWarnings({"RedundantCast"})
-	public static class HttpResponse extends Rfc822HeaderState {
-
-		public HttpResponse(Rfc822HeaderState proto) {
-			super(proto);
-			String protocol = protocol();
-			if (null != protocol && !protocol.startsWith("HTTP"))
-				protocol(null);
-		}
-
-		public HttpStatus statusEnum() {
-			try {
-				return HttpStatus.valueOf('$' + resCode());
-			} catch (Exception e) {
-				e.printStackTrace(); //todo: verify for a purpose
-			}
-			return null;
-		}
-
-		@Override
-		public String toString() {
-			return asResponseHeaderString();
-		}
-
-		public String protocol() {
-			return methodProtocol();
-		}
-
-		public String resCode() {
-			return pathResCode();
-		}
-
-		public String status() {
-			return protocolStatus();
-		}
-
-		public HttpResponse protocol(String protocol) {
-			return (HttpResponse) methodProtocol(protocol);
-		}
-
-		public HttpResponse resCode(String res) {
-			return (HttpResponse) pathResCode(res);
-		}
-
-		public HttpResponse resCode(HttpStatus resCode) {
-			return (HttpResponse) pathResCode(resCode.name().substring(1));
-		}
-
-		public HttpResponse status(String status) {
-			return (HttpResponse) protocolStatus(status);
-		}
-
-		/**
-		 * convenience method ^2 -- sets rescode and status captions from same enum
-		 *
-		 * @param httpStatus
-		 * @return
-		 */
-		public HttpResponse status(HttpStatus httpStatus) {
-			return ((HttpResponse) protocolStatus(httpStatus.caption))
-					.resCode(httpStatus);
-		}
-
-		@Override
-		public <T> T as(Class<T> clazz) {
-			if (ByteBuffer.class.equals(clazz)) {
-				if (null == protocol()) {
-					protocol("HTTP/1.1");
-				}
-				return (T) asResponseHeaderByteBuffer();
-			}
-			return super.as(clazz); //To change body of overridden methods use File | Settings | File Templates.
-
-		}
 	}
 
 	/**
@@ -224,103 +202,14 @@ public class Rfc822HeaderState {
 
 	}
 
-	/**
-	 * copy ctor
-	 * <p/>
-	 * jrn: moved most things to atomic state soas to provide letter-envelope abstraction without
-	 * undue array[1] members to do the same thing.
-	 *
-	 * @param proto the original Rfc822HeaderState
-	 */
-	public Rfc822HeaderState(Rfc822HeaderState proto) {
-		cookies = proto.cookies;
-		cookieStrings = proto.cookieStrings;
-		dirty = proto.dirty;
-		headerBuf = proto.headerBuf;
-		headerInterest = proto.headerInterest;
-		headerStrings = proto.headerStrings;
-		methodProtocol = proto.methodProtocol;
-		pathRescode = proto.pathRescode;
-		//this.PREFIX                =proto.PREFIX                       ;
-		protocolStatus = proto.protocolStatus;
-		sourceKey = proto.sourceKey;
-		sourceRoute = proto.sourceRoute;
-	}
-
-	public AtomicBoolean dirty = new AtomicBoolean();
-	public AtomicReference<String[]> headerInterest = new AtomicReference<String[]>(
-			EMPTY),
-			cookies = new AtomicReference<String[]>(EMPTY);
-	/**
-	 * the source route froom the active socket.
-	 * <p/>
-	 */
-	private AtomicReference<InetAddress> sourceRoute = new AtomicReference<InetAddress>();
-
-	/**
-	 * stored buffer from which things are parsed and later grepped.
-	 * <p/>
-	 * NOT atomic.
-	 */
-	private ByteBuffer headerBuf;
-	/**
-	 * parsed valued post-{@link #apply(ByteBuffer)}
-	 */
-	private AtomicReference<Map<String, String>> headerStrings = new AtomicReference<Map<String, String>>();
-	/**
-	 * parsed cookie values post-{@link #apply(ByteBuffer)}
-	 */
-	public AtomicReference<Map<String, String>> cookieStrings = new AtomicReference<Map<String, String>>();
-	/**
-	 * dual purpose HTTP protocol header token found on the first line of a HttpRequest/$res in the first position.
-	 * <p/>
-	 * contains either the method (HttpRequest) or a the "HTTP/1.1" string (the protocol) on responses.
-	 * <p/>
-	 * user is responsible for populating this on outbound addHeaderInterest
-	 */
-	private AtomicReference<String> methodProtocol = new AtomicReference<String>();
-
-	/**
-	 * dual purpose HTTP protocol header token found on the first line of a HttpRequest/$res in the second position
-	 * <p/>
-	 * contains either the path (HttpRequest) or a the numeric result code on responses.
-	 * <p/>
-	 * user is responsible for populating this on outbound addHeaderInterest
-	 */
-	private AtomicReference<String> pathRescode = new AtomicReference<String>();
-
-	/**
-	 * Dual purpose HTTP protocol header token found on the first line of a HttpRequest/$res in the third position.
-	 * <p/>
-	 * Contains either the protocol (HttpRequest) or a status line message ($res)
-	 */
-	private AtomicReference<String> protocolStatus = new AtomicReference<String>();
-	/**
-	 * passed in on 0.0.0.0 dispatch to tie the header state to an nio object, to provide a socketchannel handle, and to lookup up the incoming source route
-	 */
-	private AtomicReference<SelectionKey> sourceKey = new AtomicReference<SelectionKey>();
-	/**
-	 * terminates header keys
-	 */
-	public static final String PREFIX = ": ";
-
 	public Rfc822HeaderState headerString(HttpHeaders hdrEnum, String s) {
 		return headerString(hdrEnum.getHeader().trim(), s); //To change body of created methods use File | Settings | File Templates.
 	}
 
 	/**
-	 * default ctor populates {@link #headerInterest}
-	 *
-	 * @param headerInterest keys placed in     {@link #headerInterest} which will be parsed on {@link #apply(ByteBuffer)}
-	 */
-	public Rfc822HeaderState(String... headerInterest) {
-
-		this.headerInterest.set(headerInterest);
-	}
-
-	/**
 	 * assigns a state parser to a  {@link SelectionKey} and attempts to grab the source route froom the active socket.
 	 * <p/>
+	 *
 	 * @param key a NIO select key
 	 * @return self
 	 * @throws IOException
@@ -481,15 +370,6 @@ public class Rfc822HeaderState {
 	public Rfc822HeaderState headerInterest(HttpHeaders... replaceInterest) {
 		final String[] strings = staticHeaderStrings(replaceInterest);
 		return headerInterest(strings);
-	}
-
-	public static String[] staticHeaderStrings(HttpHeaders... replaceInterest) {
-		final String[] strings = new String[replaceInterest.length];
-		for (int i = 0; i < strings.length; i++) {
-			strings[i] = replaceInterest[i].getHeader();
-
-		}
-		return strings;
 	}
 
 	public Rfc822HeaderState headerInterest(String... replaceInterest) {
@@ -843,19 +723,132 @@ public class Rfc822HeaderState {
 		return sourceKey.get(); //To change body of created methods use File | Settings | File Templates.
 	}
 
-	public static ByteBuffer moveCaretToDoubleEol(ByteBuffer buffer) {
-		int distance;
-		int eol = buffer.position();
+	@SuppressWarnings({"RedundantCast"})
+	public static class HttpRequest extends Rfc822HeaderState {
+		public HttpRequest(Rfc822HeaderState proto) {
+			super(proto);
+			String protocol = protocol();
+			if (null != protocol && !protocol.startsWith("HTTP"))
+				protocol(null);
+		}
 
-		do {
-			int prev = eol;
-			while (buffer.hasRemaining() && '\n' != buffer.get());
-			eol = buffer.position();
-			distance = abs(eol - prev);
-			if (2 == distance && '\r' == buffer.get(eol - 2)) {
-				break;
+		public String method() {
+			return methodProtocol(); //To change body of overridden methods use File | Settings | File Templates.
+		}
+
+		public HttpRequest method(HttpMethod method) {
+			return method(method.name()); //To change body of overridden methods use File | Settings | File Templates.
+		}
+
+		public HttpRequest method(String s) {
+			return (HttpRequest) methodProtocol(s);
+		}
+
+		public String path() {
+			return pathResCode(); //To change body of overridden methods use File | Settings | File Templates.
+		}
+
+		public HttpRequest path(String path) {
+			return (HttpRequest) pathResCode(path);
+		}
+
+		public String protocol() {
+			return protocolStatus(); //To change body of overridden methods use File | Settings | File Templates.
+		}
+
+		public HttpRequest protocol(String protocol) {
+			return (HttpRequest) protocolStatus(protocol); //To change body of overridden methods use File | Settings | File Templates.
+		}
+
+		@Override
+		public String toString() {
+			return asRequestHeaderString();
+		}
+
+		public <T> T as(Class<T> clazz) {
+			if (ByteBuffer.class.equals(clazz)) {
+				if (null == protocol())
+					protocol("HTTP/1.1");
+				return (T) asRequestHeaderByteBuffer();
 			}
-		} while (buffer.hasRemaining() && 1 < distance);
-		return buffer;
+			return (T) super.as(clazz);
+		}
+
+	}
+
+	@SuppressWarnings({"RedundantCast"})
+	public static class HttpResponse extends Rfc822HeaderState {
+
+		public HttpResponse(Rfc822HeaderState proto) {
+			super(proto);
+			String protocol = protocol();
+			if (null != protocol && !protocol.startsWith("HTTP"))
+				protocol(null);
+		}
+
+		public HttpStatus statusEnum() {
+			try {
+				return HttpStatus.valueOf('$' + resCode());
+			} catch (Exception e) {
+				e.printStackTrace(); //todo: verify for a purpose
+			}
+			return null;
+		}
+
+		@Override
+		public String toString() {
+			return asResponseHeaderString();
+		}
+
+		public String protocol() {
+			return methodProtocol();
+		}
+
+		public String resCode() {
+			return pathResCode();
+		}
+
+		public String status() {
+			return protocolStatus();
+		}
+
+		public HttpResponse protocol(String protocol) {
+			return (HttpResponse) methodProtocol(protocol);
+		}
+
+		public HttpResponse resCode(String res) {
+			return (HttpResponse) pathResCode(res);
+		}
+
+		public HttpResponse resCode(HttpStatus resCode) {
+			return (HttpResponse) pathResCode(resCode.name().substring(1));
+		}
+
+		public HttpResponse status(String status) {
+			return (HttpResponse) protocolStatus(status);
+		}
+
+		/**
+		 * convenience method ^2 -- sets rescode and status captions from same enum
+		 *
+		 * @param httpStatus
+		 * @return
+		 */
+		public HttpResponse status(HttpStatus httpStatus) {
+			return ((HttpResponse) protocolStatus(httpStatus.caption))
+					.resCode(httpStatus);
+		}
+
+		@Override
+		public <T> T as(Class<T> clazz) {
+			if (ByteBuffer.class.equals(clazz)) {
+				if (null == protocol()) {
+					protocol("HTTP/1.1");
+				}
+				return (T) asResponseHeaderByteBuffer();
+			}
+			return super.as(clazz); //To change body of overridden methods use File | Settings | File Templates.
+
+		}
 	}
 }

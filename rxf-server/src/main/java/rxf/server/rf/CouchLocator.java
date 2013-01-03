@@ -1,6 +1,9 @@
-package rxf.server;
+package rxf.server.rf;
 
 import com.google.web.bindery.requestfactory.shared.Locator;
+import rxf.server.BlobAntiPatternRelic;
+import rxf.server.CouchNamespace;
+import rxf.server.CouchTx;
 import rxf.server.gen.CouchDriver.DocFetch;
 import rxf.server.gen.CouchDriver.DocPersist;
 
@@ -11,7 +14,7 @@ import static rxf.server.gen.CouchDriver.GSON;
 
 public abstract class CouchLocator<T> extends Locator<T, String>
 		implements
-			CouchNamespace<T> {
+        CouchNamespace<T> {
 
 	public CouchLocator(String... nse) {
 		for (int i = 0; i < nse.length; i++) {

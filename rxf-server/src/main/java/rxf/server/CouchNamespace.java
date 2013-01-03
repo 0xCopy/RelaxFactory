@@ -71,18 +71,17 @@ public interface CouchNamespace<T> {
 	public enum ns {
 		orgname {
 			@Override
-			void setMe(CouchNamespace cl, String ns) {
+            public void setMe(CouchNamespace cl, String ns) {
 				cl.setOrgname(ns);
-
 			}
 		},
 		entityName {
 			@Override
-			void setMe(CouchNamespace cl, String ns) {
+            public void setMe(CouchNamespace cl, String ns) {
 				cl.setEntityName(ns);
 			}
 		};
 
-		abstract void setMe(CouchNamespace cl, String ns);
+		public abstract void setMe(CouchNamespace cl, String ns);
 	}
 }
