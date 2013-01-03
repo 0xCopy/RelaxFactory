@@ -9,7 +9,7 @@ import one.xio.AsioVisitor;
 import org.junit.*;
 import rxf.server.CouchService;
 import rxf.server.CouchTx;
-import rxf.server.RelaxFactoryServerImpl;
+import rxf.server.RelaxFactoryServer;
 import rxf.server.gen.CouchDriver;
 import rxf.server.web.inf.ProtocolMethodDispatch;
 
@@ -19,7 +19,6 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static rxf.server.RelaxFactoryServerImpl.getEXECUTOR_SERVICE;
 
 public class CouchServiceProviderTest {
 	private static ScheduledExecutorService exec;
@@ -28,32 +27,33 @@ public class CouchServiceProviderTest {
 
 	@BeforeClass
 	public static void setUp() throws Exception {
-		RelaxFactoryServerImpl.setDEBUG_SENDJSON(true);
-		RelaxFactoryServerImpl.setKillswitch(false);
+		RelaxFactoryServer.App.get().setDEBUG_SENDJSON(true);
+		RelaxFactoryServer.App.get().setKillswitch(false);
 		exec = Executors.newScheduledThreadPool(2);
 		exec.submit(new Runnable() {
 			public void run() {
 				AsioVisitor topLevel = new ProtocolMethodDispatch();
 				try {
-					RelaxFactoryServerImpl.init(topLevel/*, 1000*/);
+					RelaxFactoryServer.App.get().init(topLevel/*, 1000*/);
 
 				} catch (Exception e) {
 					Assert.fail();
 				}
 			}
 		});
-		getEXECUTOR_SERVICE().schedule(new Runnable() {
-			public void run() {
-				Assert.fail();
-			}
-		}, 5, TimeUnit.SECONDS);
+		RelaxFactoryServer.App.get().getEXECUTOR_SERVICE().schedule(
+				new Runnable() {
+					public void run() {
+						Assert.fail();
+					}
+				}, 5, TimeUnit.SECONDS);
 	}
 
 	@AfterClass
 	public static void tearDown() throws Exception {
 		try {
-			RelaxFactoryServerImpl.setKillswitch(true);
-			RelaxFactoryServerImpl.getSelector().close();
+			RelaxFactoryServer.App.get().setKillswitch(true);
+			RelaxFactoryServer.App.get().getSelector().close();
 			exec.shutdown();
 		} catch (Exception ignore) {
 		}

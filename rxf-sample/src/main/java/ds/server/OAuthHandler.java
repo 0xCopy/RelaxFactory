@@ -20,7 +20,7 @@ import java.nio.channels.SocketChannel;
 import java.util.Map;
 
 import static one.xio.HttpHeaders.*;
-import static one.xio.HttpMethod.UTF8;
+import static rxf.server.RelaxFactoryServer.UTF8;
 import static one.xio.HttpStatus.$200;
 import static rxf.server.BlobAntiPatternObject.*;
 

@@ -31,14 +31,14 @@ public class CouchServiceTest {
 
 	@BeforeClass
 	static public void setUp() throws Exception {
-		RelaxFactoryServerImpl.setDEBUG_SENDJSON(true);
-		RelaxFactoryServerImpl.setKillswitch(false);
+		RelaxFactoryServer.App.get().setDEBUG_SENDJSON(true);
+		RelaxFactoryServer.App.get().setKillswitch(false);
 		exec = Executors.newScheduledThreadPool(2);
 		exec.submit(new Runnable() {
 			public void run() {
 				AsioVisitor topLevel = new ProtocolMethodDispatch();
 				try {
-					RelaxFactoryServerImpl.init(topLevel);
+					RelaxFactoryServer.App.get().init(topLevel);
 				} catch (Exception e) {
 					fail();
 				}
@@ -74,8 +74,8 @@ public class CouchServiceTest {
 	static public void tearDown() throws Exception {
 
 		try {
-			RelaxFactoryServerImpl.setKillswitch(true);
-			RelaxFactoryServerImpl.getSelector().close();
+			RelaxFactoryServer.App.get().setKillswitch(true);
+			RelaxFactoryServer.App.get().getSelector().close();
 			exec.shutdown();
 		} catch (Exception ignore) {
 		}

@@ -8,7 +8,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import rxf.server.DateHeaderParser;
-import rxf.server.RelaxFactoryServerImpl;
+import rxf.server.RelaxFactoryServer;
 
 import java.net.InetSocketAddress;
 import java.nio.channels.ServerSocketChannel;
@@ -20,6 +20,7 @@ import static one.xio.HttpHeaders.If$2dModified$2dSince;
 import static one.xio.HttpHeaders.If$2dUnmodified$2dSince;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static rxf.server.RelaxFactoryServer.App.*;
 
 public class ContentRootImplTest {
 	private static final String host = "localhost";
@@ -33,8 +34,8 @@ public class ContentRootImplTest {
 	static public void setUp() throws Exception {
 		wc = new WebConversation();
 
-		RelaxFactoryServerImpl.setDEBUG_SENDJSON(true);
-		RelaxFactoryServerImpl.setKillswitch(false);
+		get().setDEBUG_SENDJSON(true);
+		get().setKillswitch(false);
 
 		serverSocketChannel = ServerSocketChannel.open();
 		final InetSocketAddress serverSocket = new InetSocketAddress(host, 0);
@@ -48,9 +49,8 @@ public class ContentRootImplTest {
 				AsioVisitor topLevel = new ProtocolMethodDispatch();
 				try {
 
-					RelaxFactoryServerImpl.enqueue(serverSocketChannel,
-							OP_ACCEPT, topLevel);
-					RelaxFactoryServerImpl.init(topLevel/*, 1000*/);
+					get().enqueue(serverSocketChannel, OP_ACCEPT, topLevel);
+					get().init(topLevel/*, 1000*/);
 
 				} catch (Exception e) {
 					System.out.println("failed startup");
@@ -63,8 +63,8 @@ public class ContentRootImplTest {
 	@AfterClass
 	static public void tearDown() throws Exception {
 		try {
-			RelaxFactoryServerImpl.setKillswitch(true);
-			RelaxFactoryServerImpl.getSelector().close();
+			get().setKillswitch(true);
+			get().getSelector().close();
 			serverSocketChannel.close();
 
 			exec.shutdown();

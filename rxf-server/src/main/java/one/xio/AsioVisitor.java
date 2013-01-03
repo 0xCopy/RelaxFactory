@@ -1,5 +1,6 @@
 package one.xio;
 
+import rxf.server.RelaxFactoryServer;
 import rxf.server.RelaxFactoryServerImpl;
 
 import java.nio.ByteBuffer;
@@ -41,7 +42,7 @@ public interface AsioVisitor {
 			System.err.println("fail: " + key.toString());
 			SocketChannel channel = (SocketChannel) key.channel();
 			int receiveBufferSize = channel.socket().getReceiveBufferSize();
-			String trim = RelaxFactoryServerImpl.getUTF8().decode(
+			String trim = RelaxFactoryServer.UTF8.decode(
 					ByteBuffer.allocateDirect(receiveBufferSize)).toString()
 					.trim();
 
@@ -76,8 +77,8 @@ public interface AsioVisitor {
 
 			ServerSocketChannel c = (ServerSocketChannel) key.channel();
 			SocketChannel accept = c.accept();
-			RelaxFactoryServerImpl.enqueue(accept, OP_READ | OP_WRITE, key
-					.attachment());
+			RelaxFactoryServer.App.get().enqueue(accept, OP_READ | OP_WRITE,
+					key.attachment());
 
 		}
 	}

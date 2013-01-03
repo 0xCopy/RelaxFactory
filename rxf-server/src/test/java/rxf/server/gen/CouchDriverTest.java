@@ -7,7 +7,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import rxf.server.CouchResultSet;
 import rxf.server.CouchTx;
-import rxf.server.RelaxFactoryServerImpl;
+import rxf.server.RelaxFactoryServer;
 import rxf.server.gen.CouchDriver.*;
 import rxf.server.gen.CouchDriver.ViewFetch.ViewFetchTerminalBuilder;
 import rxf.server.web.inf.ProtocolMethodDispatch;
@@ -18,7 +18,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
-import static rxf.server.gen.CouchDriver.GSON;
+import static rxf.server.gen.CouchDriver.*;
 
 /**
  * Tests out the db, cleaning up after itself. These must be run in order to work correctly and clean up.
@@ -33,14 +33,14 @@ public class CouchDriverTest {
 
 	@BeforeClass
 	static public void setUp() throws Exception {
-		RelaxFactoryServerImpl.setDEBUG_SENDJSON(true);
-		RelaxFactoryServerImpl.setKillswitch(false);
+		RelaxFactoryServer.App.get().setDEBUG_SENDJSON(true);
+		RelaxFactoryServer.App.get().setKillswitch(false);
 		exec = Executors.newScheduledThreadPool(2);
 		exec.submit(new Runnable() {
 			public void run() {
 				AsioVisitor topLevel = new ProtocolMethodDispatch();
 				try {
-					RelaxFactoryServerImpl.init(topLevel);
+					RelaxFactoryServer.App.get().init(topLevel);
 				} catch (Exception e) {
 					fail();
 				}
@@ -80,8 +80,8 @@ public class CouchDriverTest {
 		//    DbDelete.$().db(SOMEDB).to().fire().oneWay();
 
 		try {
-			RelaxFactoryServerImpl.setKillswitch(true);
-			RelaxFactoryServerImpl.getSelector().close();
+			RelaxFactoryServer.App.get().setKillswitch(true);
+			RelaxFactoryServer.App.get().getSelector().close();
 			//      HttpMethod.broke = null;
 			exec.shutdown();
 			//Thread.sleep(4000);//more than 3 seconds, standard timeout

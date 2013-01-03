@@ -19,10 +19,12 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.text.ParseException;
+import java.util.concurrent.Future;
 
 import static rxf.server.BlobAntiPatternRelic.getReceiveBufferSize;
-import static rxf.server.RelaxFactoryServerImpl.UTF8;
-import static rxf.server.RelaxFactoryServerImpl.getEXECUTOR_SERVICE;
+import static rxf.server.RelaxFactoryServer.App.get;
+import static rxf.server.RelaxFactoryServer.UTF8;
+import static rxf.server.RelaxFactoryServer.UTF8;
 import static rxf.server.driver.CouchMetaDriver.HEADER_TERMINATOR;
 
 /**
@@ -110,52 +112,63 @@ public class GwtRpcVisitor extends Impl
 	public void onWrite(final SelectionKey key) throws Exception {
 		if (payload == null) {
 			key.interestOps(0);
-			getEXECUTOR_SERVICE().submit(new Runnable() {
-				@Override
-				public void run() {
-					try {
-						String reqPayload = UTF8.decode(
-								(ByteBuffer) cursor.rewind()).toString();
+			Future<?> submit = RelaxFactoryServer.App.get()
+					.getEXECUTOR_SERVICE().submit(new Runnable() {
+						@Override
+						public void run() {
+							try {
+								String reqPayload = UTF8.decode(
+										(ByteBuffer) cursor.rewind())
+										.toString();
 
-						RPCRequest rpcRequest = RPC.decodeRequest(reqPayload,
-								delegate.getClass(), GwtRpcVisitor.this);
+								RPCRequest rpcRequest = RPC.decodeRequest(
+										reqPayload, delegate.getClass(),
+										GwtRpcVisitor.this);
 
-						try {
-							payload = RPC.invokeAndEncodeResponse(delegate,
-									rpcRequest.getMethod(), rpcRequest
-											.getParameters(), rpcRequest
-											.getSerializationPolicy(),
-									rpcRequest.getFlags());
-						} catch (IncompatibleRemoteServiceException ex) {
-							payload = RPC.encodeResponseForFailure(null, ex);
-						} catch (RpcTokenException ex) {
-							payload = RPC.encodeResponseForFailure(null, ex);
+								try {
+									payload = RPC
+											.invokeAndEncodeResponse(
+													delegate,
+													rpcRequest.getMethod(),
+													rpcRequest.getParameters(),
+													rpcRequest
+															.getSerializationPolicy(),
+													rpcRequest.getFlags());
+								} catch (IncompatibleRemoteServiceException ex) {
+									payload = RPC.encodeResponseForFailure(
+											null, ex);
+								} catch (RpcTokenException ex) {
+									payload = RPC.encodeResponseForFailure(
+											null, ex);
+								}
+								ByteBuffer pbuf = (ByteBuffer) UTF8.encode(
+										payload).rewind();
+								final int limit = pbuf.rewind().limit();
+								Rfc822HeaderState.HttpResponse res = req.$res();
+								res.status(HttpStatus.$200);
+								ByteBuffer as = res.headerString(
+										HttpHeaders.Content$2dType,
+										MimeType.json.contentType)
+										.headerString(
+												HttpHeaders.Content$2dLength,
+												String.valueOf(limit)).as(
+												ByteBuffer.class);
+								int needed = as.rewind().limit() + limit;
+
+								cursor = (ByteBuffer) ((ByteBuffer) (cursor
+										.capacity() >= needed ? cursor.clear()
+										.limit(needed) : ByteBuffer
+										.allocateDirect(needed))).put(as).put(
+										pbuf).rewind();
+
+								key.interestOps(SelectionKey.OP_WRITE);
+							} catch (Exception e) {
+								key.cancel();
+								e.printStackTrace(); //todo: verify for a purpose
+							} finally {
+							}
 						}
-						ByteBuffer pbuf = (ByteBuffer) UTF8.encode(payload)
-								.rewind();
-						final int limit = pbuf.rewind().limit();
-						Rfc822HeaderState.HttpResponse res = req.$res();
-						res.status(HttpStatus.$200);
-						ByteBuffer as = res.headerString(
-								HttpHeaders.Content$2dType,
-								MimeType.json.contentType).headerString(
-								HttpHeaders.Content$2dLength,
-								String.valueOf(limit)).as(ByteBuffer.class);
-						int needed = as.rewind().limit() + limit;
-
-						cursor = (ByteBuffer) ((ByteBuffer) (cursor.capacity() >= needed
-								? cursor.clear().limit(needed)
-								: ByteBuffer.allocateDirect(needed))).put(as)
-								.put(pbuf).rewind();
-
-						key.interestOps(SelectionKey.OP_WRITE);
-					} catch (Exception e) {
-						key.cancel();
-						e.printStackTrace(); //todo: verify for a purpose
-					} finally {
-					}
-				}
-			});
+					});
 			return;
 		}
 		int write = channel.write(cursor);

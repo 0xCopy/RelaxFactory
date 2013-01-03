@@ -20,8 +20,11 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.lang.Math.abs;
 import static one.xio.HttpHeaders.Set$2dCookie;
-import static rxf.server.RelaxFactoryServerImpl.UTF8;
+import static rxf.server.RelaxFactoryServer.App.get;
+import static rxf.server.RelaxFactoryServer.UTF8;
+import static rxf.server.RelaxFactoryServer.UTF8;
 
+import static rxf.server.RelaxFactoryServer.UTF8;
 /**
  * this is a utility class to parse a HttpRequest header or
  * $res header according to declared need of

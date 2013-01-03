@@ -19,8 +19,9 @@ import java.util.concurrent.Executors;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static rxf.server.BlobAntiPatternRelic.getReceiveBufferSize;
-import static rxf.server.RelaxFactoryServerImpl.UTF8;
-import static rxf.server.RelaxFactoryServerImpl.getLOOPBACK;
+import static rxf.server.RelaxFactoryServer.App.get;
+import static rxf.server.RelaxFactoryServer.UTF8;
+import static rxf.server.RelaxFactoryServer.UTF8;
 
 /**
  * revisit this with new API's, it's not expected to be current but non-trivial to get it right.
@@ -38,7 +39,8 @@ public class CouchChangesClient extends AsioVisitor.Impl {
 	public String feedname = "example";
 	public Serializable port = 5984;
 	public boolean scriptExit2 = false;
-	public String hostname = getLOOPBACK().getHostAddress();
+	public String hostname = RelaxFactoryServer.App.get().getLOOPBACK()
+			.getHostAddress();
 	boolean active = false;
 
 	public CouchChangesClient(String feedname) {

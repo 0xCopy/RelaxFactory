@@ -18,7 +18,6 @@ import java.util.concurrent.TimeUnit;
 import static java.nio.channels.SelectionKey.OP_ACCEPT;
 import static rxf.server.CouchNamespace.COUCH_DEFAULT_ORGNAME;
 import static rxf.server.RelaxFactoryServerImpl.wheresWaldo;
-
 /**
  * <a href='http://www.antipatterns.com/briefing/sld024.htm'> Blob Anti Pattern </a>
  * used here as a pattern to centralize the antipatterns
@@ -29,10 +28,10 @@ import static rxf.server.RelaxFactoryServerImpl.wheresWaldo;
 public class BlobAntiPatternRelic {
 
 	public static SocketChannel createCouchConnection() {
-		while (!RelaxFactoryServerImpl.isKillswitch()) {
+		while (!RelaxFactoryServer.App.get().isKillswitch()) {
 			try {
 				SocketChannel channel = SocketChannel
-						.open(RelaxFactoryServerImpl.getCOUCHADDR());
+						.open(RelaxFactoryServer.App.get().getCOUCHADDR());
 				channel.configureBlocking(false);
 				return channel;
 			} catch (IOException e) {
@@ -63,16 +62,16 @@ public class BlobAntiPatternRelic {
 	}
 
 	public static int getReceiveBufferSize() {
-		if (0 == RelaxFactoryServerImpl.getReceiveBufferSize())
+		if (0 == RelaxFactoryServer.App.get().getReceiveBufferSize())
 			try {
 				SocketChannel couchConnection = createCouchConnection();
-				RelaxFactoryServerImpl.setReceiveBufferSize(couchConnection
-						.socket().getReceiveBufferSize());
+				RelaxFactoryServer.App.get().setReceiveBufferSize(
+						couchConnection.socket().getReceiveBufferSize());
 				recycleChannel(couchConnection);
 			} catch (IOException ignored) {
 			}
 
-		return RelaxFactoryServerImpl.getReceiveBufferSize();
+		return RelaxFactoryServer.App.get().getReceiveBufferSize();
 	}
 
 	public static void setReceiveBufferSize(int receiveBufferSize) {
@@ -80,15 +79,15 @@ public class BlobAntiPatternRelic {
 	}
 
 	public static int getSendBufferSize() {
-		if (0 == RelaxFactoryServerImpl.getSendBufferSize())
+		if (0 == RelaxFactoryServer.App.get().getSendBufferSize())
 			try {
 				SocketChannel couchConnection = createCouchConnection();
-				RelaxFactoryServerImpl.setSendBufferSize(couchConnection
-						.socket().getReceiveBufferSize());
+				RelaxFactoryServer.App.get().setSendBufferSize(
+						couchConnection.socket().getReceiveBufferSize());
 				recycleChannel(couchConnection);
 			} catch (IOException ignored) {
 			}
-		return RelaxFactoryServerImpl.getSendBufferSize();
+		return RelaxFactoryServer.App.get().getSendBufferSize();
 	}
 
 	public static void setSendBufferSize(int sendBufferSize) {
@@ -115,41 +114,42 @@ public class BlobAntiPatternRelic {
 
 		return ret;
 	}
+	/*
+	 //test
+	 public static void main(String... args) throws Exception {
+	 //		GeoIpService.startGeoIpService();
+	 startServer(args);
+	 }*/
+	/*
 
-	//test
-	public static void main(String... args) throws Exception {
-		//		GeoIpService.startGeoIpService();
-		startServer(args);
-	}
-
-	public static void startServer(String... args) throws IOException {
-		AsioVisitor topLevel;
-		ServerSocketChannel serverSocketChannel;
-		final String port;
-		InetAddress hostname;
-		{
-			String json = "{}";
-			for (String arg : args) {
-				json += arg;
-			}
-			final Properties properties = CouchDriver.GSON.fromJson(json,
-					Properties.class);
-			topLevel = new ProtocolMethodDispatch();
-			serverSocketChannel = ServerSocketChannel.open();
-			port = properties.getProperty("port", "8080");
-			hostname = InetAddress.getByName(properties.getProperty("hostname",
-					"0.0.0.0"));
-		}
-		serverSocketChannel.socket().bind(
-				new InetSocketAddress(hostname, Integer.parseInt(port)));
-		serverSocketChannel.configureBlocking(false);
-		RelaxFactoryServerImpl
-				.enqueue(serverSocketChannel, OP_ACCEPT, topLevel);
-		RelaxFactoryServerImpl.init(topLevel, args);
-	}
+	 public static void startServer(String... args) throws IOException {
+	 AsioVisitor topLevel;
+	 ServerSocketChannel serverSocketChannel;
+	 final String port;
+	 InetAddress hostname;
+	 {
+	 String json = "{}";
+	 for (String arg : args) {
+	 json += arg;
+	 }
+	 final Properties properties = CouchDriver.GSON.fromJson(json,
+	 Properties.class);
+	 topLevel = new ProtocolMethodDispatch();
+	 serverSocketChannel = ServerSocketChannel.open();
+	 port = properties.getProperty("port", "8080");
+	 hostname = InetAddress.getByName(properties.getProperty("hostname",
+	 "0.0.0.0"));
+	 }
+	 serverSocketChannel.socket().bind(
+	 new InetSocketAddress(hostname, Integer.parseInt(port)));
+	 serverSocketChannel.configureBlocking(false);
+	 RelaxFactoryServer.
+	 .enqueue(serverSocketChannel, OP_ACCEPT, topLevel).init(topLevel, args);
+	 }
+	 */
 
 	public static TimeUnit getDefaultCollectorTimeUnit() {
-		return RelaxFactoryServerImpl.isDEBUG_SENDJSON()
+		return RelaxFactoryServer.App.get().isDEBUG_SENDJSON()
 				? TimeUnit.HOURS
 				: CouchDriver.defaultCollectorTimeUnit;
 	}

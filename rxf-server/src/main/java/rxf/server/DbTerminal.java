@@ -21,7 +21,7 @@ public enum DbTerminal {
 					+ (implementation
 							? "{\n    final DbKeysBuilder dbKeysBuilder=(DbKeysBuilder)DbKeysBuilder.get();\n"
 									+ "final ActionBuilder actionBuilder=(ActionBuilder )ActionBuilder.get();"
-									+ "\ndbKeysBuilder.validate();\n BlobAntiPatternRelic.EXECUTOR_SERVICE.submit(new Runnable(){"
+									+ "\ndbKeysBuilder.validate();\n RelaxFactoryServer.App.get().getEXECUTOR_SERVICE().submit(new Runnable(){"
 									+ "\npublic void run(){\n"
 									+ "    try{\n\n      DbKeysBuilder.currentKeys.set(dbKeysBuilder);   \n      ActionBuilder.currentAction.set(actionBuilder); \nrxf.server.driver.CouchMetaDriver."
 									+ couchDriver
@@ -41,7 +41,7 @@ public enum DbTerminal {
 			@Language("JAVA")
 			String s = "{\n"
 					+ "            try {\n"
-					+ "              return    GSON.fromJson(one.xio.HttpMethod.UTF8.decode(avoidStarvation("
+					+ "              return    GSON.fromJson(rxf.server.RelaxFactoryServer.UTF8.decode(avoidStarvation("
 					+ visitor
 					+ ".visit())).toString(),\n"
 					+ "                  new java.lang.reflect.ParameterizedType() {\n"
@@ -104,12 +104,12 @@ public enum DbTerminal {
 					+ " CouchTx tx()"
 					+ (implementation
 							? "{try {\n"
-									+ "        return (CouchTx)GSON.fromJson(one.xio.HttpMethod.UTF8.decode("
+									+ "        return (CouchTx)GSON.fromJson(rxf.server.RelaxFactoryServer.UTF8.decode("
 									+ " rxf.server.driver.CouchMetaDriver."
 									+ couchDriver
 									+ ".visit()).toString(),CouchTx.class);\n"
 									+ "      } catch (Exception e) {\n"
-									+ "        if(rxf.server.BlobAntiPatternRelic.DEBUG_SENDJSON)e.printStackTrace();   \n"
+									+ "        if(RelaxFactoryServer.App.get().isDEBUG_SENDJSON())e.printStackTrace();   \n"
 									+ "      } return null;} "
 							: ";");
 		}
@@ -123,7 +123,7 @@ public enum DbTerminal {
 			return (implementation ? "public " : "")
 					+ "Future<ByteBuffer>future()"
 					+ (implementation
-							? "{\n    try{\n    BlobAntiPatternRelic.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>(){\nfinal DbKeysBuilder dbKeysBuilder=(DbKeysBuilder)DbKeysBuilder.get();\n"
+							? "{\n    try{\n    RelaxFactoryServer.App.get().getEXECUTOR_SERVICE().submit(new Callable<ByteBuffer>(){\nfinal DbKeysBuilder dbKeysBuilder=(DbKeysBuilder)DbKeysBuilder.get();\n"
 									+ "final ActionBuilder actionBuilder=(ActionBuilder)ActionBuilder.get();\n"
 									+ "public "
 									+ ByteBuffer.class.getCanonicalName()
@@ -160,7 +160,7 @@ public enum DbTerminal {
 					+ "    ByteBuffer visit=rxf.server.driver.CouchMetaDriver."
 					+ couchDriver.name()
 					+ ".visit();\n"
-					+ "return null==visit?null:one.xio.HttpMethod.UTF8.decode(avoidStarvation(visit)).toString();\n"
+					+ "return null==visit?null:rxf.server.RelaxFactoryServer.UTF8.decode(avoidStarvation(visit)).toString();\n"
 					+ "}catch(Exception e){\n" + "    e.printStackTrace();\n"
 					+ "}\n" + "    return null;\n}";
 			return (implementation ? " public " : "") + " String  json()"

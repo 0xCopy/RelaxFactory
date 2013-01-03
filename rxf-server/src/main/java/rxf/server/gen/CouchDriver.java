@@ -68,14 +68,13 @@ public interface CouchDriver {
 						try {
 							return (CouchTx) GSON
 									.fromJson(
-											RelaxFactoryServerImpl
-													.getUTF8()
+											rxf.server.RelaxFactoryServer.UTF8
 													.decode(
 															rxf.server.driver.CouchMetaDriver.DbCreate
 																	.visit())
 													.toString(), CouchTx.class);
 						} catch (Exception e) {
-							if (RelaxFactoryServerImpl.isDEBUG_SENDJSON())
+							if (RelaxFactoryServer.App.get().isDEBUG_SENDJSON())
 								e.printStackTrace();
 						}
 						return null;
@@ -86,8 +85,8 @@ public interface CouchDriver {
 						final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder
 								.get();
 						dbKeysBuilder.validate();
-						RelaxFactoryServerImpl.getEXECUTOR_SERVICE().submit(
-								new Runnable() {
+						RelaxFactoryServer.App.get().getEXECUTOR_SERVICE()
+								.submit(new Runnable() {
 									public void run() {
 										try {
 
@@ -154,14 +153,13 @@ public interface CouchDriver {
 						try {
 							return (CouchTx) GSON
 									.fromJson(
-											RelaxFactoryServerImpl
-													.getUTF8()
+											rxf.server.RelaxFactoryServer.UTF8
 													.decode(
 															rxf.server.driver.CouchMetaDriver.DbDelete
 																	.visit())
 													.toString(), CouchTx.class);
 						} catch (Exception e) {
-							if (RelaxFactoryServerImpl.isDEBUG_SENDJSON())
+							if (RelaxFactoryServer.App.get().isDEBUG_SENDJSON())
 								e.printStackTrace();
 						}
 						return null;
@@ -172,8 +170,8 @@ public interface CouchDriver {
 						final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder
 								.get();
 						dbKeysBuilder.validate();
-						RelaxFactoryServerImpl.getEXECUTOR_SERVICE().submit(
-								new Runnable() {
+						RelaxFactoryServer.App.get().getEXECUTOR_SERVICE()
+								.submit(new Runnable() {
 									public void run() {
 										try {
 
@@ -248,7 +246,7 @@ public interface CouchDriver {
 					}
 					public Future<ByteBuffer> future() {
 						try {
-							RelaxFactoryServerImpl.getEXECUTOR_SERVICE()
+							RelaxFactoryServer.App.get().getEXECUTOR_SERVICE()
 									.submit(new Callable<ByteBuffer>() {
 										final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder
 												.get();
@@ -277,8 +275,9 @@ public interface CouchDriver {
 									.visit();
 							return null == visit
 									? null
-									: RelaxFactoryServerImpl.getUTF8().decode(
-											avoidStarvation(visit)).toString();
+									: rxf.server.RelaxFactoryServer.UTF8
+											.decode(avoidStarvation(visit))
+											.toString();
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
@@ -342,8 +341,9 @@ public interface CouchDriver {
 									.visit();
 							return null == visit
 									? null
-									: RelaxFactoryServerImpl.getUTF8().decode(
-											avoidStarvation(visit)).toString();
+									: rxf.server.RelaxFactoryServer.UTF8
+											.decode(avoidStarvation(visit))
+											.toString();
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
@@ -351,7 +351,7 @@ public interface CouchDriver {
 					}
 					public Future<ByteBuffer> future() {
 						try {
-							RelaxFactoryServerImpl.getEXECUTOR_SERVICE()
+							RelaxFactoryServer.App.get().getEXECUTOR_SERVICE()
 									.submit(new Callable<ByteBuffer>() {
 										final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder
 												.get();
@@ -432,14 +432,13 @@ public interface CouchDriver {
 						try {
 							return (CouchTx) GSON
 									.fromJson(
-											RelaxFactoryServerImpl
-													.getUTF8()
+											rxf.server.RelaxFactoryServer.UTF8
 													.decode(
 															rxf.server.driver.CouchMetaDriver.DocPersist
 																	.visit())
 													.toString(), CouchTx.class);
 						} catch (Exception e) {
-							if (RelaxFactoryServerImpl.isDEBUG_SENDJSON())
+							if (RelaxFactoryServer.App.get().isDEBUG_SENDJSON())
 								e.printStackTrace();
 						}
 						return null;
@@ -450,8 +449,8 @@ public interface CouchDriver {
 						final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder
 								.get();
 						dbKeysBuilder.validate();
-						RelaxFactoryServerImpl.getEXECUTOR_SERVICE().submit(
-								new Runnable() {
+						RelaxFactoryServer.App.get().getEXECUTOR_SERVICE()
+								.submit(new Runnable() {
 									public void run() {
 										try {
 
@@ -469,7 +468,7 @@ public interface CouchDriver {
 					}
 					public Future<ByteBuffer> future() {
 						try {
-							RelaxFactoryServerImpl.getEXECUTOR_SERVICE()
+							RelaxFactoryServer.App.get().getEXECUTOR_SERVICE()
 									.submit(new Callable<ByteBuffer>() {
 										final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder
 												.get();
@@ -558,14 +557,13 @@ public interface CouchDriver {
 						try {
 							return (CouchTx) GSON
 									.fromJson(
-											RelaxFactoryServerImpl
-													.getUTF8()
+											rxf.server.RelaxFactoryServer.UTF8
 													.decode(
 															rxf.server.driver.CouchMetaDriver.DocDelete
 																	.visit())
 													.toString(), CouchTx.class);
 						} catch (Exception e) {
-							if (RelaxFactoryServerImpl.isDEBUG_SENDJSON())
+							if (RelaxFactoryServer.App.get().isDEBUG_SENDJSON())
 								e.printStackTrace();
 						}
 						return null;
@@ -576,8 +574,8 @@ public interface CouchDriver {
 						final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder
 								.get();
 						dbKeysBuilder.validate();
-						RelaxFactoryServerImpl.getEXECUTOR_SERVICE().submit(
-								new Runnable() {
+						RelaxFactoryServer.App.get().getEXECUTOR_SERVICE()
+								.submit(new Runnable() {
 									public void run() {
 										try {
 
@@ -595,7 +593,7 @@ public interface CouchDriver {
 					}
 					public Future<ByteBuffer> future() {
 						try {
-							RelaxFactoryServerImpl.getEXECUTOR_SERVICE()
+							RelaxFactoryServer.App.get().getEXECUTOR_SERVICE()
 									.submit(new Callable<ByteBuffer>() {
 										final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder
 												.get();
@@ -612,6 +610,7 @@ public interface CouchDriver {
 													.visit(dbKeysBuilder,
 															actionBuilder);
 										}
+
 									});
 						} catch (Exception e) {
 							e.printStackTrace();
@@ -686,7 +685,7 @@ public interface CouchDriver {
 					}
 					public Future<ByteBuffer> future() {
 						try {
-							RelaxFactoryServerImpl.getEXECUTOR_SERVICE()
+							RelaxFactoryServer.App.get().getEXECUTOR_SERVICE()
 									.submit(new Callable<ByteBuffer>() {
 										final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder
 												.get();
@@ -715,8 +714,9 @@ public interface CouchDriver {
 									.visit();
 							return null == visit
 									? null
-									: RelaxFactoryServerImpl.getUTF8().decode(
-											avoidStarvation(visit)).toString();
+									: rxf.server.RelaxFactoryServer.UTF8
+											.decode(avoidStarvation(visit))
+											.toString();
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
@@ -781,8 +781,7 @@ public interface CouchDriver {
 						try {
 							return GSON
 									.fromJson(
-											RelaxFactoryServerImpl
-													.getUTF8()
+											rxf.server.RelaxFactoryServer.UTF8
 													.decode(
 															avoidStarvation(rxf.server.driver.CouchMetaDriver.ViewFetch
 																	.visit()))
@@ -809,7 +808,7 @@ public interface CouchDriver {
 					}
 					public Future<ByteBuffer> future() {
 						try {
-							RelaxFactoryServerImpl.getEXECUTOR_SERVICE()
+							RelaxFactoryServer.App.get().getEXECUTOR_SERVICE()
 									.submit(new Callable<ByteBuffer>() {
 										final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder
 												.get();
@@ -900,14 +899,13 @@ public interface CouchDriver {
 						try {
 							return (CouchTx) GSON
 									.fromJson(
-											RelaxFactoryServerImpl
-													.getUTF8()
+											rxf.server.RelaxFactoryServer.UTF8
 													.decode(
 															rxf.server.driver.CouchMetaDriver.JsonSend
 																	.visit())
 													.toString(), CouchTx.class);
 						} catch (Exception e) {
-							if (RelaxFactoryServerImpl.isDEBUG_SENDJSON())
+							if (RelaxFactoryServer.App.get().isDEBUG_SENDJSON())
 								e.printStackTrace();
 						}
 						return null;
@@ -918,8 +916,8 @@ public interface CouchDriver {
 						final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder
 								.get();
 						dbKeysBuilder.validate();
-						RelaxFactoryServerImpl.getEXECUTOR_SERVICE().submit(
-								new Runnable() {
+						RelaxFactoryServer.App.get().getEXECUTOR_SERVICE()
+								.submit(new Runnable() {
 									public void run() {
 										try {
 
@@ -939,8 +937,7 @@ public interface CouchDriver {
 						try {
 							return GSON
 									.fromJson(
-											RelaxFactoryServerImpl
-													.getUTF8()
+											rxf.server.RelaxFactoryServer.UTF8
 													.decode(
 															avoidStarvation(rxf.server.driver.CouchMetaDriver.JsonSend
 																	.visit()))
@@ -971,8 +968,9 @@ public interface CouchDriver {
 									.visit();
 							return null == visit
 									? null
-									: RelaxFactoryServerImpl.getUTF8().decode(
-											avoidStarvation(visit)).toString();
+									: rxf.server.RelaxFactoryServer.UTF8
+											.decode(avoidStarvation(visit))
+											.toString();
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
@@ -980,7 +978,7 @@ public interface CouchDriver {
 					}
 					public Future<ByteBuffer> future() {
 						try {
-							RelaxFactoryServerImpl.getEXECUTOR_SERVICE()
+							RelaxFactoryServer.App.get().getEXECUTOR_SERVICE()
 									.submit(new Callable<ByteBuffer>() {
 										final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder
 												.get();
@@ -1067,21 +1065,20 @@ public interface CouchDriver {
 						try {
 							return (CouchTx) GSON
 									.fromJson(
-											RelaxFactoryServerImpl
-													.getUTF8()
+											rxf.server.RelaxFactoryServer.UTF8
 													.decode(
 															rxf.server.driver.CouchMetaDriver.BlobSend
 																	.visit())
 													.toString(), CouchTx.class);
 						} catch (Exception e) {
-							if (RelaxFactoryServerImpl.isDEBUG_SENDJSON())
+							if (RelaxFactoryServer.App.get().isDEBUG_SENDJSON())
 								e.printStackTrace();
 						}
 						return null;
 					}
 					public Future<ByteBuffer> future() {
 						try {
-							RelaxFactoryServerImpl.getEXECUTOR_SERVICE()
+							RelaxFactoryServer.App.get().getEXECUTOR_SERVICE()
 									.submit(new Callable<ByteBuffer>() {
 										final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder
 												.get();
@@ -1110,8 +1107,8 @@ public interface CouchDriver {
 						final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder
 								.get();
 						dbKeysBuilder.validate();
-						RelaxFactoryServerImpl.getEXECUTOR_SERVICE().submit(
-								new Runnable() {
+						RelaxFactoryServer.App.get().getEXECUTOR_SERVICE()
+								.submit(new Runnable() {
 									public void run() {
 										try {
 

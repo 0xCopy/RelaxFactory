@@ -20,6 +20,7 @@ import java.util.regex.Pattern;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static one.xio.HttpMethod.*;
 import static rxf.server.CouchNamespace.NAMESPACE;
+import static rxf.server.RelaxFactoryServer.*;
 
 /**
  * this class holds a protocol namespace to dispatch requests
@@ -107,7 +108,7 @@ public class ProtocolMethodDispatch extends Impl {
 		ServerSocketChannel channel = (ServerSocketChannel) key.channel();
 		SocketChannel accept = channel.accept();
 		accept.configureBlocking(false);
-		RelaxFactoryServerImpl.enqueue(accept, OP_READ, this);
+		App.get().enqueue(accept, OP_READ, this);
 
 	}
 
@@ -129,11 +130,10 @@ public class ProtocolMethodDispatch extends Impl {
 			Rfc822HeaderState state = new Rfc822HeaderState()
 					.apply((ByteBuffer) cursor.flip());
 			httpRequest = state.$req();
-			if (RelaxFactoryServerImpl.isDEBUG_SENDJSON()) {
-				System.err.println(BlobAntiPatternRelic
-						.deepToString(RelaxFactoryServerImpl.getUTF8().decode(
-								(ByteBuffer) httpRequest.headerBuf()
-										.duplicate().rewind())));
+			if (App.get().isDEBUG_SENDJSON()) {
+				System.err.println(BlobAntiPatternRelic.deepToString(UTF8
+						.decode((ByteBuffer) httpRequest.headerBuf()
+								.duplicate().rewind())));
 			}
 			String method1 = httpRequest.method();
 			method = HttpMethod.valueOf(method1);
@@ -153,7 +153,7 @@ public class ProtocolMethodDispatch extends Impl {
 		for (Entry<Pattern, Class<? extends Impl>> visitorEntry : entries) {
 			Matcher matcher = visitorEntry.getKey().matcher(path);
 			if (matcher.find()) {
-				if (RelaxFactoryServerImpl.isDEBUG_SENDJSON()) {
+				if (App.get().isDEBUG_SENDJSON()) {
 					System.err.println("+?+?+? using " + matcher.toString());
 				}
 				Class<? extends Impl> value = visitorEntry.getValue();

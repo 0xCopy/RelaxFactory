@@ -23,7 +23,7 @@ import java.nio.channels.SocketChannel;
 import java.text.ParseException;
 
 import static rxf.server.BlobAntiPatternRelic.getReceiveBufferSize;
-import static rxf.server.RelaxFactoryServerImpl.UTF8;
+import static rxf.server.RelaxFactoryServer.UTF8;
 import static rxf.server.driver.CouchMetaDriver.HEADER_TERMINATOR;
 
 /**
@@ -112,8 +112,8 @@ public class RequestQueueVisitor extends Impl
 	public void onWrite(final SelectionKey key) throws Exception {
 		if (payload == null) {
 			key.interestOps(0);
-			((RelaxFactoryServerImpl) RelaxFactoryServer.App.get())
-					.getEXECUTOR_SERVICE().submit(new Runnable() {
+			RelaxFactoryServer.App.get().getEXECUTOR_SERVICE().submit(
+					new Runnable() {
 						@Override
 						public void run() {
 							try {

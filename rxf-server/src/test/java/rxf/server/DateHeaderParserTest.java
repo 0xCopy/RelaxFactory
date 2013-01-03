@@ -29,7 +29,7 @@ public class DateHeaderParserTest {
 	};
 
 	static {
-		RelaxFactoryServerImpl.setDEBUG_SENDJSON(true);
+		RelaxFactoryServer.App.get().setDEBUG_SENDJSON(true);
 	}
 	@Test
 	public void testIfModifiedStuff() {

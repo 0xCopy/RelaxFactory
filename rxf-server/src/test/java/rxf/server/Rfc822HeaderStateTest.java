@@ -4,7 +4,8 @@ import org.junit.Test;
 
 import java.nio.ByteBuffer;
 
-import static rxf.server.RelaxFactoryServerImpl.UTF8;
+import static rxf.server.RelaxFactoryServer.App.get;
+import static rxf.server.RelaxFactoryServer.UTF8;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 

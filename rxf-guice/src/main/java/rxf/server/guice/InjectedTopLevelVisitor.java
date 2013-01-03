@@ -1,9 +1,13 @@
 package rxf.server.guice;
 
-import static java.nio.channels.SelectionKey.OP_READ;
-import static java.nio.channels.SelectionKey.OP_WRITE;
-import static rxf.server.RelaxFactoryServerImpl.UTF8;
-import static rxf.server.CouchNamespace.NAMESPACE;
+import com.google.inject.*;
+import one.xio.AsioVisitor;
+import one.xio.HttpMethod;
+import rxf.server.BlobAntiPatternRelic;
+import rxf.server.PreRead;
+import rxf.server.RelaxFactoryServer;
+import rxf.server.Rfc822HeaderState;
+import rxf.server.Rfc822HeaderState.HttpRequest;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -16,19 +20,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import one.xio.AsioVisitor;
-import one.xio.HttpMethod;
-import rxf.server.BlobAntiPatternRelic;
-import rxf.server.PreRead;
-import rxf.server.RelaxFactoryServerImpl;
-import rxf.server.Rfc822HeaderState;
-import rxf.server.Rfc822HeaderState.HttpRequest;
-
-import com.google.inject.Binding;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.TypeLiteral;
+import static java.nio.channels.SelectionKey.OP_READ;
+import static java.nio.channels.SelectionKey.OP_WRITE;
+import static rxf.server.CouchNamespace.NAMESPACE;
+import static rxf.server.RelaxFactoryServer.UTF8;
 
 public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
 	private final Map<HttpMethod, Map<String, Key<? extends AsioVisitor>>> bindings = new EnumMap<HttpMethod, Map<String, Key<? extends AsioVisitor>>>(
@@ -59,7 +54,7 @@ public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
 		ServerSocketChannel channel = (ServerSocketChannel) key.channel();
 		SocketChannel accept = channel.accept();
 		accept.configureBlocking(false);
-		RelaxFactoryServerImpl.enqueue(accept, OP_READ, this);
+		RelaxFactoryServer.App.get().enqueue(accept, OP_READ, this);
 
 	}
 
@@ -81,7 +76,7 @@ public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
 			Rfc822HeaderState state = new Rfc822HeaderState()
 					.apply((ByteBuffer) cursor.flip());
 			httpRequest = state.$req();
-			if (RelaxFactoryServerImpl.isDEBUG_SENDJSON()) {
+			if (RelaxFactoryServer.App.get().isDEBUG_SENDJSON()) {
 				System.err.println(BlobAntiPatternRelic.deepToString(UTF8
 						.decode((ByteBuffer) httpRequest.headerBuf()
 								.duplicate().rewind())));
@@ -103,7 +98,7 @@ public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
 		String path = httpRequest.path();
 		for (Entry<String, Key<? extends AsioVisitor>> visitorEntry : entries) {
 			if (path.matches(visitorEntry.getKey())) {
-				if (RelaxFactoryServerImpl.isDEBUG_SENDJSON()) {
+				if (RelaxFactoryServer.App.get().isDEBUG_SENDJSON()) {
 					System.err.println("+?+?+? using "
 							+ visitorEntry.getValue());
 				}

@@ -153,7 +153,7 @@ public class ContentRootImpl extends Impl implements PreRead {
 					File f = new File(file.getAbsoluteFile() + "."
 							+ compType.suffix);
 					if (f.isFile() && f.canRead()) {
-						if (RelaxFactoryServerImpl.isDEBUG_SENDJSON()) {
+						if (RelaxFactoryServer.App.get().isDEBUG_SENDJSON()) {
 							System.err.println("sending compressed archive: "
 									+ f.getAbsolutePath());
 						}

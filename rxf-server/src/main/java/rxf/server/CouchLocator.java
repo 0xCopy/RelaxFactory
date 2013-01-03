@@ -6,6 +6,7 @@ import rxf.server.gen.CouchDriver.DocPersist;
 
 import java.util.List;
 
+import static rxf.server.RelaxFactoryServerImpl.wheresWaldo;
 import static rxf.server.gen.CouchDriver.GSON;
 
 public abstract class CouchLocator<T> extends Locator<T, String>
@@ -44,7 +45,7 @@ public abstract class CouchLocator<T> extends Locator<T, String>
 			e.printStackTrace();
 		}
 		throw new UnsupportedOperationException("no default ctor "
-				+ RelaxFactoryServerImpl.wheresWaldo(3));
+				+ wheresWaldo(3));
 	}
 
 	@Override

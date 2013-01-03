@@ -1,41 +1,107 @@
 package rxf.server;
 
 import one.xio.AsioVisitor;
+import one.xio.HttpStatus;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.nio.channels.*;
+import java.nio.charset.Charset;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ScheduledExecutorService;
 
-/**
-* Created with IntelliJ IDEA.
-* User: jim
-* Date: 1/2/13
-* Time: 8:12 PM
-* To change this template use File | Settings | File Templates.
-*/
 public interface RelaxFactoryServer {
 
-    void init(String hostname, int port, AsioVisitor topLevel)
+    Charset UTF8 = Charset.forName("UTF8");
+    InheritableThreadLocal<RelaxFactoryServer> rxfTl = new InheritableThreadLocal<>();
+
+    Selector getSelector();
+
+    RelaxFactoryServer setSelector(Selector selector);
+
+    Object[] toArray(Object... t);
+
+    RelaxFactoryServer enqueue(SelectableChannel channel, int op, Object... s)
+            throws ClosedChannelException;
+
+    RelaxFactoryServer response(SelectionKey key, HttpStatus httpStatus)
+            throws IOException;
+
+    RelaxFactoryServer init(AsioVisitor protocoldecoder, String... a)
+            throws IOException;
+
+    AsioVisitor inferAsioVisitor(AsioVisitor default$, SelectionKey key);
+
+    Charset getUTF8();
+
+    Thread getSelectorThread();
+
+    RelaxFactoryServer setSelectorThread(Thread selectorThread);
+
+    boolean isKillswitch();
+
+    RelaxFactoryServer setKillswitch(boolean killswitch);
+
+    ConcurrentLinkedQueue<Object[]> getQ();
+
+    RelaxFactoryServer setQ(ConcurrentLinkedQueue<Object[]> q);
+
+    boolean isDEBUG_SENDJSON();
+
+    RelaxFactoryServer setDEBUG_SENDJSON(boolean DEBUG_SENDJSON);
+
+    InetAddress getLOOPBACK();
+
+    InetSocketAddress getCOUCHADDR();
+
+    RelaxFactoryServer setCOUCHADDR(InetSocketAddress COUCHADDR);
+
+    ScheduledExecutorService getEXECUTOR_SERVICE();
+
+    RelaxFactoryServer setEXECUTOR_SERVICE(
+            ScheduledExecutorService EXECUTOR_SERVICE);
+
+    int getReceiveBufferSize();
+
+    RelaxFactoryServer setReceiveBufferSize(int receiveBufferSize);
+
+    int getSendBufferSize();
+
+    RelaxFactoryServer setSendBufferSize(int sendBufferSize);
+
+    RelaxFactoryServer init(String hostname, int port, AsioVisitor topLevel)
             throws UnknownHostException;
-    void start() throws IOException;
-    void stop() throws IOException;
 
-    /**
-     * Returns the port the server has started on. Useful in the case where
-     * {@link #init(String, int, one.xio.AsioVisitor)} was invoked with 0, {@link #start()} called,
-     * and the server selected its own port.
-     * @return
-     */
+    RelaxFactoryServer start() throws IOException;
+
     int getPort();
-    InheritableThreadLocal<RelaxFactoryServer>rxfTl = new InheritableThreadLocal<>();
 
-    class App{
-    static RelaxFactoryServer get(){
-        RelaxFactoryServer relaxFactoryServer = rxfTl.get();
-        if(null== relaxFactoryServer){
-            relaxFactoryServer = new RelaxFactoryServerImpl();
-            rxfTl.set(relaxFactoryServer);
+    RelaxFactoryServer setPort(int port);
+
+    RelaxFactoryServer stop() throws IOException;
+
+    AsioVisitor getTopLevel();
+
+    RelaxFactoryServer setTopLevel(AsioVisitor topLevel);
+
+    InetAddress getHostname();
+
+    RelaxFactoryServer setHostname(InetAddress hostname);
+
+    ServerSocketChannel getServerSocketChannel();
+
+    RelaxFactoryServer setServerSocketChannel(ServerSocketChannel serverSocketChannel);
+
+    class App {
+        public static RelaxFactoryServer get() {
+            RelaxFactoryServer relaxFactoryServer = rxfTl.get();
+            if (null == relaxFactoryServer) {
+                relaxFactoryServer = RelaxFactoryServerImpl.createRelaxFactoryServerImpl();
+                rxfTl.set(relaxFactoryServer);
+            }
+            return relaxFactoryServer;
         }
-        return relaxFactoryServer;
     }
-  }
 }

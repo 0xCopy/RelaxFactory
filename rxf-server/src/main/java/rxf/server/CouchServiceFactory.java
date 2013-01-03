@@ -83,7 +83,7 @@ public class CouchServiceFactory {
 			Type[] genericInterfaces = serviceInterface.getGenericInterfaces();
 			final ParameterizedType genericInterface = (ParameterizedType) genericInterfaces[0];
 			entityType = (Class<E>) genericInterface.getActualTypeArguments()[0];
-			init = RelaxFactoryServerImpl.getEXECUTOR_SERVICE().submit(
+			init = RelaxFactoryServer.App.get().getEXECUTOR_SERVICE().submit(
 					new Callable() {
 
 						public Object call() throws Exception {
@@ -213,8 +213,8 @@ public class CouchServiceFactory {
 			init.get();
 
 			if (viewMethods.get().containsKey(method.getName())) {
-				return RelaxFactoryServerImpl.getEXECUTOR_SERVICE().submit(
-						new Callable() {
+				return RelaxFactoryServer.App.get().getEXECUTOR_SERVICE()
+						.submit(new Callable() {
 							public Object call() throws Exception {
 
 								String name = method.getName();

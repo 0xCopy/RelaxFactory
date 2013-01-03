@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 
 import static ds.server.SecurityImpl.*;
 import static java.lang.Math.abs;
-import static one.xio.HttpMethod.UTF8;
+import static rxf.server.RelaxFactoryServer.UTF8;
 import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 import static rxf.server.BlobAntiPatternObject.deepToString;
 import static rxf.server.CouchNamespace.NAMESPACE;

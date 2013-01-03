@@ -1,11 +1,14 @@
 package one.xio;
 
+import rxf.server.RelaxFactoryServer;
 import rxf.server.RelaxFactoryServerImpl;
 
 import java.net.URLDecoder;
 import java.nio.ByteBuffer;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import static rxf.server.RelaxFactoryServer.UTF8;
 
 /**
  *
@@ -1406,8 +1409,7 @@ public enum HttpHeaders {
 
 	WWW$2dAuthenticate, ;
 	private final String header = URLDecoder.decode(name().replace('$', '%'));
-	private final ByteBuffer token = RelaxFactoryServerImpl.getUTF8().encode(
-			header);
+	private final ByteBuffer token = UTF8.encode(header);
 	private int tokenLen = token.limit();
 
 	/**
@@ -1430,7 +1432,7 @@ public enum HttpHeaders {
 			while (headers.hasRemaining() && '\n' != headers.get());
 			int p3 = headers.position();
 
-			String key = RelaxFactoryServerImpl.getUTF8().decode(
+			String key = UTF8.decode(
 					(ByteBuffer) headers.position(p1).limit(p2 - 1)).toString()
 					.trim();
 			if (key.length() > 0) {

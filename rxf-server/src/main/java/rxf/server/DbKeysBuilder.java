@@ -21,7 +21,7 @@ public abstract class DbKeysBuilder {
 
 	public DbKeysBuilder() {
 		currentKeys.set(this);
-		if (RelaxFactoryServerImpl.isDEBUG_SENDJSON()) {
+		if (RelaxFactoryServer.App.get().isDEBUG_SENDJSON()) {
 			debug();
 		}
 
