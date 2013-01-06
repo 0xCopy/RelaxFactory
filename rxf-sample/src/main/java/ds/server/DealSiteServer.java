@@ -23,6 +23,8 @@ import java.util.regex.Pattern;
 
 import static ds.server.SecurityImpl.*;
 import static java.lang.Math.abs;
+import static java.nio.channels.SelectionKey.OP_CONNECT;
+import static java.nio.channels.SelectionKey.OP_WRITE;
 import static rxf.server.RelaxFactoryServer.UTF8;
 import static rxf.server.BlobAntiPatternObject.deepToString;
 import static rxf.server.CouchNamespace.NAMESPACE;
@@ -172,7 +174,7 @@ public class DealSiteServer {
                         // write.  would be interesting to see when.
                         assert respHdrs.limit() == written;
                         key.selector().wakeup();//removes 1000ms from transitions from READ<->WRITE
-                        key.interestOps(SelectionKey.OP_WRITE | SelectionKey.OP_CONNECT).attach(new Impl() {
+                        key.interestOps(OP_WRITE | OP_CONNECT).attach(new Impl() {
                             @Override
                             public void onWrite(SelectionKey key) throws Exception {
                                 int write = channel.write(responseBuffer);

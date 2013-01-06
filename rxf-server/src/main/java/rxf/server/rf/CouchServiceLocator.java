@@ -18,7 +18,7 @@ public class CouchServiceLocator implements ServiceLocator {
 		CouchService<?> ret = null;
 		try {
 			ret = CouchServiceFactory.get((Class<CouchService<?>>) aClass,
-                    CouchNamespace.COUCH_DEFAULT_ORGNAME);
+					CouchNamespace.COUCH_DEFAULT_ORGNAME);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		} catch (ExecutionException e) {

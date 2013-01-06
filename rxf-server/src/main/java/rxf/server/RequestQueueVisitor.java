@@ -103,7 +103,6 @@ public class RequestQueueVisitor extends Impl
 						return;
 					}
 				}
-
 			});
 		key.interestOps(SelectionKey.OP_WRITE);
 	}
@@ -124,7 +123,6 @@ public class RequestQueueVisitor extends Impl
 								RPCRequest rpcRequest = BatchInvoker
 										.decodeRequest(reqPayload, null,
 												RequestQueueVisitor.this);
-
 								try {
 									payload = RPC
 											.invokeAndEncodeResponse(
@@ -172,12 +170,9 @@ public class RequestQueueVisitor extends Impl
 			return;
 		}
 		int write = channel.write(cursor);
-		if (!cursor.hasRemaining()) { /*Socket socket = channel.socket();
-										socket.getOutputStream().flush();
-										socket.close();*/
+		if (!cursor.hasRemaining()) {
 			key.interestOps(SelectionKey.OP_READ).attach(null);
 		}
-
 	}
 
 	public final SerializationPolicy getSerializationPolicy(

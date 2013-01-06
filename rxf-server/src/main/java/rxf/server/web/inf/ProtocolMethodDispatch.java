@@ -101,79 +101,85 @@ public class ProtocolMethodDispatch extends Impl {
 		 * system proprty: RXF_SERVER_CONTENT_ROOT
 		 */
 		GETmap
-				.put(Pattern.compile(".*"), ContentRootImpl.class/*(COUCH_DEFAULT_FS_ROOT)*/);
+				.put(Pattern.compile(".*"), ContentRootImpl.class /*(COUCH_DEFAULT_FS_ROOT)*/);
 	}
 
 	public void onAccept(SelectionKey key) throws IOException {
 		ServerSocketChannel channel = (ServerSocketChannel) key.channel();
 		SocketChannel accept = channel.accept();
 		accept.configureBlocking(false);
-		App.get().enqueue(accept, OP_READ, this);
+		App.get().enqueue(accept, OP_READ, new Impl() {
+			public void onRead(SelectionKey key) throws Exception {
+				SocketChannel channel = (SocketChannel) key.channel();
 
-	}
-
-	public void onRead(SelectionKey key) throws Exception {
-		SocketChannel channel = (SocketChannel) key.channel();
-
-		ByteBuffer cursor = ByteBuffer.allocateDirect(BlobAntiPatternRelic
-				.getReceiveBufferSize());
-		int read = channel.read(cursor);
-		if (-1 == read) {
-			((SocketChannel) key.channel()).socket().close();//cancel();
-			return;
-		}
-
-		HttpMethod method = null;
-		HttpRequest httpRequest = null;
-		try {
-			//find the method to dispatch
-			Rfc822HeaderState state = new Rfc822HeaderState()
-					.apply((ByteBuffer) cursor.flip());
-			httpRequest = state.$req();
-			if (App.get().isDEBUG_SENDJSON()) {
-				System.err.println(BlobAntiPatternRelic.deepToString(UTF8
-						.decode((ByteBuffer) httpRequest.headerBuf()
-								.duplicate().rewind())));
-			}
-			String method1 = httpRequest.method();
-			method = HttpMethod.valueOf(method1);
-
-		} catch (Exception e) {
-		}
-
-		if (null == method) {
-			((SocketChannel) key.channel()).socket().close();//cancel();
-
-			return;
-		}
-
-		Set<Entry<Pattern, Class<? extends Impl>>> entries = NAMESPACE.get(
-				method).entrySet();
-		String path = httpRequest.path();
-		for (Entry<Pattern, Class<? extends Impl>> visitorEntry : entries) {
-			Matcher matcher = visitorEntry.getKey().matcher(path);
-			if (matcher.find()) {
-				if (App.get().isDEBUG_SENDJSON()) {
-					System.err.println("+?+?+? using " + matcher.toString());
+				ByteBuffer cursor = ByteBuffer
+						.allocateDirect(BlobAntiPatternRelic
+								.getReceiveBufferSize());
+				int read = channel.read(cursor);
+				if (-1 == read) {
+					((SocketChannel) key.channel()).socket().close();//cancel();
+					return;
 				}
-				Class<? extends Impl> value = visitorEntry.getValue();
-				Impl impl;
 
-				impl = value.newInstance();
-				Object a[] = {impl, httpRequest, cursor};
-				key.attach(a);
-				if (PreRead.class.isAssignableFrom(value)) {
-					impl.onRead(key);
-				};
+				HttpMethod method = null;
+				HttpRequest httpRequest = null;
+				try {
+					//find the method to dispatch
+					Rfc822HeaderState state = new Rfc822HeaderState()
+							.apply((ByteBuffer) cursor.flip());
+					httpRequest = state.$req();
+					if (App.get().isDEBUG_SENDJSON()) {
+						System.err.println(BlobAntiPatternRelic
+								.deepToString(UTF8
+										.decode((ByteBuffer) httpRequest
+												.headerBuf().duplicate()
+												.rewind())));
+					}
+					String method1 = httpRequest.method();
+					method = HttpMethod.valueOf(method1);
 
-				key.selector().wakeup();
+				} catch (Exception e) {
+				}
 
-				return;
+				if (null != method) {
+
+					Set<Entry<Pattern, Class<? extends Impl>>> entries = NAMESPACE
+							.get(method).entrySet();
+					String path = httpRequest.path();
+					for (Entry<Pattern, Class<? extends Impl>> visitorEntry : entries) {
+						Matcher matcher = visitorEntry.getKey().matcher(path);
+						if (matcher.find()) {
+							if (App.get().isDEBUG_SENDJSON()) {
+								System.err.println("+?+?+? using "
+										+ matcher.toString());
+							}
+							Class<? extends Impl> value = visitorEntry
+									.getValue();
+							Impl impl;
+
+							impl = value.newInstance();
+							Object a[] = {impl, httpRequest, cursor};
+							key.attach(a);
+							if (PreRead.class.isAssignableFrom(value)) {
+								impl.onRead(key);
+							};
+
+							key.selector().wakeup();
+
+							return;
+						}
+
+					}
+					System.err.println(BlobAntiPatternRelic.deepToString(
+							"!!!1!1!!", "404", path, "using", NAMESPACE));
+				} else {
+					((SocketChannel) key.channel()).socket().close();//cancel();
+
+					return;
+				}
 			}
+		});
 
-		}
-		System.err.println(BlobAntiPatternRelic.deepToString("!!!1!1!!", "404",
-				path, "using", NAMESPACE));
 	}
 
 }

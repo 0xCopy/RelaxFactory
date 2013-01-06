@@ -107,7 +107,6 @@ public class HttpProxyImpl extends Impl {
 												browserChannel.close();
 											browserKey.selector().wakeup();
 											browserKey.interestOps(0);
-											couchKey.selector().wakeup();
 											couchKey.interestOps(OP_READ)
 													.selector().wakeup();
 										} catch (Exception e) {
@@ -133,7 +132,6 @@ public class HttpProxyImpl extends Impl {
 										dst.flip();
 										couchKey.selector().wakeup();
 										couchKey.interestOps(0);
-										browserKey.selector().wakeup();
 										browserKey.interestOps(OP_WRITE)
 												.selector().wakeup();
 
@@ -149,8 +147,8 @@ public class HttpProxyImpl extends Impl {
 						public void onWrite(SelectionKey couchKey)
 								throws Exception {
 							couchConnection.write(UTF8.encode(req));
-							couchKey.selector().wakeup();
-							couchKey.interestOps(OP_READ);
+
+							couchKey.interestOps(OP_READ).selector().wakeup();;
 						}
 					});
 		}

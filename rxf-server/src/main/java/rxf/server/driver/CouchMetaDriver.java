@@ -123,8 +123,7 @@ public enum CouchMetaDriver {
 									cursor = (ByteBuffer) flip.slice();
 									header = null;
 
-									if (RelaxFactoryServer.App.get()
-											.isDEBUG_SENDJSON()) {
+									if (d()) {
 										System.err
 												.println(deepToString(
 														response.statusEnum(),
@@ -194,7 +193,7 @@ public enum CouchMetaDriver {
 			try {
 				cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
 			} catch (Exception e) {
-				if (RelaxFactoryServer.App.get().isDEBUG_SENDJSON()) {
+				if (d()) {
 					System.err.println("!!! " + deepToString(this, e)
 							+ "\n\tfrom");
 					dbKeysBuilder.trace().printStackTrace();
@@ -261,8 +260,7 @@ public enum CouchMetaDriver {
 									cursor = (ByteBuffer) flip.slice();
 									header = null;
 
-									if (RelaxFactoryServer.App.get()
-											.isDEBUG_SENDJSON()) {
+									if (d()) {
 										System.err
 												.println(deepToString(
 														response.statusEnum(),
@@ -330,7 +328,7 @@ public enum CouchMetaDriver {
 			try {
 				cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
 			} catch (Exception e) {
-				if (RelaxFactoryServer.App.get().isDEBUG_SENDJSON()) {
+				if (d()) {
 					System.err.println("!!! " + deepToString(this, e)
 							+ "\n\tfrom");
 					dbKeysBuilder.trace().printStackTrace();
@@ -413,8 +411,7 @@ public enum CouchMetaDriver {
 									cursor = (ByteBuffer) flip.slice();
 									header = null;
 
-									if (RelaxFactoryServer.App.get()
-											.isDEBUG_SENDJSON()) {
+									if (d()) {
 										System.err
 												.println(deepToString(
 														response.statusEnum(),
@@ -485,7 +482,7 @@ public enum CouchMetaDriver {
 			try {
 				cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
 			} catch (Throwable e) {
-				if (RelaxFactoryServer.App.get().isDEBUG_SENDJSON()) {
+				if (d()) {
 					System.err.println("!!! " + deepToString(this, e)
 							+ "\n\tfrom");
 					dbKeysBuilder.trace().printStackTrace();
@@ -558,8 +555,7 @@ public enum CouchMetaDriver {
 											HEADER_TERMINATOR, response
 													.headerBuf())) {
 										try {
-											if (RelaxFactoryServer.App.get()
-													.isDEBUG_SENDJSON())
+											if (d())
 												System.err
 														.println(deepToString(
 																"??? ",
@@ -575,8 +571,7 @@ public enum CouchMetaDriver {
 													.encode(str);
 											payload.set(encode);
 										} catch (Exception e) {
-											if (RelaxFactoryServer.App.get()
-													.isDEBUG_SENDJSON()) {
+											if (d()) {
 												e.printStackTrace();
 												Throwable trace = dbKeysBuilder
 														.trace();
@@ -619,7 +614,7 @@ public enum CouchMetaDriver {
 			try {
 				cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
 			} catch (Exception e) {
-				if (RelaxFactoryServer.App.get().isDEBUG_SENDJSON()) {
+				if (d()) {
 					System.err.println("!!! " + deepToString(this, e)
 							+ "\n\tfrom");
 					dbKeysBuilder.trace().printStackTrace();
@@ -718,8 +713,7 @@ public enum CouchMetaDriver {
 									cursor = (ByteBuffer) flip.slice();
 									header = null;
 
-									if (RelaxFactoryServer.App.get()
-											.isDEBUG_SENDJSON()) {
+									if (d()) {
 										System.err
 												.println(deepToString(
 														response.statusEnum(),
@@ -774,7 +768,7 @@ public enum CouchMetaDriver {
 			try {
 				cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
 			} catch (Exception e) {
-				if (RelaxFactoryServer.App.get().isDEBUG_SENDJSON()) {
+				if (d()) {
 					System.err.println("!!! " + deepToString(this, e)
 							+ "\n\tfrom");
 					dbKeysBuilder.trace().printStackTrace();
@@ -879,8 +873,7 @@ public enum CouchMetaDriver {
 									cursor = (ByteBuffer) flip.slice();
 									header = null;
 
-									if (RelaxFactoryServer.App.get()
-											.isDEBUG_SENDJSON()) {
+									if (d()) {
 										System.err
 												.println(deepToString(
 														response.statusEnum(),
@@ -1015,8 +1008,7 @@ public enum CouchMetaDriver {
 												ByteBuffer put = outbound
 														.put(byteBuffer);
 											}
-											if (RelaxFactoryServer.App.get()
-													.isDEBUG_SENDJSON()) {
+											if (d()) {
 												System.err
 														.println(UTF8
 																.decode((ByteBuffer) outbound
@@ -1028,9 +1020,7 @@ public enum CouchMetaDriver {
 											int endl = 0;
 											while (sum > 0
 													&& src.hasRemaining()) {
-												if (RelaxFactoryServer.App
-														.get()
-														.isDEBUG_SENDJSON())
+												if (d())
 													System.err
 															.println("outbound:----\n"
 																	+ UTF8
@@ -1073,8 +1063,7 @@ public enum CouchMetaDriver {
 											ByteBuffer retval = (ByteBuffer) outbound
 													.clear().limit(endl);
 
-											if (RelaxFactoryServer.App.get()
-													.isDEBUG_SENDJSON()) {
+											if (d()) {
 												System.err.println(UTF8
 														.decode(retval
 																.duplicate()));
@@ -1090,7 +1079,7 @@ public enum CouchMetaDriver {
 			try {
 				cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
 			} catch (Exception e) {
-				if (RelaxFactoryServer.App.get().isDEBUG_SENDJSON()) {
+				if (d()) {
 					System.err.println("!!! " + deepToString(this, e)
 							+ "\n\tfrom");
 					dbKeysBuilder.trace().printStackTrace();
@@ -1146,7 +1135,7 @@ public enum CouchMetaDriver {
 							Accept, MimeType.json.contentType).headerString(
 							Content$2dType, MimeType.json.contentType).as(
 							ByteBuffer.class);
-			if (RelaxFactoryServer.App.get().isDEBUG_SENDJSON()) {
+			if (d()) {
 				System.err.println(deepToString(opaque, validjson, UTF8
 						.decode(header.duplicate()), state));
 			}
@@ -1224,8 +1213,7 @@ public enum CouchMetaDriver {
 									cursor = (ByteBuffer) flip.slice();
 									header = null;
 
-									if (RelaxFactoryServer.App.get()
-											.isDEBUG_SENDJSON()) {
+									if (d()) {
 										System.err
 												.println(deepToString(
 														response.statusEnum(),
@@ -1290,7 +1278,7 @@ public enum CouchMetaDriver {
 			try {
 				cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
 			} catch (Exception e) {
-				if (RelaxFactoryServer.App.get().isDEBUG_SENDJSON()) {
+				if (d()) {
 					System.err.println("!!! " + deepToString(this, e)
 							+ "\n\tfrom");
 					dbKeysBuilder.trace().printStackTrace();
@@ -1442,7 +1430,7 @@ public enum CouchMetaDriver {
 			try {
 				cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
 			} catch (Exception e) {
-				if (RelaxFactoryServer.App.get().isDEBUG_SENDJSON()) {
+				if (d()) {
 					System.err.println("!!! " + deepToString(this, e)
 							+ "\n\tfrom");
 					dbKeysBuilder.trace().printStackTrace();
@@ -1453,6 +1441,11 @@ public enum CouchMetaDriver {
 		}
 
 	};
+
+	private static boolean d() {
+		return RelaxFactoryServer.App.get().isDEBUG_SENDJSON();
+	}
+
 	public static final byte[] HEADER_TERMINATOR = "\r\n\r\n".getBytes(UTF8);
 	public static final byte[] CE_TERMINAL = "\n0\r\n\r\n".getBytes(UTF8);
 	//"premature optimization" s/mature/view/
@@ -1482,7 +1475,19 @@ public enum CouchMetaDriver {
 	public static void main(String... args) throws NoSuchFieldException {
 		Field[] fields = CouchMetaDriver.class.getFields();
 		@Language("JAVA")
-		String s = "package rxf.server.gen;\n//generated\n  \n\nimport java.util.concurrent.*; \n/**\n * generated drivers\n */\npublic interface CouchDriver{\n"
+		String s = "package rxf.server.gen;\n//generated\n  \n\nimport com.google.gson.FieldNamingPolicy;\n"
+				+ "import com.google.gson.Gson;\n"
+				+ "import com.google.gson.GsonBuilder;\n"
+				+ "import rxf.server.*;\n"
+				+ "import rxf.server.an.DbKeys;\n"
+				+ "\n"
+				+ "import java.lang.reflect.Type;\n"
+				+ "import java.nio.ByteBuffer;\n"
+				+ "import java.util.concurrent.Callable;\n"
+				+ "import java.util.concurrent.Future;\n"
+				+ "import java.util.concurrent.TimeUnit;\n"
+				+ "\n"
+				+ "import static rxf.server.BlobAntiPatternRelic.avoidStarvation;\n/**\n * generated drivers\n */\npublic interface CouchDriver{\n"
 				+ "\n"
 				+ "\n"
 				+ "    TimeUnit defaultCollectorTimeUnit = TimeUnit.SECONDS;\n"

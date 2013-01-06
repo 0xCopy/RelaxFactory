@@ -14,7 +14,7 @@ import static rxf.server.gen.CouchDriver.GSON;
 
 public abstract class CouchLocator<T> extends Locator<T, String>
 		implements
-        CouchNamespace<T> {
+			CouchNamespace<T> {
 
 	public CouchLocator(String... nse) {
 		for (int i = 0; i < nse.length; i++) {

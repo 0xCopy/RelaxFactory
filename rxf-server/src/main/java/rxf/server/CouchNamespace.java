@@ -71,13 +71,13 @@ public interface CouchNamespace<T> {
 	public enum ns {
 		orgname {
 			@Override
-            public void setMe(CouchNamespace cl, String ns) {
+			public void setMe(CouchNamespace cl, String ns) {
 				cl.setOrgname(ns);
 			}
 		},
 		entityName {
 			@Override
-            public void setMe(CouchNamespace cl, String ns) {
+			public void setMe(CouchNamespace cl, String ns) {
 				cl.setEntityName(ns);
 			}
 		};

@@ -63,8 +63,8 @@ public class CouchChangesClient extends AsioVisitor.Impl {
 		System.err.println("attempting " + str);
 		attachment[1] = UTF8.encode(str);
 		channel.write(ByteBuffer.wrap(str.getBytes()));
-		key.selector().wakeup();
-		key.interestOps(OP_READ);
+
+		key.interestOps(OP_READ).selector().wakeup();;
 	}
 
 	/**
@@ -96,8 +96,7 @@ public class CouchChangesClient extends AsioVisitor.Impl {
 						System.err.println("attempting " + str);
 						attachment[1] = UTF8.encode(str);
 						channel.write(ByteBuffer.wrap(str.getBytes()));
-						key.selector().wakeup();
-						key.interestOps(OP_READ);
+						key.interestOps(OP_READ).selector().wakeup();
 					}
 
 					@Override
@@ -149,8 +148,7 @@ public class CouchChangesClient extends AsioVisitor.Impl {
 						((SocketChannel) key.channel()).write(ByteBuffer
 								.wrap(str.getBytes()));
 						key.selector().wakeup();
-						key.interestOps(OP_READ);
-						key.attach(prev);
+						key.interestOps(OP_READ).attach(prev);
 						scriptExit2 = true;
 					}
 				});

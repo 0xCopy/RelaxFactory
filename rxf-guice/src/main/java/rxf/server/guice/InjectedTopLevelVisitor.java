@@ -20,8 +20,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import static java.nio.channels.SelectionKey.OP_READ;
-import static java.nio.channels.SelectionKey.OP_WRITE;
+import static java.nio.channels.SelectionKey.*;
 import static rxf.server.CouchNamespace.NAMESPACE;
 import static rxf.server.RelaxFactoryServer.UTF8;
 
@@ -54,81 +53,85 @@ public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
 		ServerSocketChannel channel = (ServerSocketChannel) key.channel();
 		SocketChannel accept = channel.accept();
 		accept.configureBlocking(false);
-		RelaxFactoryServer.App.get().enqueue(accept, OP_READ, this);
+		RelaxFactoryServer.App.get().enqueue(accept, OP_READ, new Impl() {
 
-	}
+			public void onRead(SelectionKey key) throws Exception {
+				final SocketChannel channel = (SocketChannel) key.channel();
 
-	public void onRead(SelectionKey key) throws Exception {
-		final SocketChannel channel = (SocketChannel) key.channel();
-
-		ByteBuffer cursor = ByteBuffer.allocateDirect(BlobAntiPatternRelic
-				.getReceiveBufferSize());
-		int read = channel.read(cursor);
-		if (-1 == read) {
-			((SocketChannel) key.channel()).socket().close();//cancel();
-			return;
-		}
-
-		HttpMethod method = null;
-		HttpRequest httpRequest = null;
-		try {
-			//find the method to dispatch
-			Rfc822HeaderState state = new Rfc822HeaderState()
-					.apply((ByteBuffer) cursor.flip());
-			httpRequest = state.$req();
-			if (RelaxFactoryServer.App.get().isDEBUG_SENDJSON()) {
-				System.err.println(BlobAntiPatternRelic.deepToString(UTF8
-						.decode((ByteBuffer) httpRequest.headerBuf()
-								.duplicate().rewind())));
-			}
-			String method1 = httpRequest.method();
-			method = HttpMethod.valueOf(method1);
-
-		} catch (Exception e) {
-		}
-
-		if (null == method) {
-			((SocketChannel) key.channel()).socket().close();//cancel();
-
-			return;
-		}
-
-		Set<Entry<String, Key<? extends AsioVisitor>>> entries = bindings.get(
-				method).entrySet();
-		String path = httpRequest.path();
-		for (Entry<String, Key<? extends AsioVisitor>> visitorEntry : entries) {
-			if (path.matches(visitorEntry.getKey())) {
-				if (RelaxFactoryServer.App.get().isDEBUG_SENDJSON()) {
-					System.err.println("+?+?+? using "
-							+ visitorEntry.getValue());
-				}
-				AsioVisitor visitor = injector.getInstance(visitorEntry
-						.getValue());
-
-				Object a[] = {visitor, httpRequest, cursor};
-				key.attach(a);
-				if (visitor instanceof PreRead) {
-					visitor.onRead(key);
+				ByteBuffer cursor = ByteBuffer
+						.allocateDirect(BlobAntiPatternRelic
+								.getReceiveBufferSize());
+				int read = channel.read(cursor);
+				if (-1 == read) {
+					((SocketChannel) key.channel()).socket().close();//cancel();
+					return;
 				}
 
-				key.selector().wakeup();
+				HttpMethod method = null;
+				HttpRequest httpRequest = null;
+				try {
+					//find the method to dispatch
+					Rfc822HeaderState state = new Rfc822HeaderState()
+							.apply((ByteBuffer) cursor.flip());
+					httpRequest = state.$req();
+					if (RelaxFactoryServer.App.get().isDEBUG_SENDJSON()) {
+						System.err.println(BlobAntiPatternRelic
+								.deepToString(UTF8
+										.decode((ByteBuffer) httpRequest
+												.headerBuf().duplicate()
+												.rewind())));
+					}
+					String method1 = httpRequest.method();
+					method = HttpMethod.valueOf(method1);
 
-				return;
-			}
-		}
-		// Failed to find a matching visitor, 404
-		key.selector().wakeup();
-		key.interestOps(OP_WRITE).attach(new Impl() {
-			@Override
-			public void onWrite(SelectionKey key) throws Exception {
-				String response = "HTTP/1.1 404 Not Found\n"
-						+ "Content-Length: 0\n\n";
-				int write = channel.write(UTF8.encode(response));
+				} catch (Exception e) {
+				}
+
+				if (null == method) {
+					((SocketChannel) key.channel()).socket().close();//cancel();
+
+					return;
+				}
+
+				Set<Entry<String, Key<? extends AsioVisitor>>> entries = bindings
+						.get(method).entrySet();
+				String path = httpRequest.path();
+				for (Entry<String, Key<? extends AsioVisitor>> visitorEntry : entries) {
+					if (path.matches(visitorEntry.getKey())) {
+						if (RelaxFactoryServer.App.get().isDEBUG_SENDJSON()) {
+							System.err.println("+?+?+? using "
+									+ visitorEntry.getValue());
+						}
+						AsioVisitor visitor = injector.getInstance(visitorEntry
+								.getValue());
+
+						Object a[] = {visitor, httpRequest, cursor};
+						key.attach(a);
+						if (visitor instanceof PreRead) {
+							visitor.onRead(key);
+						}
+
+						key.selector().wakeup();
+
+						return;
+					}
+				}
+				// Failed to find a matching visitor, 404
 				key.selector().wakeup();
-				key.interestOps(OP_READ).attach(null);
+				key.interestOps(OP_WRITE).attach(new Impl() {
+					@Override
+					public void onWrite(SelectionKey key) throws Exception {
+						String response = "HTTP/1.1 404 Not Found\n"
+								+ "Content-Length: 0\n\n";
+						int write = channel.write(UTF8.encode(response));
+						key.selector().wakeup();
+						key.interestOps(OP_READ).attach(null);
+					}
+				});
+				System.err.println(BlobAntiPatternRelic.deepToString(
+						"!!!1!1!!", "404", path, "using", NAMESPACE));
 			}
 		});
-		System.err.println(BlobAntiPatternRelic.deepToString("!!!1!1!!", "404",
-				path, "using", NAMESPACE));
+
 	}
 }
