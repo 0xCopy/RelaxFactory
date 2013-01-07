@@ -42,12 +42,11 @@ import static rxf.server.an.DbKeys.etype.*;
  * the fluent interface is carried in threadlocal variables from step to step.  the visit() method cracks these open and
  * inserts them as the apropriate state for lower level visit(builder1...buildern) method
  * <p/>
- * <h2>{@link one.xio.AsioVisitor} visitor  sub-threads in threadpools must be one of:</h2><ol>
- * <li>inner classes using the <u>final</u> paramters passed in
- * via {@link #visit(rxf.server.DbKeysBuilder, rxf.server.ActionBuilder)}</li>
- * <li>fluent class interface agnostic(highly unlikely)</li>
- * <li>arduously carried in (same as first option but not as clean as inner class refs)</li>
- * </ol>
+ * <p/>
+ * the slots do not return errors conventionally, the contract is success or null.
+ * <p/>
+ * {@link ActionBuilder#currentAction}.get().state() holds RFC822 Headerstate of the responses, or need to be fixed to do so.
+ * <p/>
  * User: jim
  * Date: 5/24/12
  * Time: 3:09 PM
