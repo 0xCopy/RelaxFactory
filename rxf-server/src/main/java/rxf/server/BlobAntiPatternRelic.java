@@ -1,21 +1,14 @@
 package rxf.server;
 
-import one.xio.AsioVisitor;
 import rxf.server.gen.CouchDriver;
-import rxf.server.web.inf.ProtocolMethodDispatch;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-import static java.nio.channels.SelectionKey.OP_ACCEPT;
 import static rxf.server.CouchNamespace.COUCH_DEFAULT_ORGNAME;
 import static rxf.server.RelaxFactoryServerImpl.wheresWaldo;
 /**
@@ -144,7 +137,7 @@ public class BlobAntiPatternRelic {
 	 new InetSocketAddress(hostname, Integer.parseInt(port)));
 	 serverSocketChannel.configureBlocking(false);
 	 RelaxFactoryServer.
-	 .enqueue(serverSocketChannel, OP_ACCEPT, topLevel).init(topLevel, args);
+	 .enqueue(serverSocketChannel, OP_ACCEPT, topLevel).launchVhost(topLevel, args);
 	 }
 	 */
 

@@ -1,12 +1,5 @@
 package rxf.server.guice;
 
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
-
-import one.xio.AsioVisitor;
-import one.xio.HttpMethod;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Key;
 import com.google.inject.Provides;
@@ -14,8 +7,14 @@ import com.google.inject.Singleton;
 import com.google.inject.internal.UniqueAnnotations;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+import one.xio.AsioVisitor;
+import one.xio.HttpMethod;
 import rxf.server.RelaxFactoryServer;
 import rxf.server.RelaxFactoryServerImpl;
+
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Guice bindings to configure RelaxFactory with injection for each visitor impl. Binds
@@ -62,7 +61,7 @@ public class RxfModule extends AbstractModule {
 			@Named("hostname") String hostname) throws UnknownHostException {
 		RelaxFactoryServer server = RelaxFactoryServerImpl
 				.createRelaxFactoryServerImpl();
-		server.init(hostname, port, topLevel);
+		server.launchVhost(hostname, port, topLevel);
 		return server;
 	}
 

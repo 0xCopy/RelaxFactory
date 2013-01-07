@@ -59,7 +59,7 @@ public class CouchModuleBuilder {
 							.get(String.class, Names.named(NAMESPACE)));
 				}
 
-				//TODO setup some init for the entities so their DBs are known to exist before needed
+				//TODO setup some launchVhost for the entities so their DBs are known to exist before needed
 
 				for (Class<? extends CouchService<?>> service : services) {
 					bindService(service);

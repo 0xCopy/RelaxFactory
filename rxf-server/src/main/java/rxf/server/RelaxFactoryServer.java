@@ -71,10 +71,10 @@ public interface RelaxFactoryServer {
 
     RelaxFactoryServer setSendBufferSize(int sendBufferSize);
 
-    RelaxFactoryServer init(String hostname, int port, AsioVisitor topLevel)
+    RelaxFactoryServer launchVhost(String hostname, int port, AsioVisitor topLevel)
             throws UnknownHostException;
-
-    RelaxFactoryServer start() throws IOException;
+/*
+    RelaxFactoryServer start() throws IOException;*/
 
     int getPort();
 
