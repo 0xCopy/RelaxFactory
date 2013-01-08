@@ -1,6 +1,9 @@
 package ds.shared.rf;
 
-import com.google.web.bindery.requestfactory.shared.*;
+import com.google.web.bindery.requestfactory.shared.Request;
+import com.google.web.bindery.requestfactory.shared.RequestContext;
+import com.google.web.bindery.requestfactory.shared.RequestFactory;
+import com.google.web.bindery.requestfactory.shared.Service;
 import ds.server.SecurityImpl;
 import ds.shared.rf.proxy.*;
 import ds.shared.rf.request.*;
@@ -13,21 +16,23 @@ import rxf.shared.prox.CouchTxProxy;
  */
 public interface DealRequestFactory extends RequestFactory {
 
-  DealRequest dealReq();
+    DealRequest dealReq();
 
-  LoginRequest loginReq();
+    LoginRequest loginReq();
 
-  VendorRequest vendorReq();
-  
-  NpoRequest npoReq();
+    VendorRequest vendorReq();
 
-  @Service(SecurityImpl.class)
-  interface SendRequest extends RequestContext {
-    Request<CouchTxProxy> deal(DealProxy deal);
-    Request<CouchTxProxy> login(LoginProxy login);
-    Request<CouchTxProxy> vendor(VendorProxy vendor);
-  }
+    NpoRequest npoReq();
 
-  SendRequest send();
+    @Service(SecurityImpl.class)
+    interface SendRequest extends RequestContext {
+        Request<CouchTxProxy> deal(DealProxy deal);
+
+        Request<CouchTxProxy> login(LoginProxy login);
+
+        Request<CouchTxProxy> vendor(VendorProxy vendor);
+    }
+
+    SendRequest send();
 
 }

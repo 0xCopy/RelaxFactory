@@ -16,8 +16,7 @@ import static java.lang.annotation.ElementType.*;
  * To change this template use File | Settings | File Templates.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({FIELD, LOCAL_VARIABLE, TYPE, ANNOTATION_TYPE, CONSTRUCTOR, PACKAGE,
-		PARAMETER})
-public @interface DbTask {
-	DbTerminal[] value();
+@Target({FIELD,LOCAL_VARIABLE,TYPE,ANNOTATION_TYPE,CONSTRUCTOR,PACKAGE,PARAMETER})
+public @interface DbTask{
+  DbTerminal[] value();
 }

@@ -1,11 +1,11 @@
 package ds.shared.rf.proxy;
 
-import java.util.Date;
-
 import com.google.web.bindery.requestfactory.shared.EntityProxy;
 import com.google.web.bindery.requestfactory.shared.ProxyFor;
 import ds.model.Vendor;
 import ds.server.SecurityImpl;
+
+import java.util.Date;
 
 /**
  * User: jim
@@ -14,31 +14,31 @@ import ds.server.SecurityImpl;
  */
 @ProxyFor(value = Vendor.class, locator = SecurityImpl.VendorCouchLocator.class)
 public interface VendorProxy extends EntityProxy {
-  String getId();
+    String getId();
 
-  void setId(String id);
+    void setId(String id);
 
-  Date getCreation();
+    Date getCreation();
 
-  void setCreation(Date creation);
+    void setCreation(Date creation);
 
-  String getVersion();
+    String getVersion();
 
-  void setVersion(String version);
+    void setVersion(String version);
 
-  String getName();
+    String getName();
 
-  void setName(String name);
+    void setName(String name);
 
-  String getDescription();
+    String getDescription();
 
-  void setDescription(String description);
+    void setDescription(String description);
 
-  String getPocName();
+    String getPocName();
 
-  void setPocName(String pocName);
+    void setPocName(String pocName);
 
-  ContactProxy getContactInfo();
+    ContactProxy getContactInfo();
 
-  void setContactInfo(ContactProxy contactInfo);
+    void setContactInfo(ContactProxy contactInfo);
 }

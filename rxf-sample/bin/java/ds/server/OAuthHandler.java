@@ -20,9 +20,9 @@ import java.nio.channels.SocketChannel;
 import java.util.Map;
 
 import static one.xio.HttpHeaders.*;
-import static rxf.server.RelaxFactoryServer.UTF8;
 import static one.xio.HttpStatus.$200;
 import static rxf.server.BlobAntiPatternObject.*;
+import static rxf.server.RelaxFactoryServer.UTF8;
 
 /**
  * this requiers some https, but sslEngine done right would require a keystore operation in the build process, so I'm

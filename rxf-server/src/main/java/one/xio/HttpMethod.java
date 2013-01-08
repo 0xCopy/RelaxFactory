@@ -6,6 +6,15 @@ package one.xio;
  * Date: May 6, 2009
  * Time: 10:12:22 PM
  */
-public enum HttpMethod {
-	GET, POST, PUT, HEAD, DELETE, TRACE, CONNECT, OPTIONS, HELP, VERSION, ;
+public enum HttpMethod{
+    GET,
+    POST,
+    PUT,
+    HEAD,
+    DELETE,
+    TRACE,
+    CONNECT,
+    OPTIONS,
+    HELP,
+    VERSION,;
 }

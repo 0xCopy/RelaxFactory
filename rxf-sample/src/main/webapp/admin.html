@@ -12,27 +12,27 @@
 <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/googleapis/0.0.4/googleapis.min.js"></script>
 <script type="text/javascript" src="//ajax.googleapis.com/jsapi"></script>
 <script type="text/javascript">
-  google.load("identitytoolkit", "1", {packages: ["ac"], language:"en"});
+    google.load("identitytoolkit", "1", {packages: ["ac"], language: "en"});
 </script>
 <script type="text/javascript">
-  $(function() {
-    window.google.identitytoolkit.setConfig({
-        developerKey: "AIzaSyBIRwIq-3Op3r5taLhE2_t_fbjRmGbmMNY",
-        companyName: "DealSite",
-        callbackUrl: "/DealSite/oauthWindow.html",
-        realm: "",
-        userStatusUrl: "/rxf.server.Auth/userStatus",
-        loginUrl: "/rxf.server.Auth/login",
-        signupUrl: "/rxf.server.Auth/signup",
-        homeUrl: "/rxf.server.Auth/home",
-        logoutUrl: "/rxf.server.Auth/signout",
-        idps: ["Gmail", "GoogleApps", "Yahoo", "AOL"],
-        tryFederatedFirst: true,
-        useCachedUserStatus: false,
-        useContextParam: true
+    $(function () {
+        window.google.identitytoolkit.setConfig({
+            developerKey: "AIzaSyBIRwIq-3Op3r5taLhE2_t_fbjRmGbmMNY",
+            companyName: "DealSite",
+            callbackUrl: "/DealSite/oauthWindow.html",
+            realm: "",
+            userStatusUrl: "/rxf.server.Auth/userStatus",
+            loginUrl: "/rxf.server.Auth/login",
+            signupUrl: "/rxf.server.Auth/signup",
+            homeUrl: "/rxf.server.Auth/home",
+            logoutUrl: "/rxf.server.Auth/signout",
+            idps: ["Gmail", "GoogleApps", "Yahoo", "AOL"],
+            tryFederatedFirst: true,
+            useCachedUserStatus: false,
+            useContextParam: true
+        });
+        $("#navbar").accountChooser();
     });
-    $("#navbar").accountChooser();
-  });
 </script>
 <!-- Insert the navbar element somewhere in the HTML page -->
 <div id="navbar"></div>

@@ -6,7 +6,6 @@ import one.xio.HttpStatus;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.nio.channels.*;
 import java.nio.charset.Charset;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -72,7 +71,7 @@ public interface RelaxFactoryServer {
     RelaxFactoryServer setSendBufferSize(int sendBufferSize);
 
     RelaxFactoryServer launchVhost(String hostname, int port, AsioVisitor topLevel)
-            throws UnknownHostException;
+            throws IOException;
 /*
     RelaxFactoryServer start() throws IOException;*/
 
@@ -86,7 +85,7 @@ public interface RelaxFactoryServer {
 
     RelaxFactoryServer setTopLevel(AsioVisitor topLevel);
 
-    InetAddress getHostname();
+    InetAddress getInetAddress();
 
     RelaxFactoryServer setHostname(InetAddress hostname);
 

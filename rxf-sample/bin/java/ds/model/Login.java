@@ -1,7 +1,6 @@
 package ds.model;
 
 import com.google.gson.annotations.SerializedName;
-import rxf.server.BlobAntiPatternObject;
 import rxf.server.CouchService;
 import rxf.server.CouchTx;
 import rxf.server.gen.CouchDriver;

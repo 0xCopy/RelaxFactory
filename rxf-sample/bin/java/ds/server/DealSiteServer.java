@@ -25,9 +25,9 @@ import static ds.server.SecurityImpl.*;
 import static java.lang.Math.abs;
 import static java.nio.channels.SelectionKey.OP_CONNECT;
 import static java.nio.channels.SelectionKey.OP_WRITE;
-import static rxf.server.RelaxFactoryServer.UTF8;
 import static rxf.server.BlobAntiPatternObject.deepToString;
 import static rxf.server.CouchNamespace.NAMESPACE;
+import static rxf.server.RelaxFactoryServer.UTF8;
 
 /**
  * User: jim

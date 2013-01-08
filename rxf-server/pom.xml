@@ -24,11 +24,11 @@
             <version>10.5.4</version>
             <scope>compile</scope>
         </dependency>
-<!--        <dependency>
-            <groupId>1xio</groupId>
-            <artifactId>1xio</artifactId>
-            <version>${one.xio.version}</version>
-        </dependency>-->
+        <!--        <dependency>
+                    <groupId>1xio</groupId>
+                    <artifactId>1xio</artifactId>
+                    <version>${one.xio.version}</version>
+                </dependency>-->
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>

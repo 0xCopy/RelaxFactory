@@ -4,21 +4,21 @@ JIT_LOGGING_OPT='-XX:+AggressiveOpts -XX:+AlwaysCompileLoopMethods -XX:+Backgrou
 
 mvn -Plinode package war:exploded && {
 
-set -x
-rt=$PWD/$(dirname $0)
-s=$(grep '<version>' ${rt}/../pom.xml | head -n1 | sed -e 's,[^>]*>\([^<]*\).*,\1,g')
-RD=${rt}/..
-TD=${RD}/rxf-server
-pushd ${TD}
-LAUNCHCP=$(mvn dependency:build-classpath | grep -v '\[INFO\]' | grep -v ' ')
-LAUNCHME=${RD}/rxf-server/target/rxf-server-${s}-jar-with-dependencies.jar
-mvn assembly:assembly
-popd
+    set -x
+    rt=$PWD/$(dirname $0)
+    s=$(grep '<version>' ${rt}/../pom.xml | head -n1 | sed -e 's,[^>]*>\([^<]*\).*,\1,g')
+    RD=${rt}/..
+    TD=${RD}/rxf-server
+    pushd ${TD}
+    LAUNCHCP=$(mvn dependency:build-classpath | grep -v '\[INFO\]' | grep -v ' ')
+    LAUNCHME=${RD}/rxf-server/target/rxf-server-${s}-jar-with-dependencies.jar
+    mvn assembly:assembly
+    popd
 
 } && {
     set -x
-rt=$PWD/$(dirname $0)
-s=$(grep '<version>' ${rt}/../pom.xml | head -n1 | sed -e 's,[^>]*>\([^<]*\).*,\1,g')
+    rt=$PWD/$(dirname $0)
+    s=$(grep '<version>' ${rt}/../pom.xml | head -n1 | sed -e 's,[^>]*>\([^<]*\).*,\1,g')
     RD=${rt}/..
     TD=${RD}/rxf-examples
     pushd ${TD}
@@ -30,7 +30,7 @@ s=$(grep '<version>' ${rt}/../pom.xml | head -n1 | sed -e 's,[^>]*>\([^<]*\).*,\
         PATHSEP=":"
         [[ "${OS}" = "Windows_NT" ]] && PATHSEP=';'
         FP="WEB-INF/classes${PATHSEP}${CP}"
-    	java -Xmx4g -cp ${FP} -jar $LAUNCHME $@ 
+        java -Xmx4g -cp ${FP} -jar $LAUNCHME $@
     }
     popd
 }

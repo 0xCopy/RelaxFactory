@@ -1,11 +1,11 @@
 package ds.shared.rf.proxy;
 
-import java.util.Date;
-
 import com.google.web.bindery.requestfactory.shared.EntityProxy;
 import com.google.web.bindery.requestfactory.shared.ProxyFor;
 import ds.model.Deal;
 import ds.server.SecurityImpl;
+
+import java.util.Date;
 
 /**
  * User: jim
@@ -14,78 +14,78 @@ import ds.server.SecurityImpl;
  */
 @ProxyFor(value = Deal.class, locator = SecurityImpl.DealCouchLocator.class)
 public interface DealProxy extends EntityProxy {
-  String getId();
+    String getId();
 
-  void setId(String id);
+    void setId(String id);
 
-  Date getCreation();
+    Date getCreation();
 
-  void setCreation(Date creation);
+    void setCreation(Date creation);
 
-  String getVersion();
+    String getVersion();
 
-  void setVersion(String version);
+    void setVersion(String version);
 
-  String getProduct();
+    String getProduct();
 
-  void setProduct(String product);
+    void setProduct(String product);
 
-  /**
-   * @return trusted html to be drawn on the page
-   */
-  String getProductDescription();
+    /**
+     * @return trusted html to be drawn on the page
+     */
+    String getProductDescription();
 
-  void setProductDescription(String productDescription);
+    void setProductDescription(String productDescription);
 
-  LoginProxy getCreator();
+    LoginProxy getCreator();
 
-  String getCreatorId();
+    String getCreatorId();
 
-  void setCreatorId(String creatorId);
+    void setCreatorId(String creatorId);
 
-  void setCreator(LoginProxy creator);
+    void setCreator(LoginProxy creator);
 
-  VendorProxy getVendor();
+    VendorProxy getVendor();
 
-  String getVendorId();
+    String getVendorId();
 
-  void setVendorId(String vendorId);
+    void setVendorId(String vendorId);
 
-  void setVendor(VendorProxy vendor);
+    void setVendor(VendorProxy vendor);
 
-  NpoProxy getNpo();
+    NpoProxy getNpo();
 
-  String getNpoId();
+    String getNpoId();
 
-  void setNpoId(String npoId);
+    void setNpoId(String npoId);
 
-  void setNpo(NpoProxy npo);
+    void setNpo(NpoProxy npo);
 
-  String getRoAdmin();
+    String getRoAdmin();
 
-  void setRoAdmin(String roAdmin);
+    void setRoAdmin(String roAdmin);
 
-  String getJson();
+    String getJson();
 
-  void setJson(String json);
+    void setJson(String json);
 
-  Float getDiscount();
+    Float getDiscount();
 
-  void setDiscount(Float discount);
+    void setDiscount(Float discount);
 
-  Float getAmount();
+    Float getAmount();
 
-  void setAmount(Float amount);
+    void setAmount(Float amount);
 
-  Date getExpire();
+    Date getExpire();
 
-  void setExpire(Date expire);
+    void setExpire(Date expire);
 
-  Integer getMinimum();
+    Integer getMinimum();
 
-  void setMinimum(Integer minimum);
+    void setMinimum(Integer minimum);
 
-  Integer getLimit();
+    Integer getLimit();
 
-  void setLimit(Integer limit);
+    void setLimit(Integer limit);
 }
