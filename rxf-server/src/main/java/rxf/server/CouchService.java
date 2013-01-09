@@ -11,7 +11,7 @@ import java.lang.annotation.*;
  *
  * @param <E> the entity this service is concerned with.
  */
-public interface CouchService<E>{
+public interface CouchService<E> {
   E find(String key);
 
   CouchTx persist(E entity);
@@ -25,7 +25,7 @@ public interface CouchService<E>{
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.METHOD)
   @Documented
-  public @interface View{
+  public @interface View {
     String map();
 
     String reduce() default "";
@@ -36,7 +36,7 @@ public interface CouchService<E>{
    */
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.ANNOTATION_TYPE)
-  public @interface CouchRequestParam{
+  public @interface CouchRequestParam {
     /**
      * The parameter name to use in the request
      */
@@ -50,7 +50,8 @@ public interface CouchService<E>{
   @Target(ElementType.PARAMETER)
   @CouchRequestParam("key")
   @Documented
-  public @interface Key{}
+  public @interface Key {
+  }
 
   /**
    * Marks a service method or parameter as being used on a couchdb view GET request as
@@ -60,7 +61,8 @@ public interface CouchService<E>{
   @Target(ElementType.PARAMETER)
   @CouchRequestParam("keys")
   @Documented
-  public @interface Keys{}
+  public @interface Keys {
+  }
 
   /**
    * Marks a service method or parameter as being used on a couchdb view GET request as
@@ -70,10 +72,10 @@ public interface CouchService<E>{
    * (Not yet supported on a method)
    */
   @Retention(RetentionPolicy.RUNTIME)
-  @Target({ElementType.PARAMETER/*, ElementType.METHOD*/})
+  @Target( {ElementType.PARAMETER/*, ElementType.METHOD*/})
   @CouchRequestParam("limit")
   @Documented
-  public @interface Limit{
+  public @interface Limit {
     //    /**
     //     * Value to use as the "limit" parameter. Annotations on the method override possible
     //     * parameters.
@@ -89,10 +91,10 @@ public interface CouchService<E>{
    * (Not yet supported on a method)
    */
   @Retention(RetentionPolicy.RUNTIME)
-  @Target({ElementType.PARAMETER/*, ElementType.METHOD*/})
+  @Target( {ElementType.PARAMETER/*, ElementType.METHOD*/})
   @CouchRequestParam("skip")
   @Documented
-  public @interface Skip{
+  public @interface Skip {
     //    /**
     //     * Value to use as the "skip" parameter. Annotations on the method override possible
     //     * parameters.
@@ -109,7 +111,8 @@ public interface CouchService<E>{
   @Target(ElementType.PARAMETER)
   @CouchRequestParam("startkey")
   @Documented
-  public @interface StartKey{}
+  public @interface StartKey {
+  }
 
   /**
    * Marks a service method or parameter as being used on a couchdb view GET request as
@@ -119,5 +122,6 @@ public interface CouchService<E>{
   @Target(ElementType.PARAMETER)
   @CouchRequestParam("endkey")
   @Documented
-  public @interface EndKey{}
+  public @interface EndKey {
+  }
 }

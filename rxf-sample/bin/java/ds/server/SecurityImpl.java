@@ -1,6 +1,9 @@
 package ds.server;
 
-import ds.model.*;
+import ds.model.Deal;
+import ds.model.Login;
+import ds.model.Npo;
+import ds.model.Vendor;
 import one.xio.HttpMethod;
 import rxf.server.CouchLocator;
 import rxf.server.CouchTx;

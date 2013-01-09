@@ -12,10 +12,14 @@ import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryEditorDriv
 import com.google.web.bindery.requestfactory.gwt.client.testing.MockRequestFactoryEditorDriver;
 import ds.shared.activity.DealActivityMapper;
 import ds.shared.activity.DealSearchActivity;
-import ds.shared.place.*;
+import ds.shared.place.DealPlace;
+import ds.shared.place.DealSearchPlace;
+import ds.shared.place.HomePlace;
 import ds.shared.rf.DealRequestFactory;
 import ds.shared.rf.proxy.DealProxy;
-import ds.shared.view.*;
+import ds.shared.view.DealSearchView;
+import ds.shared.view.DealView;
+import ds.shared.view.HomeView;
 
 import java.util.List;
 

@@ -24,23 +24,23 @@ import static rxf.server.gen.CouchDriver.GSON;
 /**
  * Tests out the db, cleaning up after itself. These must be run in order to work correctly and clean up.
  */
-public class CouchServiceTest{
-  public static final String             SOMEDBPREFIX  ="test_somedb_";
-  public static final String             SOMEDB        =SOMEDBPREFIX+System.currentTimeMillis(); //ordered names of testdbs for failure postmortem....
-  public static final String             DESIGN_SAMPLE ="_design/sample";
+public class CouchServiceTest {
+  public static final String SOMEDBPREFIX = "test_somedb_";
+  public static final String SOMEDB = SOMEDBPREFIX + System.currentTimeMillis(); //ordered names of testdbs for failure postmortem....
+  public static final String DESIGN_SAMPLE = "_design/sample";
   public static ScheduledExecutorService exec;
 
   @BeforeClass
-  static public void setUp() throws Exception{
+  static public void setUp() throws Exception {
     RelaxFactoryServer.App.get().setDEBUG_SENDJSON(true);
     RelaxFactoryServer.App.get().setKillswitch(false);
-    exec=Executors.newScheduledThreadPool(2);
-    exec.submit(new Runnable(){
-      public void run(){
-        AsioVisitor topLevel=new ProtocolMethodDispatch();
-        try{
+    exec = Executors.newScheduledThreadPool(2);
+    exec.submit(new Runnable() {
+      public void run() {
+        AsioVisitor topLevel = new ProtocolMethodDispatch();
+        try {
           RelaxFactoryServer.App.get().init(topLevel);
-        }catch(Exception e){
+        } catch (Exception e) {
           fail();
         }
       }
@@ -48,7 +48,7 @@ public class CouchServiceTest{
     nukeTestDbs();
 
     {
-      CouchTx tx=CouchDriver.DbCreate.$().db(SOMEDB).to().fire().tx();
+      CouchTx tx = CouchDriver.DbCreate.$().db(SOMEDB).to().fire().tx();
       assertNotNull(tx);
       assertTrue(tx.ok());
       assertNull(tx.getError());
@@ -56,123 +56,124 @@ public class CouchServiceTest{
 
   }
 
-  static void nukeTestDbs(){
-    try{
-      String json=DocFetch.$().db("").docId("_all_dbs").to().fire().json();
-      String[] strings=GSON.fromJson(json,String[].class);
-      for(String s:strings){
-        if(s.startsWith(SOMEDBPREFIX))
+  static void nukeTestDbs() {
+    try {
+      String json = DocFetch.$().db("").docId("_all_dbs").to().fire().json();
+      String[] strings = GSON.fromJson(json, String[].class);
+      for (String s : strings) {
+        if (s.startsWith(SOMEDBPREFIX))
           DbDelete.$().db(s).to().fire().tx();
       }
-    }catch(JsonSyntaxException e){
+    } catch (JsonSyntaxException e) {
       e.printStackTrace();
       fail();
     }
   }
 
   @AfterClass
-  static public void tearDown() throws Exception{
+  static public void tearDown() throws Exception {
 
-    try{
+    try {
       RelaxFactoryServer.App.get().setKillswitch(true);
       RelaxFactoryServer.App.get().getSelector().close();
       exec.shutdown();
-    }catch(Exception ignore){}
+    } catch (Exception ignore) {
+    }
   }
 
-  @Test(timeout=1000)
-  public void testTrivialFetchDoc() throws InterruptedException,ExecutionException{
-    TrivialCouchService service=CouchServiceFactory.get(TrivialCouchService.class,SOMEDB);
+  @Test(timeout = 1000)
+  public void testTrivialFetchDoc() throws InterruptedException, ExecutionException {
+    TrivialCouchService service = CouchServiceFactory.get(TrivialCouchService.class, SOMEDB);
 
-    CSFTest entity=new CSFTest();
+    CSFTest entity = new CSFTest();
 
-    entity.model="abc";
-    entity.brand="def";
+    entity.model = "abc";
+    entity.brand = "def";
 
-    CouchTx tx=service.persist(entity);
-    String id=tx.id();
+    CouchTx tx = service.persist(entity);
+    String id = tx.id();
 
-    CSFTest obj=service.find(id);
+    CSFTest obj = service.find(id);
     org.junit.Assert.assertNotNull(obj);
-    org.junit.Assert.assertEquals("abc",obj.model);
-    org.junit.Assert.assertEquals("def",obj.brand);
+    org.junit.Assert.assertEquals("abc", obj.model);
+    org.junit.Assert.assertEquals("def", obj.brand);
 
   }
 
-  @Test(timeout=1000)
-  public void testTrivialFinders(){
-    try{
-      TrivialCouchService service=null;
-      service=CouchServiceFactory.get(TrivialCouchService.class,SOMEDB);
+  @Test(timeout = 1000)
+  public void testTrivialFinders() {
+    try {
+      TrivialCouchService service = null;
+      service = CouchServiceFactory.get(TrivialCouchService.class, SOMEDB);
 
-      CouchTx tx=service.persist(new CSFTest());
+      CouchTx tx = service.persist(new CSFTest());
 
       org.junit.Assert.assertNotNull(tx);
       org.junit.Assert.assertTrue(tx.ok());
       org.junit.Assert.assertNull(tx.getError());
 
-      CSFTest obj=service.find(tx.id());
+      CSFTest obj = service.find(tx.id());
       org.junit.Assert.assertNull(obj.brand);
       org.junit.Assert.assertNull(obj.model);
-      obj.brand="Best";
-      obj.model="Sample";
+      obj.brand = "Best";
+      obj.model = "Sample";
 
-      CouchTx tx2=service.persist(obj);
-      org.junit.Assert.assertEquals(tx.id(),tx2.id());
+      CouchTx tx2 = service.persist(obj);
+      org.junit.Assert.assertEquals(tx.id(), tx2.id());
       org.junit.Assert.assertFalse(tx.rev().equals(tx2.rev()));
 
-      CSFTest obj2=service.find(tx.id());
-      org.junit.Assert.assertEquals("Best",obj2.brand);
-      org.junit.Assert.assertEquals("Sample",obj2.model);
-    }catch(Exception e){
+      CSFTest obj2 = service.find(tx.id());
+      org.junit.Assert.assertEquals("Best", obj2.brand);
+      org.junit.Assert.assertEquals("Sample", obj2.model);
+    } catch (Exception e) {
       fail();
     }
   }
 
-  @Test(timeout=1000)
-  public void testSimpleFinder(){
-    try{
-      SimpleCouchService service=null;
+  @Test(timeout = 1000)
+  public void testSimpleFinder() {
+    try {
+      SimpleCouchService service = null;
 
-      service=CouchServiceFactory.get(SimpleCouchService.class,SOMEDB);
+      service = CouchServiceFactory.get(SimpleCouchService.class, SOMEDB);
 
-      CSFTest a=new CSFTest();
-      a.brand="something";
-      CSFTest b=new CSFTest();
-      b.brand="else";
+      CSFTest a = new CSFTest();
+      a.brand = "something";
+      CSFTest b = new CSFTest();
+      b.brand = "else";
 
       service.persist(a);
       service.persist(b);
 
-      List<CSFTest> results=service.getItemsWithBrand("something");
+      List<CSFTest> results = service.getItemsWithBrand("something");
       org.junit.Assert.assertNotNull(results);
-      org.junit.Assert.assertEquals(1,results.size());
-      org.junit.Assert.assertEquals("something",results.get(0).brand);
+      org.junit.Assert.assertEquals(1, results.size());
+      org.junit.Assert.assertEquals("something", results.get(0).brand);
 
-    }catch(Exception e){
+    } catch (Exception e) {
       fail();
     }
   }
 
   @Test
-  public void testSimpleFinderEmptyRowset(){
-    try{
-      SimpleCouchService service=null;
+  public void testSimpleFinderEmptyRowset() {
+    try {
+      SimpleCouchService service = null;
 
-      service=CouchServiceFactory.get(SimpleCouchService.class,SOMEDB);
+      service = CouchServiceFactory.get(SimpleCouchService.class, SOMEDB);
 
-      CSFTest a=new CSFTest();
-      a.brand="something";
-      CSFTest b=new CSFTest();
-      b.brand="else";
+      CSFTest a = new CSFTest();
+      a.brand = "something";
+      CSFTest b = new CSFTest();
+      b.brand = "else";
 
       service.persist(a);
       service.persist(b);
 
-      List<CSFTest> noResults=service.getItemsWithBrand("a");
-      assert (null==noResults||noResults.isEmpty());
-      org.junit.Assert.assertEquals(0,noResults.size());
-    }catch(Exception e){
+      List<CSFTest> noResults = service.getItemsWithBrand("a");
+      assert (null == noResults || noResults.isEmpty());
+      org.junit.Assert.assertEquals(0, noResults.size());
+    } catch (Exception e) {
       fail();
     }
   }
@@ -192,51 +193,54 @@ public class CouchServiceTest{
   //  }
 
   @Test
-  public void testMultiParamFinder() throws Exception{
-    SlightlyComplexCouchService service=CouchServiceFactory.get(SlightlyComplexCouchService.class,SOMEDB);
-    for(int i=0;i<10;i++){
-      CSFTest a=new CSFTest();
-      a.brand="-brand"+i;
-      a.model="-model"+i;
+  public void testMultiParamFinder() throws Exception {
+    SlightlyComplexCouchService service =
+        CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
+    for (int i = 0; i < 10; i++) {
+      CSFTest a = new CSFTest();
+      a.brand = "-brand" + i;
+      a.model = "-model" + i;
       service.persist(a);
     }
 
-    List<CSFTest> loaded=service.load("-mod",5,5);
+    List<CSFTest> loaded = service.load("-mod", 5, 5);
     assertNotNull(loaded);
-    assertEquals(5,loaded.size());
-    assertEquals("-brand5",loaded.get(0).brand);
-    assertEquals("-model9",loaded.get(4).model);
+    assertEquals(5, loaded.size());
+    assertEquals("-brand5", loaded.get(0).brand);
+    assertEquals("-model9", loaded.get(4).model);
   }
 
   @Test
-  public void testKeysFinder() throws Exception{
-    SlightlyComplexCouchService service=CouchServiceFactory.get(SlightlyComplexCouchService.class,SOMEDB);
-    for(int i=0;i<10;i++){
-      CSFTest a=new CSFTest();
-      a.brand="-brand"+i;
-      a.model="-model"+i;
+  public void testKeysFinder() throws Exception {
+    SlightlyComplexCouchService service =
+        CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
+    for (int i = 0; i < 10; i++) {
+      CSFTest a = new CSFTest();
+      a.brand = "-brand" + i;
+      a.model = "-model" + i;
       service.persist(a);
     }
 
-    List<CSFTest> loaded=service.anyMatching("-model1","-model5");
+    List<CSFTest> loaded = service.anyMatching("-model1", "-model5");
     assertNotNull(loaded);
-    assertEquals(2,loaded.size());
+    assertEquals(2, loaded.size());
   }
 
   @Test
-  public void testNonPrimitiveKeyFinder() throws Exception{
-    SlightlyComplexCouchService service=CouchServiceFactory.get(SlightlyComplexCouchService.class,SOMEDB);
-    for(int i=0;i<10;i++){
-      CSFTest a=new CSFTest();
-      a.brand="-brand"+i;
-      a.model="-model"+i;
+  public void testNonPrimitiveKeyFinder() throws Exception {
+    SlightlyComplexCouchService service =
+        CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
+    for (int i = 0; i < 10; i++) {
+      CSFTest a = new CSFTest();
+      a.brand = "-brand" + i;
+      a.model = "-model" + i;
       service.persist(a);
     }
 
-    CSFTest sample=new CSFTest();
-    sample.brand="-brand4";
-    sample.model="-model4";
-    List<CSFTest> loaded=service.matchingTuples(sample);
+    CSFTest sample = new CSFTest();
+    sample.brand = "-brand4";
+    sample.model = "-model4";
+    List<CSFTest> loaded = service.matchingTuples(sample);
     /* returns null, whoops
     turns out to be a json exception:
 
@@ -275,46 +279,47 @@ public class CouchServiceTest{
   }
 
   @Test
-  public void testNoArgMethod() throws Exception{
+  public void testNoArgMethod() throws Exception {
     nukeTestDbs();
-    SlightlyComplexCouchService service=CouchServiceFactory.get(SlightlyComplexCouchService.class,SOMEDB);
-    for(int i=0;i<10;i++){
-      CSFTest a=new CSFTest();
-      a.brand="-brand"+i;
-      a.model="-model"+i;
+    SlightlyComplexCouchService service =
+        CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
+    for (int i = 0; i < 10; i++) {
+      CSFTest a = new CSFTest();
+      a.brand = "-brand" + i;
+      a.model = "-model" + i;
       service.persist(a);
     }
 
-    List<CSFTest> loaded=service.all();
+    List<CSFTest> loaded = service.all();
     assertNotNull(loaded);
-    assertEquals(10,loaded.size());
+    assertEquals(10, loaded.size());
   }
 
-  public interface SimpleCouchService extends CouchService<CSFTest>{
-    @View(map="function(doc){emit(doc.brand, doc); }")
+  public interface SimpleCouchService extends CouchService<CSFTest> {
+    @View(map = "function(doc){emit(doc.brand, doc); }")
     List<CSFTest> getItemsWithBrand(@Key String brand);
   }
 
-  public interface TrivialCouchService extends CouchService<CSFTest>{
+  public interface TrivialCouchService extends CouchService<CSFTest> {
 
   }
 
-  public interface SlightlyComplexCouchService extends CouchService<CSFTest>{
-    @View(map="function(doc){emit(doc.model.slice(0,4), doc);}")
-    List<CSFTest> load(@Key String key,@Limit int limit,@Skip int skip);
+  public interface SlightlyComplexCouchService extends CouchService<CSFTest> {
+    @View(map = "function(doc){emit(doc.model.slice(0,4), doc);}")
+    List<CSFTest> load(@Key String key, @Limit int limit, @Skip int skip);
 
-    @View(map="function(doc){emit(doc.model, doc);}")
-    List<CSFTest> anyMatching(@Keys String...keys);
+    @View(map = "function(doc){emit(doc.model, doc);}")
+    List<CSFTest> anyMatching(@Keys String... keys);
 
-    @View(map="function(doc){emit({model:doc.model, brand:doc.brand}, doc);}")
+    @View(map = "function(doc){emit({model:doc.model, brand:doc.brand}, doc);}")
     List<CSFTest> matchingTuples(@Key CSFTest obj);
 
-    @View(map="function(doc){emit(doc.id,doc);}")
+    @View(map = "function(doc){emit(doc.id,doc);}")
     List<CSFTest> all();
   }
 
-  public static class CSFTest{
-    public String _id,_rev;
+  public static class CSFTest {
+    public String _id, _rev;
     public String model;
     public String brand;
   }

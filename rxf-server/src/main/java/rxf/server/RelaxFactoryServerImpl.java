@@ -3,7 +3,6 @@ package rxf.server;
 import one.xio.AsioVisitor;
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpStatus;
-import rxf.server.web.inf.ProtocolMethodDispatch;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -22,63 +21,65 @@ import java.util.concurrent.ScheduledExecutorService;
 import static java.lang.Math.min;
 import static java.nio.channels.SelectionKey.OP_ACCEPT;
 
-public class RelaxFactoryServerImpl implements RelaxFactoryServer{
+public class RelaxFactoryServerImpl implements RelaxFactoryServer {
 
-  private static InetAddress              LOCALHOST;
-  private boolean                         DEBUG_SENDJSON   =System.getenv().containsKey("DEBUG_SENDJSON");
-  private int                             receiveBufferSize;
-  private int                             sendBufferSize;
-  private InetSocketAddress               COUCHADDR;
-  private ScheduledExecutorService        EXECUTOR_SERVICE =Executors.newScheduledThreadPool(Runtime.getRuntime()
-                                                               .availableProcessors()+3);
+  private static InetAddress LOCALHOST;
+  private boolean DEBUG_SENDJSON = System.getenv().containsKey("DEBUG_SENDJSON");
+  private int receiveBufferSize;
+  private int sendBufferSize;
+  private InetSocketAddress COUCHADDR;
+  private ScheduledExecutorService EXECUTOR_SERVICE =
+      Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() + 3);
   //    private  int DEFAULT_EXP = 0;
-  private Thread                          selectorThread;
-  private boolean                         killswitch       =false;
-  private int                             port             =8080;
-  private Selector                        selector;
-  private ConcurrentLinkedQueue<Object[]> q                =new ConcurrentLinkedQueue<Object[]>();
-  private AsioVisitor                     topLevel;
-  private InetAddress                     inetAddress;
-  private ServerSocketChannel             serverSocketChannel;
+  private Thread selectorThread;
+  private boolean killswitch = false;
+  private int port = 8080;
+  private Selector selector;
+  private ConcurrentLinkedQueue<Object[]> q = new ConcurrentLinkedQueue<Object[]>();
+  private AsioVisitor topLevel;
+  private InetAddress inetAddress;
+  private ServerSocketChannel serverSocketChannel;
 
-  public RelaxFactoryServerImpl(){
+  public RelaxFactoryServerImpl() {
 
-    setCOUCHADDR(new InetSocketAddress(getLOOPBACK(),5984));
+    setCOUCHADDR(new InetSocketAddress(getLOOPBACK(), 5984));
 
   }
 
-  public static String wheresWaldo(int...depth){
-    int d=0>=depth.length?2:depth[0];
-    Throwable throwable=new Throwable();
-    Throwable throwable1=throwable.fillInStackTrace();
-    StackTraceElement[] stackTrace=throwable1.getStackTrace();
-    String ret="";
-    for(int i=2,end=min(stackTrace.length-1,d);i<=end;i++){
-      StackTraceElement stackTraceElement=stackTrace[i];
-      ret+="\tat "+stackTraceElement.getClassName()+"."+stackTraceElement.getMethodName()+"("+stackTraceElement.getFileName()
-          +":"+stackTraceElement.getLineNumber()+")\n";
+  public static String wheresWaldo(int... depth) {
+    int d = 0 >= depth.length ? 2 : depth[0];
+    Throwable throwable = new Throwable();
+    Throwable throwable1 = throwable.fillInStackTrace();
+    StackTraceElement[] stackTrace = throwable1.getStackTrace();
+    String ret = "";
+    for (int i = 2, end = min(stackTrace.length - 1, d); i <= end; i++) {
+      StackTraceElement stackTraceElement = stackTrace[i];
+      ret +=
+          "\tat " + stackTraceElement.getClassName() + "." + stackTraceElement.getMethodName()
+              + "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber()
+              + ")\n";
 
     }
     return ret;
   }
 
-  public static RelaxFactoryServer createRelaxFactoryServerImpl(){
+  public static RelaxFactoryServer createRelaxFactoryServerImpl() {
     return new RelaxFactoryServerImpl();
   }
 
   @Override
-  public Selector getSelector(){
+  public Selector getSelector() {
     return selector;
   }
 
   @Override
-  public RelaxFactoryServer setSelector(Selector selector){
-    this.selector=selector;
+  public RelaxFactoryServer setSelector(Selector selector) {
+    this.selector = selector;
     return this;
   }
 
   @Override
-  public Object[] toArray(Object...t){
+  public Object[] toArray(Object... t) {
     return t;
   }
 
@@ -92,48 +93,53 @@ public class RelaxFactoryServerImpl implements RelaxFactoryServer{
    *
    */
   @Override
-  public RelaxFactoryServer enqueue(SelectableChannel channel,int op,Object...s) throws ClosedChannelException{
-    boolean add=q.add(toArray(channel,op,s));
-    Selector selector1=getSelector();
-    if(null!=selector1)
+  public RelaxFactoryServer enqueue(SelectableChannel channel, int op, Object... s)
+      throws ClosedChannelException {
+    boolean add = q.add(toArray(channel, op, s));
+    Selector selector1 = getSelector();
+    if (null != selector1)
       selector1.wakeup();
     return this;
   }
 
   @Override
-  public RelaxFactoryServer response(SelectionKey key,HttpStatus httpStatus) throws IOException{
-    try{
-      SocketChannel channel=(SocketChannel)key.channel();
-      ByteBuffer buffer=ByteBuffer.allocateDirect(channel.socket().getSendBufferSize());
-      CharBuffer charBuffer=(CharBuffer)buffer.asCharBuffer().append("HTTP/1.1 ").append(httpStatus.name().substring(1))
-          .append(' ').append(httpStatus.caption).append("\r\n").flip();
-      ByteBuffer out=UTF8.encode(charBuffer);
-      ((SocketChannel)key.channel()).write(out);
-    }catch(Exception ignored){}
+  public RelaxFactoryServer response(SelectionKey key, HttpStatus httpStatus) throws IOException {
+    try {
+      SocketChannel channel = (SocketChannel) key.channel();
+      ByteBuffer buffer = ByteBuffer.allocateDirect(channel.socket().getSendBufferSize());
+      CharBuffer charBuffer =
+          (CharBuffer) buffer.asCharBuffer().append("HTTP/1.1 ").append(
+              httpStatus.name().substring(1)).append(' ').append(httpStatus.caption).append("\r\n")
+              .flip();
+      ByteBuffer out = UTF8.encode(charBuffer);
+      ((SocketChannel) key.channel()).write(out);
+    } catch (Exception ignored) {
+    }
 
     return this;
   }
 
   @Override
-  public RelaxFactoryServer launchVhost(String hostname,int port,AsioVisitor topLevel) throws IOException{
-    assert null==topLevel&&null==serverSocketChannel:"Can't call launchVhost twice";
-    this.topLevel=topLevel;
-    this.inetAddress=InetAddress.getByName(hostname);
-    serverSocketChannel=ServerSocketChannel.open();
-    InetSocketAddress serverSocket=new InetSocketAddress(hostname,port);
+  public RelaxFactoryServer launchVhost(String hostname, int port, final AsioVisitor topLevel)
+      throws IOException {
+    assert null == topLevel && null == serverSocketChannel : "Can't call launchVhost twice";
+    this.topLevel = topLevel;
+    this.inetAddress = InetAddress.getByName(hostname);
+    serverSocketChannel = ServerSocketChannel.open();
+    InetSocketAddress serverSocket = new InetSocketAddress(hostname, port);
     serverSocketChannel.socket().bind(serverSocket);
     setPort(serverSocketChannel.socket().getLocalPort());
     serverSocketChannel.configureBlocking(false);
 
-    EXECUTOR_SERVICE.submit(new Runnable(){
-      public void run(){
-        AsioVisitor topLevel=new ProtocolMethodDispatch();
-        try{
+    EXECUTOR_SERVICE.submit(new Runnable() {
+      public void run() {
 
-          enqueue(serverSocketChannel,OP_ACCEPT,topLevel);
+        try {
+
+          enqueue(serverSocketChannel, OP_ACCEPT, topLevel);
           init(topLevel);
 
-        }catch(Exception e){
+        } catch (Exception e) {
           System.out.println("failed startup");
         }
       }
@@ -142,12 +148,12 @@ public class RelaxFactoryServerImpl implements RelaxFactoryServer{
     return this;
   }
 
-  static{
-    try{
+  static {
+    try {
 
-      LOCALHOST=InetAddress.getByAddress(new byte[]{127,0,0,1});
+      LOCALHOST = InetAddress.getByAddress(new byte[] {127, 0, 0, 1});
       //            System.err.println("java 6 LOCALHOST detected");
-    }catch(UnknownHostException e){
+    } catch (UnknownHostException e) {
       e.printStackTrace();
     }
   }
@@ -168,78 +174,78 @@ public class RelaxFactoryServerImpl implements RelaxFactoryServer{
    }*/
 
   @Override
-  public RelaxFactoryServer init(AsioVisitor protocoldecoder,String...a) throws IOException{
+  public RelaxFactoryServer init(AsioVisitor protocoldecoder, String... a) throws IOException {
 
-    selector=Selector.open();
-    selectorThread=Thread.currentThread();
+    selector = Selector.open();
+    selectorThread = Thread.currentThread();
 
-    synchronized(a){
-      long timeoutMax=1024,timeout=1;
+    synchronized (a) {
+      long timeoutMax = 1024, timeout = 1;
 
-      while(!killswitch){
-        while(!q.isEmpty()){
-          Object[] s=q.remove();
-          SelectableChannel x=(SelectableChannel)s[0];
-          Selector sel=getSelector();
-          Integer op=(Integer)s[1];
-          Object att=s[2];
-          try{
-            x.register(sel,op,att);
-          }catch(Throwable e){
+      while (!killswitch) {
+        while (!q.isEmpty()) {
+          Object[] s = q.remove();
+          SelectableChannel x = (SelectableChannel) s[0];
+          Selector sel = getSelector();
+          Integer op = (Integer) s[1];
+          Object att = s[2];
+          try {
+            x.register(sel, op, att);
+          } catch (Throwable e) {
 
           }
         }
-        int select=selector.select(timeout);
+        int select = selector.select(timeout);
 
-        timeout=0!=select?1:min(timeout<<1,timeoutMax);
-        if(0!=select){
-          Set<SelectionKey> keys=selector.selectedKeys();
+        timeout = 0 != select ? 1 : min(timeout << 1, timeoutMax);
+        if (0 != select) {
+          Set<SelectionKey> keys = selector.selectedKeys();
 
-          for(Iterator<SelectionKey> i=keys.iterator();i.hasNext();){
-            SelectionKey key=i.next();
+          for (Iterator<SelectionKey> i = keys.iterator(); i.hasNext();) {
+            SelectionKey key = i.next();
             i.remove();
 
-            if(key.isValid()){
-              SelectableChannel channel=key.channel();
-              try{
-                AsioVisitor m=inferAsioVisitor(protocoldecoder,key);
+            if (key.isValid()) {
+              SelectableChannel channel = key.channel();
+              try {
+                AsioVisitor m = inferAsioVisitor(protocoldecoder, key);
 
-                if(key.isValid()&&key.isWritable()){
-                  if(!((SocketChannel)channel).socket().isOutputShutdown()){
+                if (key.isValid() && key.isWritable()) {
+                  if (!((SocketChannel) channel).socket().isOutputShutdown()) {
                     m.onWrite(key);
-                  }else{
+                  } else {
                     key.cancel();
                   }
                 }
-                if(key.isValid()&&key.isReadable()){
-                  if(((SocketChannel)channel).socket().isInputShutdown()){
+                if (key.isValid() && key.isReadable()) {
+                  if (((SocketChannel) channel).socket().isInputShutdown()) {
                     key.cancel();
-                  }else{
+                  } else {
                     m.onRead(key);
                   }
                 }
-                if(key.isValid()&&key.isAcceptable()){
+                if (key.isValid() && key.isAcceptable()) {
                   m.onAccept(key);
                 }
-                if(key.isValid()&&key.isConnectable()){
+                if (key.isValid() && key.isConnectable()) {
                   m.onConnect(key);
                 }
-              }catch(Throwable e){
-                Object attachment=key.attachment();
-                if(attachment instanceof Object[]){
-                  Object[] objects=(Object[])attachment;
-                  System.err.println("BadHandler: "+java.util.Arrays.deepToString(objects));
+              } catch (Throwable e) {
+                Object attachment = key.attachment();
+                if (attachment instanceof Object[]) {
+                  Object[] objects = (Object[]) attachment;
+                  System.err.println("BadHandler: " + java.util.Arrays.deepToString(objects));
 
-                }else
-                  System.err.println("BadHandler: "+String.valueOf(attachment));
+                } else
+                  System.err.println("BadHandler: " + String.valueOf(attachment));
 
-                if(AsioVisitor.$DBG){
-                  AsioVisitor asioVisitor=inferAsioVisitor(protocoldecoder,key);
-                  if(asioVisitor instanceof Impl){
-                    Impl visitor=(Impl)asioVisitor;
-                    if(AsioVisitor.$origins.containsKey(visitor)){
-                      String s=AsioVisitor.$origins.get(visitor);
-                      System.err.println("origin "+s);
+                if (AsioVisitor.$DBG) {
+                  AsioVisitor asioVisitor = inferAsioVisitor(protocoldecoder, key);
+                  if (asioVisitor instanceof Impl) {
+                    Impl visitor = (Impl) asioVisitor;
+                    if (AsioVisitor.$origins.containsKey(visitor)) {
+                      String s = AsioVisitor.$origins.get(visitor);
+                      System.err.println("origin " + s);
                     }
                   }
                 }
@@ -256,181 +262,181 @@ public class RelaxFactoryServerImpl implements RelaxFactoryServer{
   }
 
   @Override
-  public AsioVisitor inferAsioVisitor(AsioVisitor default$,SelectionKey key){
-    Object attachment=key.attachment();
+  public AsioVisitor inferAsioVisitor(AsioVisitor default$, SelectionKey key) {
+    Object attachment = key.attachment();
     AsioVisitor m;
-    if(null==attachment)
-      m=default$;
-    if(attachment instanceof Object[]){
-      for(Object o:(Object[])attachment){
-        attachment=o;
+    if (null == attachment)
+      m = default$;
+    if (attachment instanceof Object[]) {
+      for (Object o : (Object[]) attachment) {
+        attachment = o;
         break;
       }
     }
-    if(attachment instanceof Iterable){
-      Iterable iterable=(Iterable)attachment;
-      for(Object o:iterable){
-        attachment=o;
+    if (attachment instanceof Iterable) {
+      Iterable iterable = (Iterable) attachment;
+      for (Object o : iterable) {
+        attachment = o;
         break;
       }
     }
-    if(attachment instanceof AsioVisitor){
-      m=(AsioVisitor)attachment;
+    if (attachment instanceof AsioVisitor) {
+      m = (AsioVisitor) attachment;
 
-    }else{
+    } else {
 
-      m=default$;
+      m = default$;
     }
     return m;
   }
 
   @Override
-  public Charset getUTF8(){
+  public Charset getUTF8() {
     return UTF8;
   }
 
   @Override
-  public Thread getSelectorThread(){
+  public Thread getSelectorThread() {
     return selectorThread;
   }
 
   @Override
-  public RelaxFactoryServer setSelectorThread(Thread selectorThread){
-    this.selectorThread=selectorThread;
+  public RelaxFactoryServer setSelectorThread(Thread selectorThread) {
+    this.selectorThread = selectorThread;
     return this;
   }
 
   @Override
-  public boolean isKillswitch(){
+  public boolean isKillswitch() {
     return killswitch;
   }
 
   @Override
-  public RelaxFactoryServer setKillswitch(boolean killswitch){
-    this.killswitch=killswitch;
+  public RelaxFactoryServer setKillswitch(boolean killswitch) {
+    this.killswitch = killswitch;
     return this;
   }
 
   @Override
-  public ConcurrentLinkedQueue<Object[]> getQ(){
+  public ConcurrentLinkedQueue<Object[]> getQ() {
     return q;
   }
 
   @Override
-  public RelaxFactoryServer setQ(ConcurrentLinkedQueue<Object[]> q){
-    this.q=q;
+  public RelaxFactoryServer setQ(ConcurrentLinkedQueue<Object[]> q) {
+    this.q = q;
     return this;
   }
 
   @Override
-  public boolean isDEBUG_SENDJSON(){
+  public boolean isDEBUG_SENDJSON() {
     return DEBUG_SENDJSON;
   }
 
   @Override
-  public RelaxFactoryServer setDEBUG_SENDJSON(boolean DEBUG_SENDJSON){
-    this.DEBUG_SENDJSON=DEBUG_SENDJSON;
+  public RelaxFactoryServer setDEBUG_SENDJSON(boolean DEBUG_SENDJSON) {
+    this.DEBUG_SENDJSON = DEBUG_SENDJSON;
     return this;
   }
 
   @Override
-  public InetAddress getLOOPBACK(){
+  public InetAddress getLOOPBACK() {
     return LOCALHOST;
   }
 
   @Override
-  public InetSocketAddress getCOUCHADDR(){
+  public InetSocketAddress getCOUCHADDR() {
     return COUCHADDR;
   }
 
   @Override
-  public RelaxFactoryServer setCOUCHADDR(InetSocketAddress COUCHADDR){
-    this.COUCHADDR=COUCHADDR;
+  public RelaxFactoryServer setCOUCHADDR(InetSocketAddress COUCHADDR) {
+    this.COUCHADDR = COUCHADDR;
     return this;
   }
 
   @Override
-  public ScheduledExecutorService getEXECUTOR_SERVICE(){
+  public ScheduledExecutorService getEXECUTOR_SERVICE() {
     return EXECUTOR_SERVICE;
   }
 
   @Override
-  public RelaxFactoryServer setEXECUTOR_SERVICE(ScheduledExecutorService EXECUTOR_SERVICE){
-    this.EXECUTOR_SERVICE=EXECUTOR_SERVICE;
+  public RelaxFactoryServer setEXECUTOR_SERVICE(ScheduledExecutorService EXECUTOR_SERVICE) {
+    this.EXECUTOR_SERVICE = EXECUTOR_SERVICE;
     return this;
   }
 
   @Override
-  public int getReceiveBufferSize(){
+  public int getReceiveBufferSize() {
     return receiveBufferSize;
   }
 
   @Override
-  public RelaxFactoryServer setReceiveBufferSize(int receiveBufferSize){
-    this.receiveBufferSize=receiveBufferSize;
+  public RelaxFactoryServer setReceiveBufferSize(int receiveBufferSize) {
+    this.receiveBufferSize = receiveBufferSize;
     return this;
   }
 
   @Override
-  public int getSendBufferSize(){
+  public int getSendBufferSize() {
     return sendBufferSize;
   }
 
   @Override
-  public RelaxFactoryServer setSendBufferSize(int sendBufferSize){
-    this.sendBufferSize=sendBufferSize;
+  public RelaxFactoryServer setSendBufferSize(int sendBufferSize) {
+    this.sendBufferSize = sendBufferSize;
     return this;
   }
 
   @Override
-  public int getPort(){
+  public int getPort() {
     return port;
   }
 
   @Override
-  public RelaxFactoryServer setPort(int port){
-    this.port=port;
+  public RelaxFactoryServer setPort(int port) {
+    this.port = port;
     return this;
   }
 
   @Override
-  public RelaxFactoryServer stop() throws IOException{
-    this.killswitch=true;
+  public RelaxFactoryServer stop() throws IOException {
+    this.killswitch = true;
     getSelector().close();
     serverSocketChannel.close();
     return this;
   }
 
   @Override
-  public AsioVisitor getTopLevel(){
+  public AsioVisitor getTopLevel() {
     return topLevel;
   }
 
   @Override
-  public RelaxFactoryServer setTopLevel(AsioVisitor topLevel){
-    this.topLevel=topLevel;
+  public RelaxFactoryServer setTopLevel(AsioVisitor topLevel) {
+    this.topLevel = topLevel;
     return this;
   }
 
   @Override
-  public InetAddress getInetAddress(){
+  public InetAddress getInetAddress() {
     return inetAddress;
   }
 
   @Override
-  public RelaxFactoryServer setHostname(InetAddress hostname){
-    this.inetAddress=hostname;
+  public RelaxFactoryServer setHostname(InetAddress hostname) {
+    this.inetAddress = hostname;
     return this;
   }
 
   @Override
-  public ServerSocketChannel getServerSocketChannel(){
+  public ServerSocketChannel getServerSocketChannel() {
     return serverSocketChannel;
   }
 
   @Override
-  public RelaxFactoryServer setServerSocketChannel(ServerSocketChannel serverSocketChannel){
-    this.serverSocketChannel=serverSocketChannel;
+  public RelaxFactoryServer setServerSocketChannel(ServerSocketChannel serverSocketChannel) {
+    this.serverSocketChannel = serverSocketChannel;
     return this;
   }
 }

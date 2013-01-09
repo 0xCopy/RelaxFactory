@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>rxf</groupId>
     <artifactId>relaxfactory</artifactId>
-    <version>0.10.0</version>
+    <version>0.10.1</version>
     <packaging>pom</packaging>
     <properties>
         <gwt.draftCompile>false</gwt.draftCompile>
@@ -146,7 +146,7 @@
         <module>rxf-shared</module>
         <module>rxf-server</module>
         <module>rxf-guice</module>
-        <module>x0uchDb</module>
+        <module>rxf-db</module>
     </modules>
     <build>
         <pluginManagement>
@@ -215,7 +215,9 @@
                 </executions>
                 <configuration>
                     <compilerCompliance>1.7</compilerCompliance>
-                    <configFile>${project.basedir}/../fmt/ugh.xml</configFile>
+                    <!--<configFile>${project.basedir}/../fmt/ugh.xml</configFile>-->
+                    <!--<configFile>http://code.google.com/p/google-web-toolkit/source/browse/trunk/eclipse/settings/code-style/gwt-format.xml</configFile>-->
+                    <configFile>${project.basedir}/../fmt/gwt-format.xml</configFile>
                     <lineEnding>LF</lineEnding>
                 </configuration>
             </plugin>

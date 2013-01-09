@@ -1,5 +1,5 @@
 package rxf.server;
 
-public interface TerminalBuilder{
+public interface TerminalBuilder {
 
 }

@@ -31,65 +31,67 @@ import static rxf.server.driver.CouchMetaDriver.HEADER_TERMINATOR;
  * Date: 6/3/12
  * Time: 7:42 PM
  */
-public class RequestQueueVisitor extends Impl implements PreRead,SerializationPolicyProvider{
+public class RequestQueueVisitor extends Impl implements PreRead, SerializationPolicyProvider {
 
   private final BatchInvoker invoker;
-  private HttpRequest        req;
-  private ByteBuffer         cursor =null;
-  private SocketChannel      channel;
-  private String             payload;
+  private HttpRequest req;
+  private ByteBuffer cursor = null;
+  private SocketChannel channel;
+  private String payload;
 
-  public RequestQueueVisitor(){
+  public RequestQueueVisitor() {
     this(new BatchServiceLocator());
   }
 
-  public RequestQueueVisitor(BatchServiceLocator locator){
+  public RequestQueueVisitor(BatchServiceLocator locator) {
     this(new BatchInvoker(locator));
   }
 
-  public RequestQueueVisitor(BatchInvoker invoker){
-    this.invoker=invoker;
+  public RequestQueueVisitor(BatchInvoker invoker) {
+    this.invoker = invoker;
   }
 
   @Override
-  public void onRead(SelectionKey key) throws Exception{
-    channel=(SocketChannel)key.channel();
-    if(cursor==null){
-      if(key.attachment() instanceof Object[]){
-        Object[] ar=(Object[])key.attachment();
-        for(Object o:ar){
-          if(o instanceof ByteBuffer){
-            cursor=(ByteBuffer)o;
+  public void onRead(SelectionKey key) throws Exception {
+    channel = (SocketChannel) key.channel();
+    if (cursor == null) {
+      if (key.attachment() instanceof Object[]) {
+        Object[] ar = (Object[]) key.attachment();
+        for (Object o : ar) {
+          if (o instanceof ByteBuffer) {
+            cursor = (ByteBuffer) o;
             continue;
           }
-          if(o instanceof Rfc822HeaderState){
-            req=((Rfc822HeaderState)o).$req();
+          if (o instanceof Rfc822HeaderState) {
+            req = ((Rfc822HeaderState) o).$req();
           }
         }
       }
       key.attach(this);
     }
-    cursor=null==cursor?ByteBuffer.allocateDirect(getReceiveBufferSize()):cursor.hasRemaining()?cursor:ByteBuffer
-        .allocateDirect(cursor.capacity()<<1).put((ByteBuffer)cursor.rewind());
-    int read=channel.read(cursor);
-    if(read==-1)
+    cursor =
+        null == cursor ? ByteBuffer.allocateDirect(getReceiveBufferSize()) : cursor.hasRemaining()
+            ? cursor : ByteBuffer.allocateDirect(cursor.capacity() << 1).put(
+                (ByteBuffer) cursor.rewind());
+    int read = channel.read(cursor);
+    if (read == -1)
       key.cancel();
-    Buffer flip=cursor.duplicate().flip();
-    req=(HttpRequest)req.headerInterest(HttpHeaders.Content$2dLength).apply((ByteBuffer)flip);
-    if(!BlobAntiPatternRelic.suffixMatchChunks(HEADER_TERMINATOR,req.headerBuf())){
+    Buffer flip = cursor.duplicate().flip();
+    req = (HttpRequest) req.headerInterest(HttpHeaders.Content$2dLength).apply((ByteBuffer) flip);
+    if (!BlobAntiPatternRelic.suffixMatchChunks(HEADER_TERMINATOR, req.headerBuf())) {
       return;
     }
-    cursor=((ByteBuffer)cursor).slice();
-    int remaining=Integer.parseInt(req.headerString(HttpHeaders.Content$2dLength));
-    final RequestQueueVisitor prev=this;
-    if(cursor.remaining()!=remaining)
-      key.attach(new Impl(){
+    cursor = ((ByteBuffer) cursor).slice();
+    int remaining = Integer.parseInt(req.headerString(HttpHeaders.Content$2dLength));
+    final RequestQueueVisitor prev = this;
+    if (cursor.remaining() != remaining)
+      key.attach(new Impl() {
         @Override
-        public void onRead(SelectionKey key) throws Exception{
-          int read1=channel.read(cursor);
-          if(read1==-1)
+        public void onRead(SelectionKey key) throws Exception {
+          int read1 = channel.read(cursor);
+          if (read1 == -1)
             key.cancel();
-          if(!cursor.hasRemaining()){
+          if (!cursor.hasRemaining()) {
             key.interestOps(SelectionKey.OP_WRITE).attach(prev);
             return;
           }
@@ -99,79 +101,85 @@ public class RequestQueueVisitor extends Impl implements PreRead,SerializationPo
   }
 
   @Override
-  public void onWrite(final SelectionKey key) throws Exception{
-    if(payload==null){
+  public void onWrite(final SelectionKey key) throws Exception {
+    if (payload == null) {
       key.interestOps(0);
-      RelaxFactoryServer.App.get().getEXECUTOR_SERVICE().submit(new Runnable(){
+      RelaxFactoryServer.App.get().getEXECUTOR_SERVICE().submit(new Runnable() {
         @Override
-        public void run(){
-          try{
-            String reqPayload=UTF8.decode((ByteBuffer)cursor.rewind()).toString();
+        public void run() {
+          try {
+            String reqPayload = UTF8.decode((ByteBuffer) cursor.rewind()).toString();
 
-            RPCRequest rpcRequest=BatchInvoker.decodeRequest(reqPayload,null,RequestQueueVisitor.this);
-            try{
-              payload=RPC.invokeAndEncodeResponse(invoker,rpcRequest.getMethod(),rpcRequest.getParameters(),rpcRequest
-                  .getSerializationPolicy(),rpcRequest.getFlags());
-            }catch(IncompatibleRemoteServiceException ex){
-              payload=RPC.encodeResponseForFailure(null,ex);
-            }catch(RpcTokenException ex){
-              payload=RPC.encodeResponseForFailure(null,ex);
+            RPCRequest rpcRequest =
+                BatchInvoker.decodeRequest(reqPayload, null, RequestQueueVisitor.this);
+            try {
+              payload =
+                  RPC.invokeAndEncodeResponse(invoker, rpcRequest.getMethod(), rpcRequest
+                      .getParameters(), rpcRequest.getSerializationPolicy(), rpcRequest.getFlags());
+            } catch (IncompatibleRemoteServiceException ex) {
+              payload = RPC.encodeResponseForFailure(null, ex);
+            } catch (RpcTokenException ex) {
+              payload = RPC.encodeResponseForFailure(null, ex);
             }
-            ByteBuffer pbuf=(ByteBuffer)UTF8.encode(payload).rewind();
-            final int limit=pbuf.rewind().limit();
-            Rfc822HeaderState.HttpResponse res=req.$res();
+            ByteBuffer pbuf = (ByteBuffer) UTF8.encode(payload).rewind();
+            final int limit = pbuf.rewind().limit();
+            Rfc822HeaderState.HttpResponse res = req.$res();
             res.status(HttpStatus.$200);
-            ByteBuffer as=res.headerString(HttpHeaders.Content$2dType,MimeType.json.contentType).headerString(
-                HttpHeaders.Content$2dLength,String.valueOf(limit)).as(ByteBuffer.class);
-            int needed=as.rewind().limit()+limit;
+            ByteBuffer as =
+                res.headerString(HttpHeaders.Content$2dType, MimeType.json.contentType)
+                    .headerString(HttpHeaders.Content$2dLength, String.valueOf(limit)).as(
+                        ByteBuffer.class);
+            int needed = as.rewind().limit() + limit;
 
-            cursor=(ByteBuffer)((ByteBuffer)(cursor.capacity()>=needed?cursor.clear().limit(needed):ByteBuffer
-                .allocateDirect(needed))).put(as).put(pbuf).rewind();
+            cursor =
+                (ByteBuffer) ((ByteBuffer) (cursor.capacity() >= needed ? cursor.clear().limit(
+                    needed) : ByteBuffer.allocateDirect(needed))).put(as).put(pbuf).rewind();
 
             key.interestOps(SelectionKey.OP_WRITE);
-          }catch(Exception e){
+          } catch (Exception e) {
             key.cancel();
             e.printStackTrace(); //todo: verify for a purpose
-          }finally{}
+          } finally {
+          }
         }
       });
       return;
     }
-    int write=channel.write(cursor);
-    if(!cursor.hasRemaining()){
+    int write = channel.write(cursor);
+    if (!cursor.hasRemaining()) {
       key.interestOps(SelectionKey.OP_READ).attach(null);
     }
   }
 
-  public final SerializationPolicy getSerializationPolicy(String moduleBaseURL,String strongName){
+  public final SerializationPolicy getSerializationPolicy(String moduleBaseURL, String strongName) {
     //TODO cache policies in weakrefmap? cleaner than reading from fs?
 
     // Translate the module path to a path on the filesystem, and grab a stream
-    InputStream is=null;
+    InputStream is = null;
     String fileName;
-    try{
-      String path=new URL(moduleBaseURL).getPath();
-      fileName=SerializationPolicyLoader.getSerializationPolicyFileName(path+strongName);
-      is=new File("./"+fileName).toURI().toURL().openStream();
-    }catch(MalformedURLException e1){
-      System.out.println("ERROR: malformed moduleBaseURL: "+moduleBaseURL);
+    try {
+      String path = new URL(moduleBaseURL).getPath();
+      fileName = SerializationPolicyLoader.getSerializationPolicyFileName(path + strongName);
+      is = new File("./" + fileName).toURI().toURL().openStream();
+    } catch (MalformedURLException e1) {
+      System.out.println("ERROR: malformed moduleBaseURL: " + moduleBaseURL);
       return null;
-    }catch(IOException e){
+    } catch (IOException e) {
       e.printStackTrace();
       return null;
     }
 
-    SerializationPolicy serializationPolicy=null;
-    try{
-      serializationPolicy=SerializationPolicyLoader.loadFromStream(is,null);
-    }catch(ParseException e){
-      System.out.println("ERROR: Failed to parse the policy file '"+fileName+"'");
-    }catch(IOException e){
-      System.out.println("ERROR: Could not read the policy file '"+fileName+"'");
-    }finally{
-      try{
+    SerializationPolicy serializationPolicy = null;
+    try {
+      serializationPolicy = SerializationPolicyLoader.loadFromStream(is, null);
+    } catch (ParseException e) {
+      System.out.println("ERROR: Failed to parse the policy file '" + fileName + "'");
+    } catch (IOException e) {
+      System.out.println("ERROR: Could not read the policy file '" + fileName + "'");
+    } finally {
+      try {
         is.close();
-      }catch(IOException e){
+      } catch (IOException e) {
         e.printStackTrace();
       }
     }

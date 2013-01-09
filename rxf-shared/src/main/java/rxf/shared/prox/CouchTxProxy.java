@@ -8,8 +8,8 @@ import com.google.web.bindery.requestfactory.shared.ValueProxy;
  * Date: 5/14/12
  * Time: 7:21 PM
  */
-@ProxyForName(value="rxf.server.CouchTx")
-public interface CouchTxProxy extends ValueProxy{
+@ProxyForName(value = "rxf.server.CouchTx")
+public interface CouchTxProxy extends ValueProxy {
   Boolean getOk();
 
   void setOk(Boolean ok);

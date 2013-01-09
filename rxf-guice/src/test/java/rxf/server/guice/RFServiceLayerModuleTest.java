@@ -17,51 +17,51 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author colin
  */
-public class RFServiceLayerModuleTest{
-  public static class TestModule extends AbstractModule{
+public class RFServiceLayerModuleTest {
+  public static class TestModule extends AbstractModule {
     @Override
-    protected void configure(){
+    protected void configure() {
 
       install(new RFServiceLayerModule());
       bind(ServiceLayerDecorator.class).to(InjectingServiceLayerDecorator.class);
     }
   }
 
-  public static class SampleService{
-    public String trim(String str){
+  public static class SampleService {
+    public String trim(String str) {
       return str.trim();
     }
   }
 
-  @Service(value=SampleService.class,locator=InjectingServiceLocator.class)
-  public interface SampleRequest extends RequestContext{
+  @Service(value = SampleService.class, locator = InjectingServiceLocator.class)
+  public interface SampleRequest extends RequestContext {
     Request<String> trim(String str);
   }
 
-  public interface SampleFactory extends RequestFactory{
+  public interface SampleFactory extends RequestFactory {
     SampleRequest req();
   }
 
   @Test
-  public void testBasicSetup(){
+  public void testBasicSetup() {
     //build injector, but don't make use of it directly, only via the request processor
     Guice.createInjector(new TestModule());
-    SampleFactory f=RequestFactorySource.create(SampleFactory.class);
-    f.initialize(new SimpleEventBus(),new RequestTransport(){
-      public void send(String arg0,TransportReceiver arg1){
+    SampleFactory f = RequestFactorySource.create(SampleFactory.class);
+    f.initialize(new SimpleEventBus(), new RequestTransport() {
+      public void send(String arg0, TransportReceiver arg1) {
         // the SIMPLE_REQUEST_PROCESSOR field should have been repopulated by guice
         // and any dependencies satisfied
-        String resp=GwtRequestFactoryVisitor.SIMPLE_REQUEST_PROCESSOR.process(arg0);
+        String resp = GwtRequestFactoryVisitor.SIMPLE_REQUEST_PROCESSOR.process(arg0);
         arg1.onTransportSuccess(resp);
       }
     });
-    final AtomicReference<String> holder=new AtomicReference<String>();
-    f.req().trim("   word   ").fire(new Receiver<String>(){
+    final AtomicReference<String> holder = new AtomicReference<String>();
+    f.req().trim("   word   ").fire(new Receiver<String>() {
       @Override
-      public void onSuccess(String arg0){
+      public void onSuccess(String arg0) {
         holder.set(arg0);
       }
     });
-    Assert.assertEquals("word",holder.get());
+    Assert.assertEquals("word", holder.get());
   }
 }
