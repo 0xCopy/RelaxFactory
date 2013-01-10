@@ -312,9 +312,9 @@ public class CouchServiceTest extends TestCase {
 		 */
 
 		//Comment in these tests to see it fail, currently fails silently, returning null
-		//    assertNotNull(loaded);
-		//    assertEquals(1, loaded.size());
-		//    assertNotNull(loaded.get(0)._id);
+		assertNotNull(loaded);
+		//		assertEquals(4, loaded.size());
+		assertNotNull(loaded.get(0)._id);
 	}
 
 	public void testNoArgMethod() throws Exception {

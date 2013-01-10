@@ -19,11 +19,12 @@ public class CouchResultSet<T> {
 	}
 
 	public static class tuple<T> {
-		String id, key;
+		String id;
+		//		Object key;
 
 		@Override
 		public String toString() {
-			return "tuple{" + "id='" + id + '\'' + ", key='" + key + '\''
+			return "tuple{" + "id='" + id + '\'' + ", key='" + null + '\''
 					+ ", value=" + value + '}';
 		}
 
