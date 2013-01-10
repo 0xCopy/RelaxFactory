@@ -1,15 +1,7 @@
 package rxf.server;
 
-import com.google.gson.JsonSyntaxException;
-import junit.framework.TestCase;
-import one.xio.AsioVisitor;
-import one.xio.HttpMethod;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import rxf.server.gen.CouchDriver.DbDelete;
-import rxf.server.gen.CouchDriver.DocFetch;
-import rxf.server.web.inf.ProtocolMethodDispatch;
+import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
+import static rxf.server.BlobAntiPatternObject.GSON;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -17,8 +9,19 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
-import static rxf.server.BlobAntiPatternObject.GSON;
+import junit.framework.TestCase;
+import one.xio.AsioVisitor;
+import one.xio.HttpMethod;
+
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import rxf.server.gen.CouchDriver.DbDelete;
+import rxf.server.gen.CouchDriver.DocFetch;
+import rxf.server.web.inf.ProtocolMethodDispatch;
+
+import com.google.gson.JsonSyntaxException;
 
 /**
  * Tests out the db, cleaning up after itself. These must be run in order to work correctly and clean up.
@@ -327,5 +330,20 @@ public class CouchServiceTest extends TestCase {
 		List<CSFTest> loaded = service.all();
 		assertNotNull(loaded);
 		assertEquals(10, loaded.size());
+	}
+
+	@Test
+	public void testMassCreate() throws InterruptedException,
+			ExecutionException {
+		for (int i = 0; i < 1000; i++) {
+			SlightlyComplexCouchService service = CouchServiceFactory.get(
+					SlightlyComplexCouchService.class, SOMEDB + i);
+			CSFTest a = new CSFTest();
+			a.brand = "-brand" + i;
+			a.model = "-model" + i;
+			CouchTx tx = service.persist(a);
+			assertNotNull("" + i, tx);
+			assertTrue("" + i, tx.ok());
+		}
 	}
 }

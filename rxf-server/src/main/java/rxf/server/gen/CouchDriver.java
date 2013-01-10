@@ -1035,7 +1035,7 @@ public interface CouchDriver {
 
 					public Future<ByteBuffer> future() {
 						try {
-							BlobAntiPatternObject.EXECUTOR_SERVICE
+							return BlobAntiPatternObject.EXECUTOR_SERVICE
 									.submit(new Callable<ByteBuffer>() {
 										final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder
 												.get();
