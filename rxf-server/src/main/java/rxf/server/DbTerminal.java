@@ -9,23 +9,26 @@ import java.util.EnumSet;
 
 public enum DbTerminal {
 	/**
-	 * results are squashed.
+	 * results are squashed
+	 * 
+	 * @deprecated no need for this, since fire() already caused the request to be issued...
 	 */
+	@Deprecated
 	oneWay {
 		public String builder(CouchMetaDriver couchDriver, etype[] parms,
 				boolean implementation) {
-			return (implementation ? "public " : "")
+			return "@Deprecated "
+					+ (implementation ? "public " : "")
 					+ "void "
 					+ name()
 					+ "()"
 					+ (implementation
 							? "{\n    final DbKeysBuilder dbKeysBuilder=(DbKeysBuilder)DbKeysBuilder.get();\n"
 									+ "final ActionBuilder actionBuilder=(ActionBuilder )ActionBuilder.get();"
-									+ "\ndbKeysBuilder.validate();\n BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable(){"
+									+ "\nBlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable(){"
 									+ "\npublic void run(){\n"
-									+ "    try{\n\n      DbKeysBuilder.currentKeys.set(dbKeysBuilder);   \n      ActionBuilder.currentAction.set(actionBuilder); \nrxf.server.driver.CouchMetaDriver."
-									+ couchDriver
-									+ ".visit();\n}catch(Exception e){\n    e.printStackTrace();}\n    }\n    });\n}"
+									+ "    try{\n\n      DbKeysBuilder.currentKeys.set(dbKeysBuilder);   \n      ActionBuilder.currentAction.set(actionBuilder); \nfuture.get();"
+									+ "\n}catch(Exception e){\n    e.printStackTrace();}\n    }\n    });\n}"
 							: ";");
 		}
 	},
@@ -36,14 +39,12 @@ public enum DbTerminal {
 		public String builder(CouchMetaDriver couchDriver, etype[] parms,
 				boolean implementation) {
 
-			String visitor = "rxf.server.driver.CouchMetaDriver." + couchDriver;
 			String cmdName = couchDriver.name();
 			@Language("JAVA")
 			String s = "{\n"
 					+ "            try {\n"
 					+ "              return    BlobAntiPatternObject.GSON.fromJson(one.xio.HttpMethod.UTF8.decode(avoidStarvation("
-					+ visitor
-					+ ".visit())).toString(),\n"
+					+ "future.get())).toString(),\n"
 					+ "                  new java.lang.reflect.ParameterizedType() {\n"
 					+ "                    public Type getRawType() {\n"
 					+ "                      return CouchResultSet.class;\n"
@@ -55,16 +56,13 @@ public enum DbTerminal {
 					+ "\n"
 					+ "                    public Type[] getActualTypeArguments() {\n"
 					+ "                             "
-					+ "                          Type[]t={(Type)"
-					+ cmdName
+					+ "                          Type[]t={(Type)" + cmdName
 					+ ".this.get(DbKeys.etype.type)};"
 					+ "                          return t;\n"
-					+ "                    }\n"
-					+ "                  });\n"
+					+ "                    }\n" + "                  });\n"
 					+ "            } catch (Exception e) {\n"
 					+ "              e.printStackTrace();\n"
-					+ "            }\n"
-					+ "            return null;\n"
+					+ "            }\n" + "            return null;\n"
 					+ "          }";
 			return (implementation ? "public " : "")
 					+ CouchResultSet.class.getCanonicalName() + " " + name()
@@ -85,10 +83,8 @@ public enum DbTerminal {
 					+ " "
 					+ name()
 					+ "()"
-					+ (implementation ? "{ \n" + "try {\n" + "        return ("
-							+ ByteBuffer.class.getCanonicalName()
-							+ ") rxf.server.driver.CouchMetaDriver."
-							+ couchDriver + ".visit();\n"
+					+ (implementation ? "{ \n" + "try {\n"
+							+ "        return future.get();\n"
 							+ "      } catch (Exception e) {\n"
 							+ "        e.printStackTrace();   \n" + "      } "
 							+ "        return null;} " : ";");
@@ -105,9 +101,7 @@ public enum DbTerminal {
 					+ (implementation
 							? "{try {\n"
 									+ "        return (CouchTx)rxf.server.BlobAntiPatternObject.GSON.fromJson(one.xio.HttpMethod.UTF8.decode("
-									+ " rxf.server.driver.CouchMetaDriver."
-									+ couchDriver
-									+ ".visit()).toString(),CouchTx.class);\n"
+									+ " future.get()).toString(),CouchTx.class);\n"
 									+ "      } catch (Exception e) {\n"
 									+ "        if(rxf.server.BlobAntiPatternObject.DEBUG_SENDJSON)e.printStackTrace();   \n"
 									+ "      } return null;} "
@@ -122,23 +116,7 @@ public enum DbTerminal {
 				boolean implementation) {
 			return (implementation ? "public " : "")
 					+ "Future<ByteBuffer>future()"
-					+ (implementation
-							? "{\n    try{\n    BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>(){\nfinal DbKeysBuilder dbKeysBuilder=(DbKeysBuilder)DbKeysBuilder.get();\n"
-									+ "final ActionBuilder actionBuilder=(ActionBuilder)ActionBuilder.get();\n"
-									+ "public "
-									+ ByteBuffer.class.getCanonicalName()
-									+ " call() throws Exception{"
-									+ "    DbKeysBuilder.currentKeys.set(dbKeysBuilder);"
-									+ "\nActionBuilder.currentAction.set(actionBuilder);\n"
-									+ "return("
-									+ ByteBuffer.class.getCanonicalName()
-									+ ")rxf.server.driver.CouchMetaDriver."
-									+ couchDriver
-									+ ".visit(dbKeysBuilder,actionBuilder);\n}"
-									+ "\n    }"
-									+ "\n    );"
-									+ "\n} catch(Exception e){\n    e.printStackTrace();\n}\n    return null;\n}"
-							: ";");
+					+ (implementation ? "{\n    return future;\n}" : ";");
 		}
 	},
 	/**
@@ -157,9 +135,7 @@ public enum DbTerminal {
 				boolean implementation) {
 			@Language("JAVA")
 			String s = "{\n    try{\n"
-					+ "    ByteBuffer visit=rxf.server.driver.CouchMetaDriver."
-					+ couchDriver.name()
-					+ ".visit();\n"
+					+ "    ByteBuffer visit=future.get();"
 					+ "return null==visit?null:one.xio.HttpMethod.UTF8.decode(avoidStarvation(visit)).toString();\n"
 					+ "}catch(Exception e){\n" + "    e.printStackTrace();\n"
 					+ "}\n" + "    return null;\n}";

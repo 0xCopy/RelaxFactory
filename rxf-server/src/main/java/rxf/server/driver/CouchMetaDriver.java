@@ -47,6 +47,10 @@ import static rxf.server.an.DbKeys.etype.*;
  * <li>fluent class interface agnostic(highly unlikely)</li>
  * <li>arduously carried in (same as first option but not as clean as inner class refs)</li>
  * </ol>
+ * 
+ * 
+ * to() - setup the request: provide early access to the header state to tweak whatever you want. This can then be used after fire() to read out the header state from the response
+ * fire() - execution of the visitor, access to results, future, (errors?). If results is null, check error. If you use future, its your own damn problem
  * User: jim
  * Date: 5/24/12
  * Time: 3:09 PM
@@ -1352,7 +1356,7 @@ public enum CouchMetaDriver {
 			String rtypeBounds = "";
 			s = "public class _ename_"
 					+ rtypeTypeParams
-					+ " extends DbKeysBuilder  {\n  private _ename_() {\n  }\n\n  static public "
+					+ " extends DbKeysBuilder  {\n  private _ename_() {\n  }\n\n  public static "
 					+ rtypeBounds
 					+ " _ename_"
 					+ rtypeTypeParams
@@ -1367,6 +1371,18 @@ public enum CouchMetaDriver {
 					+ " fire() {\n      return new _ename_TerminalBuilder"
 					+ rtypeTypeParams
 					+ "() {        \n      "
+					+ "Future<ByteBuffer> future = BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>(){\nfinal DbKeysBuilder dbKeysBuilder=(DbKeysBuilder)DbKeysBuilder.get();\n"
+					+ "final ActionBuilder actionBuilder=(ActionBuilder)ActionBuilder.get();\n"
+					+ "public "
+					+ ByteBuffer.class.getCanonicalName()
+					+ " call() throws Exception{"
+					+ "    DbKeysBuilder.currentKeys.set(dbKeysBuilder);"
+					+ "\nActionBuilder.currentAction.set(actionBuilder);\n"
+					+ "return("
+					+ ByteBuffer.class.getCanonicalName()
+					+ ")rxf.server.driver.CouchMetaDriver."
+					+ couchDriver
+					+ ".visit(dbKeysBuilder,actionBuilder);\n}\n});"
 					+ FIRE_METHODS
 					+ "\n      };\n    }\n\n    \n    "
 					+ "public _ename_ActionBuilder state(Rfc822HeaderState state) {\n      "
@@ -1378,7 +1394,7 @@ public enum CouchMetaDriver {
 					+ arrToString(parms) + "\");\n  } \n   \n   "
 					+ GENERATED_METHODS + "\n" + "}";
 			int vl = parms.length;
-			String s1 = "\nstatic private final int parmsCount=" + PCOUNT
+			String s1 = "\nprivate static final int parmsCount=" + PCOUNT
 					+ ";\n";
 			for (etype etype : parms) {
 				s1 = writeParameterSetter(rtypeTypeParams, s1, etype,
