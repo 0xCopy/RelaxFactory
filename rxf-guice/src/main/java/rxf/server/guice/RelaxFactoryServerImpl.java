@@ -53,7 +53,7 @@ public class RelaxFactoryServerImpl implements RelaxFactoryServer {
 	@Override
 	public void stop() throws IOException {
 		HttpMethod.killswitch = true;
-		HttpMethod.getSelector().close();
+		//		HttpMethod.getSelector().close();
 		serverSocketChannel.close();
 	}
 
