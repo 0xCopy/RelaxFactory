@@ -29,7 +29,7 @@ public interface RelaxFactoryServer {
     InheritableThreadLocal<RelaxFactoryServer>rxfTl = new InheritableThreadLocal<>();
 
     class App{
-    static RelaxFactoryServer get(){
+    public static RelaxFactoryServer get(){
         RelaxFactoryServer relaxFactoryServer = rxfTl.get();
         if(null== relaxFactoryServer){
             relaxFactoryServer = new RelaxFactoryServerImpl();

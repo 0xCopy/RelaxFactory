@@ -5,8 +5,7 @@
     <artifactId>rxf-shared</artifactId>
     <parent>
         <groupId>rxf</groupId>
-        <version>0.9.1</version>
-        <artifactId>relaxfactory</artifactId>
+    <version>0.9.2</version>        <artifactId>relaxfactory</artifactId>
     </parent>
     <groupId>rxf</groupId>
     <packaging>jar</packaging>

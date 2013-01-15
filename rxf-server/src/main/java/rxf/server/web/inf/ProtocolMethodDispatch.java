@@ -105,9 +105,9 @@ public class ProtocolMethodDispatch extends Impl {
 
 	public void onAccept(SelectionKey key) throws IOException {
 		ServerSocketChannel channel = (ServerSocketChannel) key.channel();
-		SocketChannel accept = channel.accept();
-		accept.configureBlocking(false);
-		RelaxFactoryServerImpl.enqueue(accept, OP_READ, this);
+		SocketChannel acceptedNewSocket = channel.accept();
+		acceptedNewSocket.configureBlocking(false);
+		RelaxFactoryServerImpl.enqueue(acceptedNewSocket, OP_READ, this);
 
 	}
 

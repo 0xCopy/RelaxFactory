@@ -1,6 +1,7 @@
 package rxf.server;
 
 import one.xio.AsioVisitor;
+import one.xio.HttpMethod;
 import one.xio.HttpStatus;
 
 import java.io.IOException;
@@ -12,14 +13,11 @@ import java.nio.CharBuffer;
 import java.nio.channels.*;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
-import java.util.Iterator;
 import java.util.Random;
-import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static java.lang.StrictMath.min;
 import static java.nio.channels.SelectionKey.OP_ACCEPT;
-import static one.xio.AsioVisitor.Impl;
 
 /**
  * Created with IntelliJ IDEA.
@@ -67,10 +65,11 @@ public class RelaxFactoryServerImpl implements RelaxFactoryServer {
 	 */
 	public static void enqueue(SelectableChannel channel, int op, Object... s)
 			throws ClosedChannelException {
-		boolean add = q.add(toArray(channel, op, s));
-		Selector selector1 = getSelector();
-		if (null != selector1)
-			selector1.wakeup();
+		//		boolean add = q.add(toArray(channel, op, s));
+		//		Selector selector1 = getSelector();
+		//		if (null != selector1)
+		//			selector1.wakeup();
+		HttpMethod.enqueue(channel, op, s);
 	}
 
 	public static String wheresWaldo(int... depth) {
@@ -109,99 +108,100 @@ public class RelaxFactoryServerImpl implements RelaxFactoryServer {
 	public static void init(AsioVisitor protocoldecoder, String... a)
 			throws IOException {
 
-		setSelector(Selector.open());
-		selectorThread = Thread.currentThread();
+		/*	setSelector(Selector.open());
+			selectorThread = Thread.currentThread();
 
-		synchronized (a) {
-			int kick = 0;
-			int maxKick = 10;
-			long timeoutMax = 1024, timeout = 1;
+			synchronized (a) {
+				int kick = 0;
+				int maxKick = 10;
+				long timeoutMax = 1024, timeout = 1;
 
-			while (!killswitch) {
-				while (!q.isEmpty()) {
-					Object[] s = q.remove();
-					SelectableChannel x = (SelectableChannel) s[0];
-					Selector sel = getSelector();
-					Integer op = (Integer) s[1];
-					Object att = s[2];
-					try {
-						x.register(sel, op, att);
-					} catch (Throwable e) {
-
-					}
-				}
-				int select = selector.select(timeout);
-
-				timeout = 0 == select ? min(timeout << 1, timeoutMax) : 1;
-				if (0 == select)
-					continue;
-				Set<SelectionKey> keys = selector.selectedKeys();
-
-				for (Iterator<SelectionKey> i = keys.iterator(); i.hasNext();) {
-					SelectionKey key = i.next();
-					i.remove();
-
-					if (key.isValid()) {
-						SelectableChannel channel = key.channel();
+				while (!killswitch) {
+					while (!q.isEmpty()) {
+						Object[] s = q.remove();
+						SelectableChannel x = (SelectableChannel) s[0];
+						Selector sel = getSelector();
+						Integer op = (Integer) s[1];
+						Object att = s[2];
 						try {
-							AsioVisitor m = inferAsioVisitor(protocoldecoder,
-									key);
-
-							if (key.isValid() && key.isWritable()) {
-								if (!((SocketChannel) channel).socket()
-										.isOutputShutdown()) {
-									m.onWrite(key);
-								} else {
-									key.cancel();
-								}
-							}
-							if (key.isValid() && key.isReadable()) {
-								if (!((SocketChannel) channel).socket()
-										.isInputShutdown()) {
-									m.onRead(key);
-								} else {
-									key.cancel();
-								}
-							}
-							if (key.isValid() && key.isAcceptable()) {
-								m.onAccept(key);
-							}
-							if (key.isValid() && key.isConnectable()) {
-								m.onConnect(key);
-							}
+							x.register(sel, op, att);
 						} catch (Throwable e) {
-							Object attachment = key.attachment();
-							if (attachment instanceof Object[]) {
-								Object[] objects = (Object[]) attachment;
-								System.err.println("BadHandler: "
-										+ java.util.Arrays
-												.deepToString(objects));
 
-							} else
-								System.err.println("BadHandler: "
-										+ String.valueOf(attachment));
+						}
+					}
+					int select = selector.select(timeout);
 
-							if (AsioVisitor.$DBG) {
-								AsioVisitor asioVisitor = inferAsioVisitor(
-										protocoldecoder, key);
-								if (asioVisitor instanceof Impl) {
-									Impl visitor = (Impl) asioVisitor;
-									if (AsioVisitor.$origins
-											.containsKey(visitor)) {
-										String s = AsioVisitor.$origins
-												.get(visitor);
-										System.err.println("origin " + s);
+					timeout = 0 == select ? min(timeout << 1, timeoutMax) : 1;
+					if (0 == select)
+						continue;
+					Set<SelectionKey> keys = selector.selectedKeys();
+
+					for (Iterator<SelectionKey> i = keys.iterator(); i.hasNext();) {
+						SelectionKey key = i.next();
+						i.remove();
+
+						if (key.isValid()) {
+							SelectableChannel channel = key.channel();
+							try {
+								AsioVisitor m = inferAsioVisitor(protocoldecoder,
+										key);
+
+								if (key.isValid() && key.isWritable()) {
+									if (!((SocketChannel) channel).socket()
+											.isOutputShutdown()) {
+										m.onWrite(key);
+									} else {
+										key.cancel();
 									}
 								}
+								if (key.isValid() && key.isReadable()) {
+									if (!((SocketChannel) channel).socket()
+											.isInputShutdown()) {
+										m.onRead(key);
+									} else {
+										key.cancel();
+									}
+								}
+								if (key.isValid() && key.isAcceptable()) {
+									m.onAccept(key);
+								}
+								if (key.isValid() && key.isConnectable()) {
+									m.onConnect(key);
+								}
+							} catch (Throwable e) {
+								Object attachment = key.attachment();
+								if (attachment instanceof Object[]) {
+									Object[] objects = (Object[]) attachment;
+									System.err.println("BadHandler: "
+											+ java.util.Arrays
+													.deepToString(objects));
+
+								} else
+									System.err.println("BadHandler: "
+											+ String.valueOf(attachment));
+
+								if (AsioVisitor.$DBG) {
+									AsioVisitor asioVisitor = inferAsioVisitor(
+											protocoldecoder, key);
+									if (asioVisitor instanceof Impl) {
+										Impl visitor = (Impl) asioVisitor;
+										if (AsioVisitor.$origins
+												.containsKey(visitor)) {
+											String s = AsioVisitor.$origins
+													.get(visitor);
+											System.err.println("origin " + s);
+										}
+									}
+								}
+								e.printStackTrace();
+								key.attach(null);
+								channel.close();
 							}
-							e.printStackTrace();
-							key.attach(null);
-							channel.close();
 						}
 					}
 				}
-			}
-		}
+			}*/
+		HttpMethod.init(protocoldecoder, a);
 	}
 
 	static AsioVisitor inferAsioVisitor(AsioVisitor default$, SelectionKey key) {

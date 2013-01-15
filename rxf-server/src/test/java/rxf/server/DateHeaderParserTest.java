@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static junit.framework.Assert.assertEquals;
+import static rxf.server.BlobAntiPatternObject.setDEBUG_SENDJSON;
 
 /**
  * Created with IntelliJ IDEA.
@@ -29,8 +30,9 @@ public class DateHeaderParserTest {
 	};
 
 	static {
-		BlobAntiPatternObject.setDEBUG_SENDJSON(true);
+		setDEBUG_SENDJSON(true);
 	}
+
 	@Test
 	public void testIfModifiedStuff() {
 
@@ -45,6 +47,7 @@ public class DateHeaderParserTest {
 		}
 
 	}
+
 	@Test
 	public void testFmt() {
 		for (Map.Entry<String, String> stringStringEntry : map.entrySet()) {

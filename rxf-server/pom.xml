@@ -5,8 +5,7 @@
     <artifactId>rxf-server</artifactId>
     <parent>
         <groupId>rxf</groupId>
-        <version>0.9.1</version>
-        <artifactId>relaxfactory</artifactId>
+    <version>0.9.2</version>        <artifactId>relaxfactory</artifactId>
     </parent>
     <packaging>jar</packaging>
     <properties>

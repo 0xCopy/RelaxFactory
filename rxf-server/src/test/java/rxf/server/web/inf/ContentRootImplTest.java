@@ -7,9 +7,7 @@ import one.xio.AsioVisitor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import rxf.server.BlobAntiPatternObject;
 import rxf.server.DateHeaderParser;
-import rxf.server.RelaxFactoryServerImpl;
 
 import java.net.InetSocketAddress;
 import java.nio.channels.ServerSocketChannel;
@@ -19,8 +17,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import static java.nio.channels.SelectionKey.OP_ACCEPT;
 import static one.xio.HttpHeaders.If$2dModified$2dSince;
 import static one.xio.HttpHeaders.If$2dUnmodified$2dSince;
+import static one.xio.HttpMethod.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static rxf.server.BlobAntiPatternObject.setDEBUG_SENDJSON;
 
 public class ContentRootImplTest {
 	private static final String host = "localhost";
@@ -34,8 +34,8 @@ public class ContentRootImplTest {
 	static public void setUp() throws Exception {
 		wc = new WebConversation();
 
-		BlobAntiPatternObject.setDEBUG_SENDJSON(true);
-		RelaxFactoryServerImpl.killswitch = false;
+		setDEBUG_SENDJSON(true);
+		setKillswitch(false);
 
 		serverSocketChannel = ServerSocketChannel.open();
 		final InetSocketAddress serverSocket = new InetSocketAddress(host, 0);
@@ -49,9 +49,8 @@ public class ContentRootImplTest {
 				AsioVisitor topLevel = new ProtocolMethodDispatch();
 				try {
 
-					RelaxFactoryServerImpl.enqueue(serverSocketChannel,
-							OP_ACCEPT, topLevel);
-					RelaxFactoryServerImpl.init(topLevel/*, 1000*/);
+					enqueue(serverSocketChannel, OP_ACCEPT);
+					init(topLevel);
 
 				} catch (Exception e) {
 					System.out.println("failed startup");
@@ -64,8 +63,8 @@ public class ContentRootImplTest {
 	@AfterClass
 	static public void tearDown() throws Exception {
 		try {
-			RelaxFactoryServerImpl.killswitch = true;
-			RelaxFactoryServerImpl.getSelector().close();
+			setKillswitch(true);
+			getSelector().close();
 			serverSocketChannel.close();
 
 			exec.shutdown();

@@ -8,7 +8,6 @@ import org.junit.Test;
 import rxf.server.BlobAntiPatternObject;
 import rxf.server.CouchResultSet;
 import rxf.server.CouchTx;
-import rxf.server.RelaxFactoryServerImpl;
 import rxf.server.gen.CouchDriver.*;
 import rxf.server.gen.CouchDriver.ViewFetch.ViewFetchTerminalBuilder;
 import rxf.server.web.inf.ProtocolMethodDispatch;
@@ -17,8 +16,10 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
+import static one.xio.HttpMethod.*;
 import static org.junit.Assert.*;
-import static rxf.server.gen.CouchDriver.GSON;
+import static rxf.server.BlobAntiPatternObject.setDEBUG_SENDJSON;
+import static rxf.server.gen.CouchDriver.*;
 
 /**
  * Tests out the db, cleaning up after itself. These must be run in order to work correctly and clean up.
@@ -51,14 +52,14 @@ public class PathologicalBufferSizeTest {
 
 	@BeforeClass
 	static public void setUp() throws Exception {
-		BlobAntiPatternObject.setDEBUG_SENDJSON(true);
-		RelaxFactoryServerImpl.killswitch = false;
+		setDEBUG_SENDJSON(true);
+		setKillswitch(false);
 		exec = Executors.newScheduledThreadPool(2);
 		exec.submit(new Runnable() {
 			public void run() {
 				AsioVisitor topLevel = new ProtocolMethodDispatch();
 				try {
-					RelaxFactoryServerImpl.init(topLevel/*, 1000*/);
+					init(topLevel/*, 1000*/);
 				} catch (Exception e) {
 					fail();
 				}
@@ -80,8 +81,8 @@ public class PathologicalBufferSizeTest {
 	static public void tearDown() throws Exception {
 
 		try {
-			RelaxFactoryServerImpl.killswitch = true;
-			RelaxFactoryServerImpl.getSelector().close();
+			setKillswitch(true);
+			getSelector().close();
 			exec.shutdown();
 		} catch (Exception ignore) {
 		}

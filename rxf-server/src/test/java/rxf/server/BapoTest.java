@@ -4,16 +4,19 @@ import org.junit.Test;
 
 import java.nio.channels.SocketChannel;
 
+import static one.xio.HttpMethod.setKillswitch;
 import static org.junit.Assert.assertNotNull;
+import static rxf.server.BlobAntiPatternObject.createCouchConnection;
+import static rxf.server.BlobAntiPatternObject.recycleChannel;
 
 public class BapoTest {
 	@Test
 	public void testCreateCouchChannel() {
-		RelaxFactoryServerImpl.killswitch = false;
-		SocketChannel channel = BlobAntiPatternObject.createCouchConnection();
+		setKillswitch(false);
+		SocketChannel channel = createCouchConnection();
 		assertNotNull(channel);
-		BlobAntiPatternObject.recycleChannel(channel);
-		RelaxFactoryServerImpl.killswitch = true;
+		recycleChannel(channel);
+		setKillswitch(true);
 	}
 
 }

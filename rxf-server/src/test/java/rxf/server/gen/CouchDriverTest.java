@@ -2,13 +2,13 @@ package rxf.server.gen;
 
 import com.google.gson.JsonSyntaxException;
 import one.xio.AsioVisitor;
+import one.xio.HttpMethod;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import rxf.server.BlobAntiPatternObject;
 import rxf.server.CouchResultSet;
 import rxf.server.CouchTx;
-import rxf.server.RelaxFactoryServerImpl;
 import rxf.server.gen.CouchDriver.*;
 import rxf.server.gen.CouchDriver.ViewFetch.ViewFetchTerminalBuilder;
 import rxf.server.web.inf.ProtocolMethodDispatch;
@@ -19,7 +19,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
-import static rxf.server.gen.CouchDriver.GSON;
+import static rxf.server.gen.CouchDriver.*;
 
 /**
  * Tests out the db, cleaning up after itself. These must be run in order to work correctly and clean up.
@@ -35,13 +35,13 @@ public class CouchDriverTest {
 	@BeforeClass
 	static public void setUp() throws Exception {
 		BlobAntiPatternObject.setDEBUG_SENDJSON(true);
-		RelaxFactoryServerImpl.killswitch = false;
+		HttpMethod.setKillswitch(false);
 		exec = Executors.newScheduledThreadPool(2);
 		exec.submit(new Runnable() {
 			public void run() {
 				AsioVisitor topLevel = new ProtocolMethodDispatch();
 				try {
-					RelaxFactoryServerImpl.init(topLevel);
+					HttpMethod.init(topLevel);
 				} catch (Exception e) {
 					fail();
 				}
@@ -81,8 +81,8 @@ public class CouchDriverTest {
 		//    DbDelete.$().db(SOMEDB).to().fire().oneWay();
 
 		try {
-			RelaxFactoryServerImpl.killswitch = true;
-			RelaxFactoryServerImpl.getSelector().close();
+			HttpMethod.setKillswitch(true);
+			HttpMethod.getSelector().close();
 			//      HttpMethod.broke = null;
 			exec.shutdown();
 			//Thread.sleep(4000);//more than 3 seconds, standard timeout

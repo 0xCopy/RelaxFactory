@@ -5,8 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>rxf</groupId>
     <artifactId>relaxfactory</artifactId>
-    <version>0.9.1</version>
-    <packaging>pom</packaging>
+<version>0.9.2</version>    <packaging>pom</packaging>
     <properties>
         <gwt.draftCompile>false</gwt.draftCompile>
         <java.compiler.version>${java.specification.version}</java.compiler.version>

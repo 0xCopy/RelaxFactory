@@ -1,10 +1,10 @@
 package rxf.server;
 
+import one.xio.HttpMethod;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
 
-import static rxf.server.RelaxFactoryServerImpl.UTF8;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
@@ -36,7 +36,7 @@ public class Rfc822HeaderStateTest {
 				"HTTP/1.0").headerString("Header", "value").headerString(
 				"Header2", "value2");
 		ByteBuffer buf = req.asRequestHeaderByteBuffer();
-		String result = UTF8.decode(buf.duplicate()).toString();
+		String result = HttpMethod.UTF8.decode(buf.duplicate()).toString();
 
 		assertEquals(
 				"VERB /noun HTTP/1.0\r\nHeader: value\r\nHeader2: value2\r\n\r\n",
@@ -84,7 +84,7 @@ public class Rfc822HeaderStateTest {
 		resp.methodProtocol("HTTP/1.0").pathResCode("501").protocolStatus(
 				"Unsupported Method").headerString("Connection", "close");
 		ByteBuffer buf = resp.asResponseHeaderByteBuffer();
-		String result = UTF8.decode(buf).toString();
+		String result = HttpMethod.UTF8.decode(buf).toString();
 		assertEquals(
 				"HTTP/1.0 501 Unsupported Method\r\nConnection: close\r\n\r\n",
 				result);

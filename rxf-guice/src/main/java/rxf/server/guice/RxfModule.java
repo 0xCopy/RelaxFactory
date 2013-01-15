@@ -58,9 +58,8 @@ public class RxfModule extends AbstractModule {
 
 	@Provides
 	@Singleton
-	protected RelaxFactoryServer provideServer(
-			@Named("port") Integer port, @Named("hostname") String hostname)
-			throws UnknownHostException {
+	protected RelaxFactoryServer provideServer(@Named("port") Integer port,
+			@Named("hostname") String hostname) throws UnknownHostException {
 		RelaxFactoryServer server = new RelaxFactoryServerImpl();
 		server.init(hostname, port, topLevel);
 		return server;

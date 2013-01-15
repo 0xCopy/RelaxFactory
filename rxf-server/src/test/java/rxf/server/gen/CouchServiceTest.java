@@ -5,7 +5,8 @@ import one.xio.AsioVisitor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import rxf.server.*;
+import rxf.server.CouchService;
+import rxf.server.CouchServiceFactory;
 import rxf.server.CouchTx;
 import rxf.server.gen.CouchDriver.DbDelete;
 import rxf.server.gen.CouchDriver.DocFetch;
@@ -16,7 +17,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
+import static one.xio.HttpMethod.*;
 import static org.junit.Assert.*;
+import static rxf.server.BlobAntiPatternObject.setDEBUG_SENDJSON;
 import static rxf.server.gen.CouchDriver.GSON;
 
 /**
@@ -31,14 +34,14 @@ public class CouchServiceTest {
 
 	@BeforeClass
 	static public void setUp() throws Exception {
-		BlobAntiPatternObject.setDEBUG_SENDJSON(true);
-		RelaxFactoryServerImpl.killswitch = false;
+		setDEBUG_SENDJSON(true);
+		setKillswitch(false);
 		exec = Executors.newScheduledThreadPool(2);
 		exec.submit(new Runnable() {
 			public void run() {
 				AsioVisitor topLevel = new ProtocolMethodDispatch();
 				try {
-					RelaxFactoryServerImpl.init(topLevel);
+					init(topLevel);
 				} catch (Exception e) {
 					fail();
 				}
@@ -74,8 +77,8 @@ public class CouchServiceTest {
 	static public void tearDown() throws Exception {
 
 		try {
-			RelaxFactoryServerImpl.killswitch = true;
-			RelaxFactoryServerImpl.getSelector().close();
+			setKillswitch(true);
+			getSelector().close();
 			exec.shutdown();
 		} catch (Exception ignore) {
 		}
@@ -245,34 +248,34 @@ public class CouchServiceTest {
 		sample.model = "-model4";
 		List<CSFTest> loaded = service.matchingTuples(sample);
 		/* returns null, whoops
-		 turns out to be a json exception:
+		turns out to be a json exception:
 
-		  com.google.gson.JsonSyntaxException: java.lang.IllegalStateException: Expected a string but was BEGIN_OBJECT at line 2 column 49
-		  at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:180)
-		  at com.google.gson.internal.bind.TypeAdapterRuntimeTypeWrapper.read(TypeAdapterRuntimeTypeWrapper.java:40)
-		  at com.google.gson.internal.bind.CollectionTypeAdapterFactory$Adapter.read(CollectionTypeAdapterFactory.java:81)
-		  at com.google.gson.internal.bind.CollectionTypeAdapterFactory$Adapter.read(CollectionTypeAdapterFactory.java:60)
-		  at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:93)
-		  at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:176)
-		  at com.google.gson.Gson.fromJson(Gson.java:755)
-		  at com.google.gson.Gson.fromJson(Gson.java:721)
-		  at com.google.gson.Gson.fromJson(Gson.java:670)
-		  at rxf.server.gen.CouchDriver$ViewFetch$ViewFetchActionBuilder$1.rows(CouchDriver.java:735)
-		  at rxf.server.CouchServiceFactory$CouchServiceHandler$2.call(CouchServiceFactory.java:198)
-		  at java.util.concurrent.FutureTask$Sync.innerRun(FutureTask.java:334)
-		  at java.util.concurrent.FutureTask.run(FutureTask.java:166)
-		  at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$201(ScheduledThreadPoolExecutor.java:178)
-		  at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:292)
-		  at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1110)
-		  at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:603)
-		  at java.lang.Thread.run(Thread.java:722)
-		  Caused by: java.lang.IllegalStateException: Expected a string but was BEGIN_OBJECT at line 2 column 49
-		  at com.google.gson.stream.JsonReader.nextString(JsonReader.java:464)
-		  at com.google.gson.internal.bind.TypeAdapters$13.read(TypeAdapters.java:347)
-		  at com.google.gson.internal.bind.TypeAdapters$13.read(TypeAdapters.java:335)
-		  at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:93)
-		  at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:176)
-		  ... 17 more
+		com.google.gson.JsonSyntaxException: java.lang.IllegalStateException: Expected a string but was BEGIN_OBJECT at line 2 column 49
+		at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:180)
+		at com.google.gson.internal.bind.TypeAdapterRuntimeTypeWrapper.read(TypeAdapterRuntimeTypeWrapper.java:40)
+		at com.google.gson.internal.bind.CollectionTypeAdapterFactory$Adapter.read(CollectionTypeAdapterFactory.java:81)
+		at com.google.gson.internal.bind.CollectionTypeAdapterFactory$Adapter.read(CollectionTypeAdapterFactory.java:60)
+		at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:93)
+		at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:176)
+		at com.google.gson.Gson.fromJson(Gson.java:755)
+		at com.google.gson.Gson.fromJson(Gson.java:721)
+		at com.google.gson.Gson.fromJson(Gson.java:670)
+		at rxf.server.gen.CouchDriver$ViewFetch$ViewFetchActionBuilder$1.rows(CouchDriver.java:735)
+		at rxf.server.CouchServiceFactory$CouchServiceHandler$2.call(CouchServiceFactory.java:198)
+		at java.util.concurrent.FutureTask$Sync.innerRun(FutureTask.java:334)
+		at java.util.concurrent.FutureTask.run(FutureTask.java:166)
+		at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$201(ScheduledThreadPoolExecutor.java:178)
+		at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:292)
+		at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1110)
+		at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:603)
+		at java.lang.Thread.run(Thread.java:722)
+		Caused by: java.lang.IllegalStateException: Expected a string but was BEGIN_OBJECT at line 2 column 49
+		at com.google.gson.stream.JsonReader.nextString(JsonReader.java:464)
+		at com.google.gson.internal.bind.TypeAdapters$13.read(TypeAdapters.java:347)
+		at com.google.gson.internal.bind.TypeAdapters$13.read(TypeAdapters.java:335)
+		at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:93)
+		at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:176)
+		... 17 more
 		 */
 
 		//Comment in these tests to see it fail, currently fails silently, returning null
@@ -280,6 +283,7 @@ public class CouchServiceTest {
 		//    assertEquals(1, loaded.size());
 		//    assertNotNull(loaded.get(0)._id);
 	}
+
 	@Test
 	public void testNoArgMethod() throws Exception {
 		nukeTestDbs();

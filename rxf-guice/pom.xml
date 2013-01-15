@@ -4,8 +4,7 @@
     <parent>
         <artifactId>relaxfactory</artifactId>
         <groupId>rxf</groupId>
-        <version>0.9.1</version>
-    </parent>
+    <version>0.9.2</version>    </parent>
     <artifactId>rxf-guice</artifactId>
     <name>rxf DI tools</name>
     <dependencies>
