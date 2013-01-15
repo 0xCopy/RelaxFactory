@@ -17,7 +17,7 @@ import static java.lang.annotation.ElementType.*;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({FIELD, LOCAL_VARIABLE, TYPE, ANNOTATION_TYPE, CONSTRUCTOR, PACKAGE,
-		PARAMETER})
+        PARAMETER})
 public @interface DbTask {
-	DbTerminal[] value();
+    DbTerminal[] value();
 }

@@ -29,75 +29,75 @@ import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
  */
 public class ContentRootImpl extends Impl implements PreRead {
 
-	public static final String SLASHDOTSLASH = File.separator + "."
-			+ File.separator;
-	public static final String DOUBLESEP = File.separator + File.separator;
-	private String rootPath = CouchNamespace.COUCH_DEFAULT_FS_ROOT;
-	private ByteBuffer cursor;
-	private SocketChannel channel;
-	private HttpRequest req;
+    public static final String SLASHDOTSLASH = File.separator + "."
+            + File.separator;
+    public static final String DOUBLESEP = File.separator + File.separator;
+    private String rootPath = CouchNamespace.COUCH_DEFAULT_FS_ROOT;
+    private ByteBuffer cursor;
+    private SocketChannel channel;
+    private HttpRequest req;
 
-	public ContentRootImpl() {
-		init();
-	}
+    public ContentRootImpl() {
+        init();
+    }
 
-	File file;
+    File file;
 
-	public ContentRootImpl(String rootPath) {
-		this.rootPath = rootPath;
-		init();
-	}
+    public ContentRootImpl(String rootPath) {
+        this.rootPath = rootPath;
+        init();
+    }
 
-	public static String fileScrub(String scrubMe) {
-		final char inverseChar = '/' == File.separatorChar ? '\\' : '/';
-		return null == scrubMe ? null : scrubMe.trim().replace(inverseChar,
-				File.separatorChar).replace(DOUBLESEP, "" + File.separator)
-				.replace("..", ".");
-	}
+    public static String fileScrub(String scrubMe) {
+        final char inverseChar = '/' == File.separatorChar ? '\\' : '/';
+        return null == scrubMe ? null : scrubMe.trim().replace(inverseChar,
+                File.separatorChar).replace(DOUBLESEP, "" + File.separator)
+                .replace("..", ".");
+    }
 
-	public void init() {
-		File dir = new File(rootPath);
-		if (!dir.isDirectory() && dir.canRead())
-			throw new IllegalAccessError("can't verify readable dir at "
-					+ rootPath);
-	}
+    public void init() {
+        File dir = new File(rootPath);
+        if (!dir.isDirectory() && dir.canRead())
+            throw new IllegalAccessError("can't verify readable dir at "
+                    + rootPath);
+    }
 
-	@Override
-	public void onRead(SelectionKey key) throws Exception {
-		channel = (SocketChannel) key.channel();
-		if (cursor == null) {
-			if (key.attachment() instanceof Object[]) {
-				Object[] ar = (Object[]) key.attachment();
-				for (Object o : ar) {
-					if (o instanceof ByteBuffer) {
-						cursor = (ByteBuffer) o;
-						continue;
-					}
-					if (o instanceof Rfc822HeaderState) {
-						req = ((Rfc822HeaderState) o).$req();
-						continue;
-					}
-				}
-			}
-			key.attach(this);
-		}
-		cursor = null == cursor ? ByteBuffer
-				.allocateDirect(getReceiveBufferSize()) : cursor.hasRemaining()
-				? cursor
-				: ByteBuffer.allocateDirect(cursor.capacity() << 1).put(
-						(ByteBuffer) cursor.rewind());
-		int read = channel.read(cursor);
-		if (read == -1)
-			key.cancel();
-		Buffer flip = cursor.duplicate().flip();
-		req = (HttpRequest) new Rfc822HeaderState().addHeaderInterest(
-				Accept$2dEncoding).$req().apply((ByteBuffer) flip);
-		if (!BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, req
-				.headerBuf())) {
-			return;
-		}
-		cursor = ((ByteBuffer) flip).slice();
-		/*  int remaining = Integer.parseInt(req.headerString(HttpHeaders.Content$2dLength));
+    @Override
+    public void onRead(SelectionKey key) throws Exception {
+        channel = (SocketChannel) key.channel();
+        if (cursor == null) {
+            if (key.attachment() instanceof Object[]) {
+                Object[] ar = (Object[]) key.attachment();
+                for (Object o : ar) {
+                    if (o instanceof ByteBuffer) {
+                        cursor = (ByteBuffer) o;
+                        continue;
+                    }
+                    if (o instanceof Rfc822HeaderState) {
+                        req = ((Rfc822HeaderState) o).$req();
+                        continue;
+                    }
+                }
+            }
+            key.attach(this);
+        }
+        cursor = null == cursor ? ByteBuffer
+                .allocateDirect(getReceiveBufferSize()) : cursor.hasRemaining()
+                ? cursor
+                : ByteBuffer.allocateDirect(cursor.capacity() << 1).put(
+                (ByteBuffer) cursor.rewind());
+        int read = channel.read(cursor);
+        if (read == -1)
+            key.cancel();
+        Buffer flip = cursor.duplicate().flip();
+        req = (HttpRequest) new Rfc822HeaderState().addHeaderInterest(
+                Accept$2dEncoding).$req().apply((ByteBuffer) flip);
+        if (!BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, req
+                .headerBuf())) {
+            return;
+        }
+        cursor = ((ByteBuffer) flip).slice();
+        /*  int remaining = Integer.parseInt(req.headerString(HttpHeaders.Content$2dLength));
 		      final Impl prev = this;
 		      if (cursor.remaining() != remaining) key.attach(new Impl() {
 		        @Override
@@ -112,96 +112,96 @@ public class ContentRootImpl extends Impl implements PreRead {
 		        }
 
 		      });*/
-		key.interestOps(SelectionKey.OP_WRITE);
-	}
+        key.interestOps(SelectionKey.OP_WRITE);
+    }
 
-	public void onWrite(SelectionKey key) throws Exception {
+    public void onWrite(SelectionKey key) throws Exception {
 
-		String accepts = req.headerString(Accept$2dEncoding);
-		String ceString = null;
-		String finalFname = fileScrub(rootPath + SLASHDOTSLASH
-				+ req.path().split("\\?")[0]);
-		file = new File(finalFname);
-		if (file.isDirectory()) {
-			file = new File((finalFname + "/index.html"));
-		}
-		finalFname = (file.getCanonicalPath());
-		if (null != accepts) {
+        String accepts = req.headerString(Accept$2dEncoding);
+        String ceString = null;
+        String finalFname = fileScrub(rootPath + SLASHDOTSLASH
+                + req.path().split("\\?")[0]);
+        file = new File(finalFname);
+        if (file.isDirectory()) {
+            file = new File((finalFname + "/index.html"));
+        }
+        finalFname = (file.getCanonicalPath());
+        if (null != accepts) {
 
-			for (CompressionTypes compType : CompressionTypes.values()) {
-				if (accepts.contains(compType.name())) {
-					File f = new File(file.getAbsoluteFile() + "."
-							+ compType.suffix);
-					if (f.isFile() && f.canRead()) {
-						if (BlobAntiPatternObject.DEBUG_SENDJSON) {
-							System.err.println("sending compressed archive: "
-									+ f.getAbsolutePath());
-						}
-						ceString = (compType.name());
-						file = f;
-						break;
-					}
-				}
-			}
-		}
-		boolean send200 = file.canRead() && file.isFile();
+            for (CompressionTypes compType : CompressionTypes.values()) {
+                if (accepts.contains(compType.name())) {
+                    File f = new File(file.getAbsoluteFile() + "."
+                            + compType.suffix);
+                    if (f.isFile() && f.canRead()) {
+                        if (BlobAntiPatternObject.DEBUG_SENDJSON) {
+                            System.err.println("sending compressed archive: "
+                                    + f.getAbsolutePath());
+                        }
+                        ceString = (compType.name());
+                        file = f;
+                        break;
+                    }
+                }
+            }
+        }
+        boolean send200 = file.canRead() && file.isFile();
 
-		if (send200) {
-			final RandomAccessFile randomAccessFile = new RandomAccessFile(
-					file, "r");
-			final long total = randomAccessFile.length();
-			final FileChannel fileChannel = randomAccessFile.getChannel();
+        if (send200) {
+            final RandomAccessFile randomAccessFile = new RandomAccessFile(
+                    file, "r");
+            final long total = randomAccessFile.length();
+            final FileChannel fileChannel = randomAccessFile.getChannel();
 
-			String substring = finalFname
-					.substring(finalFname.lastIndexOf('.') + 1);
-			MimeType mimeType = MimeType.valueOf(substring);
-			long length = randomAccessFile.length();
+            String substring = finalFname
+                    .substring(finalFname.lastIndexOf('.') + 1);
+            MimeType mimeType = MimeType.valueOf(substring);
+            long length = randomAccessFile.length();
 
-			final HttpResponse responseHeader = new Rfc822HeaderState().$res();
+            final HttpResponse responseHeader = new Rfc822HeaderState().$res();
 
-			responseHeader.status(HttpStatus.$200).headerString(Content$2dType,
-					(null == mimeType ? MimeType.bin : mimeType).contentType)
-					.headerString(Content$2dLength, String.valueOf(length));
-			if (null != ceString)
-				responseHeader.headerString(Content$2dEncoding, ceString);
-			ByteBuffer response = responseHeader.as(ByteBuffer.class);
-			int write = channel.write(response);
-			final int sendBufferSize = BlobAntiPatternObject
-					.getSendBufferSize();
-			final long[] progress = {fileChannel.transferTo(0, sendBufferSize,
-					channel)};
-			key.interestOps(OP_WRITE | OP_CONNECT);
-			key.selector().wakeup();
-			key.attach(new Impl() {
+            responseHeader.status(HttpStatus.$200).headerString(Content$2dType,
+                    (null == mimeType ? MimeType.bin : mimeType).contentType)
+                    .headerString(Content$2dLength, String.valueOf(length));
+            if (null != ceString)
+                responseHeader.headerString(Content$2dEncoding, ceString);
+            ByteBuffer response = responseHeader.as(ByteBuffer.class);
+            int write = channel.write(response);
+            final int sendBufferSize = BlobAntiPatternObject
+                    .getSendBufferSize();
+            final long[] progress = {fileChannel.transferTo(0, sendBufferSize,
+                    channel)};
+            key.interestOps(OP_WRITE | OP_CONNECT);
+            key.selector().wakeup();
+            key.attach(new Impl() {
 
-				public void onWrite(SelectionKey key) throws Exception {
-					long remaining = total - progress[0];
-					progress[0] += fileChannel.transferTo(progress[0], min(
-							sendBufferSize, remaining), channel);
-					remaining = total - progress[0];
-					if (0 == remaining) {
-						fileChannel.close();
-						randomAccessFile.close();
-						key.selector().wakeup();
-						key.interestOps(OP_READ);
-						key.attach(null);
-					}
-				}
-			});
-		} else {
-			key.selector().wakeup();
-			key.interestOps(OP_WRITE).attach(new Impl() {
+                public void onWrite(SelectionKey key) throws Exception {
+                    long remaining = total - progress[0];
+                    progress[0] += fileChannel.transferTo(progress[0], min(
+                            sendBufferSize, remaining), channel);
+                    remaining = total - progress[0];
+                    if (0 == remaining) {
+                        fileChannel.close();
+                        randomAccessFile.close();
+                        key.selector().wakeup();
+                        key.interestOps(OP_READ);
+                        key.attach(null);
+                    }
+                }
+            });
+        } else {
+            key.selector().wakeup();
+            key.interestOps(OP_WRITE).attach(new Impl() {
 
-				public void onWrite(SelectionKey key) throws Exception {
+                public void onWrite(SelectionKey key) throws Exception {
 
-					String response = "HTTP/1.1 404 Not Found\n"
-							+ "Content-Length: 0\n\n";
-					System.err.println("!!! " + file.getAbsolutePath());
-					int write = channel.write(UTF8.encode(response));
-					key.selector().wakeup();
-					key.interestOps(OP_READ).attach(null);
-				}
-			});
-		}
-	}
+                    String response = "HTTP/1.1 404 Not Found\n"
+                            + "Content-Length: 0\n\n";
+                    System.err.println("!!! " + file.getAbsolutePath());
+                    int write = channel.write(UTF8.encode(response));
+                    key.selector().wakeup();
+                    key.interestOps(OP_READ).attach(null);
+                }
+            });
+        }
+    }
 }
