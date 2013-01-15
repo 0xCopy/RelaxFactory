@@ -1,9 +1,9 @@
 package ds.shared.rpc;
 
-import java.util.List;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
+import java.util.List;
+
 public interface SampleRemoteServiceAsync {
-	void getAllNpoNames(AsyncCallback<List<String>> callback);
+    void getAllNpoNames(AsyncCallback<List<String>> callback);
 }

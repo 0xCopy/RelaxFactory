@@ -12,38 +12,38 @@ import ds.shared.rf.request.DealRequest;
 import ds.shared.view.DealView;
 
 public class DealActivity extends AbstractActivity {
-  private final DealPlace place;
+    private final DealPlace place;
 
-  private DealRequestFactory rf;
-  private DealView view;
+    private DealRequestFactory rf;
+    private DealView view;
 
-  public DealActivity(DealPlace place) {
-    this.place = place;
-  }
+    public DealActivity(DealPlace place) {
+        this.place = place;
+    }
 
-  //@Inject
-  public void setRequestFactory(DealRequestFactory rf) {
-    this.rf = rf;
-  }
+    //@Inject
+    public void setRequestFactory(DealRequestFactory rf) {
+        this.rf = rf;
+    }
 
-  //@Inject
-  public void setView(DealView view) {
-    this.view = view;
-  }
+    //@Inject
+    public void setView(DealView view) {
+        this.view = view;
+    }
 
-  @Override
-  public void start(final AcceptsOneWidget panel, EventBus eventBus) {
-    final RequestFactoryEditorDriver<DealProxy, ? super DealView> driver = view.getDriver();
-    driver.initialize(rf, view);
+    @Override
+    public void start(final AcceptsOneWidget panel, EventBus eventBus) {
+        final RequestFactoryEditorDriver<DealProxy, ? super DealView> driver = view.getDriver();
+        driver.initialize(rf, view);
 
-    final DealRequest request = rf.dealReq();
-    request.find(place.getKey()).with(driver.getPaths()).fire(new Receiver<DealProxy>() {
-      @Override
-      public void onSuccess(DealProxy dealProxy) {
-        driver.display(dealProxy);
-        panel.setWidget(view);
-      }
-    });
+        final DealRequest request = rf.dealReq();
+        request.find(place.getKey()).with(driver.getPaths()).fire(new Receiver<DealProxy>() {
+            @Override
+            public void onSuccess(DealProxy dealProxy) {
+                driver.display(dealProxy);
+                panel.setWidget(view);
+            }
+        });
 
-  }
+    }
 }

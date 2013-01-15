@@ -5,11 +5,10 @@
     <artifactId>rxf-server</artifactId>
     <parent>
         <groupId>rxf</groupId>
-        <version>0.9.0</version>
+        <version>0.9.2</version>
         <artifactId>relaxfactory</artifactId>
     </parent>
     <packaging>jar</packaging>
-
     <properties>
         <!--<java.version>1.7</java.version>-->
     </properties>
@@ -25,31 +24,28 @@
             <version>10.5.4</version>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>1xio</groupId>
-            <artifactId>1xio</artifactId>
-            <version>${one.xio.version}</version>
-        </dependency>
-
+        <!--        <dependency>
+                    <groupId>1xio</groupId>
+                    <artifactId>1xio</artifactId>
+                    <version>${one.xio.version}</version>
+                </dependency>-->
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>2.1</version>
+            <version>2.3-SNAPSHOT</version>
         </dependency>
-
-        <!--  <dependency>
-            <groupId>com.googlecode.gwtquery</groupId>
-            <artifactId>gwtquery</artifactId>
-            <version>1.1.1-SNAPSHOT</version>
-            <scope>provided</scope>
-        </dependency>-->
-
+        <!--
+              <dependency>
+                    <groupId>com.rubiconproject.oss</groupId>
+                    <artifactId>jchronic</artifactId>
+                    <version>0.2.6</version>
+                </dependency>
+                -->
         <dependency>
             <groupId>com.google.web.bindery</groupId>
             <artifactId>requestfactory-server</artifactId>
             <version>${gwt.version}</version>
         </dependency>
-
         <!-- see sample projects for correct placement -->
         <dependency>
             <groupId>com.google.web.bindery</groupId>
@@ -57,149 +53,35 @@
             <version>${gwt.version}</version>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>com.colinalworth</groupId>
             <artifactId>rpq</artifactId>
             <version>0.0.1-SNAPSHOT</version>
             <optional>true</optional>
         </dependency>
-
-
-        <dependency>
-            <groupId>net.sf.jtidy</groupId>
-            <artifactId>jtidy</artifactId>
-            <version>r938</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-compress</artifactId>
-            <version>1.4</version>
-        </dependency>
-
         <dependency>
             <groupId>net.sourceforge.htmlunit</groupId>
             <artifactId>htmlunit</artifactId>
-            <version>2.10</version>
+            <version>2.12-SNAPSHOT</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.httpunit</groupId>
+            <artifactId>httpunit</artifactId>
+            <version>1.7.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <detail>true</detail>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
-                    <showDeprecation>true</showDeprecation>
-                    <showWarnings>true</showWarnings>
-                    <!--<executable>${env.JAVA_HOME_7}/bin/javac</executable>-->
-                    <!--<fork>true</fork>-->
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>2.2</version>
-                <!-- <configuration> <webXml>target/web.xml</webXml> </configuration> -->
-                <executions>
-                    <execution>
-                        <id>setup-test-war-dir</id>
-                        <phase>process-test-resources</phase>
-                        <goals>
-                            <goal>exploded</goal>
-                        </goals>
-                        <configuration>
-                            <failOnMissingWebXml>false</failOnMissingWebXml>
-                            <webappDirectory>${project.build.directory}/test-www</webappDirectory>
-                            <warSourceDirectory>${basedir}/src/test/webapp</warSourceDirectory>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.3</version>
-                <configuration>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                    <archive>
-                        <manifest>
-                            <mainClass>rxf.rxf.server.BlobAntiPatternObject</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>1.2</version>
-                <executions>
-                    <execution>
-                        <phase>process-classes</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <id>VerifyRequestFactoryInterfaces</id>
-                        <configuration>
-                            <executable>java</executable>
-                            <arguments>
-                                <argument>-cp</argument>
-                                <classpath/>
-                                <argument>com.google.web.bindery.requestfactory.apt.ValidationTool</argument>
-                                <argument>${project.build.outputDirectory}</argument>
-                                <argument>rxf.shared.KernelFactory</argument>
-                            </arguments>
-                            <classpathScope>compile</classpathScope>
-                        </configuration>
-                    </execution>
-                </executions>
-                <dependencies>
-                    <dependency>
-                        <groupId>com.google.web.bindery</groupId>
-                        <artifactId>requestfactory-apt</artifactId>
-                        <version>${gwt.version}</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>com.google.gwt</groupId>
-                        <artifactId>gwt-user</artifactId>
-                        <version>${gwt.version}</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
-
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.7.2</version>
                 <configuration>
-                    <workingDirectory>${project.build.directory}/test-www</workingDirectory>
+                    <workingDirectory>${project.build.directory}/test-classes</workingDirectory>
                 </configuration>
             </plugin>
         </plugins>
         <outputDirectory>${project.build.directory}/${project.build.finalName}/WEB-INF/classes</outputDirectory>
     </build>
-    <reporting>
-        <plugins>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>gwt-maven-plugin</artifactId>
-                <version>${gwt.plugin.version}</version>
-                <reportSets>
-                    <reportSet>
-                        <reports>
-                            <report>compile-report</report>
-                        </reports>
-                    </reportSet>
-                </reportSets>
-            </plugin>
-        </plugins>
-    </reporting>
 </project>

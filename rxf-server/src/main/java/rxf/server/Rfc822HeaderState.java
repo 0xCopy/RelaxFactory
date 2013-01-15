@@ -19,9 +19,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.lang.Math.abs;
+import static one.xio.HttpHeaders.Cookie;
 import static one.xio.HttpHeaders.Set$2dCookie;
 import static one.xio.HttpMethod.UTF8;
-import static rxf.server.BlobAntiPatternObject.COOKIE;
 
 /**
  * this is a utility class to parse a HttpRequest header or
@@ -185,8 +185,6 @@ public class Rfc822HeaderState {
 
     /**
      * simple wrapper for HttpRequest setters
-     *
-     * @return
      */
     public HttpRequest $req() {
         return HttpRequest.class == this.getClass()
@@ -196,8 +194,6 @@ public class Rfc822HeaderState {
 
     /**
      * simple wrapper for HttpRequest setters
-     *
-     * @return
      */
     public HttpResponse $res() {
         return HttpResponse.class == this.getClass()
@@ -246,15 +242,15 @@ public class Rfc822HeaderState {
     }
 
     public AtomicBoolean dirty = new AtomicBoolean();
-    public AtomicReference<String[]> headerInterest = new AtomicReference<String[]>(
+    public AtomicReference<String[]> headerInterest = new AtomicReference<>(
             EMPTY),
-            cookies = new AtomicReference<String[]>(EMPTY);
+            cookies = new AtomicReference<>(EMPTY);
     /**
-     * the source route froom the active socket.
+     * the source route from the active socket.
      * <p/>
-     * this is necessary to look up {@link GeoIpService } queries among other things
+     * this is necessary to look up  GeoIpService queries among other things
      */
-    private AtomicReference<InetAddress> sourceRoute = new AtomicReference<InetAddress>();
+    private AtomicReference<InetAddress> sourceRoute = new AtomicReference<>();
 
     /**
      * stored buffer from which things are parsed and later grepped.
@@ -265,11 +261,11 @@ public class Rfc822HeaderState {
     /**
      * parsed valued post-{@link #apply(ByteBuffer)}
      */
-    private AtomicReference<Map<String, String>> headerStrings = new AtomicReference<Map<String, String>>();
+    private AtomicReference<Map<String, String>> headerStrings = new AtomicReference<>();
     /**
      * parsed cookie values post-{@link #apply(ByteBuffer)}
      */
-    public AtomicReference<Map<String, String>> cookieStrings = new AtomicReference<Map<String, String>>();
+    public AtomicReference<Map<String, String>> cookieStrings = new AtomicReference<>();
     /**
      * dual purpose HTTP protocol header token found on the first line of a HttpRequest/$res in the first position.
      * <p/>
@@ -277,7 +273,7 @@ public class Rfc822HeaderState {
      * <p/>
      * user is responsible for populating this on outbound addHeaderInterest
      */
-    private AtomicReference<String> methodProtocol = new AtomicReference<String>();
+    private AtomicReference<String> methodProtocol = new AtomicReference<>();
 
     /**
      * dual purpose HTTP protocol header token found on the first line of a HttpRequest/$res in the second position
@@ -286,18 +282,18 @@ public class Rfc822HeaderState {
      * <p/>
      * user is responsible for populating this on outbound addHeaderInterest
      */
-    private AtomicReference<String> pathRescode = new AtomicReference<String>();
+    private AtomicReference<String> pathRescode = new AtomicReference<>();
 
     /**
      * Dual purpose HTTP protocol header token found on the first line of a HttpRequest/$res in the third position.
      * <p/>
      * Contains either the protocol (HttpRequest) or a status line message ($res)
      */
-    private AtomicReference<String> protocolStatus = new AtomicReference<String>();
+    private AtomicReference<String> protocolStatus = new AtomicReference<>();
     /**
      * passed in on 0.0.0.0 dispatch to tie the header state to an nio object, to provide a socketchannel handle, and to lookup up the incoming source route
      */
-    private AtomicReference<SelectionKey> sourceKey = new AtomicReference<SelectionKey>();
+    private AtomicReference<SelectionKey> sourceKey = new AtomicReference<>();
     /**
      * terminates header keys
      */
@@ -320,7 +316,7 @@ public class Rfc822HeaderState {
     /**
      * assigns a state parser to a  {@link SelectionKey} and attempts to grab the source route froom the active socket.
      * <p/>
-     * this is necessary to look up {@link GeoIpService } queries among other things
+     * this is necessary to look up GeoIpService queries among other things
      *
      * @param key a NIO select key
      * @return self
@@ -330,7 +326,7 @@ public class Rfc822HeaderState {
         sourceKey.set(key);
         SocketChannel channel = (SocketChannel) sourceKey.get().channel();
         sourceRoute.set(channel.socket().getInetAddress());
-        return (Rfc822HeaderState) this;
+        return this;
     }
 
     /**
@@ -364,7 +360,6 @@ public class Rfc822HeaderState {
     /**
      * this is agrep of the full header state to find one or more addHeaderInterest of a given name.
      * <p/>
-     * todo: regex?
      *
      * @param header a header name
      * @return a list of values
@@ -372,25 +367,27 @@ public class Rfc822HeaderState {
     List<String> getHeadersNamed(String header) {
         ByteBuffer byteBuffer = headerBuf();
         List<String> ret;
-        if (null != byteBuffer) {
+        if (null == byteBuffer) {
+            ret = Arrays.asList();
+        } else {
             String decode = UTF8.decode((ByteBuffer) byteBuffer.rewind())
                     .toString();
 
             String[] lines = decode.split("\n[^ \t]");
             Arrays.sort(lines);
-            ArrayList<String> a = new ArrayList<String>();
+            ArrayList<String> a = new ArrayList<>();
+            String s = header + PREFIX;
             for (String line : lines) {
-                boolean trigger = false;
-                if (line.startsWith(PREFIX)) {
-                    trigger = a.add(line.substring(PREFIX.length()));
+                boolean added = false;
+
+                if (line.startsWith(s)) {
+                    added = a.add(line.substring(s.length()));
                 } else {
-                    if (!trigger)
+                    if (added)
                         break;
                 }
             }
             ret = a;
-        } else {
-            ret = Arrays.asList();
         }
         return ret;
     }
@@ -403,18 +400,17 @@ public class Rfc822HeaderState {
      */
     public Rfc822HeaderState cookies(String... cookies) {
         this.cookies.set(cookies);
-        List<String> headersNamed = getHeadersNamed(COOKIE);
+        List<String> headersNamed = getHeadersNamed(Cookie.getHeader());
         cookieStrings.set(new LinkedHashMap<String, String>());
         Arrays.sort(cookies);
-        for (String cookie : headersNamed) {
+        for (String cookie : headersNamed)
             for (String s : cookie.split(";")) {
                 String[] split = s.split("^[^=]*=", 2);
-                for (String s1 : split) {
-                    cookieStrings.get().put(split[0].trim(), split[1].trim());
-                }
+                /*for (String ignored : split) */
+                cookieStrings.get().put(split[0].trim(), split[1].trim());
+
             }
-        }
-        return (Rfc822HeaderState) this;
+        return this;
     }
 
     /**
@@ -475,7 +471,7 @@ public class Rfc822HeaderState {
             }
 
         }
-        return (Rfc822HeaderState) this;
+        return this;
     }
 
     public Rfc822HeaderState headerInterest(HttpHeaders... replaceInterest) {
@@ -494,7 +490,7 @@ public class Rfc822HeaderState {
 
     public Rfc822HeaderState headerInterest(String... replaceInterest) {
         headerInterest.set(replaceInterest);
-        return (Rfc822HeaderState) this;
+        return this;
     }
 
     public Rfc822HeaderState addHeaderInterest(HttpHeaders... appendInterest) {
@@ -518,7 +514,7 @@ public class Rfc822HeaderState {
     public Rfc822HeaderState addHeaderInterest(String... newInterest) {
 
         //adds a few more instructions than the blind append but does what was desired
-        Set<String> theCow = new CopyOnWriteArraySet<String>(Arrays
+        Set<String> theCow = new CopyOnWriteArraySet<>(Arrays
                 .<String>asList(headerInterest.get()));
         theCow.addAll(Arrays.asList(newInterest));
         String[] strings = theCow.toArray(new String[theCow.size()]);
@@ -529,7 +525,7 @@ public class Rfc822HeaderState {
         //    System.arraycopy(this.addHeaderInterest, 0, temp, 0, this.addHeaderInterest.length);
         //    System.arraycopy(headerInterest, 0, temp, this.addHeaderInterest.length, headerInterest.length);
         //    this.addHeaderInterest = temp;
-        return (Rfc822HeaderState) this;
+        return this;
     }
 
     /**
@@ -548,7 +544,7 @@ public class Rfc822HeaderState {
      */
     public Rfc822HeaderState dirty(boolean dirty) {
         this.dirty.set(dirty);
-        return (Rfc822HeaderState) this;
+        return this;
     }
 
     /**
@@ -585,7 +581,7 @@ public class Rfc822HeaderState {
      */
     public Rfc822HeaderState sourceRoute(InetAddress sourceRoute) {
         this.sourceRoute.set(sourceRoute);
-        return (Rfc822HeaderState) this;
+        return this;
     }
 
     /**
@@ -599,7 +595,7 @@ public class Rfc822HeaderState {
      */
     public Rfc822HeaderState headerBuf(ByteBuffer headerBuf) {
         this.headerBuf = headerBuf;
-        return (Rfc822HeaderState) this;
+        return this;
     }
 
     /**
@@ -610,7 +606,7 @@ public class Rfc822HeaderState {
      */
     public Rfc822HeaderState headerStrings(Map<String, String> headerStrings) {
         this.headerStrings.set(headerStrings);
-        return (Rfc822HeaderState) this;
+        return this;
     }
 
     /**
@@ -647,7 +643,7 @@ public class Rfc822HeaderState {
 
     public Rfc822HeaderState cookieStrings(Map<String, String> cookieStrings) {
         this.cookieStrings.set(cookieStrings);
-        return (Rfc822HeaderState) this;
+        return this;
     }
 
     /**
@@ -664,7 +660,7 @@ public class Rfc822HeaderState {
      */
     public Rfc822HeaderState methodProtocol(String methodProtocol) {
         this.methodProtocol.set(methodProtocol);
-        return (Rfc822HeaderState) this;
+        return this;
     }
 
     /**
@@ -686,7 +682,7 @@ public class Rfc822HeaderState {
      */
     public Rfc822HeaderState pathResCode(String pathRescode) {
         this.pathRescode.set(pathRescode);
-        return (Rfc822HeaderState) this;
+        return this;
     }
 
     /**
@@ -703,7 +699,7 @@ public class Rfc822HeaderState {
      */
     public Rfc822HeaderState protocolStatus(String protocolStatus) {
         this.protocolStatus.set(protocolStatus);
-        return (Rfc822HeaderState) this;
+        return this;
     }
 
     @Override
@@ -780,7 +776,7 @@ public class Rfc822HeaderState {
         }
         for (Entry<String, String> stringStringEntry : cookieStrings()
                 .entrySet()) {
-            protocol += COOKIE + ": " + stringStringEntry.getKey() + "="
+            protocol += Cookie.getHeader() + ": " + stringStringEntry.getKey() + "="
                     + stringStringEntry.getValue() + "\r\n";
         }
 
@@ -831,7 +827,7 @@ public class Rfc822HeaderState {
      */
     public Rfc822HeaderState headerString(String key, String val) {
         headerStrings().put(key, val);
-        return (Rfc822HeaderState) this;
+        return this;
     }
 
     /**

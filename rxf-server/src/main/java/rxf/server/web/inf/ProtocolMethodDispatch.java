@@ -33,147 +33,140 @@ import static rxf.server.CouchNamespace.NAMESPACE;
  */
 public class ProtocolMethodDispatch extends Impl {
 
-    public static final ByteBuffer NONCE = ByteBuffer.allocateDirect(0);
+  public static final ByteBuffer NONCE = ByteBuffer.allocateDirect(0);
+
+  /**
+   * if you *must* register a new priority ahead of existing patterns, this is how.  otherwise the LinkedHashMap stays ordered as defined.
+   *
+   * @param method
+   * @param pattern
+   * @param impl
+   * @return
+   */
+  public static Map<Pattern, Class<? extends Impl>> precedeAllWith(HttpMethod method,
+      Pattern pattern, Class<? extends Impl> impl) {
+    Map<Pattern, Class<? extends Impl>> patternImplMap = NAMESPACE.get(method);
+    Map<Pattern, Class<? extends Impl>> ret = new LinkedHashMap<Pattern, Class<? extends Impl>>();
+    ret.put(pattern, impl);
+    if (null == patternImplMap)
+      patternImplMap = new LinkedHashMap<Pattern, Class<? extends Impl>>();
+
+    for (Entry<Pattern, Class<? extends Impl>> patternImplEntry : patternImplMap.entrySet()) {
+      ret.put(patternImplEntry.getKey(), patternImplEntry.getValue());
+    }
+    NAMESPACE.put(method, ret);
+    return patternImplMap;
+
+  }
+
+  /**
+   * the PUT protocol handlers, only static for the sake of javadocs
+   */
+  public static Map<Pattern, Class<? extends Impl>> POSTmap =
+      new LinkedHashMap<Pattern, Class<? extends Impl>>();
+
+  /**
+   * the GET protocol handlers, only static for the sake of javadocs
+   */
+  public static Map<Pattern, Class<? extends Impl>> GETmap =
+      new LinkedHashMap<Pattern, Class<? extends Impl>>();
+
+  static {
+    NAMESPACE.put(POST, POSTmap);
+    NAMESPACE.put(GET, GETmap);
 
     /**
-     * if you *must* register a new priority ahead of existing patterns, this is how.  otherwise the LinkedHashMap stays ordered as defined.
+     * for gwt requestfactory done via POST.
      *
-     * @param method
-     * @param pattern
-     * @param impl
-     * @return
+     * TODO: rf GET from query parameters
      */
-    public static Map<Pattern, Class<? extends Impl>> precedeAllWith(
-            HttpMethod method, Pattern pattern, Class<? extends Impl> impl) {
-        Map<Pattern, Class<? extends Impl>> patternImplMap = NAMESPACE
-                .get(method);
-        Map<Pattern, Class<? extends Impl>> ret = new LinkedHashMap<Pattern, Class<? extends Impl>>();
-        ret.put(pattern, impl);
-        if (null == patternImplMap)
-            patternImplMap = new LinkedHashMap<Pattern, Class<? extends Impl>>();
-
-        for (Entry<Pattern, Class<? extends Impl>> patternImplEntry : patternImplMap
-                .entrySet()) {
-            ret.put(patternImplEntry.getKey(), patternImplEntry.getValue());
-        }
-        NAMESPACE.put(method, ret);
-        return patternImplMap;
-
-    }
+    POSTmap.put(Pattern.compile("^/gwtRequest"), GwtRequestFactoryVisitor.class);
 
     /**
-     * the PUT protocol handlers, only static for the sake of javadocs
+     * any url begining with /i is a proxied $req to couchdb but only permits image/* and text/*
      */
-    public static Map<Pattern, Class<? extends Impl>> POSTmap = new LinkedHashMap<Pattern, Class<? extends Impl>>();
+
+    Pattern passthroughExpr = Pattern.compile("^/i(/.*)$");
+    GETmap.put(passthroughExpr, HttpProxyImpl.class/*(passthroughExpr)*/);
 
     /**
-     * the GET protocol handlers, only static for the sake of javadocs
+     * general purpose httpd static content server that recognizes .gz and other compression suffixes when convenient
+     *
+     * any random config mechanism with a default will suffice here to define the content root.
+     *
+     * widest regex last intentionally
+     *
+     * system proprty: RXF_SERVER_CONTENT_ROOT
      */
-    public static Map<Pattern, Class<? extends Impl>> GETmap = new LinkedHashMap<Pattern, Class<? extends Impl>>();
+    GETmap.put(Pattern.compile(".*"), ContentRootImpl.class/*(COUCH_DEFAULT_FS_ROOT)*/);
+  }
 
-    static {
-        NAMESPACE.put(POST, POSTmap);
-        NAMESPACE.put(GET, GETmap);
+  public void onAccept(SelectionKey key) throws IOException {
+    ServerSocketChannel channel = (ServerSocketChannel) key.channel();
+    SocketChannel accept = channel.accept();
+    accept.configureBlocking(false);
+    HttpMethod.enqueue(accept, OP_READ, this);
 
-        /**
-         * for gwt requestfactory done via POST.
-         *
-         * TODO: rf GET from query parameters
-         */
-        POSTmap.put(Pattern.compile("^/gwtRequest"),
-                GwtRequestFactoryVisitor.class);
+  }
 
-        /**
-         * any url begining with /i is a proxied $req to couchdb but only permits image/* and text/*
-         */
+  public void onRead(SelectionKey key) throws Exception {
+    SocketChannel channel = (SocketChannel) key.channel();
 
-        Pattern passthroughExpr = Pattern.compile("^/i(/.*)$");
-        GETmap.put(passthroughExpr, HttpProxyImpl.class/*(passthroughExpr)*/);
-
-        /**
-         * general purpose httpd static content server that recognizes .gz and other compression suffixes when convenient
-         *
-         * any random config mechanism with a default will suffice here to define the content root.
-         *
-         * widest regex last intentionally
-         *
-         * system proprty: RXF_SERVER_CONTENT_ROOT
-         */
-        GETmap
-                .put(Pattern.compile(".*"), ContentRootImpl.class/*(COUCH_DEFAULT_FS_ROOT)*/);
+    ByteBuffer cursor = ByteBuffer.allocateDirect(BlobAntiPatternObject.getReceiveBufferSize());
+    int read = channel.read(cursor);
+    if (-1 == read) {
+      ((SocketChannel) key.channel()).socket().close();//cancel();
+      return;
     }
 
-    public void onAccept(SelectionKey key) throws IOException {
-        ServerSocketChannel channel = (ServerSocketChannel) key.channel();
-        SocketChannel accept = channel.accept();
-        accept.configureBlocking(false);
-        HttpMethod.enqueue(accept, OP_READ, this);
+    HttpMethod method = null;
+    HttpRequest httpRequest = null;
+    try {
+      //find the method to dispatch
+      Rfc822HeaderState state = new Rfc822HeaderState().apply((ByteBuffer) cursor.flip());
+      httpRequest = state.$req();
+      if (BlobAntiPatternObject.DEBUG_SENDJSON) {
+        System.err.println(BlobAntiPatternObject.deepToString(UTF8.decode((ByteBuffer) httpRequest
+            .headerBuf().duplicate().rewind())));
+      }
+      String method1 = httpRequest.method();
+      method = HttpMethod.valueOf(method1);
 
+    } catch (Exception e) {
     }
 
-    public void onRead(SelectionKey key) throws Exception {
-        SocketChannel channel = (SocketChannel) key.channel();
+    if (null == method) {
+      ((SocketChannel) key.channel()).socket().close();//cancel();
 
-        ByteBuffer cursor = ByteBuffer.allocateDirect(BlobAntiPatternObject
-                .getReceiveBufferSize());
-        int read = channel.read(cursor);
-        if (-1 == read) {
-            ((SocketChannel) key.channel()).socket().close();//cancel();
-            return;
-        }
-
-        HttpMethod method = null;
-        HttpRequest httpRequest = null;
-        try {
-            //find the method to dispatch
-            Rfc822HeaderState state = new Rfc822HeaderState()
-                    .apply((ByteBuffer) cursor.flip());
-            httpRequest = state.$req();
-            if (BlobAntiPatternObject.DEBUG_SENDJSON) {
-                System.err.println(BlobAntiPatternObject.deepToString(UTF8
-                        .decode((ByteBuffer) httpRequest.headerBuf()
-                                .duplicate().rewind())));
-            }
-            String method1 = httpRequest.method();
-            method = HttpMethod.valueOf(method1);
-
-        } catch (Exception e) {
-        }
-
-        if (null == method) {
-            ((SocketChannel) key.channel()).socket().close();//cancel();
-
-            return;
-        }
-
-        Set<Entry<Pattern, Class<? extends Impl>>> entries = NAMESPACE.get(
-                method).entrySet();
-        String path = httpRequest.path();
-        for (Entry<Pattern, Class<? extends Impl>> visitorEntry : entries) {
-            Matcher matcher = visitorEntry.getKey().matcher(path);
-            if (matcher.find()) {
-                if (BlobAntiPatternObject.DEBUG_SENDJSON) {
-                    System.err.println("+?+?+? using " + matcher.toString());
-                }
-                Class<? extends Impl> value = visitorEntry.getValue();
-                Impl impl;
-
-                impl = value.newInstance();
-                Object a[] = {impl, httpRequest, cursor};
-                key.attach(a);
-                if (PreRead.class.isAssignableFrom(value)) {
-                    impl.onRead(key);
-                }
-                ;
-
-                key.selector().wakeup();
-
-                return;
-            }
-
-        }
-        System.err.println(BlobAntiPatternObject.deepToString("!!!1!1!!",
-                "404", path, "using", NAMESPACE));
+      return;
     }
+
+    Set<Entry<Pattern, Class<? extends Impl>>> entries = NAMESPACE.get(method).entrySet();
+    String path = httpRequest.path();
+    for (Entry<Pattern, Class<? extends Impl>> visitorEntry : entries) {
+      Matcher matcher = visitorEntry.getKey().matcher(path);
+      if (matcher.find()) {
+        if (BlobAntiPatternObject.DEBUG_SENDJSON) {
+          System.err.println("+?+?+? using " + matcher.toString());
+        }
+        Class<? extends Impl> value = visitorEntry.getValue();
+        Impl impl;
+
+        impl = value.newInstance();
+        Object a[] = {impl, httpRequest, cursor};
+        key.attach(a);
+        if (PreRead.class.isAssignableFrom(value)) {
+          impl.onRead(key);
+        };
+
+        key.selector().wakeup();
+
+        return;
+      }
+
+    }
+    System.err.println(BlobAntiPatternObject.deepToString("!!!1!1!!", "404", path, "using",
+        NAMESPACE));
+  }
 
 }

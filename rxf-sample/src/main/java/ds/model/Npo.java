@@ -1,97 +1,97 @@
 package ds.model;
 
-import java.util.Date;
-
 import com.google.gson.annotations.SerializedName;
 import rxf.Seo;
 
+import java.util.Date;
+
 public class Npo {
 
-  @SerializedName("_id")
-  private String id;
-  @Seo
-  private
-  String name;
-  @Seo
-  private
-  String description;
-  private String pocName;
-  @Seo
-  private
-  Contact contactInfo;
-  private Date creation;
+    @SerializedName("_id")
+    private String id;
+    @Seo
+    private
+    String name;
+    @Seo
+    private
+    String description;
+    private String pocName;
+    @Seo
+    private
+    Contact contactInfo;
+    private Date creation;
 
-  @SerializedName("_rev")
-  private String version;
-
-
-  public String getId() {
-    return id;
-  }
+    @SerializedName("_rev")
+    private String version;
 
 
-  public void setId(String id) {
-    this.id = id;
-  }
+    public String getId() {
+        return id;
+    }
 
 
-  public Date getCreation() {
-    return creation;
-  }
+    public void setId(String id) {
+        this.id = id;
+    }
 
 
-  public void setCreation(Date creation) {
-    this.creation = creation;
-  }
+    public Date getCreation() {
+        return creation;
+    }
 
 
-  public String getVersion() {
-    return version;
-  }
+    public void setCreation(Date creation) {
+        this.creation = creation;
+    }
 
 
-  public void setVersion(String version) {
-    this.version = version;
-  }
+    public String getVersion() {
+        return version;
+    }
 
 
-  public String getName() {
-    return name;
-  }
+    public void setVersion(String version) {
+        this.version = version;
+    }
 
 
-  public void setName(String name) {
-    this.name = name;
-  }
+    public String getName() {
+        return name;
+    }
 
 
-  public String getDescription() {
-    return description;
-  }
+    public void setName(String name) {
+        this.name = name;
+    }
 
 
-  public void setDescription(String description) {
-    this.description = description;
-  }
+    public String getDescription() {
+        return description;
+    }
 
 
-  public String getPocName() {
-    return pocName;
-  }
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
 
-  public void setPocName(String pocName) {
-    this.pocName = pocName;
-  }
+    public String getPocName() {
+        return pocName;
+    }
 
 
-  public Contact getContactInfo() {
-    return contactInfo;
-  }
+    public void setPocName(String pocName) {
+        this.pocName = pocName;
+    }
 
 
-  public void setContactInfo(Contact contactInfo) {
-    this.contactInfo = contactInfo;
-  }
+    public Contact getContactInfo() {
+        return contactInfo;
+    }
+
+
+    public void setContactInfo(Contact contactInfo) {
+        this.contactInfo = contactInfo;
+    }
 
 }

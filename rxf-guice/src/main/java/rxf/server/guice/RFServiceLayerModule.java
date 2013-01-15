@@ -10,24 +10,22 @@ import rxf.server.GwtRequestFactoryVisitor;
 
 /**
  * Simple Guice module to make it easier to take over RXF's handling of RequestFactory.
- *
  */
 public class RFServiceLayerModule extends AbstractModule {
-	@Override
-	protected void configure() {
-		requireBinding(ServiceLayerDecorator.class);
+  @Override
+  protected void configure() {
+    requireBinding(ServiceLayerDecorator.class);
 
-		requestStaticInjection(this.getClass());
-	}
+    requestStaticInjection(this.getClass());
+  }
 
-	@Provides
-	SimpleRequestProcessor provideSimpleRequestProcessor(
-			ServiceLayerDecorator sld) {
-		return new SimpleRequestProcessor(ServiceLayer.create(sld));
-	}
+  @Provides
+  SimpleRequestProcessor provideSimpleRequestProcessor(ServiceLayerDecorator sld) {
+    return new SimpleRequestProcessor(ServiceLayer.create(sld));
+  }
 
-	@Inject
-	static void injectGwtRequestFactoryVisitor(SimpleRequestProcessor srp) {
-		GwtRequestFactoryVisitor.SIMPLE_REQUEST_PROCESSOR = srp;
-	}
+  @Inject
+  static void injectGwtRequestFactoryVisitor(SimpleRequestProcessor srp) {
+    GwtRequestFactoryVisitor.SIMPLE_REQUEST_PROCESSOR = srp;
+  }
 }

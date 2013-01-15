@@ -1,10 +1,10 @@
 package ds.server;
 
-import java.util.List;
-
 import com.google.gwt.activity.shared.ActivityMapper;
 import com.google.gwt.place.impl.AbstractPlaceHistoryMapper;
-import com.google.gwt.place.shared.*;
+import com.google.gwt.place.shared.Place;
+import com.google.gwt.place.shared.PlaceHistoryMapper;
+import com.google.gwt.place.shared.PlaceTokenizer;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.Widget;
@@ -16,6 +16,8 @@ import ds.shared.place.*;
 import ds.shared.rf.DealRequestFactory;
 import ds.shared.rf.proxy.DealProxy;
 import ds.shared.view.*;
+
+import java.util.List;
 
 public class DealSiteServerActivities extends ServerActivityExperiment {
 

@@ -3,13 +3,13 @@
         "http://google-web-toolkit.googlecode.com/svn/trunk/distro-source/core/src/gwt-module.dtd"
         >
 <module rename-to="admin">
-	<inherits name="com.google.gwt.user.User" />
-	<inherits name="ds.Deals" />
-	
-	<source path="client"/>
-	
-	<!-- Quick and dirty hack to get all existing code with a new entrypoint. -->
-	<replace-with class="ds.admin.client.DealAdminEntryPoint">
-	    <when-type-is class="ds.client.DealEntryPoint" />
-	</replace-with>
+    <inherits name="com.google.gwt.user.User"/>
+    <inherits name="ds.Deals"/>
+
+    <source path="client"/>
+
+    <!-- Quick and dirty hack to get all existing code with a new entrypoint. -->
+    <replace-with class="ds.admin.client.DealAdminEntryPoint">
+        <when-type-is class="ds.client.DealEntryPoint"/>
+    </replace-with>
 </module>

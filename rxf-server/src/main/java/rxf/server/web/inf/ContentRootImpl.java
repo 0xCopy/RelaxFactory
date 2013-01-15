@@ -6,6 +6,7 @@ import one.xio.MimeType;
 import rxf.server.*;
 import rxf.server.Rfc822HeaderState.HttpRequest;
 import rxf.server.Rfc822HeaderState.HttpResponse;
+import rxf.server.driver.CouchMetaDriver;
 
 import java.io.File;
 import java.io.RandomAccessFile;
@@ -18,8 +19,6 @@ import java.nio.channels.SocketChannel;
 import static java.lang.Math.min;
 import static java.nio.channels.SelectionKey.*;
 import static one.xio.HttpHeaders.*;
-import static one.xio.HttpMethod.UTF8;
-import static rxf.server.BlobAntiPatternObject.HEADER_TERMINATOR;
 import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
 
 /**
@@ -29,179 +28,184 @@ import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
  */
 public class ContentRootImpl extends Impl implements PreRead {
 
-    public static final String SLASHDOTSLASH = File.separator + "."
-            + File.separator;
-    public static final String DOUBLESEP = File.separator + File.separator;
-    private String rootPath = CouchNamespace.COUCH_DEFAULT_FS_ROOT;
-    private ByteBuffer cursor;
-    private SocketChannel channel;
-    private HttpRequest req;
+  public static final String SLASHDOTSLASH = File.separator + "." + File.separator;
+  public static final String DOUBLESEP = File.separator + File.separator;
+  private String rootPath = CouchNamespace.COUCH_DEFAULT_FS_ROOT;
+  private ByteBuffer cursor;
+  private SocketChannel channel;
+  private HttpRequest req;
 
-    public ContentRootImpl() {
-        init();
-    }
+  public ContentRootImpl() {
+    init();
+  }
 
-    File file;
+  File file;
 
-    public ContentRootImpl(String rootPath) {
-        this.rootPath = rootPath;
-        init();
-    }
+  public ContentRootImpl(String rootPath) {
+    this.rootPath = rootPath;
+    init();
+  }
 
-    public static String fileScrub(String scrubMe) {
-        final char inverseChar = '/' == File.separatorChar ? '\\' : '/';
-        return null == scrubMe ? null : scrubMe.trim().replace(inverseChar,
-                File.separatorChar).replace(DOUBLESEP, "" + File.separator)
-                .replace("..", ".");
-    }
+  public static String fileScrub(String scrubMe) {
+    final char inverseChar = '/' == File.separatorChar ? '\\' : '/';
+    return null == scrubMe ? null : scrubMe.trim().replace(inverseChar, File.separatorChar)
+        .replace(DOUBLESEP, "" + File.separator).replace("..", ".");
+  }
 
-    public void init() {
-        File dir = new File(rootPath);
-        if (!dir.isDirectory() && dir.canRead())
-            throw new IllegalAccessError("can't verify readable dir at "
-                    + rootPath);
-    }
+  public void init() {
+    File dir = new File(rootPath);
+    if (!dir.isDirectory() && dir.canRead())
+      throw new IllegalAccessError("can't verify readable dir at " + rootPath);
+  }
 
-    @Override
-    public void onRead(SelectionKey key) throws Exception {
-        channel = (SocketChannel) key.channel();
-        if (cursor == null) {
-            if (key.attachment() instanceof Object[]) {
-                Object[] ar = (Object[]) key.attachment();
-                for (Object o : ar) {
-                    if (o instanceof ByteBuffer) {
-                        cursor = (ByteBuffer) o;
-                        continue;
-                    }
-                    if (o instanceof Rfc822HeaderState) {
-                        req = ((Rfc822HeaderState) o).$req();
-                        continue;
-                    }
-                }
-            }
-            key.attach(this);
+  @Override
+  public void onRead(SelectionKey key) throws Exception {
+    channel = (SocketChannel) key.channel();
+    if (cursor == null) {
+      if (key.attachment() instanceof Object[]) {
+        Object[] ar = (Object[]) key.attachment();
+        for (Object o : ar) {
+          if (o instanceof ByteBuffer) {
+            cursor = (ByteBuffer) o;
+            continue;
+          }
+          if (o instanceof Rfc822HeaderState) {
+            req = ((Rfc822HeaderState) o).$req();
+            continue;
+          }
         }
-        cursor = null == cursor ? ByteBuffer
-                .allocateDirect(getReceiveBufferSize()) : cursor.hasRemaining()
-                ? cursor
-                : ByteBuffer.allocateDirect(cursor.capacity() << 1).put(
+      }
+      key.attach(this);
+    }
+    cursor =
+        null == cursor ? ByteBuffer.allocateDirect(getReceiveBufferSize()) : cursor.hasRemaining()
+            ? cursor : ByteBuffer.allocateDirect(cursor.capacity() << 1).put(
                 (ByteBuffer) cursor.rewind());
-        int read = channel.read(cursor);
-        if (read == -1)
-            key.cancel();
-        Buffer flip = cursor.duplicate().flip();
-        req = (HttpRequest) new Rfc822HeaderState().addHeaderInterest(
-                Accept$2dEncoding).$req().apply((ByteBuffer) flip);
-        if (!BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, req
-                .headerBuf())) {
-            return;
-        }
-        cursor = ((ByteBuffer) flip).slice();
-        /*  int remaining = Integer.parseInt(req.headerString(HttpHeaders.Content$2dLength));
-		      final Impl prev = this;
-		      if (cursor.remaining() != remaining) key.attach(new Impl() {
-		        @Override
-		        public void onRead(SelectionKey key) throws Exception {
-		          int read1 = channel.read(cursor);
-		          if (read1 == -1)
-		            key.cancel();
-		          if (!cursor.hasRemaining()) {
-		            key.interestOps(SelectionKey.OP_WRITE).attach(prev);
-		            return;
-		          }
-		        }
+    int read = channel.read(cursor);
+    if (read == -1)
+      key.cancel();
+    Buffer flip = cursor.duplicate().flip();
 
-		      });*/
-        key.interestOps(SelectionKey.OP_WRITE);
+    req =
+        (HttpRequest) new Rfc822HeaderState().addHeaderInterest(Accept$2dEncoding,
+            If$2dModified$2dSince, If$2dUnmodified$2dSince).$req().apply((ByteBuffer) flip);
+    if (!BlobAntiPatternObject
+        .suffixMatchChunks(CouchMetaDriver.HEADER_TERMINATOR, req.headerBuf())) {
+      return;
     }
+    cursor = ((ByteBuffer) flip).slice();
+    key.interestOps(SelectionKey.OP_WRITE);
+  }
 
-    public void onWrite(SelectionKey key) throws Exception {
+  public void onWrite(SelectionKey key) throws Exception {
 
-        String accepts = req.headerString(Accept$2dEncoding);
-        String ceString = null;
-        String finalFname = fileScrub(rootPath + SLASHDOTSLASH
-                + req.path().split("\\?")[0]);
-        file = new File(finalFname);
-        if (file.isDirectory()) {
-            file = new File((finalFname + "/index.html"));
+    String finalFname = fileScrub(rootPath + SLASHDOTSLASH + req.path().split("\\?")[0]);
+    file = new File(finalFname);
+    if (file.isDirectory()) {
+      file = new File((finalFname + "/index.html"));
+    }
+    finalFname = (file.getCanonicalPath());
+
+    java.util.Date fdate = new java.util.Date(file.lastModified());
+
+    String since = req.headerString(If$2dModified$2dSince);
+    String accepts = req.headerString(Accept$2dEncoding);
+
+    HttpResponse res = req.$res();
+    if (null != since) {
+      java.util.Date cachedDate = DateHeaderParser.parseDate(since);
+
+      if (cachedDate.after(fdate)) {
+
+        res.status(HttpStatus.$304).headerString(Connection, "close").headerString(Last$2dModified,
+            DateHeaderParser.formatHttpHeaderDate(fdate));
+        int write = channel.write(res.as(ByteBuffer.class));
+        key.interestOps(OP_READ).attach(null);
+        return;
+      }
+    } else {
+      since = req.headerString(If$2dUnmodified$2dSince);
+
+      if (null != since) {
+        java.util.Date cachedDate = DateHeaderParser.parseDate(since);
+
+        if (cachedDate.before(fdate)) {
+
+          res.status(HttpStatus.$412).headerString(Connection, "close").headerString(
+              Last$2dModified, DateHeaderParser.formatHttpHeaderDate(fdate));
+          int write = channel.write(res.as(ByteBuffer.class));
+          key.interestOps(OP_READ).attach(null);
+          return;
         }
-        finalFname = (file.getCanonicalPath());
-        if (null != accepts) {
+      }
+    }
+    String ceString = null;
+    if (null != accepts) {
 
-            for (CompressionTypes compType : CompressionTypes.values()) {
-                if (accepts.contains(compType.name())) {
-                    File f = new File(file.getAbsoluteFile() + "."
-                            + compType.suffix);
-                    if (f.isFile() && f.canRead()) {
-                        if (BlobAntiPatternObject.DEBUG_SENDJSON) {
-                            System.err.println("sending compressed archive: "
-                                    + f.getAbsolutePath());
-                        }
-                        ceString = (compType.name());
-                        file = f;
-                        break;
-                    }
-                }
+      for (CompressionTypes compType : CompressionTypes.values()) {
+        if (accepts.contains(compType.name())) {
+          File f = new File(file.getAbsoluteFile() + "." + compType.suffix);
+          if (f.isFile() && f.canRead()) {
+            if (BlobAntiPatternObject.DEBUG_SENDJSON) {
+              System.err.println("sending compressed archive: " + f.getAbsolutePath());
             }
+            ceString = (compType.name());
+            file = f;
+            break;
+          }
         }
-        boolean send200 = file.canRead() && file.isFile();
-
-        if (send200) {
-            final RandomAccessFile randomAccessFile = new RandomAccessFile(
-                    file, "r");
-            final long total = randomAccessFile.length();
-            final FileChannel fileChannel = randomAccessFile.getChannel();
-
-            String substring = finalFname
-                    .substring(finalFname.lastIndexOf('.') + 1);
-            MimeType mimeType = MimeType.valueOf(substring);
-            long length = randomAccessFile.length();
-
-            final HttpResponse responseHeader = new Rfc822HeaderState().$res();
-
-            responseHeader.status(HttpStatus.$200).headerString(Content$2dType,
-                    (null == mimeType ? MimeType.bin : mimeType).contentType)
-                    .headerString(Content$2dLength, String.valueOf(length));
-            if (null != ceString)
-                responseHeader.headerString(Content$2dEncoding, ceString);
-            ByteBuffer response = responseHeader.as(ByteBuffer.class);
-            int write = channel.write(response);
-            final int sendBufferSize = BlobAntiPatternObject
-                    .getSendBufferSize();
-            final long[] progress = {fileChannel.transferTo(0, sendBufferSize,
-                    channel)};
-            key.interestOps(OP_WRITE | OP_CONNECT);
-            key.selector().wakeup();
-            key.attach(new Impl() {
-
-                public void onWrite(SelectionKey key) throws Exception {
-                    long remaining = total - progress[0];
-                    progress[0] += fileChannel.transferTo(progress[0], min(
-                            sendBufferSize, remaining), channel);
-                    remaining = total - progress[0];
-                    if (0 == remaining) {
-                        fileChannel.close();
-                        randomAccessFile.close();
-                        key.selector().wakeup();
-                        key.interestOps(OP_READ);
-                        key.attach(null);
-                    }
-                }
-            });
-        } else {
-            key.selector().wakeup();
-            key.interestOps(OP_WRITE).attach(new Impl() {
-
-                public void onWrite(SelectionKey key) throws Exception {
-
-                    String response = "HTTP/1.1 404 Not Found\n"
-                            + "Content-Length: 0\n\n";
-                    System.err.println("!!! " + file.getAbsolutePath());
-                    int write = channel.write(UTF8.encode(response));
-                    key.selector().wakeup();
-                    key.interestOps(OP_READ).attach(null);
-                }
-            });
-        }
+      }
     }
+    boolean send200 = file.canRead() && file.isFile();
+
+    if (send200) {
+      final RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
+      final long total = randomAccessFile.length();
+      final FileChannel fileChannel = randomAccessFile.getChannel();
+
+      String substring = finalFname.substring(finalFname.lastIndexOf('.') + 1);
+      MimeType mimeType = MimeType.valueOf(substring);
+      long length = randomAccessFile.length();
+
+      res.status(HttpStatus.$200).headerString(Content$2dType,
+          ((null == mimeType) ? MimeType.bin : mimeType).contentType).headerString(
+          Content$2dLength, String.valueOf(length)).headerString(Connection, "close").headerString(
+          Date, DateHeaderParser.formatHttpHeaderDate(fdate));;
+      if (null != ceString)
+        res.headerString(Content$2dEncoding, ceString);
+      ByteBuffer response = res.as(ByteBuffer.class);
+      int write = channel.write(response);
+      final int sendBufferSize = BlobAntiPatternObject.getSendBufferSize();
+      final long[] progress = {fileChannel.transferTo(0, sendBufferSize, channel)};
+      key.interestOps(OP_WRITE | OP_CONNECT);
+      key.selector().wakeup();
+      key.attach(new Impl() {
+
+        public void onWrite(SelectionKey key) throws Exception {
+          long remaining = total - progress[0];
+          progress[0] +=
+              fileChannel.transferTo(progress[0], min(sendBufferSize, remaining), channel);
+          remaining = total - progress[0];
+          if (0 == remaining) {
+            fileChannel.close();
+            randomAccessFile.close();
+            key.selector().wakeup();
+            key.interestOps(OP_READ).attach(null);
+          }
+        }
+      });
+    } else {
+      key.selector().wakeup();
+      key.interestOps(OP_WRITE).attach(new Impl() {
+
+        public void onWrite(SelectionKey key) throws Exception {
+          int write =
+              channel.write(req.$res().status(HttpStatus.$404).headerString(Content$2dLength, "0")
+                  .as(ByteBuffer.class));
+          key.selector().wakeup();
+          key.interestOps(OP_READ).attach(null);
+        }
+      });
+    }
+  }
 }

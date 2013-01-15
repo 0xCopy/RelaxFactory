@@ -5,34 +5,12 @@
     <artifactId>rxf-shared</artifactId>
     <parent>
         <groupId>rxf</groupId>
-        <version>0.9.0</version>
+        <version>0.9.2</version>
         <artifactId>relaxfactory</artifactId>
     </parent>
     <groupId>rxf</groupId>
     <packaging>jar</packaging>
     <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.3.2</version>
-                <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
-                    <encoding>${project.build.sourceEncoding}</encoding>
-                </configuration>
-            </plugin>
-
-            <!--<plugin>-->
-            <!--<groupId>org.apache.maven.plugins</groupId>-->
-            <!--<artifactId>maven-resources-plugin</artifactId>-->
-            <!--<version>2.5</version>-->
-            <!--<configuration>-->
-            <!--<encoding>${project.build.sourceEncoding}</encoding>-->
-            <!--&lt;!&ndash;<outputDirectory>${project.build.outputDirectory}</outputDirectory>&ndash;&gt;-->
-            <!--</configuration>-->
-            <!--</plugin>-->
-        </plugins>
         <resources>
             <resource>
                 <directory>src/main/java</directory>

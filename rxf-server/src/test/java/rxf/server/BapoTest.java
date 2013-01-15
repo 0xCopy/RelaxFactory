@@ -1,17 +1,22 @@
 package rxf.server;
 
-import junit.framework.TestCase;
-import one.xio.HttpMethod;
+import org.junit.Test;
 
 import java.nio.channels.SocketChannel;
 
-public class BapoTest extends TestCase {
-    public void testCreateCouchChannel() {
-        HttpMethod.killswitch = false;
-        SocketChannel channel = BlobAntiPatternObject.createCouchConnection();
-        assertNotNull(channel);
-        BlobAntiPatternObject.recycleChannel(channel);
-        HttpMethod.killswitch = true;
-    }
+import static one.xio.HttpMethod.setKillswitch;
+import static org.junit.Assert.assertNotNull;
+import static rxf.server.BlobAntiPatternObject.createCouchConnection;
+import static rxf.server.BlobAntiPatternObject.recycleChannel;
+
+public class BapoTest {
+  @Test
+  public void testCreateCouchChannel() {
+    setKillswitch(false);
+    SocketChannel channel = createCouchConnection();
+    assertNotNull(channel);
+    recycleChannel(channel);
+    setKillswitch(true);
+  }
 
 }

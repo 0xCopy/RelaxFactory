@@ -8,7 +8,7 @@
     <inherits name="com.google.gwt.precompress.Precompress"/>
     <inherits name="com.google.gwt.place.Place"/>
     <inherits name="com.google.gwt.activity.Activity"/>
-    <inherits name="com.google.api.gwt.oauth2.OAuth2" />
+    <inherits name="com.google.api.gwt.oauth2.OAuth2"/>
     <source path='client'/>
     <source path='shared'/>
     <entry-point class='ds.client.DealEntryPoint'/>

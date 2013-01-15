@@ -11,39 +11,39 @@ import ds.model.Contact;
  */
 @ProxyFor(Contact.class)
 public interface ContactProxy extends ValueProxy {
-  public String getEmail();
+    public String getEmail();
 
-  public void setEmail(String email);
+    public void setEmail(String email);
 
-  public String getPhone();
+    public String getPhone();
 
-  public void setPhone(String phone);
+    public void setPhone(String phone);
 
-  public String getAddr1();
+    public String getAddr1();
 
-  public void setAddr1(String addr1);
+    public void setAddr1(String addr1);
 
-  public String getAddr2();
+    public String getAddr2();
 
-  public void setAddr2(String addr2);
+    public void setAddr2(String addr2);
 
-  public String getAddr3();
+    public String getAddr3();
 
-  public void setAddr3(String addr3);
+    public void setAddr3(String addr3);
 
-  public String getCity();
+    public String getCity();
 
-  public void setCity(String city);
+    public void setCity(String city);
 
-  public String getState();
+    public String getState();
 
-  public void setState(String state);
+    public void setState(String state);
 
-  public String getZip();
+    public String getZip();
 
-  public void setZip(String zip);
+    public void setZip(String zip);
 
-  public String getCountry();
+    public String getCountry();
 
-  public void setCountry(String country);
+    public void setCountry(String country);
 }
