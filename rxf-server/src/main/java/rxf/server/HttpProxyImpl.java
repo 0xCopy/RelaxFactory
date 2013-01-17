@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 
 import static java.nio.channels.SelectionKey.*;
 import static one.xio.HttpHeaders.Content$2dLength;
-import static rxf.server.RelaxFactoryServerImpl.UTF8;
+import static one.xio.HttpMethod.UTF8;
 import static rxf.server.Rfc822HeaderState.staticHeaderStrings;
 
 /**

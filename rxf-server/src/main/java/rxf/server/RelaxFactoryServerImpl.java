@@ -28,32 +28,11 @@ import static java.nio.channels.SelectionKey.OP_ACCEPT;
  */
 public class RelaxFactoryServerImpl implements RelaxFactoryServer {
 
-  public static Charset UTF8 = Charset.forName("UTF8");
-  //    private static int DEFAULT_EXP = 0;
-  public static Thread selectorThread;
-  public static boolean killswitch = false;
-  public static int port = 8080;
-  static Charset charset = UTF8;
-  public static CharsetDecoder decoder = charset.newDecoder();
-  private static Selector selector;
-  private static ConcurrentLinkedQueue<Object[]> q = new ConcurrentLinkedQueue<Object[]>();
-  private static Random RANDOM = new Random();
+  private int port = 8080;
   private AsioVisitor topLevel;
   private InetAddress hostname;
 
   private ServerSocketChannel serverSocketChannel;
-
-  public static Selector getSelector() {
-    return selector;
-  }
-
-  static public void setSelector(Selector selector) {
-    selector = selector;
-  }
-
-  public static Object[] toArray(Object... t) {
-    return t;
-  }
 
   /**
    * handles the threadlocal ugliness if any to registering user threads into the selector/reactor pattern
@@ -66,10 +45,6 @@ public class RelaxFactoryServerImpl implements RelaxFactoryServer {
    */
   public static void enqueue(SelectableChannel channel, int op, Object... s)
       throws ClosedChannelException {
-    //		boolean add = q.add(toArray(channel, op, s));
-    //		Selector selector1 = getSelector();
-    //		if (null != selector1)
-    //			selector1.wakeup();
     HttpMethod.enqueue(channel, op, s);
   }
 
@@ -98,7 +73,7 @@ public class RelaxFactoryServerImpl implements RelaxFactoryServer {
           (CharBuffer) buffer.asCharBuffer().append("HTTP/1.1 ").append(
               httpStatus.name().substring(1)).append(' ').append(httpStatus.caption).append("\r\n")
               .flip();
-      ByteBuffer out = UTF8.encode(charBuffer);
+      ByteBuffer out = HttpMethod.UTF8.encode(charBuffer);
       ((SocketChannel) key.channel()).write(out);
     } catch (Exception ignored) {
     }
@@ -106,100 +81,6 @@ public class RelaxFactoryServerImpl implements RelaxFactoryServer {
   }
 
   public static void init(AsioVisitor protocoldecoder, String... a) throws IOException {
-
-    /*	setSelector(Selector.open());
-        selectorThread = Thread.currentThread();
-
-    	synchronized (a) {
-    		int kick = 0;
-    		int maxKick = 10;
-    		long timeoutMax = 1024, timeout = 1;
-
-    		while (!killswitch) {
-    			while (!q.isEmpty()) {
-    				Object[] s = q.remove();
-    				SelectableChannel x = (SelectableChannel) s[0];
-    				Selector sel = getSelector();
-    				Integer op = (Integer) s[1];
-    				Object att = s[2];
-    				try {
-    					x.register(sel, op, att);
-    				} catch (Throwable e) {
-
-    				}
-    			}
-    			int select = selector.select(timeout);
-
-    			timeout = 0 == select ? min(timeout << 1, timeoutMax) : 1;
-    			if (0 == select)
-    				continue;
-    			Set<SelectionKey> keys = selector.selectedKeys();
-
-    			for (Iterator<SelectionKey> i = keys.iterator(); i.hasNext();) {
-    				SelectionKey key = i.next();
-    				i.remove();
-
-    				if (key.isValid()) {
-    					SelectableChannel channel = key.channel();
-    					try {
-    						AsioVisitor m = inferAsioVisitor(protocoldecoder,
-    								key);
-
-    						if (key.isValid() && key.isWritable()) {
-    							if (!((SocketChannel) channel).socket()
-    									.isOutputShutdown()) {
-    								m.onWrite(key);
-    							} else {
-    								key.cancel();
-    							}
-    						}
-    						if (key.isValid() && key.isReadable()) {
-    							if (!((SocketChannel) channel).socket()
-    									.isInputShutdown()) {
-    								m.onRead(key);
-    							} else {
-    								key.cancel();
-    							}
-    						}
-    						if (key.isValid() && key.isAcceptable()) {
-    							m.onAccept(key);
-    						}
-    						if (key.isValid() && key.isConnectable()) {
-    							m.onConnect(key);
-    						}
-    					} catch (Throwable e) {
-    						Object attachment = key.attachment();
-    						if (attachment instanceof Object[]) {
-    							Object[] objects = (Object[]) attachment;
-    							System.err.println("BadHandler: "
-    									+ java.util.Arrays
-    											.deepToString(objects));
-
-    						} else
-    							System.err.println("BadHandler: "
-    									+ String.valueOf(attachment));
-
-    						if (AsioVisitor.$DBG) {
-    							AsioVisitor asioVisitor = inferAsioVisitor(
-    									protocoldecoder, key);
-    							if (asioVisitor instanceof Impl) {
-    								Impl visitor = (Impl) asioVisitor;
-    								if (AsioVisitor.$origins
-    										.containsKey(visitor)) {
-    									String s = AsioVisitor.$origins
-    											.get(visitor);
-    									System.err.println("origin " + s);
-    								}
-    							}
-    						}
-    						e.printStackTrace();
-    						key.attach(null);
-    						channel.close();
-    					}
-    				}
-    			}
-    		}
-    	}*/
     HttpMethod.init(protocoldecoder, a);
   }
 
@@ -231,8 +112,8 @@ public class RelaxFactoryServerImpl implements RelaxFactoryServer {
     return m;
   }
 
-  public static void setPort(int port) {
-    RelaxFactoryServerImpl.port = port;
+  public void setPort(int port) {
+    this.port = port;
   }
 
   @Override
@@ -264,8 +145,7 @@ public class RelaxFactoryServerImpl implements RelaxFactoryServer {
 
   @Override
   public void stop() throws IOException {
-    killswitch = true;
-    getSelector().close();
+    HttpMethod.killswitch = true;
     serverSocketChannel.close();
   }
 

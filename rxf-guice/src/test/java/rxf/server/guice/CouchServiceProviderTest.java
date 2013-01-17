@@ -1,12 +1,23 @@
 package rxf.server.guice;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.name.Names;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.TestCase.assertNotNull;
+import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import one.xio.AsioVisitor;
-import org.junit.*;
+import one.xio.HttpMethod;
+
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
 import rxf.server.BlobAntiPatternObject;
 import rxf.server.CouchService;
 import rxf.server.CouchTx;
@@ -14,13 +25,11 @@ import rxf.server.RelaxFactoryServerImpl;
 import rxf.server.gen.CouchDriver;
 import rxf.server.web.inf.ProtocolMethodDispatch;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.TestCase.assertNotNull;
-import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 
 public class CouchServiceProviderTest {
   private static ScheduledExecutorService exec;
@@ -28,7 +37,7 @@ public class CouchServiceProviderTest {
   @BeforeClass
   public static void setUp() throws Exception {
     BlobAntiPatternObject.setDEBUG_SENDJSON(true);
-    RelaxFactoryServerImpl.killswitch = false;
+    HttpMethod.killswitch = false;
     exec = Executors.newScheduledThreadPool(2);
     exec.submit(new Runnable() {
       public void run() {
@@ -51,8 +60,8 @@ public class CouchServiceProviderTest {
   @AfterClass
   public static void tearDown() throws Exception {
     try {
-      RelaxFactoryServerImpl.killswitch = true;
-      RelaxFactoryServerImpl.getSelector().close();
+      HttpMethod.killswitch = true;
+      HttpMethod.getSelector().close();
       exec.shutdown();
     } catch (Exception ignore) {
     }

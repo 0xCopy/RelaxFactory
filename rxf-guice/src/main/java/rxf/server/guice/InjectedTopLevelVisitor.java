@@ -23,7 +23,7 @@ import java.util.Set;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static rxf.server.CouchNamespace.NAMESPACE;
-import static rxf.server.RelaxFactoryServerImpl.UTF8;
+import static one.xio.HttpMethod.UTF8;
 
 public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
   private final Map<HttpMethod, Map<String, Key<? extends AsioVisitor>>> bindings =

@@ -20,7 +20,7 @@ import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static rxf.server.BlobAntiPatternObject.LOOPBACK;
 import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
-import static rxf.server.RelaxFactoryServerImpl.UTF8;
+import static one.xio.HttpMethod.UTF8;
 
 /**
  * revisit this with new API's, it's not expected to be current but non-trivial to get it right.

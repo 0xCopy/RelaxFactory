@@ -293,6 +293,7 @@ public enum HttpMethod implements AsioVisitor {
      */
     public static void enqueue(SelectableChannel channel, int op, Object... s)
             throws ClosedChannelException {
+        assert channel != null && killswitch == false : "Server appears to have shut down, cannot enqueue";
         boolean add = q.add(toArray(channel, op, s));
         Selector selector1 = getSelector();
         if (null != selector1)
