@@ -34,6 +34,8 @@ public class RelaxFactoryServerImpl implements RelaxFactoryServer {
 
   private ServerSocketChannel serverSocketChannel;
 
+  private volatile boolean isRunning = false;
+
   /**
    * handles the threadlocal ugliness if any to registering user threads into the selector/reactor pattern
    *
@@ -127,15 +129,21 @@ public class RelaxFactoryServerImpl implements RelaxFactoryServer {
   @Override
   public void start() throws IOException {
     assert serverSocketChannel == null : "Can't start already started server";
-    serverSocketChannel = ServerSocketChannel.open();
-    InetSocketAddress addr = new InetSocketAddress(hostname, getPort());
-    serverSocketChannel.socket().bind(addr);
-    setPort(serverSocketChannel.socket().getLocalPort());
-    System.out.println(hostname.getHostAddress() + ":" + getPort());
-    serverSocketChannel.configureBlocking(false);
 
-    enqueue(serverSocketChannel, OP_ACCEPT, topLevel);
-    init(topLevel);
+    isRunning = true;
+    try {
+      serverSocketChannel = ServerSocketChannel.open();
+      InetSocketAddress addr = new InetSocketAddress(hostname, getPort());
+      serverSocketChannel.socket().bind(addr);
+      setPort(serverSocketChannel.socket().getLocalPort());
+      System.out.println(hostname.getHostAddress() + ":" + getPort());
+      serverSocketChannel.configureBlocking(false);
+
+      enqueue(serverSocketChannel, OP_ACCEPT, topLevel);
+      init(topLevel);
+    } finally {
+      isRunning = false;
+    }
   }
 
   @Override
@@ -147,6 +155,11 @@ public class RelaxFactoryServerImpl implements RelaxFactoryServer {
   public void stop() throws IOException {
     HttpMethod.killswitch = true;
     serverSocketChannel.close();
+  }
+
+  @Override
+  public boolean isRunning() {
+    return isRunning;
   }
 
 }

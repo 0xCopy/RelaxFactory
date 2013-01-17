@@ -21,6 +21,8 @@ public interface RelaxFactoryServer {
 
     void stop() throws IOException;
 
+    boolean isRunning();
+
     /**
      * Returns the port the server has started on. Useful in the case where
      * {@link #init(String, int, one.xio.AsioVisitor)} was invoked with 0, {@link #start()} called,
