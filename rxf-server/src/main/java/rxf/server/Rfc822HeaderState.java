@@ -413,15 +413,15 @@ public class Rfc822HeaderState {
      * @param hdrEnc
      * @return a backwards singley-linked list of pairs.
      */
-    private Pair<ByteBuffer, ? extends Pair> headerExtract(ByteBuffer hdrEnc) {
+    public Pair<ByteBuffer, ? extends Pair> headerExtract(ByteBuffer hdrEnc) {
         hdrEnc = (ByteBuffer) hdrEnc.asReadOnlyBuffer().rewind();
         final    ByteBuffer buf = (ByteBuffer) headerBuf().rewind();
-        if (BlobAntiPatternObject.DEBUG_SENDJSON) {
+       /* if (BlobAntiPatternObject.DEBUG_SENDJSON) {
             CharBuffer ed = UTF8.decode(hdrEnc.slice());
             System.err.println("____??? " + ed);
             CharBuffer decode = UTF8.decode(buf.duplicate().slice());
             System.err.println("____+++ " + decode);
-        }
+        }*/
         Pair<ByteBuffer, ? extends Pair> ret = null;
         int hdrTokenEnd = hdrEnc.limit();
 
@@ -433,10 +433,10 @@ public class Rfc822HeaderState {
             int tokenEnd = buf.position() - 1 - begin;
             if (tokenEnd == hdrTokenEnd) {
                 ByteBuffer sampleHdr = (ByteBuffer) ((ByteBuffer) buf.duplicate().position(begin)).slice().limit(hdrTokenEnd);
-                if (BlobAntiPatternObject.DEBUG_SENDJSON) {
+                /*if (BlobAntiPatternObject.DEBUG_SENDJSON) {
                     CharBuffer sampleDec = UTF8.decode(sampleHdr.slice());
                     System.err.println("+__+ " + sampleDec);
-                }
+                }*/
                 if (sampleHdr.equals(hdrEnc.rewind())) {
                     //found it for sure
                     begin = buf.position();
