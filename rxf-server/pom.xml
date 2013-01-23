@@ -45,6 +45,7 @@
             <groupId>com.google.web.bindery</groupId>
             <artifactId>requestfactory-server</artifactId>
             <version>${gwt.version}</version>
+            <scope>provided</scope>
         </dependency>
         <!-- see sample projects for correct placement -->
         <dependency>
@@ -69,6 +70,7 @@
             <groupId>org.httpunit</groupId>
             <artifactId>httpunit</artifactId>
             <version>1.7.2</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
     <build>

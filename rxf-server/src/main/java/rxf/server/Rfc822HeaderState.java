@@ -9,6 +9,7 @@ import rxf.server.web.inf.ProtocolMethodDispatch;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
@@ -59,8 +60,9 @@ public class Rfc822HeaderState {
         public HttpRequest(Rfc822HeaderState proto) {
             super(proto);
             String protocol = protocol();
-            if (null != protocol && !protocol.startsWith("HTTP"))
+            if (null != protocol && !protocol.startsWith("HTTP")) {
                 protocol(null);
+            }
         }
 
         public String method() {
@@ -98,8 +100,9 @@ public class Rfc822HeaderState {
 
         public <T> T as(Class<T> clazz) {
             if (ByteBuffer.class.equals(clazz)) {
-                if (null == protocol())
+                if (null == protocol()) {
                     protocol("HTTP/1.1");
+                }
                 return (T) asRequestHeaderByteBuffer();
             }
             return (T) super.as(clazz);
@@ -113,8 +116,9 @@ public class Rfc822HeaderState {
         public HttpResponse(Rfc822HeaderState proto) {
             super(proto);
             String protocol = protocol();
-            if (null != protocol && !protocol.startsWith("HTTP"))
+            if (null != protocol && !protocol.startsWith("HTTP")) {
                 protocol(null);
+            }
         }
 
         public HttpStatus statusEnum() {
@@ -210,9 +214,10 @@ public class Rfc822HeaderState {
         } else if (String.class.equals(clazz)) {
             return (T) toString();
         }
-        if (ByteBuffer.class.equals(clazz))
+        if (ByteBuffer.class.equals(clazz)) {
             throw new UnsupportedOperationException(
                     "must promote to as((HttpRequest|HttpResponse)).class first");
+        }
         throw new UnsupportedOperationException("don't know how to infer "
                 + clazz.getCanonicalName());
 
@@ -357,37 +362,115 @@ public class Rfc822HeaderState {
         return headerStrings.get();
     }
 
+
     /**
-     * this is agrep of the full header state to find one or more addHeaderInterest of a given name.
+     * this is a grep of the full header state to find one or more headers of a given name.
      * <p/>
+     * performs rewind
      *
      * @param header a header name
      * @return a list of values
      */
     List<String> getHeadersNamed(String header) {
-        ByteBuffer byteBuffer = headerBuf();
-        List<String> ret;
-        if (null == byteBuffer) {
-            ret = Arrays.asList();
-        } else {
-            String decode = UTF8.decode((ByteBuffer) byteBuffer.rewind())
-                    .toString();
+        CharBuffer charBuffer = CharBuffer.wrap(header);
+        ByteBuffer henc = UTF8.encode(charBuffer);
 
-            String[] lines = decode.split("\n[^ \t]");
-            Arrays.sort(lines);
-            ArrayList<String> a = new ArrayList<>();
-            String s = header + PREFIX;
-            for (String line : lines) {
-                boolean added = false;
+        Pair<ByteBuffer, ? extends Pair> ret = headerExtract(henc);
 
-                if (line.startsWith(s)) {
-                    added = a.add(line.substring(s.length()));
-                } else {
-                    if (added)
-                        break;
+        List<String> objects = new ArrayList<>();
+        while (ret != null) {
+            objects.add(UTF8.decode(ret.getA()).toString());
+            ret = ret.getB();
+        }
+
+        return objects;
+    }
+
+       /**
+     * this is agrep of the full header state to find one or more headers of a given name.
+     * <p/>
+     * performs rewind
+     *
+     * @param theHeader a header enum
+     * @return a list of values
+     */
+    List<String> getHeadersNamed(HttpHeaders theHeader) {
+
+        Pair<ByteBuffer, ? extends Pair> ret = headerExtract(theHeader.getToken());
+
+        List<String> objects = new ArrayList<>();
+        while (ret != null) {
+            objects.add(UTF8.decode(ret.getA()).toString());
+            ret = ret.getB();
+        }
+
+        return objects;
+    }
+
+    /**
+     * string-averse buffer based header extraction
+     *
+     * @param hdrEnc
+     * @return a backwards singley-linked list of pairs.
+     */
+    private Pair<ByteBuffer, ? extends Pair> headerExtract(ByteBuffer hdrEnc) {
+        hdrEnc = (ByteBuffer) hdrEnc.asReadOnlyBuffer().rewind();
+        final    ByteBuffer buf = (ByteBuffer) headerBuf().rewind();
+        if (BlobAntiPatternObject.DEBUG_SENDJSON) {
+            CharBuffer ed = UTF8.decode(hdrEnc.slice());
+            System.err.println("____??? " + ed);
+            CharBuffer decode = UTF8.decode(buf.duplicate().slice());
+            System.err.println("____+++ " + decode);
+        }
+        Pair<ByteBuffer, ? extends Pair> ret = null;
+        int hdrTokenEnd = hdrEnc.limit();
+
+//        while (buf.hasRemaining() && '\n' != buf.get()) ; //first eol.
+//        buf = buf.slice();
+        while (buf.hasRemaining()) {
+            int begin = buf.position();
+            while (buf.hasRemaining() && ':' != buf.get() && buf.position() - 1 - begin <= hdrTokenEnd) ;
+            int tokenEnd = buf.position() - 1 - begin;
+            if (tokenEnd == hdrTokenEnd) {
+                ByteBuffer sampleHdr = (ByteBuffer) ((ByteBuffer) buf.duplicate().position(begin)).slice().limit(hdrTokenEnd);
+                if (BlobAntiPatternObject.DEBUG_SENDJSON) {
+                    CharBuffer sampleDec = UTF8.decode(sampleHdr.slice());
+                    System.err.println("+__+ " + sampleDec);
+                }
+                if (sampleHdr.equals(hdrEnc.rewind())) {
+                    //found it for sure
+                    begin = buf.position();
+                    while (buf.hasRemaining()) {
+                        int endl = buf.position();
+                        byte b;
+                        while (buf.hasRemaining() && '\n' != (b = buf.get())) {
+                            if (!Character.isWhitespace(b)) {
+                                endl = buf.position();
+                            }
+                        }
+
+
+                        buf.mark();
+                        if(buf.hasRemaining()) {
+                            b = buf.get();
+                            if (!Character.isWhitespace(b)) {
+
+                                ByteBuffer outBuf = (ByteBuffer) ((ByteBuffer) buf.reset()).duplicate().position(begin).limit(endl);
+                                while (outBuf.hasRemaining()&&Character.isWhitespace(((ByteBuffer) outBuf.mark()).get())) {
+                                }
+                                outBuf.reset();//ltrim()
+                                ret = new Pair<ByteBuffer, Pair<ByteBuffer, ? extends Pair>>(outBuf, ret);
+                                break ;
+                            }
+                        }
+
+                    }
                 }
             }
-            ret = a;
+            if (buf.remaining() > hdrTokenEnd + 3) {
+                while (buf.hasRemaining() && '\n' != buf.get()) {
+                }
+            }
         }
         return ret;
     }
@@ -403,13 +486,14 @@ public class Rfc822HeaderState {
         List<String> headersNamed = getHeadersNamed(Cookie.getHeader());
         cookieStrings.set(new LinkedHashMap<String, String>());
         Arrays.sort(cookies);
-        for (String cookie : headersNamed)
+        for (String cookie : headersNamed) {
             for (String s : cookie.split(";")) {
                 String[] split = s.split("^[^=]*=", 2);
                 /*for (String ignored : split) */
                 cookieStrings.get().put(split[0].trim(), split[1].trim());
 
             }
+        }
         return this;
     }
 
@@ -428,23 +512,30 @@ public class Rfc822HeaderState {
      * @return this
      */
     public Rfc822HeaderState apply(ByteBuffer cursor) {
-        if (!cursor.hasRemaining())
+        if (!cursor.hasRemaining()) {
             cursor.flip();
+        }
         int anchor = cursor.position();
         ByteBuffer slice = cursor.duplicate().slice();
-        while (slice.hasRemaining() && ' ' != slice.get()) ;
+        while (slice.hasRemaining() && ' ' != slice.get()) {
+        }
         methodProtocol.set(UTF8.decode((ByteBuffer) slice.flip()).toString()
                 .trim());
 
-        while (cursor.hasRemaining() && ' ' != cursor.get()) ; //method/proto
+        while (cursor.hasRemaining() && ' ' != cursor.get()) {
+            //method/proto
+        }
         slice = cursor.slice();
-        while (slice.hasRemaining() && ' ' != slice.get()) ;
+        while (slice.hasRemaining() && ' ' != slice.get()) {
+        }
         pathRescode.set(UTF8.decode((ByteBuffer) slice.flip()).toString()
                 .trim());
 
-        while (cursor.hasRemaining() && ' ' != cursor.get()) ;
+        while (cursor.hasRemaining() && ' ' != cursor.get()) {
+        }
         slice = cursor.slice();
-        while (slice.hasRemaining() && '\n' != slice.get()) ;
+        while (slice.hasRemaining() && '\n' != slice.get()) {
+        }
         protocolStatus.set(UTF8.decode((ByteBuffer) slice.flip()).toString()
                 .trim());
 
@@ -461,13 +552,14 @@ public class Rfc822HeaderState {
             headerStrings.set(new LinkedHashMap<String, String>());
             for (String o : headerInterest.get()) {
                 int[] o1 = headerMap.get(o);
-                if (null != o1)
+                if (null != o1) {
                     headerStrings.get().put(
                             o,
                             UTF8.decode(
                                     (ByteBuffer) headerBuf.duplicate().clear()
                                             .position(o1[0]).limit(o1[1]))
                                     .toString().trim());
+                }
             }
 
         }
@@ -844,7 +936,8 @@ public class Rfc822HeaderState {
 
         do {
             int prev = eol;
-            while (buffer.hasRemaining() && '\n' != buffer.get()) ;
+            while (buffer.hasRemaining() && '\n' != buffer.get()) {
+            }
             eol = buffer.position();
             distance = abs(eol - prev);
             if (2 == distance && '\r' == buffer.get(eol - 2)) {

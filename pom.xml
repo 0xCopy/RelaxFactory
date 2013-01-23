@@ -153,6 +153,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.0</version>
                     <configuration>
                         <source>${java.specification.version}</source>
                         <target>${java.specification.version}</target>
@@ -198,9 +199,13 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <compilerCompliance>1.7</compilerCompliance>
+                            <compilerSource>1.7</compilerSource>
+                        <compilerCompliance>1.7</compilerCompliance>
+                    <compilerTargetPlatform>1.7</compilerTargetPlatform>
                     <!--<configFile>${project.basedir}/../fmt/ugh.xml</configFile>-->
-                    <!--<configFile>http://code.google.com/p/google-web-toolkit/source/browse/trunk/eclipse/settings/code-style/gwt-format.xml</configFile>-->
+                    <!--<configFile>https://raw.github.com/jnorthrup/RelaxFactory/x0uchdb/fmt/gwt-format.xml</configFile>-->
+
+                    <!--http://code.google.com/p/google-web-toolkit/source/browse/trunk/eclipse/settings/code-style/gwt-format.xml</configFile>&ndash;&gt;-->
                     <configFile>${project.basedir}/../fmt/gwt-format.xml</configFile>
                     <lineEnding>LF</lineEnding>
                 </configuration>
