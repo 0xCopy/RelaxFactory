@@ -1,8 +1,9 @@
 package rxf.server;
 
-import static java.nio.channels.SelectionKey.OP_ACCEPT;
-import static rxf.server.CouchNamespace.COUCH_DEFAULT_ORGNAME;
-import static rxf.server.RelaxFactoryServerImpl.wheresWaldo;
+import one.xio.AsioVisitor;
+import one.xio.HttpMethod;
+import rxf.server.gen.CouchDriver;
+import rxf.server.web.inf.ProtocolMethodDispatch;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -19,10 +20,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import one.xio.AsioVisitor;
-import one.xio.HttpMethod;
-import rxf.server.gen.CouchDriver;
-import rxf.server.web.inf.ProtocolMethodDispatch;
+import static java.nio.channels.SelectionKey.OP_ACCEPT;
+import static rxf.server.CouchNamespace.COUCH_DEFAULT_ORGNAME;
+import static rxf.server.RelaxFactoryServerImpl.wheresWaldo;
 
 /**
  * <a href='http://www.antipatterns.com/briefing/sld024.htm'> Blob Anti Pattern </a>
@@ -177,6 +177,11 @@ public class BlobAntiPatternObject {
     return isDEBUG_SENDJSON() ? TimeUnit.HOURS : CouchDriver.defaultCollectorTimeUnit;
   }
 
+  /**
+   * 'do the right thing' when handed a buffer with no remaining bytes.
+   * @param buf
+   * @return
+   */
   public static ByteBuffer avoidStarvation(ByteBuffer buf) {
     if (0 == buf.remaining())
       buf.rewind();

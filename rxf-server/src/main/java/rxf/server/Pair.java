@@ -15,15 +15,6 @@ class Pair<A, B> {
     this.b = b;
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (!(o instanceof Pair<?, ?>)) {
-      return false;
-    }
-    Pair<?, ?> other = (Pair<?, ?>) o;
-    return a.equals(other.a) && b.equals(other.b);
-  }
-
   public A getA() {
     return a;
   }
@@ -33,7 +24,25 @@ class Pair<A, B> {
   }
 
   @Override
+  public boolean equals(Object o) {
+    if (this != o) {
+      if (o instanceof Pair) {
+
+        Pair pair = (Pair) o;
+
+        return !((null != a ? !a.equals(pair.a) : null != pair.a) || (null != b ? !b.equals(pair.b)
+            : null != pair.b));
+
+      }
+      return false;
+    }
+    return true;
+  }
+
+  @Override
   public int hashCode() {
-    return a.hashCode() * 13 + b.hashCode() * 7;
+    int result = null != a ? a.hashCode() : 0;
+    result = 31 * result + (null != b ? b.hashCode() : 0);
+    return result;
   }
 }

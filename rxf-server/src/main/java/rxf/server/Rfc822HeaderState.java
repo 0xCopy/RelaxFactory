@@ -415,7 +415,7 @@ public class Rfc822HeaderState {
      */
     public Pair<ByteBuffer, ? extends Pair> headerExtract(ByteBuffer hdrEnc) {
         hdrEnc = (ByteBuffer) hdrEnc.asReadOnlyBuffer().rewind();
-        final    ByteBuffer buf = (ByteBuffer) headerBuf().rewind();
+        final    ByteBuffer buf = BlobAntiPatternObject.avoidStarvation(headerBuf());
        /* if (BlobAntiPatternObject.DEBUG_SENDJSON) {
             CharBuffer ed = UTF8.decode(hdrEnc.slice());
             System.err.println("____??? " + ed);
