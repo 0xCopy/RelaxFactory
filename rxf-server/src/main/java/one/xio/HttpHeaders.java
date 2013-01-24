@@ -1414,28 +1414,28 @@ public enum HttpHeaders {
    */
 
   public static Map<String, int[]> getHeaders(ByteBuffer headers) {
-        headers.rewind();
-        int l = headers.limit();
-        Map<String, int[]> linkedHashMap = new LinkedHashMap<>();
-        while (headers.hasRemaining() && '\n' != headers.get()) ;
-        while (headers.hasRemaining()) {
-            int p1 = headers.position();
-            while (headers.hasRemaining() && ':' != headers.get()) ;
-            int p2 = headers.position();
-            while (headers.hasRemaining() && '\n' != headers.get()) ;
-            int p3 = headers.position();
+    headers.rewind();
+    int l = headers.limit();
+    Map<String, int[]> linkedHashMap = new LinkedHashMap();
+    while (headers.hasRemaining() && '\n' != headers.get());
+    while (headers.hasRemaining()) {
+      int p1 = headers.position();
+      while (headers.hasRemaining() && ':' != headers.get());
+      int p2 = headers.position();
+      while (headers.hasRemaining() && '\n' != headers.get());
+      int p3 = headers.position();
 
-            String key =
-                    HttpMethod.UTF8.decode((ByteBuffer) headers.position(p1).limit(p2 - 1)).toString().trim();
-            if (key.length() > 0) {
-                linkedHashMap.put(key, new int[]{p2, p3});
-            }
-            headers.limit(l).position(p3);
+      String key =
+          HttpMethod.UTF8.decode((ByteBuffer) headers.position(p1).limit(p2 - 1)).toString().trim();
+      if (key.length() > 0) {
+        linkedHashMap.put(key, new int[] {p2, p3});
+      }
+      headers.limit(l).position(p3);
 
-        }
-
-        return linkedHashMap;
     }
+
+    return linkedHashMap;
+  }
 
   public String getHeader() {
     return header;

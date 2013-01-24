@@ -14,34 +14,33 @@ import java.net.UnknownHostException;
  */
 public interface RelaxFactoryServer {
 
-    void init(String hostname, int port, AsioVisitor topLevel)
-            throws UnknownHostException;
+  void init(String hostname, int port, AsioVisitor topLevel) throws UnknownHostException;
 
-    void start() throws IOException;
+  void start() throws IOException;
 
-    void stop() throws IOException;
+  void stop() throws IOException;
 
-    boolean isRunning();
+  boolean isRunning();
 
-    /**
-     * Returns the port the server has started on. Useful in the case where
-     * {@link #init(String, int, one.xio.AsioVisitor)} was invoked with 0, {@link #start()} called,
-     * and the server selected its own port.
-     *
-     * @return
-     */
-    int getPort();
+  /**
+   * Returns the port the server has started on. Useful in the case where
+   * {@link #init(String, int, one.xio.AsioVisitor)} was invoked with 0, {@link #start()} called,
+   * and the server selected its own port.
+   *
+   * @return
+   */
+  int getPort();
 
-    InheritableThreadLocal<RelaxFactoryServer> rxfTl = new InheritableThreadLocal<>();
+  InheritableThreadLocal<RelaxFactoryServer> rxfTl = new InheritableThreadLocal();
 
-    class App {
-        public static RelaxFactoryServer get() {
-            RelaxFactoryServer relaxFactoryServer = rxfTl.get();
-            if (null == relaxFactoryServer) {
-                relaxFactoryServer = new RelaxFactoryServerImpl();
-                rxfTl.set(relaxFactoryServer);
-            }
-            return relaxFactoryServer;
-        }
+  class App {
+    public static RelaxFactoryServer get() {
+      RelaxFactoryServer relaxFactoryServer = rxfTl.get();
+      if (null == relaxFactoryServer) {
+        relaxFactoryServer = new RelaxFactoryServerImpl();
+        rxfTl.set(relaxFactoryServer);
+      }
+      return relaxFactoryServer;
     }
+  }
 }

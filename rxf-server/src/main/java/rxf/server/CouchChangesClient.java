@@ -58,7 +58,7 @@ public class CouchChangesClient extends AsioVisitor.Impl {
     String str = "HEAD " + getFeedString() + " HTTP/1.1\r\n\r\n";
     System.err.println("attempting " + str);
     attachment[1] = UTF8.encode(str);
-    channel.write(ByteBuffer.wrap(str.getBytes()));
+    channel.write(ByteBuffer.wrap(str.getBytes(UTF8)));
     key.selector().wakeup();
     key.interestOps(OP_READ);
   }
@@ -89,7 +89,7 @@ public class CouchChangesClient extends AsioVisitor.Impl {
             String str = "GET " + getFeedString() + " HTTP/1.1\r\n\r\n";
             System.err.println("attempting " + str);
             attachment[1] = UTF8.encode(str);
-            channel.write(ByteBuffer.wrap(str.getBytes()));
+            channel.write(ByteBuffer.wrap(str.getBytes(UTF8)));
             key.selector().wakeup();
             key.interestOps(OP_READ);
           }
@@ -136,7 +136,7 @@ public class CouchChangesClient extends AsioVisitor.Impl {
             String str = "PUT /" + feedname + "/ HTTP/1.1\r\n\r\n";
             ByteBuffer encode = UTF8.encode(str);
             System.err.println("attempting db creation  " + str);
-            ((SocketChannel) key.channel()).write(ByteBuffer.wrap(str.getBytes()));
+            ((SocketChannel) key.channel()).write(ByteBuffer.wrap(str.getBytes(UTF8)));
             key.selector().wakeup();
             key.interestOps(OP_READ);
             key.attach(prev);
