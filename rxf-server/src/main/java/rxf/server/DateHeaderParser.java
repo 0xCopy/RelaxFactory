@@ -17,10 +17,15 @@ import java.util.TimeZone;
  * @overhauled Jim Northrup
  */
 public enum DateHeaderParser {
-  RFC1123("EEE, dd MMM yyyy HH:mm:ss z"),
   /**
-   * Date format pattern used to parse HTTP date headers in RFC 1123 format.
+   * 5.2.14  RFC-822 Date and Time Specification: RFC-822 Section 5
+   * <p/>
+   * The syntax for the date is hereby changed to:
+   * <p/>
+   * date = 1*2DIGIT month 2*4DIGIT
    */
+
+  RFC1123("EEE, dd MMM yyyy HH:mm:ss z"),
 
   /**
    * Date format pattern used to parse HTTP date headers in RFC 1036 format.
@@ -84,5 +89,9 @@ public enum DateHeaderParser {
 
   public static String formatHttpHeaderDate(Date... fdate) {
     return RFC1123.format.format(fdate.length > 0 ? fdate[0] : new Date());
+  }
+
+  public DateFormat getFormat() {
+    return format;
   }
 }

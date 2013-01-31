@@ -1,0 +1,22 @@
+package rxf.server.web.inf;
+
+import one.xio.HttpHeaders;
+import rxf.server.DateHeaderParser;
+
+import java.nio.channels.SelectionKey;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
+
+public class ContentRootCacheImpl extends ContentRootImpl {
+
+  public static final long YEAR = TimeUnit.MILLISECONDS.convert(365, TimeUnit.DAYS);
+  public static final Pattern CACHE_PATTERN = Pattern.compile(".*[.]cache[.](gif|html)$");
+
+  @Override
+  public void onWrite(SelectionKey key) throws Exception {
+    req.headerStrings().put(HttpHeaders.Expires.getHeader(),
+        DateHeaderParser.RFC1123.getFormat().format(new Date(new Date().getTime() + YEAR)));
+    super.onWrite(key);
+  }
+}

@@ -34,17 +34,6 @@ import static rxf.server.BlobAntiPatternObject.deepToString;
 public class DealSiteInit {
 
     public static final Pattern FRAGMENT = Pattern.compile(".*_escaped_fragment_=([^&]+)");
-//
-//
-//  public static void registerurlExprAsFirst(HttpMethod method, Pattern passthroughExpr, Class<? extends Impl> value) {
-//    Map<Pattern, Class<? extends Impl>> linkedHashMap = new LinkedHashMap<Pattern, Class<? extends Impl>>();
-//    linkedHashMap.put(passthroughExpr, value);
-//    Map<Pattern, Class<? extends Impl>> patternImplMap = NAMESPACE.get(method);
-//    if (null != patternImplMap) {
-//      linkedHashMap.putAll(patternImplMap);
-//    }
-//    NAMESPACE.put(method, linkedHashMap);
-//  }
 
     public static void main(String... args) throws Exception {
         // Create an injector to kick Guice into taking over RF for services

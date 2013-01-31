@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
 import static one.xio.HttpMethod.UTF8;
 
 public class Rfc822HeaderStateTest {
@@ -100,6 +101,23 @@ public class Rfc822HeaderStateTest {
 
     String ssid = httpRequest.getCookie("SSID");
     assertEquals("A3ZS9cJVATN-UjcZP", ssid);
+
+  }
+
+  @Test
+  public void testStateTransition() {
+    Rfc822HeaderState state = ActionBuilder.get().state();/*
+                                                          System.err.println(
+                                                          state.as(String.class));*/
+    Rfc822HeaderState.HttpRequest httpRequest = state.$req();
+    httpRequest.headerStrings().put("foo", "bar");
+
+    Rfc822HeaderState.HttpResponse httpResponse = httpRequest.$res();
+    /*System.err.println(httpResponse.as(String.class));
+     */
+
+    assertTrue(httpResponse.headerStrings().containsValue("bar"));
+    assertTrue(httpResponse.headerStrings().containsKey("foo"));
 
   }
 

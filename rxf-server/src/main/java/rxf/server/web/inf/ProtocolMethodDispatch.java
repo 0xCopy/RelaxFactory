@@ -95,9 +95,10 @@ public class ProtocolMethodDispatch extends Impl {
      * any random config mechanism with a default will suffice here to define the content root.
      *
      * widest regex last intentionally
-     *
-     * system proprty: RXF_SERVER_CONTENT_ROOT
+     * system proprty: {value #RXF_SERVER_CONTENT_ROOT}
      */
+    GETmap.put(ContentRootCacheImpl.CACHE_PATTERN, ContentRootCacheImpl.class);
+    GETmap.put(ContentRootNoCacheImpl.NOCACHE_PATTERN, ContentRootNoCacheImpl.class);
     GETmap.put(Pattern.compile(".*"), ContentRootImpl.class/*(COUCH_DEFAULT_FS_ROOT)*/);
   }
 

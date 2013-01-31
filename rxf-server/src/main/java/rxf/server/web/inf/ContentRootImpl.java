@@ -33,7 +33,7 @@ public class ContentRootImpl extends Impl implements PreRead {
   private String rootPath = CouchNamespace.COUCH_DEFAULT_FS_ROOT;
   private ByteBuffer cursor;
   private SocketChannel channel;
-  private HttpRequest req;
+  protected HttpRequest req;
 
   public ContentRootImpl() {
     init();

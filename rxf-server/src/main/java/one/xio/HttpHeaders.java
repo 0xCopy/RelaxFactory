@@ -1438,7 +1438,7 @@ public enum HttpHeaders {
   }
 
   public String getHeader() {
-    return header;
+    return header.intern();
   }
 
   public ByteBuffer getToken() {

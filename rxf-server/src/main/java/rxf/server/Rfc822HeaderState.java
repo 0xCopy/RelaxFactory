@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static java.lang.Math.abs;
 import static java.util.Arrays.asList;
 import static one.xio.HttpMethod.UTF8;
+import static rxf.server.gen.CouchDriver.GSON;
 
 /**
  * this is a utility class to parse a HttpRequest header or
@@ -313,20 +314,24 @@ public class Rfc822HeaderState {
     return HttpResponse.class == this.getClass() ? (HttpResponse) this : new HttpResponse(this);
   }
 
-  public <T> T as(Class<T> clazz) {
-    if (HttpResponse.class.equals(clazz)) {
+  @Override
+  public String toString() {
+    return GSON.toJson(this);
+  }
+
+  public <T> T as(final Class<T> clazz) {
+    if (clazz.equals(HttpResponse.class)) {
       return (T) $res();
 
-    } else if (HttpRequest.class.equals(clazz)) {
+    } else if (clazz.equals(HttpRequest.class)) {
       return (T) $req();
-    } else if (String.class.equals(clazz)) {
+    } else if (clazz.equals(String.class)) {
       return (T) toString();
-    }
-    if (ByteBuffer.class.equals(clazz)) {
+    } else if (clazz.equals(ByteBuffer.class)) {
       throw new UnsupportedOperationException(
           "must promote to as((HttpRequest|HttpResponse)).class first");
-    }
-    throw new UnsupportedOperationException("don't know how to infer " + clazz.getCanonicalName());
+    } else
+      throw new UnsupportedOperationException("don't know how to infer " + clazz.getCanonicalName());
 
   }
 
@@ -444,22 +449,6 @@ public class Rfc822HeaderState {
 
   public ByteBuffer headerBuf() {
     return headerBuf;
-  }
-
-  /**
-   * header values which are pre-parsed during {@link #apply(ByteBuffer)}.
-   * <p/>
-   * addHeaderInterest in the HttpRequest/HttpResponse not so named in this list will be passed over.
-   * <p/>
-   * the value of a header appearing more than once is unspecified.
-   * <p/>
-   * multiple occuring addHeaderInterest require {@link #getHeadersNamed(String)}
-   *
-   * @return the parsed values designated by the {@link #headerInterest} list of keys.  addHeaderInterest present in {@link #headerInterest}
-   *         not appearing in the {@link ByteBuffer} input will not be in this map.
-   */
-  public Map<String, String> getHeaderStrings() {
-    return headerStrings.get();
   }
 
   /**
@@ -581,7 +570,7 @@ public class Rfc822HeaderState {
   /**
    * direction-agnostic RFC822 header state is mapped from a ByteBuffer with tolerance for HTTP method and results in the first line.
    * <p/>
-   * {@link #headerInterest } contains a list of addHeaderInterest that will be converted to a {@link Map} and available via {@link Rfc822HeaderState#getHeaderStrings()}
+   * {@link #headerInterest } contains a list of addHeaderInterest that will be converted to a {@link Map} and available via {@link Rfc822HeaderState#headerStrings()}
    * <p/>
    * currently this is  done inside of {@link ProtocolMethodDispatch } surrounding {@link SimpleRequestProcessor#process(String)}
    *
@@ -743,10 +732,16 @@ public class Rfc822HeaderState {
   }
 
   /**
-   * fluent lazy getter
+   * header values which are pre-parsed during {@link #apply(ByteBuffer)}.
+   * <p/>
+   * addHeaderInterest in the HttpRequest/HttpResponse not so named in this list will be passed over.
+   * <p/>
+   * the value of a header appearing more than once is unspecified.
+   * <p/>
+   * multiple occuring headers require {@link #getHeadersNamed(String)}
    *
-   * @return {@link #headerStrings}
-   * @see #headerStrings
+   * @return the parsed values designated by the {@link #headerInterest} list of keys.  addHeaderInterest present in {@link #headerInterest}
+   *         not appearing in the {@link ByteBuffer} input will not be in this map.
    */
   public Map<String, String> headerStrings() {
 

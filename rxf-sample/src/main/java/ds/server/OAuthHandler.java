@@ -7,6 +7,7 @@ import rxf.server.BlobAntiPatternObject;
 import rxf.server.PreRead;
 import rxf.server.Rfc822HeaderState;
 import rxf.server.Rfc822HeaderState.HttpRequest;
+import rxf.server.gen.CouchDriver;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.BufferedInputStream;
@@ -38,9 +39,8 @@ public class OAuthHandler extends Impl implements PreRead {
 
     public static final String WWW_GOOGLEAPIS_COM = "www.googleapis.com";
     HttpRequest req;
-    ByteBuffer cursor = null;
+    ByteBuffer cursor;
     private SocketChannel channel;
-    ByteBuffer output;
     private Map payload;
     private ByteBuffer outgoing;
 
@@ -52,7 +52,7 @@ public class OAuthHandler extends Impl implements PreRead {
     @Override
     public void onRead(final SelectionKey key) throws Exception {
         channel = (SocketChannel) key.channel();
-        if (cursor == null) {
+        if (null == cursor) {
             if (key.attachment() instanceof Object[]) {
                 Object[] ar = (Object[]) key.attachment();
                 for (Object o : ar) {
@@ -68,7 +68,7 @@ public class OAuthHandler extends Impl implements PreRead {
         }
         cursor = null == cursor ? ByteBuffer.allocateDirect(getReceiveBufferSize()) : cursor.hasRemaining() ? cursor : ByteBuffer.allocateDirect(cursor.capacity() << 2).put((ByteBuffer) cursor.rewind());
         int read = channel.read(cursor);
-        if (read == -1) {
+        if (-1 == read) {
             key.cancel();
             return;
         }
@@ -128,7 +128,7 @@ public class OAuthHandler extends Impl implements PreRead {
                             BufferedInputStream input = new BufferedInputStream(connection.getInputStream());
                             StringBuilder out = new StringBuilder();
 // read in each character until end-of-stream is detected
-                            for (int c = input.read(); c != -1; c = input.read()) {
+                            for (int c = input.read(); -1 != c; c = input.read()) {
                                 out.append((char) c);
                             }
 //                            System.err.println("+++ received " + out);
@@ -143,16 +143,15 @@ public class OAuthHandler extends Impl implements PreRead {
                 });
             }
             return;
-        } else {
-            remaining = Integer.parseInt(req.headerString(Content$2dLength));
         }
+        remaining = Integer.parseInt(req.headerString(Content$2dLength));
         final Impl prev = this;
         if (cursor.remaining() != remaining) {
             key.attach(new Impl() {
                 @Override
                 public void onRead(SelectionKey key) throws Exception {
                     int read1 = channel.read(cursor);
-                    if (read1 == -1) {
+                    if (-1 == read1) {
                         key.cancel();
                         return;
                     }
@@ -167,17 +166,12 @@ public class OAuthHandler extends Impl implements PreRead {
 
     @Override
     public String toString() {
-        return "OAuthHandler{" +
-                "req=" + req +
-                ", cursor=" + cursor +
-                ", channel=" + channel +
-                ", payload='" + payload + '\'' +
-                '}';
+        return CouchDriver.GSON.toJson(this);
     }
 
     @Override
     public void onWrite(SelectionKey key) throws Exception {
-        if (outgoing == null) {
+        if (null == outgoing) {
             //todo: assign login to user ****** HERE ******
             /*
     , cursor=java.nio.DirectByteBuffer[pos=0 lim=31864 cap=31864], channel=java.nio.channels.SocketChannel[
@@ -194,14 +188,15 @@ public class OAuthHandler extends Impl implements PreRead {
 
             //per https://developers.google.com/identity-toolkit/v1/acguide#open_id_callback_logic_pseudocode
             outgoing = UTF8.encode(
+
                     "<script type='text/javascript' src='https://ajax.googleapis.com/jsapi'></script>\n" +
-                            "<script type='text/javascript'> \n" +
-                            "  google.load(\"identitytoolkit\", \"1.0\", {packages: [\"notify\"]});\n" +
-                            "</script> \n" +
+                            "<script type='text/javascript'>" +
+                            "google.load(\"identitytoolkit\", \"1.0\", {packages: [\"notify\"]});\n" +
+                            "</script>\n" +
                             "<script type='text/javascript'>\n" +
-                            "  window.google.identitytoolkit.notifyFederatedSuccess({ \"email\": \"" + payload.get("verifiedEmail") +
+                            "window.google.identitytoolkit.notifyFederatedSuccess({ \"email\": \"" + payload.get("verifiedEmail") +
                             "\", \"registered\": true });\n" +
-                            "  // use window.google.identitytoolkit.notifyFederatedError(); in case of error\n" +
+                            "// use window.google.identitytoolkit.notifyFederatedError(); in case of error\n" +
                             "</script>");
             Rfc822HeaderState.HttpResponse res = ((Rfc822HeaderState.HttpResponse) req.$res()).status($200);
             ByteBuffer as = res.headerString(Content$2dLength, String.valueOf(outgoing.limit()))
