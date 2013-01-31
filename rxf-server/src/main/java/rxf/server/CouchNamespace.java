@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
  * Date: 6/25/12
  * Time: 1:24 PM
  */
-public interface CouchNamespace<T> {
+public interface CouchNamespace {
 
   /**
    * a map of http methods each containing an ordered map of regexes tested in order of

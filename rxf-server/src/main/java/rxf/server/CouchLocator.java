@@ -8,12 +8,11 @@ import java.util.List;
 
 import static rxf.server.gen.CouchDriver.GSON;
 
-public abstract class CouchLocator<T> extends Locator<T, String> implements CouchNamespace<T> {
+public abstract class CouchLocator<T> extends Locator<T, String> implements CouchNamespace {
 
   public CouchLocator(String... nse) {
     for (int i = 0; i < nse.length; i++) {
       ns.values()[i].setMe(this, nse[i]);
-
     }
   }
 
@@ -78,19 +77,16 @@ public abstract class CouchLocator<T> extends Locator<T, String> implements Couc
     this.orgname = orgname;
   }
 
-  public CouchTx persist(T domainObject) throws Exception {
+  public CouchTx persist(T domainObject) {
 
-    CouchTx ret = null;
-    try {
-      String pathPrefix = getEntityName();
-      String id = getId(domainObject);
-      final DocPersist.DocPersistTerminalBuilder fire =
-          DocPersist.$().db(pathPrefix).validjson(GSON.toJson(domainObject)).to().fire();
-      ret = fire.tx();
-    } catch (Exception e) {
-      e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
-    } finally {
-    }
+    CouchTx ret;
+
+    String pathPrefix = getEntityName();
+    String id = getId(domainObject);
+    final DocPersist.DocPersistTerminalBuilder fire =
+        DocPersist.$().db(pathPrefix).validjson(GSON.toJson(domainObject)).to().fire();
+    ret = fire.tx();
+
     return ret;
   }
 

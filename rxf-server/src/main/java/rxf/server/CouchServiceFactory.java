@@ -11,10 +11,7 @@ import rxf.server.gen.CouchDriver.JsonSend.JsonSendTerminalBuilder;
 import rxf.server.gen.CouchDriver.ViewFetch.ViewFetchTerminalBuilder;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.*;
-import java.lang.reflect.Type;
 import java.net.URLEncoder;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -44,7 +41,7 @@ public class CouchServiceFactory {
    * @param <E> type of entity that will be handled with this service proxy, used to be explicit about
    *            types in private members
    */
-  private static class CouchServiceHandler<E> implements InvocationHandler, CouchNamespace<E> {
+  private static class CouchServiceHandler<E> implements InvocationHandler, CouchNamespace {
     private final Class<E> entityType;
     private Map<String, String> viewMethods = null;
     private Future<Void> init;
@@ -80,20 +77,11 @@ public class CouchServiceFactory {
 
             //harvest, construct a view instance based on the interface. Probably not cheap, should be avoided.
             CouchDesignDoc design = new CouchDesignDoc();
-            design.id = "_design/" + getEntityName();
+            String designId = design.id = "_design/" + getEntityName();
             CouchDesignDoc existingDesignDoc = null;
-            try {
-              existingDesignDoc =
-                  GSON.fromJson(DocFetch.$().db(getPathPrefix()).docId(design.id).to().fire()
-                      .json(), CouchDesignDoc.class);
-              if (existingDesignDoc != null) {
-                design.version = existingDesignDoc.version;
-              }
-            } catch (Throwable ignored) {
-              // Likely design doc doesn't yet exist, don't assign version as we'll create fresh
-              // This will probably manifest as JSON that can't be translated, if at all
-              ignored.printStackTrace();
-            }
+
+            String pathPrefix1 = getPathPrefix();
+            design.version = RevisionFetch.$().db(pathPrefix1).docId(designId).to().fire().json();
 
             Map<String, Type> returnTypes = new TreeMap<String, Type>();
             viewMethods = new TreeMap<String, String>();
@@ -111,7 +99,7 @@ public class CouchServiceFactory {
                 design.views.put(methodName, view);
 
                 StringBuilder queryBuilder =
-                    new StringBuilder(design.id).append("/_view/").append(methodName).append("?");
+                    new StringBuilder(designId).append("/_view/").append(methodName).append("?");
 
                 Annotation[][] paramAnnotations = m.getParameterAnnotations();
                 if (paramAnnotations.length == 1 && paramAnnotations[0].length == 0) {
@@ -154,7 +142,10 @@ public class CouchServiceFactory {
             viewMethods = Collections.unmodifiableMap(viewMethods);
 
             //Now, before sending this new design doc, confirm that it isn't the same as the existing:
-            if (!design.equals(existingDesignDoc)) {
+            if (!viewMethods.isEmpty()
+                && (null == design.version || !design.equals(existingDesignDoc =
+                    GSON.fromJson(DocFetch.$().db(pathPrefix1).docId(designId).to().fire().json(),
+                        CouchDesignDoc.class)))) {
               System.err.println("Existing design doc out of date, updating...");
               final String stringParam = GSON.toJson(design);
               final JsonSendTerminalBuilder fire = JsonSend.$().opaque(getPathPrefix())

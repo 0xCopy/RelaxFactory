@@ -22,7 +22,7 @@ public class CouchModuleBuilder {
       new ArrayList<Class<? extends CouchService<?>>>();
 
   /**
-   * Creates a new builds. No namespace has been declared, a String constant must be bound to
+   * Creates a new builder. No namespace has been declared, a String constant must be bound to
    * {@literal @Named(} {@value #NAMESPACE}) to allow this to correctly create service instances.
    */
   public CouchModuleBuilder() {

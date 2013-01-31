@@ -23,6 +23,8 @@ import static one.xio.HttpHeaders.*;
 import static one.xio.HttpMethod.UTF8;
 import static one.xio.HttpStatus.$200;
 import static rxf.server.BlobAntiPatternObject.*;
+import static rxf.server.driver.CouchMetaDriver.HEADER_TERMINATOR;
+import static rxf.server.gen.CouchDriver.GSON;
 
 /**
  * this requiers some https, but sslEngine done right would require a keystore operation in the build process, so I'm
@@ -55,6 +57,7 @@ public class OAuthHandler extends Impl implements PreRead {
                 Object[] ar = (Object[]) key.attachment();
                 for (Object o : ar) {
                     if (o instanceof ByteBuffer) {
+
                         cursor = (ByteBuffer) o;
                     } else if (o instanceof Rfc822HeaderState) {
                         req = ((Rfc822HeaderState) o).$req();

@@ -20,37 +20,6 @@ public class CookieRfc6265UtilTest {
       "datr=byr_UBMy1etuo2RL3W6RgjP0; reg_fb_gate=https%3A%2F%2Fwww.facebook.com%2F; reg_fb_ref=https%3A%2F%2Fwww.facebook.com%2F; highContrast=0; wd=1680x395";
   public static final String FB_P3P_POLICY =
       "CP=\"Facebook does\n not have a\n P3P policy.\n Learn why\n here:\n http://fb.me/p3p\"";
-  public String H1 = "POST /StreamReceiver/services HTTP/1.1\n"
-      + "Host: inplay-rcv02.scanscout.com\n"
-      + "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:18.0) Gecko/20100101 Firefox/18.0 FirePHP/0.7.1\n"
-      + "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\n"
-      + "Accept-Language: en-US,en;q=0.5\n" + "Accept-Encoding: gzip, deflate\n" + "DNT: 1\n"
-      + "Cookie: " + TMID_8627085284984078588 + "\n" + "x-insight: activate\n"
-      + "Connection: keep-alive\n",
-      H2 = "GET / HTTP/1.1\n"
-          + "Host: www.facebook.com\n"
-          + "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:18.0) Gecko/20100101 Firefox/18.0 FirePHP/0.7.1\n"
-          + "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\n"
-          + "Accept-Language: en-US,en;q=0.5\n" + "Accept-Encoding: gzip, deflate\n" + "DNT: 1\n"
-          + "Cookie: " + FBSTUFF1 + "\n" + "x-insight: activate\n" + "Connection: keep-alive\n"
-          + "Cookie: " + TMID_8627085284984078588 + "\n" + "Cache-Control: max-age=0\n" + "\n";
-  String H3 =
-      "HTTP/1.1 200 OK\n"
-          + "Cache-Control: private, no-cache, no-store, must-revalidate\n"
-          + "Content-Encoding: gzip\n"
-          + "Content-Type: text/html; charset=utf-8\n"
-          + "Date: Wed, 23 Jan 2013 00:10:39 GMT\n"
-          + "Expires: Sat, 01 Jan 2000 00:00:00 GMT\n"
-          + "P3P: "
-          + FB_P3P_POLICY
-          + "\n"
-          + "Pragma: no-cache\n"
-          + "Set-Cookie: highContrast=deleted; expires=Thu, 01-Jan-1970 00:00:01 GMT; path=/; domain=.facebook.com; httponly\n"
-          + "reg_ext_ref=deleted; expires=Thu, 01-Jan-1970 00:00:01 GMT; path=/; domain=.facebook.com\n"
-          + "wd=deleted; expires=Thu, 01-Jan-1970 00:00:01 GMT; path=/; domain=.facebook.com; httponly\n"
-          + "X-Content-Type-Options: nosniff\n" + "X-Frame-Options: DENY\n"
-          + "X-XSS-Protection: 1; mode=block\n"
-          + "X-FB-Debug: AyxIiMHG0EA+jrasdfasdfsEsvtwdICkt4496U=\n" + "X-Firefox-Spdy: 2\n" + "\n";
   static String H4 =
       "POST /mail/u/0/?ui=2&ik=600asdfasdf86&rid=3472..&auto=1&view=lno&_reqid=1asdfasdf5&pcd=1&mb=0&rt=j HTTP/1.1\n"
           + "Host: mail.google.com\n"
@@ -68,6 +37,50 @@ public class CookieRfc6265UtilTest {
           + "Connection: keep-alive\n"
           + "Pragma: no-cache\n"
           + "Cache-Control: no-cache\n" + "\n";
+  public String H1 = "POST /StreamReceiver/services HTTP/1.1\n"
+      + "Host: inplay-rcv02.scanscout.com\n"
+      + "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:18.0) Gecko/20100101 Firefox/18.0 FirePHP/0.7.1\n"
+      + "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\n"
+      + "Accept-Language: en-US,en;q=0.5\n" + "Accept-Encoding: gzip, deflate\n" + "DNT: 1\n"
+      + "Cookie: " + TMID_8627085284984078588 + "\n" + "x-insight: activate\n"
+      + "Connection: keep-alive\n",
+      H2 = "GET / HTTP/1.1\n"
+          + "Host: www.facebook.com\n"
+          + "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:18.0) Gecko/20100101 Firefox/18.0 FirePHP/0.7.1\n"
+          + "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\n"
+          + "Accept-Language: en-US,en;q=0.5\n" + "Accept-Encoding: gzip, deflate\n" + "DNT: 1\n"
+          + "Cookie: " + FBSTUFF1 + "\n" + "x-insight: activate\n" + "Connection: keep-alive\n"
+          + "Cookie: " + TMID_8627085284984078588 + "\n" + "Cache-Control: max-age=0\n" + "\n",
+      SPDY2 = "HTTP/1.1 200 OK\n"
+          + "Cache-Control: private, no-cache, no-store, must-revalidate\n"
+          + "Content-Encoding: gzip\n"
+          + "Content-Type: text/html; charset=utf-8\n"
+          + "Date: Thu, 24 Jan 2013 02:58:35 GMT\n"
+          + "Expires: Sat, 01 Jan 2000 00:00:00 GMT\n"
+          + "p3p: CP=\"Facebook does not have a P3P policy. Learn why here: http://fb.me/p3p\"\n"
+          + "Pragma: no-cache\n"
+          + "Set-Cookie: reg_ext_ref=deleted; expires=Thu, 01-Jan-1970 00:00:01 GMT; path=/; domain=.facebook.com\n"
+          + "wd=deleted; expires=Thu, 01-Jan-1970 00:00:01 GMT; path=/; domain=.facebook.com; httponly\n"
+          + "X-Content-Type-Options: nosniff\n" + "X-Frame-Options: DENY\n"
+          + "X-XSS-Protection: 1; mode=block\n"
+          + "x-fb-debug: k49zFz2nntG31VC2nWULnaQShy/FqRZgZxpZoOjMkMY=\n" + "X-Firefox-Spdy: 2\n"
+          + "\n",
+      H3 = "HTTP/1.1 200 OK\n"
+          + "Cache-Control: private, no-cache, no-store, must-revalidate\n"
+          + "Content-Encoding: gzip\n"
+          + "Content-Type: text/html; charset=utf-8\n"
+          + "Date: Wed, 23 Jan 2013 00:10:39 GMT\n"
+          + "Expires: Sat, 01 Jan 2000 00:00:00 GMT\n"
+          + "P3P: "
+          + FB_P3P_POLICY
+          + "\n"
+          + "Pragma: no-cache\n"
+          + "Set-Cookie: highContrast=deleted; expires=Thu, 01-Jan-1970 00:00:01 GMT; path=/; domain=.facebook.com; httponly\n"
+          + "reg_ext_ref=deleted; expires=Thu, 01-Jan-1970 00:00:01 GMT; path=/; domain=.facebook.com\n"
+          + "wd=deleted; expires=Thu, 01-Jan-1970 00:00:01 GMT; path=/; domain=.facebook.com; httponly\n"
+          + "X-Content-Type-Options: nosniff\n" + "X-Frame-Options: DENY\n"
+          + "X-XSS-Protection: 1; mode=block\n"
+          + "X-FB-Debug: AyxIiMHG0EA+jrasdfasdfsEsvtwdICkt4496U=\n" + "X-Firefox-Spdy: 2\n" + "\n";
   String H5 =
       "HTTP/1.1 200 OK\n"
           + "Cache-Control: private, max-age=0, must-revalidate, no-transform\n"

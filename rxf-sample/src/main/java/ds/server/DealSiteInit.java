@@ -4,11 +4,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import ds.model.*;
 import one.xio.AsioVisitor.Impl;
-import rxf.server.BlobAntiPatternObject;
-import rxf.server.CouchLocator;
-import rxf.server.CouchServiceFactory;
-import rxf.server.CouchTx;
-import rxf.server.guice.RelaxFactoryServer;
+import rxf.server.*;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;

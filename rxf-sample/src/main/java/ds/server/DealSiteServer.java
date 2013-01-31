@@ -5,10 +5,7 @@ import com.google.inject.Injector;
 import ds.model.*;
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpMethod;
-import rxf.server.BlobAntiPatternObject;
-import rxf.server.CouchLocator;
-import rxf.server.CouchServiceFactory;
-import rxf.server.CouchTx;
+import rxf.server.*;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -36,9 +33,8 @@ public class DealSiteServer {
 
     public static final Pattern FRAGMENT = Pattern.compile(".*_escaped_fragment_=([^&]+)");
 
-
     public static void registerurlExprAsFirst(HttpMethod method, Pattern passthroughExpr, Class<? extends Impl> value) {
-        Map<Pattern, Class<? extends Impl>> linkedHashMap = new LinkedHashMap<Pattern, Class<? extends Impl>>();
+        Map<Pattern, Class<? extends Impl>> linkedHashMap = new LinkedHashMap();
         linkedHashMap.put(passthroughExpr, value);
         Map<Pattern, Class<? extends Impl>> patternImplMap = NAMESPACE.get(method);
         if (null != patternImplMap) {
@@ -50,6 +46,8 @@ public class DealSiteServer {
     public static void main(String... args) throws Exception {
         // Create an injector to kick Guice into taking over RF for services
         Injector injector = Guice.createInjector(new DealModule());
+
+        injector.getInstance(RelaxFactoryServer.class).start();
 
         if (System.getenv().containsKey("DEBUG_DEAL_EDITORS")) {
             BlobAntiPatternObject.EXECUTOR_SERVICE.schedule(new Runnable() {
@@ -120,18 +118,7 @@ public class DealSiteServer {
             }, 5, TimeUnit.SECONDS);
         }
 
-        BlobAntiPatternObject.EXECUTOR_SERVICE.schedule(new Runnable() {
-            @Override
-            public void run() {
-                registerurlExprAsFirst(HttpMethod.GET, FRAGMENT, FragMent.class /*(fragment)*/);
 
-                Pattern authpat = Pattern.compile("/rxf.server.Auth/.*");
-                registerurlExprAsFirst(HttpMethod.GET, authpat, OAuthHandler.class /*(fragment)*/);
-                registerurlExprAsFirst(HttpMethod.POST, authpat, OAuthHandler.class /*(fragment)*/);
-
-            }
-        }, 250, TimeUnit.MILLISECONDS);
-        BlobAntiPatternObject.startServer(args);
 
     }
 
