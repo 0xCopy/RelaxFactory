@@ -172,35 +172,37 @@ public class Rfc822HeaderState {
      */
     public Map<String, String> getCookies(String... keys) {
 
-        ByteBuffer[] k;
-        if (0 >= keys.length) {
-            k = cookieInterest;
-        } else {
-            k = new ByteBuffer[keys.length];
-            for (int i = 0; i < keys.length; i++) {
-                String key = keys[i];
-                k[i] = (ByteBuffer) ByteBuffer.wrap(key.intern().getBytes(UTF8));
-            }
+      ByteBuffer[] k;
+      if (0 >= keys.length) {
+        k = cookieInterest;
+      } else {
+        k = new ByteBuffer[keys.length];
+        for (int i = 0; i < keys.length; i++) {
+          String key = keys[i];
+          k[i] = (ByteBuffer) ByteBuffer.wrap(key.intern().getBytes(UTF8));
         }
-          Map<String, String> ret = new TreeMap<String, String>();
-          Pair<Pair<ByteBuffer, ByteBuffer>, ? extends Pair> pair = parsedCookies();
-          LinkedList<ByteBuffer> kl = new LinkedList<>(asList(k));
-          while (null != pair&&!kl.isEmpty()) {
-              Pair<ByteBuffer, ByteBuffer> a1 = pair.getA();
-              ByteBuffer ckey = (ByteBuffer) a1.getA();
-              ListIterator<ByteBuffer> ki = kl.listIterator();
-              while (ki.hasNext()) {
-                  ByteBuffer interestKey = ki.next();
-                   if (interestKey.equals(ckey)) {
-                      ret.put(UTF8.decode(interestKey).toString().intern(), UTF8.decode(a1.getB()).toString());
-                      ki.remove();
-                       break;
-                  }
-              }
-              pair = (Pair<Pair<ByteBuffer, ByteBuffer>, ? extends Pair>) pair.getB();
-          }
-          return ret;
       }
+      Map<String, String> ret = new TreeMap<String, String>();
+      Pair<Pair<ByteBuffer, ByteBuffer>, ? extends Pair> pair = parsedCookies();
+      LinkedList<ByteBuffer> kl = new LinkedList(asList(k));
+      while (null != pair && !kl.isEmpty()) {
+        Pair<ByteBuffer, ByteBuffer> a1 = pair.getA();
+        ByteBuffer ckey = (ByteBuffer) a1.getA();
+        ListIterator<ByteBuffer> ki = kl.listIterator();
+        while (ki.hasNext()) {
+          ByteBuffer interestKey = ki.next();
+          if (interestKey.equals(ckey)) {
+            ret
+                .put(UTF8.decode(interestKey).toString().intern(), UTF8.decode(a1.getB())
+                    .toString());
+            ki.remove();
+            break;
+          }
+        }
+        pair = (Pair<Pair<ByteBuffer, ByteBuffer>, ? extends Pair>) pair.getB();
+      }
+      return ret;
+    }
 
     /**
      * warning!  interns the key.  make it count!

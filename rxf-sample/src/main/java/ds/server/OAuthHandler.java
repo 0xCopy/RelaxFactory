@@ -3,7 +3,6 @@ package ds.server;
 import one.xio.AsioVisitor.Impl;
 import one.xio.MimeType;
 import rxf.server.ActionBuilder;
-import rxf.server.BlobAntiPatternObject;
 import rxf.server.PreRead;
 import rxf.server.Rfc822HeaderState;
 import rxf.server.Rfc822HeaderState.HttpRequest;
@@ -74,94 +73,95 @@ public class OAuthHandler extends Impl implements PreRead {
         }
         Buffer flip = cursor.duplicate().flip();
         req = (HttpRequest) ActionBuilder.get().state().$req().apply((ByteBuffer) flip);
-        if (!BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, req.headerBuf())) {
-            return;
-        }
-        cursor = cursor.slice();
-        int remaining = 0;
-        if (!req.headerStrings().containsKey(Content$2dLength.getHeader())) {
+        if (suffixMatchChunks(HEADER_TERMINATOR, req.headerBuf())) {
+            cursor = cursor.slice();
+            int remaining = 0;
+            if (!req.headerStrings().containsKey(Content$2dLength.getHeader())) {
 
-            String method = req.method();
-            if ("GET".equals(method)) {
-                String query = new URL("http://" + req.path()).getQuery();
-                if (null == query) {
-                    key.cancel();
-                    return;
-                }
-                String[] decl = query.split("\\&");
-                for (String pair : decl) {
-                    String[] kv = pair.split("\\=", 2);
-                    req.headerString(kv[0], kv[1]);
-                }
-                System.err.println("??? " + deepToString("results of oauth: ", req.headerStrings()));
+                String method = req.method();
+                if ("GET".equals(method)) {
+                    String query = new URL("http://" + req.path()).getQuery();
+                    if (null == query) {
+                        key.cancel();
+                        return;
+                    }
+                    String[] decl = query.split("\\&");
+                    for (String pair : decl) {
+                        String[] kv = pair.split("\\=", 2);
+                        req.headerString(kv[0], kv[1]);
+                    }
+                    System.err.println("??? " + deepToString("results of oauth: ", req.headerStrings()));
 
-                key.interestOps(0);
-                EXECUTOR_SERVICE.submit(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            URL url = new URL("https://www.googleapis.com/identitytoolkit/v1/relyingparty/verifyAssertion?key=AIzaSyBIRwIq-3Op3r5taLhE2_t_fbjRmGbmMNY");
-                            HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
-                            connection.setDoInput(true);
-                            connection.setDoOutput(true);
+                    key.interestOps(0);
+                    EXECUTOR_SERVICE.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                URL url = new URL("https://www.googleapis.com/identitytoolkit/v1/relyingparty/verifyAssertion?key=AIzaSyBIRwIq-3Op3r5taLhE2_t_fbjRmGbmMNY");
+                                HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+                                connection.setDoInput(true);
+                                connection.setDoOutput(true);
 
-                            connection.setRequestProperty(Content$2dType.getHeader(), MimeType.json.contentType);
-                            connection.setRequestMethod("POST");
-                            connection.setFollowRedirects(true);
-                            String s = "{\n" +
-                                    "  \"requestUri\": \"" + req.path() + "\",\n" +
-                                    "  \"postBody\": \"" + UTF8.decode((ByteBuffer) cursor.duplicate().rewind()).toString().trim() + "\",\n" +
-                                    "  \"returnOauthToken\": \"true\"\n" +
-                                    "}";
-                            byte[] bytes = s.getBytes(UTF8);
-                            connection.setRequestProperty(Content$2dLength.getHeader(), String.valueOf(bytes.length));
-                            connection.setRequestProperty(Accept.getHeader(), MimeType.json.contentType);
-                            connection.setRequestProperty(Accept$2dEncoding.getHeader(), "gzip");
-                            DataOutputStream output = new DataOutputStream(connection.getOutputStream());
+                                connection.setRequestProperty(Content$2dType.getHeader(), MimeType.json.contentType);
+                                connection.setRequestMethod("POST");
+                                connection.setFollowRedirects(true);
+                                String s = "{\n" +
+                                        "  \"requestUri\": \"" + req.path() + "\",\n" +
+                                        "  \"postBody\": \"" + UTF8.decode((ByteBuffer) cursor.duplicate().rewind()).toString().trim() + "\",\n" +
+                                        "  \"returnOauthToken\": \"true\"\n" +
+                                        "}";
+                                byte[] bytes = s.getBytes(UTF8);
+                                connection.setRequestProperty(Content$2dLength.getHeader(), String.valueOf(bytes.length));
+                                connection.setRequestProperty(Accept.getHeader(), MimeType.json.contentType);
+                                connection.setRequestProperty(Accept$2dEncoding.getHeader(), "gzip");
+                                DataOutputStream output = new DataOutputStream(connection.getOutputStream());
 
-                            output.write(bytes);
+                                output.write(bytes);
 
-                            System.out.println("Resp Code:" + connection.getResponseCode());
-                            System.out.println("Resp Message:" + connection.getResponseMessage());
+                                System.out.println("Resp Code:" + connection.getResponseCode());
+                                System.out.println("Resp Message:" + connection.getResponseMessage());
 
-// get ready to read the response from the cgi script
-                            BufferedInputStream input = new BufferedInputStream(connection.getInputStream());
-                            StringBuilder out = new StringBuilder();
-// read in each character until end-of-stream is detected
-                            for (int c = input.read(); -1 != c; c = input.read()) {
-                                out.append((char) c);
+    // get ready to read the response from the cgi script
+                                BufferedInputStream input = new BufferedInputStream(connection.getInputStream());
+                                StringBuilder out = new StringBuilder();
+    // read in each character until end-of-stream is detected
+                                for (int c = input.read(); -1 != c; c = input.read()) {
+                                    out.append((char) c);
+                                }
+    //                            System.err.println("+++ received " + out);
+
+                                payload = GSON.fromJson(out.toString(), Map.class);
+                                key.interestOps(SelectionKey.OP_WRITE);
+                                connection.disconnect();
+                            } catch (IOException e) {
+                                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                             }
-//                            System.err.println("+++ received " + out);
-
-                            payload = GSON.fromJson(out.toString(), Map.class);
-                            key.interestOps(SelectionKey.OP_WRITE);
-                            connection.disconnect();
-                        } catch (IOException e) {
-                            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                        }
+                    });
+                }
+                return;
+            }
+            remaining = Integer.parseInt(req.headerString(Content$2dLength));
+            final Impl prev = this;
+            if (cursor.remaining() != remaining) {
+                key.attach(new Impl() {
+                    @Override
+                    public void onRead(SelectionKey key) throws Exception {
+                        int read1 = channel.read(cursor);
+                        if (-1 == read1) {
+                            key.cancel();
+                            return;
+                        }
+                        if (!cursor.hasRemaining()) {
+                            key.interestOps(SelectionKey.OP_WRITE).attach(prev);
                         }
                     }
                 });
             }
+            key.interestOps(SelectionKey.OP_WRITE);
+        } else {
             return;
         }
-        remaining = Integer.parseInt(req.headerString(Content$2dLength));
-        final Impl prev = this;
-        if (cursor.remaining() != remaining) {
-            key.attach(new Impl() {
-                @Override
-                public void onRead(SelectionKey key) throws Exception {
-                    int read1 = channel.read(cursor);
-                    if (-1 == read1) {
-                        key.cancel();
-                        return;
-                    }
-                    if (!cursor.hasRemaining()) {
-                        key.interestOps(SelectionKey.OP_WRITE).attach(prev);
-                    }
-                }
-            });
-        }
-        key.interestOps(SelectionKey.OP_WRITE);
     }
 
     @Override
@@ -197,6 +197,7 @@ public class OAuthHandler extends Impl implements PreRead {
                             "window.google.identitytoolkit.notifyFederatedSuccess({ \"email\": \"" + payload.get("verifiedEmail") +
                             "\", \"registered\": true });\n" +
                             "// use window.google.identitytoolkit.notifyFederatedError(); in case of error\n" +
+                            "alert('logged in?');"+
                             "</script>");
             Rfc822HeaderState.HttpResponse res = ((Rfc822HeaderState.HttpResponse) req.$res()).status($200);
             ByteBuffer as = res.headerString(Content$2dLength, String.valueOf(outgoing.limit()))

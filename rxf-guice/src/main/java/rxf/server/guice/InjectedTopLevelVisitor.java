@@ -22,12 +22,13 @@ import java.util.Set;
 
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
+import static rxf.server.BlobAntiPatternObject.isDEBUG_SENDJSON;
 import static rxf.server.CouchNamespace.NAMESPACE;
 import static one.xio.HttpMethod.UTF8;
 
 public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
   private final Map<HttpMethod, Map<String, Key<? extends AsioVisitor>>> bindings =
-      new EnumMap<HttpMethod, Map<String, Key<? extends AsioVisitor>>>(HttpMethod.class);
+      new EnumMap(HttpMethod.class);
 
   private Injector injector;
 
@@ -38,7 +39,7 @@ public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
       System.out.println(def.getMethod() + " " + def.getPattern() + ": " + def.getVisitorKey());
       Map<String, Key<? extends AsioVisitor>> method = bindings.get(def.getMethod());
       if (method == null) {
-        method = new LinkedHashMap<String, Key<? extends AsioVisitor>>();
+        method = new LinkedHashMap();
         bindings.put(def.getMethod(), method);
       }
       method.put(def.getPattern(), def.getVisitorKey());
@@ -71,7 +72,7 @@ public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
       //find the method to dispatch
       Rfc822HeaderState state = new Rfc822HeaderState().apply((ByteBuffer) cursor.flip());
       httpRequest = state.$req();
-      if (BlobAntiPatternObject.isDEBUG_SENDJSON()) {
+      if (isDEBUG_SENDJSON()) {
         System.err.println(BlobAntiPatternObject.deepToString(UTF8.decode((ByteBuffer) httpRequest
             .headerBuf().duplicate().rewind())));
       }
@@ -91,7 +92,7 @@ public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
     String path = httpRequest.path();
     for (Entry<String, Key<? extends AsioVisitor>> visitorEntry : entries) {
       if (path.matches(visitorEntry.getKey())) {
-        if (BlobAntiPatternObject.isDEBUG_SENDJSON()) {
+        if (isDEBUG_SENDJSON()) {
           System.err.println("+?+?+? using " + visitorEntry.getValue());
         }
         AsioVisitor visitor = injector.getInstance(visitorEntry.getValue());

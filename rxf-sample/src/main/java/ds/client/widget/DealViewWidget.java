@@ -35,6 +35,8 @@ public class DealViewWidget implements DealView {
         String desc();
 
         String clear();
+
+        String orgTitle();
     }
 
     private Widget root;

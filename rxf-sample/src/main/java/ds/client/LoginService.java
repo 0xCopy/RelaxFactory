@@ -48,7 +48,6 @@ public class LoginService {
         //    private final AuthRequest authRequest;
         private Auth auth;
         private String token;
-        public double expires;
 
         LoginSuccessfulEvent(Auth auth, String token) {
 //      this.authRequest = authRequest;
@@ -141,11 +140,8 @@ public class LoginService {
                     public void onSuccess(final CouchTxProxy couchTxProxy) {
                         KernelFactory kf = GWT.create(KernelFactory.class);
                         kf.initialize(rf.getEventBus());
-
                     }
                 });
-
-
             }
 
             @Override

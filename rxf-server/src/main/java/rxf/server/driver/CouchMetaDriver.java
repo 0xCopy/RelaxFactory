@@ -12,6 +12,7 @@ import rxf.server.Rfc822HeaderState.HttpResponse;
 import rxf.server.an.DbKeys;
 import rxf.server.an.DbKeys.etype;
 import rxf.server.an.DbTask;
+import rxf.server.gen.CouchDriver;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -23,6 +24,7 @@ import java.util.*;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.nio.channels.SelectionKey.*;
@@ -1188,6 +1190,10 @@ public enum CouchMetaDriver {
   public static String scrub(String scrubMe) {
 
     return null == scrubMe ? null : scrubMe.trim().replace("//", "/").replace("..", ".");
+  }
+
+  public static TimeUnit getDefaultCollectorTimeUnit() {
+    return isDEBUG_SENDJSON() ? TimeUnit.HOURS : CouchDriver.defaultCollectorTimeUnit;
   }
 
   public ByteBuffer visit() throws Exception {

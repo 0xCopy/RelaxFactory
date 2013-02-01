@@ -12,9 +12,14 @@ import rxf.server.guice.CouchModuleBuilder;
 import rxf.server.guice.InjectingServiceLayerDecorator;
 import rxf.server.guice.RFServiceLayerModule;
 import rxf.server.guice.RxfModule;
+import rxf.server.web.inf.ContentRootCacheImpl;
 import rxf.server.web.inf.ContentRootImpl;
+import rxf.server.web.inf.ContentRootNoCacheImpl;
 
 import java.util.regex.Pattern;
+
+import static rxf.server.web.inf.ContentRootCacheImpl.CACHE_PATTERN;
+import static rxf.server.web.inf.ContentRootNoCacheImpl.NOCACHE_PATTERN;
 
 public class DealModule extends AbstractModule {
 
@@ -34,7 +39,8 @@ public class DealModule extends AbstractModule {
 
         // basic RF wiring
         install(new RFServiceLayerModule());
-        bind(ServiceLayerDecorator.class).to(InjectingServiceLayerDecorator.class);
+        bind(ServiceLayerDecorator.class)
+                .to(InjectingServiceLayerDecorator.class);
 
 
         // server setup - could/should be broken out into its own module type
@@ -52,7 +58,8 @@ public class DealModule extends AbstractModule {
                 post("^/gwtRequest").with(GwtRequestFactoryVisitor.class);
 
                 get("^/i(/.*)$").with(HttpProxyImpl.class);
-
+                get(CACHE_PATTERN.pattern()).with(ContentRootCacheImpl.class);
+                get(NOCACHE_PATTERN.pattern()).with(ContentRootNoCacheImpl.class);
                 get(".*").with(ContentRootImpl.class);
             }
         });

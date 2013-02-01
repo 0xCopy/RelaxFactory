@@ -5,35 +5,35 @@
     <title>DealSite</title>
     <link rel="stylesheet" href="Welcome.css">
     <script type="text/javascript" language="javascript" src="DealSite/DealSite.nocache.js"></script>
+    <!--<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jqueryui/1.8.2/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/googleapis/0.0.4/googleapis.min.js"></script>
+    <script type="text/javascript" src="//ajax.googleapis.com/jsapi"></script>
+    <script type="text/javascript">
+        google.load("identitytoolkit", "1", {packages: ["ac"], language: "en"});
+    </script>
+    <script type="text/javascript">
+        $(function () {
+            window.google.identitytoolkit.setConfig({
+                developerKey: "AIzaSyBIRwIq-3Op3r5taLhE2_t_fbjRmGbmMNY",
+                companyName: "DealSite",
+                callbackUrl: "http://127.0.0.1:8080/rxf.server.Auth/callback",
+                realm: "",
+                userStatusUrl: "/rxf.server.Auth/userStatus",
+                loginUrl: "/rxf.server.Auth/login",
+                signupUrl: "/rxf.server.Auth/signup",
+                homeUrl: "/rxf.server.Auth/home",
+                logoutUrl: "/rxf.server.Auth/signout",
+                idps: ["Gmail", "GoogleApps", "Yahoo", "AOL"],
+                tryFederatedFirst: true,
+                useCachedUserStatus: false,
+                useContextParam: true
+            });
+            $("#navbar").accountChooser();
+        });
+    </script>-->
 </head>
 <body>
-<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
-<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jqueryui/1.8.2/jquery-ui.min.js"></script>
-<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/googleapis/0.0.4/googleapis.min.js"></script>
-<script type="text/javascript" src="//ajax.googleapis.com/jsapi"></script>
-<script type="text/javascript">
-    google.load("identitytoolkit", "1", {packages: ["ac"], language: "en"});
-</script>
-<script type="text/javascript">
-    $(function () {
-        window.google.identitytoolkit.setConfig({
-            developerKey: "AIzaSyBIRwIq-3Op3r5taLhE2_t_fbjRmGbmMNY",
-            companyName: "DealSite",
-            callbackUrl: "http://127.0.0.1:8080/rxf.server.Auth/callback",
-            realm: "",
-            userStatusUrl: "/rxf.server.Auth/userStatus",
-            loginUrl: "/rxf.server.Auth/login",
-            signupUrl: "/rxf.server.Auth/signup",
-            homeUrl: "/rxf.server.Auth/home",
-            logoutUrl: "/rxf.server.Auth/signout",
-            idps: ["Gmail", "GoogleApps", "Yahoo", "AOL"],
-            tryFederatedFirst: true,
-            useCachedUserStatus: false,
-            useContextParam: true
-        });
-        $("#navbar").accountChooser();
-    });
-</script>
 <!-- Insert the navbar element somewhere in the HTML page -->
 <div id="navbar"></div>
 
