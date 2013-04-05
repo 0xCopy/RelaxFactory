@@ -9,6 +9,7 @@ import org.junit.Test;
 import rxf.server.BlobAntiPatternObject;
 import rxf.server.CouchResultSet;
 import rxf.server.CouchTx;
+import rxf.server.driver.CouchMetaDriver;
 import rxf.server.gen.CouchDriver.*;
 import rxf.server.gen.CouchDriver.ViewFetch.ViewFetchTerminalBuilder;
 import rxf.server.web.inf.ProtocolMethodDispatch;
@@ -19,7 +20,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static junit.framework.TestCase.*;
-import static rxf.server.gen.CouchDriver.*;
 
 /**
  * Tests out the db, cleaning up after itself. These must be run in order to work correctly and clean up.
@@ -62,7 +62,7 @@ public class CouchDriverTest {
 
     try {
       String json = DocFetch.$().db("").docId("_all_dbs").to().fire().json();
-      String[] strings = GSON.fromJson(json, String[].class);
+      String[] strings = CouchMetaDriver.GSON.fromJson(json, String[].class);
       for (String s : strings) {
         if (s.startsWith(SOMEDBPREFIX))
           DbDelete.$().db(s).to().fire().tx();
@@ -103,9 +103,9 @@ public class CouchDriverTest {
     CouchTx tx = DocPersist.$().db(SOMEDB).validjson("{}").to().fire().tx();
 
     String data = DocFetch.$().db(SOMEDB).docId(tx.id()).to().fire().json();
-    Map<String, Object> obj = CouchDriver.GSON.<Map<String, Object>> fromJson(data, Map.class);
+    Map<String, Object> obj = CouchMetaDriver.GSON.<Map<String, Object>> fromJson(data, Map.class);
     obj.put("abc", "123");
-    data = GSON.toJson(obj);
+    data = CouchMetaDriver.GSON.toJson(obj);
     CouchTx updateTx = DocPersist.$().db(SOMEDB).validjson(data).to().fire().tx();
     assertNotNull(updateTx);
   }
@@ -181,12 +181,13 @@ public class CouchDriverTest {
     assertEquals("a", data.rows.get(0).value.get("name")); //TODO no consistent way to write designdoc
     String designDoc = DesignDocFetch.$().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
     assertNotNull(designDoc);
-    Map<String, Object> obj = GSON.<Map<String, Object>> fromJson(designDoc, Map.class);
+    Map<String, Object> obj =
+        CouchMetaDriver.GSON.<Map<String, Object>> fromJson(designDoc, Map.class);
 
     Map<String, String> foo = (Map<String, String>) ((Map<String, ?>) obj.get("views")).get("foo");
     foo.put("map", "function(doc){ emit(doc.brand, doc); }");
 
-    designDoc = GSON.toJson(obj);
+    designDoc = CouchMetaDriver.GSON.toJson(obj);
     tx = JsonSend.$().opaque(SOMEDB).validjson(designDoc).to().fire().tx();
 
     assertNotNull(tx);

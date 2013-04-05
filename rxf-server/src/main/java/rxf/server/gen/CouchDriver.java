@@ -2,17 +2,14 @@ package rxf.server.gen;
 
 // generated
 
-import com.google.gson.FieldNamingPolicy;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import rxf.server.*;
 import rxf.server.an.DbKeys;
+import rxf.server.driver.CouchMetaDriver;
 
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 import static rxf.server.BlobAntiPatternObject.avoidStarvation;
 
@@ -20,10 +17,6 @@ import static rxf.server.BlobAntiPatternObject.avoidStarvation;
  * generated drivers
  */
 public interface CouchDriver {
-  Gson GSON =
-      new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").setFieldNamingPolicy(
-          FieldNamingPolicy.IDENTITY).setPrettyPrinting().create();
-  TimeUnit defaultCollectorTimeUnit = TimeUnit.SECONDS;
 
   //generated items
 
@@ -79,8 +72,8 @@ public interface CouchDriver {
 
           public CouchTx tx() {
             try {
-              return GSON.fromJson(one.xio.HttpMethod.UTF8.decode(future.get()).toString(),
-                  CouchTx.class);
+              return CouchMetaDriver.GSON.fromJson(one.xio.HttpMethod.UTF8.decode(future.get())
+                  .toString(), CouchTx.class);
             } catch (Exception e) {
               if (rxf.server.BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();
@@ -171,8 +164,8 @@ public interface CouchDriver {
 
           public CouchTx tx() {
             try {
-              return GSON.fromJson(one.xio.HttpMethod.UTF8.decode(future.get()).toString(),
-                  CouchTx.class);
+              return CouchMetaDriver.GSON.fromJson(one.xio.HttpMethod.UTF8.decode(future.get())
+                  .toString(), CouchTx.class);
             } catch (Exception e) {
               if (rxf.server.BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();
@@ -455,8 +448,8 @@ public interface CouchDriver {
 
           public CouchTx tx() {
             try {
-              return GSON.fromJson(one.xio.HttpMethod.UTF8.decode(future.get()).toString(),
-                  CouchTx.class);
+              return CouchMetaDriver.GSON.fromJson(one.xio.HttpMethod.UTF8.decode(future.get())
+                  .toString(), CouchTx.class);
             } catch (Exception e) {
               if (rxf.server.BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();
@@ -563,8 +556,8 @@ public interface CouchDriver {
 
           public CouchTx tx() {
             try {
-              return GSON.fromJson(one.xio.HttpMethod.UTF8.decode(future.get()).toString(),
-                  CouchTx.class);
+              return CouchMetaDriver.GSON.fromJson(one.xio.HttpMethod.UTF8.decode(future.get())
+                  .toString(), CouchTx.class);
             } catch (Exception e) {
               if (rxf.server.BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();
@@ -764,21 +757,22 @@ public interface CouchDriver {
 
           public rxf.server.CouchResultSet rows() {
             try {
-              return GSON.fromJson(one.xio.HttpMethod.UTF8.decode(avoidStarvation(future.get()))
-                  .toString(), new java.lang.reflect.ParameterizedType() {
-                public Type getRawType() {
-                  return CouchResultSet.class;
-                }
+              return CouchMetaDriver.GSON.fromJson(one.xio.HttpMethod.UTF8.decode(
+                  avoidStarvation(future.get())).toString(),
+                  new java.lang.reflect.ParameterizedType() {
+                    public Type getRawType() {
+                      return CouchResultSet.class;
+                    }
 
-                public Type getOwnerType() {
-                  return null;
-                }
+                    public Type getOwnerType() {
+                      return null;
+                    }
 
-                public Type[] getActualTypeArguments() {
-                  Type[] t = {(Type) ViewFetch.this.get(DbKeys.etype.type)};
-                  return t;
-                }
-              });
+                    public Type[] getActualTypeArguments() {
+                      Type[] t = {(Type) ViewFetch.this.get(DbKeys.etype.type)};
+                      return t;
+                    }
+                  });
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -877,8 +871,8 @@ public interface CouchDriver {
 
           public CouchTx tx() {
             try {
-              return GSON.fromJson(one.xio.HttpMethod.UTF8.decode(future.get()).toString(),
-                  CouchTx.class);
+              return CouchMetaDriver.GSON.fromJson(one.xio.HttpMethod.UTF8.decode(future.get())
+                  .toString(), CouchTx.class);
             } catch (Exception e) {
               if (rxf.server.BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();
@@ -906,21 +900,22 @@ public interface CouchDriver {
 
           public rxf.server.CouchResultSet rows() {
             try {
-              return GSON.fromJson(one.xio.HttpMethod.UTF8.decode(avoidStarvation(future.get()))
-                  .toString(), new java.lang.reflect.ParameterizedType() {
-                public Type getRawType() {
-                  return CouchResultSet.class;
-                }
+              return CouchMetaDriver.GSON.fromJson(one.xio.HttpMethod.UTF8.decode(
+                  avoidStarvation(future.get())).toString(),
+                  new java.lang.reflect.ParameterizedType() {
+                    public Type getRawType() {
+                      return CouchResultSet.class;
+                    }
 
-                public Type getOwnerType() {
-                  return null;
-                }
+                    public Type getOwnerType() {
+                      return null;
+                    }
 
-                public Type[] getActualTypeArguments() {
-                  Type[] t = {(Type) JsonSend.this.get(DbKeys.etype.type)};
-                  return t;
-                }
-              });
+                    public Type[] getActualTypeArguments() {
+                      Type[] t = {(Type) JsonSend.this.get(DbKeys.etype.type)};
+                      return t;
+                    }
+                  });
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -1044,8 +1039,8 @@ public interface CouchDriver {
 
           public CouchTx tx() {
             try {
-              return GSON.fromJson(one.xio.HttpMethod.UTF8.decode(future.get()).toString(),
-                  CouchTx.class);
+              return CouchMetaDriver.GSON.fromJson(one.xio.HttpMethod.UTF8.decode(future.get())
+                  .toString(), CouchTx.class);
             } catch (Exception e) {
               if (rxf.server.BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();

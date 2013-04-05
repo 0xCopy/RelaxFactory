@@ -4,6 +4,7 @@ import com.google.gson.annotations.SerializedName;
 import rxf.server.CouchResultSet.tuple;
 import rxf.server.CouchService.CouchRequestParam;
 import rxf.server.CouchService.View;
+import rxf.server.driver.CouchMetaDriver;
 import rxf.server.gen.CouchDriver.*;
 import rxf.server.gen.CouchDriver.DocPersist.DocPersistActionBuilder;
 import rxf.server.gen.CouchDriver.DocPersist.DocPersistTerminalBuilder;
@@ -20,7 +21,6 @@ import java.util.concurrent.Future;
 
 import static rxf.server.BlobAntiPatternObject.deepToString;
 import static rxf.server.BlobAntiPatternObject.getDefaultOrgName;
-import static rxf.server.gen.CouchDriver.*;
 
 /**
  * Creates CouchService instances by translating {@literal @}View annotations into CouchDB design documents
@@ -144,10 +144,10 @@ public class CouchServiceFactory {
             //Now, before sending this new design doc, confirm that it isn't the same as the existing:
             if (!viewMethods.isEmpty()
                 && (null == design.version || !design.equals(existingDesignDoc =
-                    GSON.fromJson(DocFetch.$().db(pathPrefix1).docId(designId).to().fire().json(),
-                        CouchDesignDoc.class)))) {
+                    CouchMetaDriver.GSON.fromJson(DocFetch.$().db(pathPrefix1).docId(designId).to()
+                        .fire().json(), CouchDesignDoc.class)))) {
               System.err.println("Existing design doc out of date, updating...");
-              final String stringParam = GSON.toJson(design);
+              final String stringParam = CouchMetaDriver.GSON.toJson(design);
               final JsonSendTerminalBuilder fire = JsonSend.$().opaque(getPathPrefix())
               /*.docId(design.id)*/.validjson(stringParam).to().fire();
               if (BlobAntiPatternObject.DEBUG_SENDJSON) {
@@ -196,7 +196,7 @@ public class CouchServiceFactory {
             if (args != null) {//apparently args is null for a zero-arg method
               jsonArgs = new String[args.length];
               for (int i = 0; i < args.length; i++) {
-                jsonArgs[i] = URLEncoder.encode(GSON.toJson(args[i]), "UTF-8");
+                jsonArgs[i] = URLEncoder.encode(CouchMetaDriver.GSON.toJson(args[i]), "UTF-8");
               }
             }
             /*       dont forget to uncomment this after new CouchResult gen*/
@@ -220,7 +220,7 @@ public class CouchServiceFactory {
         //persist or find by key
         if ("persist".equals(method.getName())) {
           //again, no point, see above with DocPersist
-          String stringParam = GSON.toJson(args[0]);
+          String stringParam = CouchMetaDriver.GSON.toJson(args[0]);
           final DocPersistActionBuilder to =
               DocPersist.$().db(getPathPrefix()).validjson(stringParam).to();
           DocPersistTerminalBuilder fire = to.fire();
@@ -229,7 +229,7 @@ public class CouchServiceFactory {
         } else {
           assert "find" == (method.getName().intern());
           String doc = DocFetch.$().db(getPathPrefix()).docId((String) args[0]).to().fire().json();
-          return (E) GSON.fromJson(doc, entityType);
+          return (E) CouchMetaDriver.GSON.fromJson(doc, entityType);
         }
       }
     }

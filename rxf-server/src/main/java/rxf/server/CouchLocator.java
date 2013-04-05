@@ -6,7 +6,7 @@ import rxf.server.gen.CouchDriver.DocPersist;
 
 import java.util.List;
 
-import static rxf.server.gen.CouchDriver.GSON;
+import static rxf.server.driver.CouchMetaDriver.GSON;
 
 public abstract class CouchLocator<T> extends Locator<T, String> implements CouchNamespace {
 

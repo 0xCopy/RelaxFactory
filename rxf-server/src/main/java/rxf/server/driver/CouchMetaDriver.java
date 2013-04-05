@@ -1,5 +1,8 @@
 package rxf.server.driver;
 
+import com.google.gson.FieldNamingPolicy;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpHeaders;
 import one.xio.HttpMethod;
@@ -12,7 +15,6 @@ import rxf.server.Rfc822HeaderState.HttpResponse;
 import rxf.server.an.DbKeys;
 import rxf.server.an.DbKeys.etype;
 import rxf.server.an.DbTask;
-import rxf.server.gen.CouchDriver;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -1170,21 +1172,32 @@ public enum CouchMetaDriver {
     }
 
   };
-
   public static final byte[] CE_TERMINAL = "\n0\r\n\r\n".getBytes(UTF8);
-
   //"premature optimization" s/mature/view/
   public static final String[] STATIC_VF_HEADERS =
       Rfc822HeaderState.staticHeaderStrings(new HttpHeaders[] {
           ETag, Content$2dLength, Transfer$2dEncoding});
-
   public static final String[] STATIC_JSON_SEND_HEADERS =
       Rfc822HeaderState.staticHeaderStrings(new HttpHeaders[] {
           ETag, Content$2dLength, Content$2dEncoding});
   public static final String[] STATIC_CONTENT_LENGTH_ARR =
       Rfc822HeaderState.staticHeaderStrings(new HttpHeaders[] {Content$2dLength});
-
   public static final byte[] HEADER_TERMINATOR = ("\r\n\r\n".getBytes(UTF8));
+  public static final Gson GSON =
+      new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").setFieldNamingPolicy(
+          FieldNamingPolicy.IDENTITY).setPrettyPrinting().create();
+  public static final TimeUnit defaultCollectorTimeUnit;
+  static {
+    String rxf_timeout_unit = System.getenv("RXF_TIMEOUT_UNIT");
+    TimeUnit timeUnit =
+        null == rxf_timeout_unit ? TimeUnit.SECONDS : TimeUnit.valueOf(rxf_timeout_unit);
+    defaultCollectorTimeUnit = null == timeUnit ? TimeUnit.SECONDS : timeUnit;
+  }
+
+  public static final String PCOUNT = "-0xdeadbeef.2";
+  public static final String GENERATED_METHODS = "/*generated methods vsd78vs0fd078fv0sa78*/";
+  public static final String IFACE_FIRE_TARGETS = "/*fire interface ijnoifnj453oijnfiojn h*/";
+  public static final String FIRE_METHODS = "/*embedded fire terminals j63l4k56jn4k3jn5l63l456jn*/";
   private static String s1 = "";
 
   public static String scrub(String scrubMe) {
@@ -1193,7 +1206,47 @@ public enum CouchMetaDriver {
   }
 
   public static TimeUnit getDefaultCollectorTimeUnit() {
-    return isDEBUG_SENDJSON() ? TimeUnit.HOURS : CouchDriver.defaultCollectorTimeUnit;
+    return isDEBUG_SENDJSON() ? TimeUnit.HOURS : defaultCollectorTimeUnit;
+  }
+
+  public static void main(String... args) throws NoSuchFieldException {
+    Field[] fields = CouchMetaDriver.class.getFields();
+    @Language("JAVA")
+    String s =
+        "package rxf.server.gen;\n" + "//generated\n" + "\n"
+            + "import com.google.gson.FieldNamingPolicy;\n" + "import com.google.gson.Gson;\n"
+            + "import com.google.gson.GsonBuilder;\n" + "import rxf.server.*;\n"
+            + "import rxf.server.an.DbKeys;\n" + "\n" + "import java.lang.reflect.Type;\n"
+            + "import java.nio.ByteBuffer;\n" + "import java.util.concurrent.Callable;\n"
+            + "import java.util.concurrent.Future;\n" + "import java.util.concurrent.TimeUnit;\n"
+            + "\n" + "import static rxf.server.BlobAntiPatternObject.avoidStarvation;\n" + "\n"
+            + "/** \n * \n * \n * generated drivers\n \n * \n \n" + " */\n"
+            + "public interface CouchDriver {\n" + "      Gson GSON = new GsonBuilder()\n"
+            + "            .setDateFormat(\"yyyy-MM-dd'T'HH:mm:ss.SSSZ\")\n"
+            + "            .setFieldNamingPolicy(FieldNamingPolicy.IDENTITY)\n"
+            + "            .setPrettyPrinting()\n" + "            .create();\n"
+            + "    TimeUnit defaultCollectorTimeUnit=TimeUnit.SECONDS;\n"
+            + "    //generated items\n" + "\n" + " ";
+    for (Field field : fields)
+      if (field.getType().isAssignableFrom(CouchMetaDriver.class)) {
+        CouchMetaDriver couchDriver = CouchMetaDriver.valueOf(field.getName());
+        DbKeys dbKeys = field.getAnnotation(DbKeys.class);
+        etype[] value = dbKeys.value();
+
+        s += ByteBuffer.class.getCanonicalName();
+        s += ' ' + couchDriver.name() + '(';
+        Iterator<etype> iterator = Arrays.asList(value).iterator();
+        while (iterator.hasNext()) {
+          etype etype = iterator.next();
+          s += " " + etype.clazz.getCanonicalName() + " " + etype.name();
+          if (iterator.hasNext())
+            s += ',';
+        }
+        s += " );\n";
+        s1 += "\n" + couchDriver.builder();
+      }
+    s += s1 + "}";
+    System.out.println(s);
   }
 
   public ByteBuffer visit() throws Exception {
@@ -1212,11 +1265,6 @@ public enum CouchMetaDriver {
       throws Exception {
     throw new AbstractMethodError();
   }
-
-  public static final String PCOUNT = "-0xdeadbeef.2";
-  public static final String GENERATED_METHODS = "/*generated methods vsd78vs0fd078fv0sa78*/";
-  public static final String IFACE_FIRE_TARGETS = "/*fire interface ijnoifnj453oijnfiojn h*/";
-  public static final String FIRE_METHODS = "/*embedded fire terminals j63l4k56jn4k3jn5l63l456jn*/";
 
   public String builder() throws NoSuchFieldException {
     Field field = CouchMetaDriver.class.getField(name());
@@ -1306,46 +1354,6 @@ public enum CouchMetaDriver {
         y.replace("_name_", etype.name()).replace("_clazz_", clazz.getCanonicalName()).replace(
             "_sclazz_", clazz.getSimpleName().toLowerCase() + "Param").replace("_ename_", name());
     return s1;
-  }
-
-  public static void main(String... args) throws NoSuchFieldException {
-    Field[] fields = CouchMetaDriver.class.getFields();
-    @Language("JAVA")
-    String s =
-        "package rxf.server.gen;\n" + "//generated\n" + "\n"
-            + "import com.google.gson.FieldNamingPolicy;\n" + "import com.google.gson.Gson;\n"
-            + "import com.google.gson.GsonBuilder;\n" + "import rxf.server.*;\n"
-            + "import rxf.server.an.DbKeys;\n" + "\n" + "import java.lang.reflect.Type;\n"
-            + "import java.nio.ByteBuffer;\n" + "import java.util.concurrent.Callable;\n"
-            + "import java.util.concurrent.Future;\n" + "import java.util.concurrent.TimeUnit;\n"
-            + "\n" + "import static rxf.server.BlobAntiPatternObject.avoidStarvation;\n" + "\n"
-            + "/**\n" + " * generated drivers\n" + " */\n" + "public interface CouchDriver {\n"
-            + "      Gson GSON = new GsonBuilder()\n"
-            + "            .setDateFormat(\"yyyy-MM-dd'T'HH:mm:ss.SSSZ\")\n"
-            + "            .setFieldNamingPolicy(FieldNamingPolicy.IDENTITY)\n"
-            + "            .setPrettyPrinting()\n" + "            .create();\n"
-            + "    TimeUnit defaultCollectorTimeUnit=TimeUnit.SECONDS;\n"
-            + "    //generated items\n" + "\n" + " ";
-    for (Field field : fields)
-      if (field.getType().isAssignableFrom(CouchMetaDriver.class)) {
-        CouchMetaDriver couchDriver = CouchMetaDriver.valueOf(field.getName());
-        DbKeys dbKeys = field.getAnnotation(DbKeys.class);
-        etype[] value = dbKeys.value();
-
-        s += ByteBuffer.class.getCanonicalName();
-        s += ' ' + couchDriver.name() + '(';
-        Iterator<etype> iterator = Arrays.asList(value).iterator();
-        while (iterator.hasNext()) {
-          etype etype = iterator.next();
-          s += " " + etype.clazz.getCanonicalName() + " " + etype.name();
-          if (iterator.hasNext())
-            s += ',';
-        }
-        s += " );\n";
-        s1 += "\n" + couchDriver.builder();
-      }
-    s += s1 + "}";
-    System.out.println(s);
   }
 
 }

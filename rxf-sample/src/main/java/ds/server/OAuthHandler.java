@@ -6,6 +6,7 @@ import rxf.server.ActionBuilder;
 import rxf.server.PreRead;
 import rxf.server.Rfc822HeaderState;
 import rxf.server.Rfc822HeaderState.HttpRequest;
+import rxf.server.driver.CouchMetaDriver;
 import rxf.server.gen.CouchDriver;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -24,7 +25,7 @@ import static one.xio.HttpMethod.UTF8;
 import static one.xio.HttpStatus.$200;
 import static rxf.server.BlobAntiPatternObject.*;
 import static rxf.server.driver.CouchMetaDriver.HEADER_TERMINATOR;
-import static rxf.server.gen.CouchDriver.GSON;
+import static rxf.server.driver.CouchMetaDriver.GSON;
 
 /**
  * this requiers some https, but sslEngine done right would require a keystore operation in the build process, so I'm
@@ -166,25 +167,14 @@ public class OAuthHandler extends Impl implements PreRead {
 
     @Override
     public String toString() {
-        return CouchDriver.GSON.toJson(this);
+        return CouchMetaDriver .GSON.toJson(this);
     }
 
     @Override
     public void onWrite(SelectionKey key) throws Exception {
         if (null == outgoing) {
             //todo: assign login to user ****** HERE ******
-            /*
-    , cursor=java.nio.DirectByteBuffer[pos=0 lim=31864 cap=31864], channel=java.nio.channels.SocketChannel[
-    connected local=/127.0.0.1:8080 remote=/127.0.0.1:5716], payload='{
-    kind=identitytoolkit#relyingparty, identifier=https://accounts.google.com/9752836876294756278345,
-    authority=https://accounts.google.com, verifiedEmail=sdahfdfldh@gmail.com,
-    displayName=James Northrup, firstName=asjdk, lastName=sdal, fullName=James Northrup,
-    profilePicture=https://jhdflaahdfaldhasd/photo.jpg,
-    photoUrl=https://lafsdhalsdafsd/photo.jpg,
-    oauthAccessToken=ya29.AHES6ZTiZhF6mF_SBsqtvPaHwbF63DzP5DYVkmbRasadC1boWQ, oauthExpireIn=3599.0,
-    context={"rp_target":"callback","rp_purpose":"signin"}}'}
 
-            */
 
             //per https://developers.google.com/identity-toolkit/v1/acguide#open_id_callback_logic_pseudocode
             outgoing = UTF8.encode(

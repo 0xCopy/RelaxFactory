@@ -20,7 +20,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import static one.xio.HttpMethod.*;
 import static org.junit.Assert.*;
 import static rxf.server.BlobAntiPatternObject.setDEBUG_SENDJSON;
-import static rxf.server.gen.CouchDriver.GSON;
+import static rxf.server.driver.CouchMetaDriver.GSON;
 
 /**
  * Tests out the db, cleaning up after itself. These must be run in order to work correctly and clean up.

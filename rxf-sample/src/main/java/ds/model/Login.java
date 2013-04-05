@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import static rxf.server.gen.CouchDriver.GSON;
+import static rxf.server.driver.CouchMetaDriver.GSON;
 
 /**
  * Visitors can authenticate to commit to a transaction.  this new state becomes tracked in Login entities.

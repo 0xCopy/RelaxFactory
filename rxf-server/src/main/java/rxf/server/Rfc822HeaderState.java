@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static java.lang.Math.abs;
 import static java.util.Arrays.asList;
 import static one.xio.HttpMethod.UTF8;
-import static rxf.server.gen.CouchDriver.GSON;
+import static rxf.server.driver.CouchMetaDriver.GSON;
 
 /**
  * this is a utility class to parse a HttpRequest header or
