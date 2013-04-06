@@ -135,7 +135,7 @@ public class CouchDriverTest {
     assertNull(tx.getError());
   }
 
-  @Test(timeout = 1000)
+  @Test(timeout = 10000)
   public void testManualViewFetch() {
     String doc =
         "{" + "  \"_id\" : \"" + DESIGN_SAMPLE + "\"," + "  \"views\" : {" + "    \"foo\" : {"
