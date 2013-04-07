@@ -6,7 +6,7 @@ package rxf.server;
  * @param <A> any type
  * @param <B> any type
  */
-class Pair<A, B> {
+public class Pair<A, B> {
   private final A a;
   private final B b;
 
