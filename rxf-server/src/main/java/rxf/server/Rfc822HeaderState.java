@@ -1,6 +1,5 @@
 package rxf.server;
 
-import com.google.web.bindery.requestfactory.server.SimpleRequestProcessor;
 import one.xio.HttpHeaders;
 import one.xio.HttpMethod;
 import one.xio.HttpStatus;
@@ -500,7 +499,7 @@ public class Rfc822HeaderState {
   /**
    * string-averse buffer based header extraction
    *
-   * @param hdrEnc
+   * @param hdrEnc a header token
    * @return a backwards singley-linked list of pairs.
    */
   public Pair<ByteBuffer, ? extends Pair> headerExtract(ByteBuffer hdrEnc) {
