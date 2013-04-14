@@ -17,6 +17,46 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import static rxf.server.CouchNamespace.COUCH_DEFAULT_ORGNAME;
 import static rxf.server.RelaxFactoryServerImpl.wheresWaldo;
+           import com.google.gson.Gson;
+import java.lang.ref.WeakReference;
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
+
+class GSONThreadLocalImmolater {
+
+
+        static void immolate() {
+                try {
+                    Field threadLocalsField = Thread.class.getDeclaredField("threadLocals");
+                        threadLocalsField.setAccessible(true);
+                        Field inheritableThreadLocalsField = Thread.class.getDeclaredField("inheritableThreadLocals");
+                        inheritableThreadLocalsField.setAccessible(true);
+                        for (Thread thread : Thread.getAllStackTraces().keySet()) {
+                         clear(threadLocalsField.get(thread));
+                               clear(inheritableThreadLocalsField.get(thread));
+                        }
+                 } catch (Exception e) {
+                        throw new Error("die", e);
+                }
+        }
+
+        private static void clear(Object threadLocalMap) throws Exception {
+            if (threadLocalMap != null) {
+                Field tableField = threadLocalMap.getClass().getDeclaredField("table");
+                tableField.setAccessible(true);
+                Object table = tableField.get(threadLocalMap);
+                for (int i = 0, length = Array.getLength(table); i < length; ++i) {
+                    Object entry = Array.get(table, i);
+                    if (entry != null) {
+                        Object threadLocal = ((WeakReference) entry).get();
+                        if (threadLocal != null && threadLocal.getClass().getEnclosingClass() == Gson.class) {
+                            Array.set(table, i, null);
+                        }
+                    }
+                }
+            }
+        }
+}
 
 /**
  * <a href='http://www.antipatterns.com/briefing/sld024.htm'> Blob Anti Pattern </a>
@@ -59,19 +99,21 @@ public class BlobAntiPatternObject {
     private static Deque couchConnections = new LinkedList<>();
 
     public static SocketChannel createCouchConnection() {
+        SocketChannel ret = null;
         while (!HttpMethod.killswitch) {
             SocketChannel poll = (SocketChannel) couchConnections.poll();
             if (poll != null && poll.isConnected())
-                return poll;
+            {ret=poll;break;}
             try {
                 SocketChannel channel = SocketChannel.open(getCOUCHADDR());
                 channel.configureBlocking(false);
-                return channel;
+                {ret=channel;break;}
             } catch (Exception e) {
             } finally {
             }
         }
-        return null;
+        GSONThreadLocalImmolater.immolate();
+        return ret;
     }
 
     public static void recycleChannel(SocketChannel channel) {
