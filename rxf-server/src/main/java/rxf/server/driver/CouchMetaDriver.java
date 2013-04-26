@@ -27,6 +27,7 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.nio.channels.SelectionKey.*;
@@ -1183,10 +1184,11 @@ public enum CouchMetaDriver {
   public static final String[] STATIC_CONTENT_LENGTH_ARR =
       Rfc822HeaderState.staticHeaderStrings(new HttpHeaders[] {Content$2dLength});
   public static final byte[] HEADER_TERMINATOR = ("\r\n\r\n".getBytes(UTF8));
-  public static final Gson GSON =
-      new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").setFieldNamingPolicy(
-          FieldNamingPolicy.IDENTITY).setPrettyPrinting().create();
   public static final TimeUnit defaultCollectorTimeUnit;
+  public static final GsonBuilder BUILDER =
+      new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").setFieldNamingPolicy(
+          FieldNamingPolicy.IDENTITY).setPrettyPrinting();
+  private static Gson GSON = BUILDER.create();
   static {
     String rxf_timeout_unit = System.getenv("RXF_TIMEOUT_UNIT");
     TimeUnit timeUnit =
@@ -1247,6 +1249,11 @@ public enum CouchMetaDriver {
       }
     s += s1 + "}";
     System.out.println(s);
+  }
+
+  public static Gson gson() {
+
+    return 0 == new AtomicInteger(0).incrementAndGet() % 10000 ? GSON = BUILDER.create() : GSON;
   }
 
   public ByteBuffer visit() throws Exception {

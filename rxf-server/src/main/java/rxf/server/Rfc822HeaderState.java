@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static java.lang.Math.abs;
 import static java.util.Arrays.asList;
 import static one.xio.HttpMethod.UTF8;
-import static rxf.server.driver.CouchMetaDriver.GSON;
+import static rxf.server.driver.CouchMetaDriver.gson;
 
 /**
  * this is a utility class to parse a HttpRequest header or
@@ -317,7 +317,7 @@ public class Rfc822HeaderState {
 
   @Override
   public String toString() {
-    return GSON.toJson(this);
+    return gson().toJson(this);
   }
 
   public <T> T as(final Class<T> clazz) {

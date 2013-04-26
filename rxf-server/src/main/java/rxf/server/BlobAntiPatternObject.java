@@ -4,9 +4,7 @@ import one.xio.HttpMethod;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
@@ -17,46 +15,6 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import static rxf.server.CouchNamespace.COUCH_DEFAULT_ORGNAME;
 import static rxf.server.RelaxFactoryServerImpl.wheresWaldo;
-           import com.google.gson.Gson;
-import java.lang.ref.WeakReference;
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
-
-class GSONThreadLocalImmolater {
-
-
-        static void immolate() {
-                try {
-                    Field threadLocalsField = Thread.class.getDeclaredField("threadLocals");
-                        threadLocalsField.setAccessible(true);
-                        Field inheritableThreadLocalsField = Thread.class.getDeclaredField("inheritableThreadLocals");
-                        inheritableThreadLocalsField.setAccessible(true);
-                        for (Thread thread : Thread.getAllStackTraces().keySet()) {
-                         clear(threadLocalsField.get(thread));
-                               clear(inheritableThreadLocalsField.get(thread));
-                        }
-                 } catch (Exception e) {
-                        throw new Error("die", e);
-                }
-        }
-
-        private static void clear(Object threadLocalMap) throws Exception {
-            if (threadLocalMap != null) {
-                Field tableField = threadLocalMap.getClass().getDeclaredField("table");
-                tableField.setAccessible(true);
-                Object table = tableField.get(threadLocalMap);
-                for (int i = 0, length = Array.getLength(table); i < length; ++i) {
-                    Object entry = Array.get(table, i);
-                    if (entry != null) {
-                        Object threadLocal = ((WeakReference) entry).get();
-                        if (threadLocal != null && threadLocal.getClass().getEnclosingClass() == Gson.class) {
-                            Array.set(table, i, null);
-                        }
-                    }
-                }
-            }
-        }
-}
 
 /**
  * <a href='http://www.antipatterns.com/briefing/sld024.htm'> Blob Anti Pattern </a>
@@ -71,29 +29,44 @@ public class BlobAntiPatternObject {
     public static InetAddress LOOPBACK;
     public static int receiveBufferSize;
     public static int sendBufferSize;
+
     public static InetSocketAddress COUCHADDR;
     public static ScheduledExecutorService EXECUTOR_SERVICE =
             Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() + 3);
 
     static {
+
+        String rxfcouchprefix = System.getenv("RXF_COUCH_PREFIX");
+        if(null==rxfcouchprefix)
         try {
             try {
-                BlobAntiPatternObject.setLOOPBACK((InetAddress) InetAddress.class.getMethod(
+                setLOOPBACK((InetAddress) InetAddress.class.getMethod(
                         "getLoopBackAddress").invoke(null));
                 System.err.println("java 7 LOOPBACK detected");
             } catch (NoSuchMethodException e) {
-                BlobAntiPatternObject.setLOOPBACK(InetAddress.getByAddress(new byte[]{127, 0, 0, 1}));
+                setLOOPBACK(InetAddress.getByAddress(new byte[]{127, 0, 0, 1}));
                 System.err.println("java 6 LOOPBACK detected");
             } catch (InvocationTargetException e) {
                 e.printStackTrace();
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }
+            setCOUCHADDR(new InetSocketAddress(LOOPBACK,
+                    5984));
         } catch (UnknownHostException e) {
             e.printStackTrace();
+        }           else{
+            URI uri = null;
+            try {
+                uri = new URI(rxfcouchprefix);
+                int port = uri.getPort();
+                port= -1 != port ? port : 80;
+                setCOUCHADDR(new InetSocketAddress(uri.getHost(),port));
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            }
         }
-        BlobAntiPatternObject.setCOUCHADDR(new InetSocketAddress(BlobAntiPatternObject.getLOOPBACK(),
-                5984));
+
     }
 
     private static Deque couchConnections = new LinkedList<>();
@@ -102,23 +75,23 @@ public class BlobAntiPatternObject {
         SocketChannel ret = null;
         while (!HttpMethod.killswitch) {
             SocketChannel poll = (SocketChannel) couchConnections.poll();
-            if (poll != null && poll.isConnected())
+            if (null != poll && poll.isConnected())
             {ret=poll;break;}
             try {
                 SocketChannel channel = SocketChannel.open(getCOUCHADDR());
                 channel.configureBlocking(false);
-                {ret=channel;break;}
+                ret=channel;break;
             } catch (Exception e) {
             } finally {
             }
         }
-        GSONThreadLocalImmolater.immolate();
+//        GSONThreadLocalImmolater.immolate();
         return ret;
     }
 
     public static void recycleChannel(SocketChannel channel) {
         try {
-            if (couchConnections.size() <= 20 && channel.isConnected()) {
+            if (20 >= couchConnections.size() && channel.isConnected()) {
                 couchConnections.addLast(channel);
             } else {
                 channel.close();
@@ -240,10 +213,6 @@ public class BlobAntiPatternObject {
 
     public static void setDEBUG_SENDJSON(boolean DEBUG_SENDJSON) {
         BlobAntiPatternObject.DEBUG_SENDJSON = DEBUG_SENDJSON;
-    }
-
-    public static InetAddress getLOOPBACK() {
-        return LOOPBACK;
     }
 
     public static void setLOOPBACK(InetAddress LOOPBACK) {

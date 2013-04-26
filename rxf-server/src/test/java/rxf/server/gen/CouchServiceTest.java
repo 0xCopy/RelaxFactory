@@ -20,10 +20,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import static one.xio.HttpMethod.*;
 import static org.junit.Assert.*;
 import static rxf.server.BlobAntiPatternObject.setDEBUG_SENDJSON;
-import static rxf.server.driver.CouchMetaDriver.GSON;
+import static rxf.server.driver.CouchMetaDriver.gson;
 
 /**
- * Tests out the db, cleaning up after itself. These must be run in order to work correctly and clean up.
+ * Tests out the db, cleaning up afterRXF itself. These must be run in order to work correctly and clean up.
  */
 public class CouchServiceTest {
   public static final String SOMEDBPREFIX = "test_somedb_";
@@ -60,7 +60,7 @@ public class CouchServiceTest {
   static void nukeTestDbs() {
     try {
       String json = DocFetch.$().db("").docId("_all_dbs").to().fire().json();
-      String[] strings = GSON.fromJson(json, String[].class);
+      String[] strings = gson().fromJson(json, String[].class);
       for (String s : strings) {
         if (s.startsWith(SOMEDBPREFIX))
           DbDelete.$().db(s).to().fire().tx();

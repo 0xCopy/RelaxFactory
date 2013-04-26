@@ -7,7 +7,6 @@ import rxf.server.PreRead;
 import rxf.server.Rfc822HeaderState;
 import rxf.server.Rfc822HeaderState.HttpRequest;
 import rxf.server.driver.CouchMetaDriver;
-import rxf.server.gen.CouchDriver;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.BufferedInputStream;
@@ -25,7 +24,7 @@ import static one.xio.HttpMethod.UTF8;
 import static one.xio.HttpStatus.$200;
 import static rxf.server.BlobAntiPatternObject.*;
 import static rxf.server.driver.CouchMetaDriver.HEADER_TERMINATOR;
-import static rxf.server.driver.CouchMetaDriver.GSON;
+import static rxf.server.driver.CouchMetaDriver.gson;
 
 /**
  * this requiers some https, but sslEngine done right would require a keystore operation in the build process, so I'm
@@ -131,7 +130,7 @@ public class OAuthHandler extends Impl implements PreRead {
                                 }
     //                            System.err.println("+++ received " + out);
 
-                                payload = GSON.fromJson(out.toString(), Map.class);
+                                payload = gson().fromJson(out.toString(), Map.class);
                                 key.interestOps(SelectionKey.OP_WRITE);
                                 connection.disconnect();
                             } catch (IOException e) {
@@ -167,7 +166,7 @@ public class OAuthHandler extends Impl implements PreRead {
 
     @Override
     public String toString() {
-        return CouchMetaDriver .GSON.toJson(this);
+        return CouchMetaDriver.gson().toJson(this);
     }
 
     @Override

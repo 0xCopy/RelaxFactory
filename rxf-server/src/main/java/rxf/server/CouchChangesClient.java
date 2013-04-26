@@ -206,7 +206,8 @@ public class CouchChangesClient extends AsioVisitor.Impl {
         ByteBuffer handoff = (ByteBuffer) buffer.slice().limit(integer);
         final String trim = UTF8.decode(handoff).toString().trim();
         //        System.err.println("RecordId: " + trim);
-        final LinkedHashMap couchChange = CouchMetaDriver.GSON.fromJson(trim, LinkedHashMap.class);
+        final LinkedHashMap couchChange =
+            CouchMetaDriver.gson().fromJson(trim, LinkedHashMap.class);
 
         EXECUTOR_SERVICE.submit(getDocUpdateHandler(couchChange));
         buffer.position(handoff.limit() + ENDL.length);

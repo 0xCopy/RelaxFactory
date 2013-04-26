@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import static rxf.server.driver.CouchMetaDriver.GSON;
+import static rxf.server.driver.CouchMetaDriver.gson;
 
 /**
  * Visitors can authenticate to commit to a transaction.  this new state becomes tracked in Login entities.
@@ -73,7 +73,7 @@ public class Login {
                 if (null != version1) l.add(version1);
             }
             try {
-                return CouchDriver.DocPersist.$().validjson(GSON.toJson(entity)).db(l.get(0)).to().fire().tx();
+                return CouchDriver.DocPersist.$().validjson(gson().toJson(entity)).db(l.get(0)).to().fire().tx();
 
             } catch (Exception e) {
                 e.printStackTrace();

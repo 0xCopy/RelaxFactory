@@ -6,7 +6,7 @@ import rxf.server.gen.CouchDriver.DocPersist;
 
 import java.util.List;
 
-import static rxf.server.driver.CouchMetaDriver.GSON;
+ import static rxf.server.driver.CouchMetaDriver.gson;
 
 public abstract class CouchLocator<T> extends Locator<T, String> implements CouchNamespace {
 
@@ -46,8 +46,8 @@ public abstract class CouchLocator<T> extends Locator<T, String> implements Couc
 
   @Override
   public T find(Class<? extends T> clazz, String id) {
-    return GSON.fromJson(DocFetch.$().db(getEntityName()).docId(id).to().fire().json(),
-        getDomainType());
+    return gson().fromJson(DocFetch.$().db(getEntityName()).docId(id).to().fire().json(),
+            getDomainType());
   }
 
   /**
@@ -84,7 +84,7 @@ public abstract class CouchLocator<T> extends Locator<T, String> implements Couc
     String pathPrefix = getEntityName();
     String id = getId(domainObject);
     final DocPersist.DocPersistTerminalBuilder fire =
-        DocPersist.$().db(pathPrefix).validjson(GSON.toJson(domainObject)).to().fire();
+        DocPersist.$().db(pathPrefix).validjson(gson().toJson(domainObject)).to().fire();
     ret = fire.tx();
 
     return ret;

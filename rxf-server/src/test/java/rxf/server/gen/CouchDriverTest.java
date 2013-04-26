@@ -62,7 +62,7 @@ public class CouchDriverTest {
 
     try {
       String json = DocFetch.$().db("").docId("_all_dbs").to().fire().json();
-      String[] strings = CouchMetaDriver.GSON.fromJson(json, String[].class);
+      String[] strings = CouchMetaDriver.gson().fromJson(json, String[].class);
       for (String s : strings) {
         if (s.startsWith(SOMEDBPREFIX))
           DbDelete.$().db(s).to().fire().tx();
@@ -103,9 +103,10 @@ public class CouchDriverTest {
     CouchTx tx = DocPersist.$().db(SOMEDB).validjson("{}").to().fire().tx();
 
     String data = DocFetch.$().db(SOMEDB).docId(tx.id()).to().fire().json();
-    Map<String, Object> obj = CouchMetaDriver.GSON.<Map<String, Object>> fromJson(data, Map.class);
+    Map<String, Object> obj =
+        CouchMetaDriver.gson().<Map<String, Object>> fromJson(data, Map.class);
     obj.put("abc", "123");
-    data = CouchMetaDriver.GSON.toJson(obj);
+    data = CouchMetaDriver.gson().toJson(obj);
     CouchTx updateTx = DocPersist.$().db(SOMEDB).validjson(data).to().fire().tx();
     assertNotNull(updateTx);
   }
@@ -182,12 +183,12 @@ public class CouchDriverTest {
     String designDoc = DesignDocFetch.$().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
     assertNotNull(designDoc);
     Map<String, Object> obj =
-        CouchMetaDriver.GSON.<Map<String, Object>> fromJson(designDoc, Map.class);
+        CouchMetaDriver.gson().<Map<String, Object>> fromJson(designDoc, Map.class);
 
     Map<String, String> foo = (Map<String, String>) ((Map<String, ?>) obj.get("views")).get("foo");
     foo.put("map", "function(doc){ emit(doc.brand, doc); }");
 
-    designDoc = CouchMetaDriver.GSON.toJson(obj);
+    designDoc = CouchMetaDriver.gson().toJson(obj);
     tx = JsonSend.$().opaque(SOMEDB).validjson(designDoc).to().fire().tx();
 
     assertNotNull(tx);
