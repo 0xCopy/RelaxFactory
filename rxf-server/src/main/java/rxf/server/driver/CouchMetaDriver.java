@@ -1188,6 +1188,7 @@ public enum CouchMetaDriver {
   public static final GsonBuilder BUILDER =
       new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").setFieldNamingPolicy(
           FieldNamingPolicy.IDENTITY).setPrettyPrinting();
+  public static final AtomicInteger ATOMIC_INTEGER = new AtomicInteger(0);
   private static Gson GSON = BUILDER.create();
   static {
     String rxf_timeout_unit = System.getenv("RXF_TIMEOUT_UNIT");
@@ -1253,7 +1254,7 @@ public enum CouchMetaDriver {
 
   public static Gson gson() {
 
-    return 0 == new AtomicInteger(0).incrementAndGet() % 10000 ? GSON = BUILDER.create() : GSON;
+    return 0 == ATOMIC_INTEGER.incrementAndGet() % 10000 ? GSON = BUILDER.create() : GSON;
   }
 
   public ByteBuffer visit() throws Exception {
