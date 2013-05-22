@@ -1,6 +1,7 @@
 package rxf.server;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * User: jim
@@ -29,6 +30,7 @@ public class CouchResultSet<T> {
     }
 
     public T value;
+    public Map<String, ?> doc;
   }
 
   public List<tuple<T>> rows;
