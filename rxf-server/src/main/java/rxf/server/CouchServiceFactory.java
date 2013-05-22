@@ -150,7 +150,7 @@ public class CouchServiceFactory {
               System.err.println("Existing design doc out of date, updating...");
               final String stringParam = CouchMetaDriver.gson().toJson(design);
               final JsonSendTerminalBuilder fire = JsonSend.$().opaque(getPathPrefix())
-              /*.docId(design.id)*/.validjson(stringParam).to().fire();
+              /*.docId(design.key)*/.validjson(stringParam).to().fire();
               if (BlobAntiPatternObject.DEBUG_SENDJSON) {
                 CouchTx tx = fire.tx();
                 assert tx.ok() : tx.error();

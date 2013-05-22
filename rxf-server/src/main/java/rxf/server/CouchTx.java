@@ -9,7 +9,7 @@ public class CouchTx {
 
   @Override
   public String toString() {
-    return "CouchTx{" + "ok=" + ok + ", id='" + id + '\'' + ", rev='" + rev + '\'' + ", error='"
+    return "CouchTx{" + "ok=" + ok + ", key='" + id + '\'' + ", rev='" + rev + '\'' + ", error='"
         + error + '\'' + ", reason='" + reason + '\'' + '}';
   }
 
