@@ -5,12 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>dealsite-gwt</artifactId>
     <groupId>rxf</groupId>
-    <version>0.9.4</version>
+    <version>0.9.5</version>
     <packaging>war</packaging>
     <properties>
         <gwt.version>2.5.0</gwt.version>
         <gwt.plugin.version>2.5.0</gwt.plugin.version>
-        <rxf.version>0.9.4</rxf.version>
+        <rxf.version>0.9.5</rxf.version>
         <java.version>${java.specification.version}</java.version>
     </properties>
     <dependencies>

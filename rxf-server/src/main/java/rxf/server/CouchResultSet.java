@@ -14,7 +14,8 @@ public class CouchResultSet<T> {
   public long offset;
 
   public static class tuple<T> {
-    public String id, key;
+    public String id;
+    public Object key;
     public T value;
     public Map<String, ?> doc;
   }

@@ -5,15 +5,15 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>rxf</groupId>
     <artifactId>relaxfactory</artifactId>
-    <version>0.9.4</version>
+    <version>0.9.5</version>
     <packaging>pom</packaging>
     <properties>
         <gwt.draftCompile>false</gwt.draftCompile>
         <java.compiler.version>${java.specification.version}</java.compiler.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <gwt.style>OBF</gwt.style>
-        <gwt.plugin.version>2.5.0</gwt.plugin.version>
-        <gwt.version>2.5.0</gwt.version>
+        <gwt.plugin.version>2.5.1</gwt.plugin.version>
+        <gwt.version>2.5.1</gwt.version>
         <gwt-maven-plugin.compileReport>false</gwt-maven-plugin.compileReport>
         <gwt-maven-plugin.soycDetailed>false</gwt-maven-plugin.soycDetailed>
         <gwt-maven-plugin.strict>false</gwt-maven-plugin.strict>
