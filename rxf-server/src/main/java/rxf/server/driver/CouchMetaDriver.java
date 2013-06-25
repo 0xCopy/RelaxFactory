@@ -36,6 +36,7 @@ import static one.xio.HttpMethod.*;
 import static rxf.server.BlobAntiPatternObject.*;
 import static rxf.server.DbTerminal.*;
 import static rxf.server.an.DbKeys.etype.*;
+import static rxf.server.driver.CouchMetaDriver.REALTIME_CUTOFF;
 
 /**
  * confers traits on an oo platform...
@@ -172,7 +173,7 @@ public enum CouchMetaDriver {
         }
       });
       try {
-        cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
+        cyclicBarrier.await(REALTIME_CUTOFF, getDefaultCollectorTimeUnit());
       } catch (Exception e) {
         if (DEBUG_SENDJSON) {
           System.err.println("!!! " + deepToString(this, e) + "\n\tfrom");
@@ -279,7 +280,7 @@ public enum CouchMetaDriver {
         }
       });
       try {
-        cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
+        cyclicBarrier.await(REALTIME_CUTOFF, getDefaultCollectorTimeUnit());
       } catch (Exception e) {
         if (DEBUG_SENDJSON) {
           System.err.println("!!! " + deepToString(this, e) + "\n\tfrom");
@@ -403,7 +404,7 @@ public enum CouchMetaDriver {
         }
       });
       try {
-        cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
+        cyclicBarrier.await(REALTIME_CUTOFF, getDefaultCollectorTimeUnit());
       } catch (Throwable e) {
         if (DEBUG_SENDJSON) {
           System.err.println("!!! " + deepToString(this, e) + "\n\tfrom");
@@ -502,7 +503,7 @@ public enum CouchMetaDriver {
         }
       });
       try {
-        cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
+        cyclicBarrier.await(REALTIME_CUTOFF, getDefaultCollectorTimeUnit());
       } catch (Exception e) {
         if (DEBUG_SENDJSON) {
           System.err.println("!!! " + deepToString(this, e) + "\n\tfrom");
@@ -627,7 +628,7 @@ public enum CouchMetaDriver {
         }
       });
       try {
-        cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
+        cyclicBarrier.await(REALTIME_CUTOFF, getDefaultCollectorTimeUnit());
       } catch (Exception e) {
         if (DEBUG_SENDJSON) {
           System.err.println("!!! " + deepToString(this, e) + "\n\tfrom");
@@ -861,7 +862,7 @@ public enum CouchMetaDriver {
         }
       });
       try {
-        cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
+        cyclicBarrier.await(REALTIME_CUTOFF, getDefaultCollectorTimeUnit());
       } catch (Exception e) {
         if (DEBUG_SENDJSON) {
           System.err.println("!!! " + deepToString(this, e) + "\n\tfrom");
@@ -1027,7 +1028,7 @@ public enum CouchMetaDriver {
         }
       });
       try {
-        cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
+        cyclicBarrier.await(REALTIME_CUTOFF, getDefaultCollectorTimeUnit());
       } catch (Exception e) {
         if (DEBUG_SENDJSON) {
           System.err.println("!!! " + deepToString(this, e) + "\n\tfrom");
@@ -1161,7 +1162,7 @@ public enum CouchMetaDriver {
       });
 
       try {
-        cyclicBarrier.await(3L, getDefaultCollectorTimeUnit());
+        cyclicBarrier.await(REALTIME_CUTOFF, getDefaultCollectorTimeUnit());
       } catch (Exception e) {
         if (DEBUG_SENDJSON) {
           System.err.println("!!! " + deepToString(this, e) + "\n\tfrom");
@@ -1189,6 +1190,8 @@ public enum CouchMetaDriver {
       new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").setFieldNamingPolicy(
           FieldNamingPolicy.IDENTITY).setPrettyPrinting();
   public static final AtomicInteger ATOMIC_INTEGER = new AtomicInteger(0);
+  public static final int REALTIME_CUTOFF =
+      Integer.parseInt(RxfBootstrap.getVar("RXF_REALTIME_CUTOFF", "3"));
   private static Gson GSON = BUILDER.create();
   static {
     String rxf_timeout_unit = RxfBootstrap.getVar("RXF_TIMEOUT_UNIT");
@@ -1206,6 +1209,10 @@ public enum CouchMetaDriver {
   public static String scrub(String scrubMe) {
 
     return null == scrubMe ? null : scrubMe.trim().replace("//", "/").replace("..", ".");
+  }
+
+  public static int getDefaultCollectorTimeAmount() {
+    return REALTIME_CUTOFF;
   }
 
   public static TimeUnit getDefaultCollectorTimeUnit() {

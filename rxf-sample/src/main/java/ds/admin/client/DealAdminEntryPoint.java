@@ -47,7 +47,7 @@ public class DealAdminEntryPoint extends DealEntryPoint {
             if (obj == null) {
                 obj = req.create(DealProxy.class);
             }
-            req.deal(obj).to(new Receiver<CouchTxProxy>() {
+            req.deal(obj).to(new Receiver<rxf.shared.prox.CouchTxProxy>() {
                 @Override
                 public void onSuccess(CouchTxProxy arg0) {
                     hide();

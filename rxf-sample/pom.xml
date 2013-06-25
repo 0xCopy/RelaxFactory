@@ -8,9 +8,9 @@
     <version>0.9.6</version>
     <packaging>war</packaging>
     <properties>
-        <gwt.version>2.5.0</gwt.version>
-        <gwt.plugin.version>2.5.0</gwt.plugin.version>
-        <rxf.version>0.9.5</rxf.version>
+        <gwt.version>2.5.1</gwt.version>
+        <gwt.plugin.version>2.5.1</gwt.plugin.version>
+        <rxf.version>0.9.6</rxf.version>
         <java.version>${java.specification.version}</java.version>
     </properties>
     <dependencies>

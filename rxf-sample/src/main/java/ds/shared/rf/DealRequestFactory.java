@@ -26,7 +26,7 @@ public interface DealRequestFactory extends RequestFactory {
 
     @Service(SecurityImpl.class)
     interface SendRequest extends RequestContext {
-        Request<CouchTxProxy> deal(DealProxy deal);
+        Request<rxf.shared.prox.CouchTxProxy> deal(DealProxy deal);
 
         Request<CouchTxProxy> login(LoginProxy login);
 
