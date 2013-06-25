@@ -2,6 +2,7 @@ package rxf.server;
 
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpMethod;
+import rxf.server.driver.RxfBootstrap;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -24,16 +25,12 @@ public interface CouchNamespace {
   /**
    * defines where 1xio/rxf finds static content root.
    */
-  String COUCH_DEFAULT_FS_ROOT =
-      null == System.getenv("RXF_SERVER_CONTENT_ROOT") ? System.getProperty(
-          "rxf.server.content.root", "./") : System.getenv("RXF_SERVER_CONTENT_ROOT");
+  String COUCH_DEFAULT_FS_ROOT = RxfBootstrap.getVar("RXF_SERVER_CONTENT_ROOT", "./");
 
   /**
    * creates the orgname used in factories without localized namespaces
    */
-  String COUCH_DEFAULT_ORGNAME =
-      null == System.getenv("RXF_ORGNAME") ? System.getProperty("rxf.orgname", "rxf_") : System
-          .getenv("RXF_ORGNAME").toLowerCase().trim();
+  String COUCH_DEFAULT_ORGNAME = RxfBootstrap.getVar("rxf.orgname", "rxf_");
 
   String getOrgName();
 

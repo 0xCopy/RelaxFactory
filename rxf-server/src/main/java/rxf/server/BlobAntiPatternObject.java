@@ -1,6 +1,7 @@
 package rxf.server;
 
 import one.xio.HttpMethod;
+import rxf.server.driver.RxfBootstrap;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -36,7 +37,8 @@ public class BlobAntiPatternObject {
 
     static {
 
-        String rxfcouchprefix = System.getenv("RXF_COUCH_PREFIX");
+        final String rxf_var = "RXF_COUCH_PREFIX";
+        String rxfcouchprefix = RxfBootstrap.getVar(rxf_var);
         if(null==rxfcouchprefix)
         try {
             try {

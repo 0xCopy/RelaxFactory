@@ -1063,7 +1063,7 @@ public enum CouchMetaDriver {
 
       String db = (String) dbKeysBuilder.get(etype.db);
       String docId = (String) dbKeysBuilder.get(etype.docId);
-      final String rev = (String) dbKeysBuilder.get(etype.rev);
+      String rev = (String) dbKeysBuilder.get(etype.rev);
       String attachname = dbKeysBuilder.get(etype.attachname);
       final String sb =
           scrub('/' + db + '/' + docId + '/' + URLEncoder.encode(attachname, UTF8.displayName())
@@ -1087,7 +1087,7 @@ public enum CouchMetaDriver {
 
         @Override
         public void onRead(SelectionKey key) throws Exception {
-          final ByteBuffer[] byteBuffer = {ByteBuffer.allocateDirect(getReceiveBufferSize())};
+          ByteBuffer[] byteBuffer = {ByteBuffer.allocateDirect(getReceiveBufferSize())};
           int read = channel.read(byteBuffer[0]);
           HttpResponse httpResponse = request.$res();
 
@@ -1183,7 +1183,7 @@ public enum CouchMetaDriver {
           ETag, Content$2dLength, Content$2dEncoding});
   public static final String[] STATIC_CONTENT_LENGTH_ARR =
       Rfc822HeaderState.staticHeaderStrings(new HttpHeaders[] {Content$2dLength});
-  public static final byte[] HEADER_TERMINATOR = ("\r\n\r\n".getBytes(UTF8));
+  public static final byte[] HEADER_TERMINATOR = "\r\n\r\n".getBytes(UTF8);
   public static final TimeUnit defaultCollectorTimeUnit;
   public static final GsonBuilder BUILDER =
       new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").setFieldNamingPolicy(
@@ -1191,7 +1191,7 @@ public enum CouchMetaDriver {
   public static final AtomicInteger ATOMIC_INTEGER = new AtomicInteger(0);
   private static Gson GSON = BUILDER.create();
   static {
-    String rxf_timeout_unit = System.getenv("RXF_TIMEOUT_UNIT");
+    String rxf_timeout_unit = RxfBootstrap.getVar("RXF_TIMEOUT_UNIT");
     TimeUnit timeUnit =
         null == rxf_timeout_unit ? TimeUnit.SECONDS : TimeUnit.valueOf(rxf_timeout_unit);
     defaultCollectorTimeUnit = null == timeUnit ? TimeUnit.SECONDS : timeUnit;
