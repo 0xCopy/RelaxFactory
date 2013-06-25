@@ -30,7 +30,7 @@ public interface CouchNamespace {
   /**
    * creates the orgname used in factories without localized namespaces
    */
-  String COUCH_DEFAULT_ORGNAME = RxfBootstrap.getVar("rxf.orgname", "rxf_");
+  String COUCH_DEFAULT_ORGNAME = RxfBootstrap.getVar("RXF_ORGNAME", "rxf_");
 
   String getOrgName();
 
