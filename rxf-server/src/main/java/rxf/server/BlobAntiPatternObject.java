@@ -26,6 +26,7 @@ import static rxf.server.RelaxFactoryServerImpl.wheresWaldo;
  */
 public class BlobAntiPatternObject {
 
+    public static final int CONNECTION_POOL_SIZE = Integer.parseInt(RxfBootstrap.getVar("RXF_CONNECTION_POOL_SIZE", "20"));
     public static boolean DEBUG_SENDJSON = System.getenv().containsKey("DEBUG_SENDJSON");
     public static InetAddress LOOPBACK;
     public static int receiveBufferSize;
@@ -93,7 +94,7 @@ public class BlobAntiPatternObject {
 
     public static void recycleChannel(SocketChannel channel) {
         try {
-            if (20 >= couchConnections.size() && channel.isConnected()) {
+            if (CONNECTION_POOL_SIZE >= couchConnections.size() && channel.isConnected()) {
                 couchConnections.addLast(channel);
             } else {
                 channel.close();
