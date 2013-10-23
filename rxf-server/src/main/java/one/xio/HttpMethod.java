@@ -4,11 +4,11 @@ import java.io.IOException;
 import java.nio.channels.*;
 import java.nio.charset.Charset;
 import java.util.Iterator;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static java.lang.StrictMath.min;
-import static one.xio.AsioVisitor.Impl;
 
 /**
  * See  http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html
@@ -18,11 +18,11 @@ import static one.xio.AsioVisitor.Impl;
  */
 public enum HttpMethod {
   GET, POST, PUT, HEAD, DELETE, TRACE, CONNECT, OPTIONS, HELP, VERSION;
+  private static final Queue<Object[]> q = new ConcurrentLinkedQueue();
   public static Charset UTF8 = Charset.forName("UTF8");
   public static Thread selectorThread;
   public static boolean killswitch;
   private static Selector selector;
-  private static final ConcurrentLinkedQueue<Object[]> q = new ConcurrentLinkedQueue();
 
   public static Selector getSelector() {
     return selector;
@@ -32,11 +32,7 @@ public enum HttpMethod {
     HttpMethod.selector = selector;
   }
 
-  public static Object[] toArray(Object... t) {
-    return t;
-  }
-
-  /**
+    /**
    * handles the threadlocal ugliness if any to registering user threads into the selector/reactor pattern
    *
    * @param channel the socketchanel
@@ -44,8 +40,16 @@ public enum HttpMethod {
    * @param s       the payload: grammar {enum,data1,data..n}
    */
   public static void enqueue(SelectableChannel channel, int op, Object... s) {
-    assert channel != null && killswitch == false : "Server appears to have shut down, cannot enqueue";
-    q.add(toArray(channel, op, s));
+    assert channel != null && !killswitch : "Server appears to have shut down, cannot enqueue";
+    if (Thread.currentThread() == selectorThread)
+      try {
+        channel.register(getSelector(), op, s);
+      } catch (ClosedChannelException e) {
+        e.printStackTrace();
+      }
+    else {
+        q.add(new Object[]{channel, op, s});
+    }
     Selector selector1 = getSelector();
     if (null != selector1)
       selector1.wakeup();
@@ -85,6 +89,7 @@ public enum HttpMethod {
           Object att = s[2];
           //          System.err.println("" + op + "/" + String.valueOf(att));
           try {
+            x.configureBlocking(false);
             SelectionKey register = x.register(sel, op, att);
             assert null != register;
           } catch (Throwable e) {
@@ -94,63 +99,66 @@ public enum HttpMethod {
         int select = selector.select(timeout);
 
         timeout = 0 == select ? min(timeout << 1, timeoutMax) : 1;
-        if (0 != select) {
-          Set<SelectionKey> keys = selector.selectedKeys();
+        if (0 != select)
+          innerloop(protocoldecoder);
+      }
+    }
+  }
 
-          for (Iterator<SelectionKey> i = keys.iterator(); i.hasNext();) {
-            SelectionKey key = i.next();
-            i.remove();
+  private static void innerloop(AsioVisitor protocoldecoder) throws IOException {
+    Set<SelectionKey> keys = selector.selectedKeys();
 
-            if (key.isValid()) {
-              SelectableChannel channel = key.channel();
-              try {
-                AsioVisitor m = inferAsioVisitor(protocoldecoder, key);
+    for (Iterator<SelectionKey> i = keys.iterator(); i.hasNext();) {
+      SelectionKey key = i.next();
+      i.remove();
 
-                if (key.isValid() && key.isWritable()) {
-                  if (!((SocketChannel) channel).socket().isOutputShutdown()) {
-                    m.onWrite(key);
-                  } else {
-                    key.cancel();
-                  }
-                }
-                if (key.isValid() && key.isReadable()) {
-                  if (!((SocketChannel) channel).socket().isInputShutdown()) {
-                    m.onRead(key);
-                  } else {
-                    key.cancel();
-                  }
-                }
-                if (key.isValid() && key.isAcceptable()) {
-                  m.onAccept(key);
-                }
-                if (key.isValid() && key.isConnectable()) {
-                  m.onConnect(key);
-                }
-              } catch (Throwable e) {
-                Object attachment = key.attachment();
-                if (attachment instanceof Object[]) {
-                  Object[] objects = (Object[]) attachment;
-                  System.err.println("BadHandler: " + java.util.Arrays.deepToString(objects));
+      if (key.isValid()) {
+        SelectableChannel channel = key.channel();
+        try {
+          AsioVisitor m = inferAsioVisitor(protocoldecoder, key);
 
-                } else
-                  System.err.println("BadHandler: " + String.valueOf(attachment));
+          if (key.isValid() && key.isWritable()) {
+            if (!((SocketChannel) channel).socket().isOutputShutdown()) {
+              m.onWrite(key);
+            } else {
+              key.cancel();
+            }
+          }
+          if (key.isValid() && key.isReadable()) {
+            if (!((SocketChannel) channel).socket().isInputShutdown()) {
+              m.onRead(key);
+            } else {
+              key.cancel();
+            }
+          }
+          if (key.isValid() && key.isAcceptable()) {
+            m.onAccept(key);
+          }
+          if (key.isValid() && key.isConnectable()) {
+            m.onConnect(key);
+          }
+        } catch (Throwable e) {
+          Object attachment = key.attachment();
+          if (attachment instanceof Object[]) {
+            Object[] objects = (Object[]) attachment;
+            System.err.println("BadHandler: " + java.util.Arrays.deepToString(objects));
 
-                if (AsioVisitor.$DBG) {
-                  AsioVisitor asioVisitor = inferAsioVisitor(protocoldecoder, key);
-                  if (asioVisitor instanceof Impl) {
-                    Impl visitor = (Impl) asioVisitor;
-                    if (AsioVisitor.$origins.containsKey(visitor)) {
-                      String s = AsioVisitor.$origins.get(visitor);
-                      System.err.println("origin" + s);
-                    }
-                  }
-                }
-                e.printStackTrace();
-                key.attach(null);
-                channel.close();
+          } else
+            System.err.println("BadHandler: " + String.valueOf(attachment));
+
+          if (AsioVisitor.$DBG) {
+            AsioVisitor asioVisitor = inferAsioVisitor(protocoldecoder, key);
+            if (asioVisitor instanceof AsioVisitor.Impl) {
+              AsioVisitor.Impl visitor = (AsioVisitor.Impl) asioVisitor;
+              if (AsioVisitor.$origins.containsKey(visitor)) {
+                String s = AsioVisitor.$origins.get(visitor);
+                System.err.println("origin" + s);
               }
             }
           }
+          e.printStackTrace();
+          key.attach(null);
+          channel.close();
         }
       }
     }

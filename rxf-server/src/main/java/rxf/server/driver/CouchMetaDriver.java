@@ -36,7 +36,6 @@ import static one.xio.HttpMethod.*;
 import static rxf.server.BlobAntiPatternObject.*;
 import static rxf.server.DbTerminal.*;
 import static rxf.server.an.DbKeys.etype.*;
-import static rxf.server.driver.CouchMetaDriver.REALTIME_CUTOFF;
 
 /**
  * confers traits on an oo platform...
@@ -311,7 +310,6 @@ public enum CouchMetaDriver {
         String db = (String) dbKeysBuilder.get(etype.db);
         String id = (String) dbKeysBuilder.get(docId);
         HttpRequest request = actionBuilder.state().$req();
-        private HttpResponse response;
         ByteBuffer header =
             (ByteBuffer) request.path(scrub("/" + db + (null == id ? "" : "/" + id))).method(GET)
                 .addHeaderInterest(STATIC_CONTENT_LENGTH_ARR).as(ByteBuffer.class);
@@ -319,8 +317,7 @@ public enum CouchMetaDriver {
         public void onWrite(SelectionKey key) throws Exception {
           int write = channel.write(header);
           assert !header.hasRemaining();
-          header.clear();
-          response = request.headerInterest(STATIC_JSON_SEND_HEADERS).$res();
+          header = null;
 
           key.interestOps(OP_READ);/*WRITE-READ implicit turnaround in 1xio won't need .selector().wakeup()*/
         }
@@ -330,10 +327,9 @@ public enum CouchMetaDriver {
         public void onRead(SelectionKey key) throws Exception {
           if (null == cursor) {
             //geometric,  vulnerable to dev/null if not max'd here.
-            header =
-                null == header ? ByteBuffer.allocateDirect(getReceiveBufferSize()) : header
-                    .hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2)
-                    .put((ByteBuffer) header.flip());
+              if (null == header) header = ByteBuffer.allocateDirect(getReceiveBufferSize());
+              else
+                  header = header.hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2).put((ByteBuffer) header.flip());
 
             int read = channel.read(header);
             if (-1 == read) {
@@ -343,6 +339,7 @@ public enum CouchMetaDriver {
               return;
             }
             ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
+              HttpResponse response = request.headerInterest(STATIC_JSON_SEND_HEADERS).$res();
             response.apply((ByteBuffer) flip);
 
             if (BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, response.headerBuf())) {
