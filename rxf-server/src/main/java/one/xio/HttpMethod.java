@@ -32,7 +32,7 @@ public enum HttpMethod {
     HttpMethod.selector = selector;
   }
 
-    /**
+  /**
    * handles the threadlocal ugliness if any to registering user threads into the selector/reactor pattern
    *
    * @param channel the socketchanel
@@ -48,7 +48,7 @@ public enum HttpMethod {
         e.printStackTrace();
       }
     else {
-        q.add(new Object[]{channel, op, s});
+      q.add(new Object[] {channel, op, s});
     }
     Selector selector1 = getSelector();
     if (null != selector1)

@@ -1400,7 +1400,7 @@ public enum HttpHeaders {
    * The HTTP access authentication process is described in "HTTP Authentication: Basic and Digest Access Authentication" [43]. User agents are advised to take special care in parsing the WWW- Authenticate field value as it might contain more than one challenge, or if more than one WWW-Authenticate header field is provided, the contents of a challenge itself can contain a comma-separated list of authentication parameters.
    */
 
-  WWW$2dAuthenticate,  X$2dForwarded$2For,;
+  WWW$2dAuthenticate, X$2dForwarded$2For, ;
   private final String header = URLDecoder.decode(name().replace('$', '%'));
   private final ByteBuffer token = HttpMethod.UTF8.encode(header);
   private int tokenLen = token.limit();

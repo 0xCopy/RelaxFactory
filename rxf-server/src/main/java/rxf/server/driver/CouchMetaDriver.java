@@ -327,9 +327,12 @@ public enum CouchMetaDriver {
         public void onRead(SelectionKey key) throws Exception {
           if (null == cursor) {
             //geometric,  vulnerable to dev/null if not max'd here.
-              if (null == header) header = ByteBuffer.allocateDirect(getReceiveBufferSize());
-              else
-                  header = header.hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2).put((ByteBuffer) header.flip());
+            if (null == header)
+              header = ByteBuffer.allocateDirect(getReceiveBufferSize());
+            else
+              header =
+                  header.hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2)
+                      .put((ByteBuffer) header.flip());
 
             int read = channel.read(header);
             if (-1 == read) {
@@ -339,7 +342,7 @@ public enum CouchMetaDriver {
               return;
             }
             ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
-              HttpResponse response = request.headerInterest(STATIC_JSON_SEND_HEADERS).$res();
+            HttpResponse response = request.headerInterest(STATIC_JSON_SEND_HEADERS).$res();
             response.apply((ByteBuffer) flip);
 
             if (BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, response.headerBuf())) {

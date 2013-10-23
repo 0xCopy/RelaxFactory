@@ -1,17 +1,16 @@
 package rxf.server.gen;
 
 import com.google.gson.JsonSyntaxException;
-import one.xio.AsioVisitor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import rxf.server.BlobAntiPatternObject;
-import rxf.server.CouchResultSet;
 import rxf.server.CouchTx;
 import rxf.server.driver.CouchMetaDriver;
-import rxf.server.gen.CouchDriver.*;
-import rxf.server.gen.CouchDriver.ViewFetch.ViewFetchTerminalBuilder;
-import rxf.server.web.inf.ProtocolMethodDispatch;
+import rxf.server.gen.CouchDriver.DbCreate;
+import rxf.server.gen.CouchDriver.DbDelete;
+import rxf.server.gen.CouchDriver.DocFetch;
+import rxf.server.gen.CouchDriver.DocPersist;
 
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -55,9 +54,8 @@ public class PathologicalBufferSizeTest {
     exec = Executors.newScheduledThreadPool(2);
     exec.submit(new Runnable() {
       public void run() {
-        AsioVisitor topLevel = new ProtocolMethodDispatch();
         try {
-          init(topLevel/*, 1000*/);
+          init(null/*, 1000*/);
         } catch (Exception e) {
           fail();
         }
@@ -122,93 +120,95 @@ public class PathologicalBufferSizeTest {
     assertNotNull(tx.getId());
     assertNull(tx.getError());
   }
+  /*
 
-  @Test(timeout = 1000)
-  public void testManualViewFetch() {
-    String doc =
-        "{" + "  \"_id\" : \"" + DESIGN_SAMPLE + "\"," + "  \"views\" : {" + "    \"foo\" : {"
-            + "      \"map\" : \"function(doc){ emit(doc.name, doc); }\"" + "    }" + "  }" + "}";
-    //TODO inconsistent with DesignDocFetch
-    CouchTx tx = JsonSend.$().opaque(SOMEDB).validjson(doc).to().fire().tx();
-    assertNotNull(tx);
-    assertTrue(tx.ok());
-    assertEquals(tx.id(), DESIGN_SAMPLE);
+   @Test(timeout = 1000)
+   public void testManualViewFetch() {
+   String doc =
+   "{" + "  \"_id\" : \"" + DESIGN_SAMPLE + "\"," + "  \"views\" : {" + "    \"foo\" : {"
+   + "      \"map\" : \"function(doc){ emit(doc.name, doc); }\"" + "    }" + "  }" + "}";
+   //TODO inconsistent with DesignDocFetch
+   CouchTx tx = JsonSend.$().opaque(SOMEDB).validjson(doc).to().fire().tx();
+   assertNotNull(tx);
+   assertTrue(tx.ok());
+   assertEquals(tx.id(), DESIGN_SAMPLE);
 
-    DocPersist.$().db(SOMEDB).validjson("{\"name\":\"a\",\"brand\":\"c\"}").to().fire().tx();
-    String space =
-        "hal kjfljdskjahkjsdfkajhdf halkjsdf kgasdkjfh hwroeuvbdfhjvb nv ihdfousbkvjlsdfkvbdkjfvpghblkjfgbldkgf,xjbxdl kfjbhxv,vdlkgfhbfkljdflkjh dfjgh bsjdhfg hlhgdvkjhgksdfglhs";
-    DocPersist.$().db(SOMEDB).validjson(
-        "{\"name\":\"b\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to().fire().tx();
-    DocPersist.$().db(SOMEDB).validjson(
-        "{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to()
-        .fire().tx();
-    DocPersist.$().db(SOMEDB).validjson(
-        "{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to()
-        .fire().tx();
-    DocPersist.$().db(SOMEDB).validjson(
-        "{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to()
-        .fire().tx();
-    DocPersist.$().db(SOMEDB).validjson(
-        "{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to()
-        .fire().tx();
-    DocPersist.$().db(SOMEDB).validjson(
-        "{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to()
-        .fire().tx();
-    DocPersist.$().db(SOMEDB).validjson(
-        "{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to()
-        .fire().tx();
-    DocPersist.$().db(SOMEDB).validjson(
-        "{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to()
-        .fire().tx();
+   DocPersist.$().db(SOMEDB).validjson("{\"name\":\"a\",\"brand\":\"c\"}").to().fire().tx();
+   String space =
+   "hal kjfljdskjahkjsdfkajhdf halkjsdf kgasdkjfh hwroeuvbdfhjvb nv ihdfousbkvjlsdfkvbdkjfvpghblkjfgbldkgf,xjbxdl kfjbhxv,vdlkgfhbfkljdflkjh dfjgh bsjdhfg hlhgdvkjhgksdfglhs";
+   DocPersist.$().db(SOMEDB).validjson(
+   "{\"name\":\"b\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to().fire().tx();
+   DocPersist.$().db(SOMEDB).validjson(
+   "{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to()
+   .fire().tx();
+   DocPersist.$().db(SOMEDB).validjson(
+   "{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to()
+   .fire().tx();
+   DocPersist.$().db(SOMEDB).validjson(
+   "{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to()
+   .fire().tx();
+   DocPersist.$().db(SOMEDB).validjson(
+   "{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to()
+   .fire().tx();
+   DocPersist.$().db(SOMEDB).validjson(
+   "{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to()
+   .fire().tx();
+   DocPersist.$().db(SOMEDB).validjson(
+   "{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to()
+   .fire().tx();
+   DocPersist.$().db(SOMEDB).validjson(
+   "{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to()
+   .fire().tx();
 
-    //running view
-    final ViewFetchTerminalBuilder fire =
-        ViewFetch.$().db(SOMEDB).type(Map.class).view(DESIGN_SAMPLE + "/_view/foo?key=\"a\"").to()
-            .fire();
-    CouchResultSet<Map<String, String>> data = fire.rows();
-    assertNotNull(data);
-    assertEquals(1, data.rows.size());
-    assertEquals("a", data.rows.get(0).value.get("name")); //TODO no consistent way to write designdoc
-    String designDoc = DesignDocFetch.$().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
-    assertNotNull(designDoc);
-    Map<String, Object> obj =
-        CouchMetaDriver.gson().<Map<String, Object>> fromJson(designDoc, Map.class);
+   //running view
+   final ViewFetchTerminalBuilder fire =
+   ViewFetch.$().db(SOMEDB).type(Map.class).view(DESIGN_SAMPLE + "/_view/foo?key=\"a\"").to()
+   .fire();
+   CouchResultSet<Map<String, String>> data = fire.rows();
+   assertNotNull(data);
+   assertEquals(1, data.rows.size());
+   assertEquals("a", data.rows.get(0).value.get("name")); //TODO no consistent way to write designdoc
+   String designDoc = DesignDocFetch.$().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
+   assertNotNull(designDoc);
+   Map<String, Object> obj =
+   CouchMetaDriver.gson().<Map<String, Object>> fromJson(designDoc, Map.class);
 
-    Map<String, String> foo = (Map<String, String>) ((Map<String, ?>) obj.get("views")).get("foo");
-    foo.put("map", "function(doc){ emit(doc.brand, doc); }");
+   Map<String, String> foo = (Map<String, String>) ((Map<String, ?>) obj.get("views")).get("foo");
+   foo.put("map", "function(doc){ emit(doc.brand, doc); }");
 
-    designDoc = CouchMetaDriver.gson().toJson(obj);
-    tx = JsonSend.$().opaque(SOMEDB).validjson(designDoc).to().fire().tx();
+   designDoc = CouchMetaDriver.gson().toJson(obj);
+   tx = JsonSend.$().opaque(SOMEDB).validjson(designDoc).to().fire().tx();
 
-    assertNotNull(tx);
-    assertTrue(tx.ok());
-    assertFalse(obj.get("_rev").equals(tx.getRev()));
-    assertEquals(obj.get("_id"), tx.id());
+   assertNotNull(tx);
+   assertTrue(tx.ok());
+   assertFalse(obj.get("_rev").equals(tx.getRev()));
+   assertEquals(obj.get("_id"), tx.id());
 
-    data =
-        ViewFetch.$().db(SOMEDB).type(Map.class).view(DESIGN_SAMPLE + "/_view/foo?key=\"d\"").to()
-            .fire().rows();
-    assertNotNull(data);
-    assertEquals(8, data.rows.size());
-    assertEquals("b", data.rows.get(0).value.get("name"));
+   data =
+   ViewFetch.$().db(SOMEDB).type(Map.class).view(DESIGN_SAMPLE + "/_view/foo?key=\"d\"").to()
+   .fire().rows();
+   assertNotNull(data);
+   assertEquals(8, data.rows.size());
+   assertEquals("b", data.rows.get(0).value.get("name"));
 
-    String rev = null;
-    try {
-      rev = RevisionFetch.$().db(SOMEDB).docId(DESIGN_SAMPLE).to().fire().json();
-      tx = DocDelete.$().db(SOMEDB).docId(DESIGN_SAMPLE).rev(rev).to().fire().tx();
-      assert tx.ok();
-    } catch (Exception e) {
-      e.printStackTrace();
-      fail(rev);
-    }
-    designDoc = DesignDocFetch.$().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
-    assertNull(designDoc);
-  }
+   String rev = null;
+   try {
+   rev = RevisionFetch.$().db(SOMEDB).docId(DESIGN_SAMPLE).to().fire().json();
+   tx = DocDelete.$().db(SOMEDB).docId(DESIGN_SAMPLE).rev(rev).to().fire().tx();
+   assert tx.ok();
+   } catch (Exception e) {
+   e.printStackTrace();
+   fail(rev);
+   }
+   designDoc = DesignDocFetch.$().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
+   assertNull(designDoc);
+   }
 
-  public static class CSFTest {
-    public String _id, _rev;
-    public String model;
-    public String brand;
-  }
+   public static class CSFTest {
+   public String _id, _rev;
+   public String model;
+   public String brand;
+   }
+   */
 
 }
