@@ -1186,13 +1186,33 @@ public enum CouchMetaDriver {
       Rfc822HeaderState.staticHeaderStrings(new HttpHeaders[] {Content$2dLength});
   public static final byte[] HEADER_TERMINATOR = "\r\n\r\n".getBytes(UTF8);
   public static final TimeUnit defaultCollectorTimeUnit;
-  public static final GsonBuilder BUILDER =
-      new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").setFieldNamingPolicy(
-          FieldNamingPolicy.IDENTITY).setPrettyPrinting();
   public static final AtomicInteger ATOMIC_INTEGER = new AtomicInteger(0);
   public static final int REALTIME_CUTOFF =
-      Integer.parseInt(RxfBootstrap.getVar("RXF_REALTIME_CUTOFF", "3"));
+      Integer.parseInt(RxfBootstrap.getVar("RXF_REALTIME_CUTOFF", "3"));;
+  public static final String PCOUNT = "-0xdeadbeef.2";
+  public static final String GENERATED_METHODS = "/*generated methods vsd78vs0fd078fv0sa78*/";
+  public static final String IFACE_FIRE_TARGETS = "/*fire interface ijnoifnj453oijnfiojn h*/";
+  public static final String FIRE_METHODS = "/*embedded fire terminals j63l4k56jn4k3jn5l63l456jn*/";
+  public static GsonBuilder BUILDER;
+
+  static {
+    GsonBuilder gsonBuilder =
+        new GsonBuilder().setDateFormat(
+            RxfBootstrap.getVar("GSON_DATEFORMAT", "yyyy-MM-dd'T'HH:mm:ss.SSSZ"))
+            .setFieldNamingPolicy(
+                FieldNamingPolicy
+                    .valueOf(RxfBootstrap.getVar("GSON_FIELDNAMINGPOLICY", "IDENTITY")));
+    if ("true" == RxfBootstrap.getVar("GSON_PRETTY", "true"))
+      gsonBuilder.setPrettyPrinting();
+    if ("true" == RxfBootstrap.getVar("GSON_NULLS", "false"))
+      gsonBuilder.serializeNulls();
+    if ("true" == RxfBootstrap.getVar("GSON_NANS", "false"))
+      gsonBuilder.serializeSpecialFloatingPointValues();
+    BUILDER = gsonBuilder;
+  }
+
   private static Gson GSON = BUILDER.create();
+
   static {
     String rxf_timeout_unit = RxfBootstrap.getVar("RXF_TIMEOUT_UNIT");
     TimeUnit timeUnit =
@@ -1200,10 +1220,6 @@ public enum CouchMetaDriver {
     defaultCollectorTimeUnit = null == timeUnit ? TimeUnit.SECONDS : timeUnit;
   }
 
-  public static final String PCOUNT = "-0xdeadbeef.2";
-  public static final String GENERATED_METHODS = "/*generated methods vsd78vs0fd078fv0sa78*/";
-  public static final String IFACE_FIRE_TARGETS = "/*fire interface ijnoifnj453oijnfiojn h*/";
-  public static final String FIRE_METHODS = "/*embedded fire terminals j63l4k56jn4k3jn5l63l456jn*/";
   private static String s1 = "";
 
   public static String scrub(String scrubMe) {

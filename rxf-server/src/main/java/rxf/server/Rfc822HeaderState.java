@@ -114,7 +114,7 @@ public class Rfc822HeaderState {
      * @param keys
      * @return
      */
-    HttpRequest cookieInterest(String... keys) {
+    public HttpRequest cookieInterest(String... keys) {
       if (0 == keys.length) { //rare event
         CopyOnWriteArraySet<String> strings =
             new CopyOnWriteArraySet<String>(asList(headerInterest()));
