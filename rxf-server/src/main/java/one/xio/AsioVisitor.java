@@ -76,6 +76,7 @@ public interface AsioVisitor {
 
       ServerSocketChannel c = (ServerSocketChannel) key.channel();
       final SocketChannel accept = c.accept();
+      accept.configureBlocking(false);
       HttpMethod.enqueue(accept, OP_READ | OP_WRITE, key.attachment());
 
     }
