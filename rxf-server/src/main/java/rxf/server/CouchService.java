@@ -28,6 +28,9 @@ public interface CouchService<E> {
   public @interface View {
     String map();
 
+    /**
+     * Typically empty (the default, meaning "don't reduce"), "_sum", "_count", or "_stats".
+     */
     String reduce() default "";
   }
 

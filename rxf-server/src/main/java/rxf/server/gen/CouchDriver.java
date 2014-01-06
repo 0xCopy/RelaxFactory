@@ -722,8 +722,13 @@ public interface CouchDriver {
       return this;
     }
 
-    public ViewFetch type(java.lang.Class classParam) {
-      parms.put(DbKeys.etype.type, classParam);
+    public ViewFetch type(java.lang.reflect.Type typeParam) {
+      parms.put(DbKeys.etype.type, typeParam);
+      return this;
+    }
+
+    public ViewFetch keyType(java.lang.reflect.Type typeParam) {
+      parms.put(DbKeys.etype.keyType, typeParam);
       return this;
     }
 
@@ -770,7 +775,11 @@ public interface CouchDriver {
                     }
 
                     public Type[] getActualTypeArguments() {
-                      Type[] t = {(Type) ViewFetch.this.get(DbKeys.etype.type)};
+                      Type key = (Type) ViewFetch.this.get(DbKeys.etype.keyType);
+                      Type[] t =
+                          {
+                              key == null ? Object.class : key,
+                              (Type) ViewFetch.this.get(DbKeys.etype.type)};
                       return t;
                     }
                   });
@@ -829,8 +838,13 @@ public interface CouchDriver {
       return this;
     }
 
-    public JsonSend type(java.lang.Class classParam) {
-      parms.put(DbKeys.etype.type, classParam);
+    public JsonSend type(java.lang.reflect.Type typeParam) {
+      parms.put(DbKeys.etype.type, typeParam);
+      return this;
+    }
+
+    public JsonSend keyType(java.lang.reflect.Type typeParam) {
+      parms.put(DbKeys.etype.keyType, typeParam);
       return this;
     }
 
@@ -913,7 +927,11 @@ public interface CouchDriver {
                     }
 
                     public Type[] getActualTypeArguments() {
-                      Type[] t = {(Type) JsonSend.this.get(DbKeys.etype.type)};
+                      Type key = (Type) JsonSend.this.get(DbKeys.etype.keyType);
+                      Type[] t =
+                          {
+                              key == null ? Object.class : key,
+                              (Type) JsonSend.this.get(DbKeys.etype.type)};
                       return t;
                     }
                   });

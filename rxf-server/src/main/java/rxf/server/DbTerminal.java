@@ -56,9 +56,12 @@ public enum DbTerminal {
               + "\n"
               + "                    public Type[] getActualTypeArguments() {\n"
               + "                             "
-              + "                          Type[]t={(Type)"
+              + "                          Type key = (Type)"
               + cmdName
-              + ".this.get(DbKeys.etype.type)};"
+              + ".this.get(DbKeys.etype.keyType);\n"
+              + "                          Type[]t={key == null ? Object.class : key, (Type)"
+              + cmdName
+              + ".this.get(DbKeys.etype.type)};\n"
               + "                          return t;\n"
               + "                    }\n"
               + "                  });\n"

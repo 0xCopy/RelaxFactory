@@ -176,7 +176,7 @@ public class CouchDriverTest {
     final ViewFetchTerminalBuilder fire =
         ViewFetch.$().db(SOMEDB).type(Map.class).view(DESIGN_SAMPLE + "/_view/foo?key=\"a\"").to()
             .fire();
-    CouchResultSet<Map<String, String>> data = fire.rows();
+    CouchResultSet<?, Map<String, String>> data = fire.rows();
     assertNotNull(data);
     assertEquals(1, data.rows.size());
     assertEquals("a", data.rows.get(0).value.get("name")); //TODO no consistent way to write designdoc
