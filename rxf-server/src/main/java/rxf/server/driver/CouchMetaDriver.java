@@ -654,7 +654,7 @@ public enum CouchMetaDriver {
    * <u> statistically imperfect </u>means that data containing said token {@link  #CE_TERMINAL} delivered on  a packet boundary or byte-at-a-time will false trigger the suffix.
    */
   @DbTask( {rows, future, continuousFeed})
-  @DbKeys(value = {db, view}, optional = type)
+  @DbKeys(value = {db, view}, optional = {type, keyType})
   ViewFetch {
     public ByteBuffer visit(final DbKeysBuilder dbKeysBuilder, final ActionBuilder actionBuilder)
         throws Exception {
@@ -875,7 +875,7 @@ public enum CouchMetaDriver {
   //training day for the Terminal rewrites
 
   @DbTask( {tx, oneWay, rows, json, future, continuousFeed})
-  @DbKeys(value = {opaque, validjson}, optional = type)
+  @DbKeys(value = {opaque, validjson}, optional = {keyType, type})
   JsonSend {
     public ByteBuffer visit(final DbKeysBuilder dbKeysBuilder, final ActionBuilder actionBuilder)
         throws Exception {

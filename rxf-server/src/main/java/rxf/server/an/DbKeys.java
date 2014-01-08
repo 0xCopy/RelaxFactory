@@ -5,6 +5,7 @@ import one.xio.MimeType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 
 import static java.lang.annotation.ElementType.*;
@@ -39,7 +40,12 @@ public @interface DbKeys {
     },
     type {
       {
-        clazz = Class.class;
+        clazz = Type.class;
+      }
+    },
+    keyType {
+      {
+        clazz = Type.class;
       }
     };
 

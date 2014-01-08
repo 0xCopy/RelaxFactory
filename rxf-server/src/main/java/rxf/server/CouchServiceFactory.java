@@ -189,9 +189,13 @@ public class CouchServiceFactory {
       init.get();
 
       if (viewMethods.containsKey(method.getName())) {
+        //view methods have several types they can returns, based on whether or not they use
+        //reduce, if they return the key (simple or composite) as part of the data in a map
+        //or just a list of data items, and how they return the data, as the full document,
+        // or some simplified format.
+
         return BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<Object>() {
           public Object call() throws Exception {
-
             String name = method.getName();
             String[] jsonArgs = null;
             if (args != null) {//apparently args is null for a zero-arg method
@@ -200,19 +204,71 @@ public class CouchServiceFactory {
                 jsonArgs[i] = URLEncoder.encode(CouchMetaDriver.gson().toJson(args[i]), "UTF-8");
               }
             }
+            Type keyType = Object.class;
+            Type valueType;
+
+            if (method.getGenericReturnType() instanceof Class) {
+              //not generic, either just a simple object (reduce obj such as _stats) or primitive
+              //read rows, unwrap to primitive/boxed/obj, return it
+              if (method.getReturnType().isPrimitive()) {
+                valueType = Primitives.wrap(method.getReturnType());
+              } else {
+                valueType = method.getReturnType();
+              }
+            } else {
+              //assume list or map, parametrized type, else give up and use entityType
+              ParameterizedType returnType = (ParameterizedType) method.getGenericReturnType();
+              if (returnType.getRawType() == Map.class) {
+                Map map = new HashMap();
+                //do map from assumed key type to assumed data type
+                keyType = returnType.getActualTypeArguments()[0];
+                valueType = returnType.getActualTypeArguments()[1];
+              } else if (returnType.getRawType() == List.class) {
+                valueType = returnType.getActualTypeArguments()[0];
+              } else {
+                //no idea, go with something somewhat sane
+                valueType = entityType;
+              }
+            }
+
             /*       dont forget to uncomment this after new CouchResult gen*/
             final Map<String, String> stringStringMap = viewMethods;
             //Object[] cast to make varargs behave
             String format = String.format(stringStringMap.get(name), (Object[]) jsonArgs);
             final ViewFetchTerminalBuilder fire =
-                ViewFetch.$().db(getPathPrefix()).type(entityType).view(format).to().fire();
-            CouchResultSet<E> rows = (CouchResultSet<E>) fire.rows();
-            if (null != rows && null != rows.rows) {
-              List<E> ar = new ArrayList<E>();
-              for (tuple<E> row : rows.rows) {
-                ar.add(row.value);
+                ViewFetch.$().db(getPathPrefix()).type(valueType).keyType(keyType).view(format).to().fire();
+            CouchResultSet<?, ?> rows = fire.rows();
+
+            if (method.getGenericReturnType() instanceof Class) {
+              //not generic, either just a simple object (reduce obj such as _stats) or primitive
+              //read rows, unwrap to primitive/boxed/obj, return it
+              return rows.rows.get(0).value;
+            } else {
+              //assume list or map, parameterized type
+              ParameterizedType returnType = (ParameterizedType) method.getGenericReturnType();
+              if (returnType.getRawType() == Map.class) {
+                Map map = new HashMap();
+                //populate map of specified type
+                if (null != rows && null != rows.rows) {
+                  for (tuple<?, ?> row : rows.rows) {
+                    map.put(row.key, (E) row.value);
+                  }
+                }
+
+                //return map
+                return map;
+              } else if (returnType.getRawType() == List.class) {
+                List list = new ArrayList();
+                //assume items in collection
+                //iterate through items in rowset, populating list
+                if (null != rows && null != rows.rows) {
+                  List<E> ar = new ArrayList<E>();
+                  for (tuple<?, ?> row : rows.rows) {
+                    ar.add((E) row.value);
+                  }
+                  return ar;
+                }
               }
-              return ar;
             }
             return null;
           }

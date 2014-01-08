@@ -71,6 +71,11 @@ public class CouchServiceTest {
     }
   }
 
+  @Before
+  public void before() {
+    nukeTestDbs();
+  }
+
   @AfterClass
   static public void tearDown() throws Exception {
 
@@ -281,7 +286,6 @@ public class CouchServiceTest {
 
   @Test
   public void testNoArgMethod() throws Exception {
-    nukeTestDbs();
     SlightlyComplexCouchService service =
         CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
     for (int i = 0; i < 10; i++) {
@@ -295,6 +299,119 @@ public class CouchServiceTest {
     assertNotNull(loaded);
     assertEquals(10, loaded.size());
   }
+
+  @Test
+  public void testNonEntityReturnType() throws Exception {
+    SlightlyComplexCouchService service =
+            CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
+
+    for (int i = 0; i < 10; i++) {
+      CSFTest a = new CSFTest();
+      a.brand = "-brand" + i;
+      a.model = "-model" + (i % 2);
+      service.persist(a);
+    }
+
+    List<String> brands = service.brandsByModel("-model0");
+
+    assertNotNull(brands);
+    assertEquals(5, brands.size());
+    assertEquals("-brand0", brands.get(0));
+    assertEquals("-brand2", brands.get(1));
+    assertEquals("-brand8", brands.get(4));
+  }
+
+  @Test
+  public void testPrimitiveReturnType() throws Exception {
+    SlightlyComplexCouchService service =
+            CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
+
+    for (int i = 0; i < 10; i++) {
+      CSFTest a = new CSFTest();
+      a.brand = "-brand" + i;
+      a.model = "-model" + (i % 2);
+      service.persist(a);
+    }
+
+    int count = service.countMatchingBrand("-brand0");
+    assertEquals(1, count);
+  }
+
+  @Test
+  public void testComplexObjectReturnType() throws Exception {
+    SlightlyComplexCouchService service =
+            CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
+
+    for (int i = 0; i < 10; i++) {
+      CSFTest a = new CSFTest();
+      a.brand = "-brand" + i;
+      a.model = "-model" + (i % 2);
+      service.persist(a);
+    }
+
+    Stats stats = service.statsOnBrandNameLengthByModel("-model0");
+
+    assertEquals(7, stats.max);
+    assertEquals(7, stats.min);
+    assertEquals(5, stats.count);
+    assertEquals(35, stats.sum);
+    assertEquals(Math.pow(35, 2), stats.sumsqr, 1e-10);
+  }
+
+  @Test
+  public void testMapReturnTypeParameterizedOnStringAndEntity() throws Exception {
+    SlightlyComplexCouchService service =
+            CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
+
+    for (int i = 0; i < 10; i++) {
+      CSFTest a = new CSFTest();
+      a.brand = "-brand" + i;
+      a.model = "-model" + (i % 2);
+      service.persist(a);
+    }
+
+    Map<String, CSFTest> map = service.getDocsByBrand("-brand0");
+
+    assertNotNull(map);
+    assertEquals(1, map.size());
+  }
+
+  @Test
+  public void testMapReturnTypeParameterizedOnStringAndString() throws Exception {
+    SlightlyComplexCouchService service =
+            CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
+
+    for (int i = 0; i < 10; i++) {
+      CSFTest a = new CSFTest();
+      a.brand = "-brand" + i;
+      a.model = "-model" + (i % 2);
+      service.persist(a);
+    }
+
+    Map<String, String> map = service.getBrandModelMap();
+
+    assertNotNull(map);
+    assertEquals(10, map.size());
+  }
+
+  @Test
+  public void testMapReturnTypeParameterizedOnComplexKeyAndString() throws Exception {
+    SlightlyComplexCouchService service =
+            CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
+
+    for (int i = 0; i < 10; i++) {
+      CSFTest a = new CSFTest();
+      a.brand = "-brand" + i;
+      a.model = "-model" + (i % 2);
+      service.persist(a);
+    }
+
+    Map<CSFTest, String> backwards = service.getBackwardData();
+
+    assertNotNull(backwards);
+    assertEquals(10, backwards.size());
+  }
+
 
   public interface SimpleCouchService extends CouchService<CSFTest> {
     @View(map = "function(doc){emit(doc.brand, doc); }")
@@ -315,13 +432,38 @@ public class CouchServiceTest {
     @View(map = "function(doc){emit({model:doc.model, brand:doc.brand}, doc);}")
     List<CSFTest> matchingTuples(@Key CSFTest obj);
 
-    @View(map = "function(doc){emit(doc.id,doc);}")
+    @View(map = "function(doc){emit(doc._id,doc);}")
     List<CSFTest> all();
+
+    @View(map = "function(doc){emit(doc.model, doc.brand);}")
+    List<String> brandsByModel(@Key String model);
+
+    @View(map = "function(doc){emit(doc.brand, 1);}", reduce = "_count")
+    int countMatchingBrand(@Key String brand);
+
+    @View(map = "function(doc){emit(doc.model, doc.brand.length)}", reduce = "_stats")
+    Stats statsOnBrandNameLengthByModel(@Key String model);
+
+    @View(map = "function(doc){emit(doc.brand, doc);}")
+    Map<String, CSFTest> getDocsByBrand(@Key String brand);
+
+    @View(map = "function(doc){emit(doc.brand, doc.model);}")
+    Map<String, String> getBrandModelMap();
+
+    @View(map = "function(doc) {emit(doc, doc._id)}")
+    Map<CSFTest, String> getBackwardData();
   }
 
   public static class CSFTest {
     public String _id, _rev;
     public String model;
     public String brand;
+  }
+  public static class Stats {
+    public int sum;
+    public int count;
+    public int min;
+    public int max;
+    public double sumsqr;
   }
 }
