@@ -138,4 +138,63 @@ public interface CouchService<E> {
   @Documented
   public @interface EndKey {
   }
+
+  /**
+   * Marks a service method or parameter as being used on a couchdb view GET request as
+   * "startkey_docid". Allows for pagination by id in case of duplicate 'startkey', and
+   * without the performance issues of 'skip'.
+   */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.PARAMETER)
+  @CouchRequestParam("startkey_docid")
+  @Documented
+  public @interface StartKeyDocId {
+  }
+
+  /**
+   * Marks a service method or parameter as being used on a couchdb view GET request as
+   * "endkey_docid". Allows for pagination by id in case of duplicate 'endkey'.
+   */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.PARAMETER)
+  @CouchRequestParam("endkey_docid")
+  @Documented
+  public @interface EndKeyDocId {
+  }
+
+  /**
+   * Changes the direction of a search.
+   */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.PARAMETER, ElementType.METHOD})
+  @CouchRequestParam("descending")
+  @Documented
+  public @interface Descending {
+    boolean value() default false;
+  }
+
+
+  /**
+   * The group option controls whether the reduce function reduces to a set of distinct keys or to a single result row.
+   */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.PARAMETER, ElementType.METHOD})
+  @CouchRequestParam("group")
+  @Documented
+  public @interface Group {
+    boolean value() default false;
+  }
+
+  /**
+   * The group_level argument. See http://wiki.apache.org/couchdb/HTTP_view_API#Querying_Options for additional details.
+   */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.PARAMETER, ElementType.METHOD})
+  @CouchRequestParam("group")
+  @Documented
+  public @interface GroupLevel {
+    int value() default 0;
+  }
+
+
 }
