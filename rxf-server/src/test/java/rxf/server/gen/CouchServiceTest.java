@@ -214,6 +214,9 @@ public class CouchServiceTest {
     assertEquals(5, loaded.size());
     assertEquals("-brand5", loaded.get(0).brand);
     assertEquals("-model9", loaded.get(4).model);
+
+    loaded = service.load("-mod", 1, 0);
+    assertEquals(1, loaded.size());
   }
 
   @Test
@@ -355,7 +358,7 @@ public class CouchServiceTest {
     assertEquals(7, stats.min);
     assertEquals(5, stats.count);
     assertEquals(35, stats.sum);
-    assertEquals(Math.pow(35, 2), stats.sumsqr, 1e-10);
+    assertEquals(Math.pow(7, 2) * 5, stats.sumsqr, 1e-10);
   }
 
   @Test
@@ -412,6 +415,24 @@ public class CouchServiceTest {
     assertEquals(10, backwards.size());
   }
 
+  @Test
+  public void testAnnotationParameters() throws Exception {
+    SlightlyComplexCouchService service =
+            CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
+
+    for (int i = 0; i < 10; i++) {
+      CSFTest a = new CSFTest();
+      a.brand = "-brand" + i;
+      a.model = "-model" + (i % 2);
+      service.persist(a);
+    }
+
+    List<CSFTest> one = service.getAnItem();
+
+    assertNotNull(one);
+    assertEquals(1, one.size());
+  }
+
 
   public interface SimpleCouchService extends CouchService<CSFTest> {
     @View(map = "function(doc){emit(doc.brand, doc); }")
@@ -450,8 +471,12 @@ public class CouchServiceTest {
     @View(map = "function(doc){emit(doc.brand, doc.model);}")
     Map<String, String> getBrandModelMap();
 
-    @View(map = "function(doc) {emit(doc, doc._id)}")
+    @View(map = "function(doc) {emit(doc, doc._id);}")
     Map<CSFTest, String> getBackwardData();
+
+    @View(map = "function(doc) {emit(doc._id, doc);}")
+    @Limit(1)
+    List<CSFTest> getAnItem();
   }
 
   public static class CSFTest {
