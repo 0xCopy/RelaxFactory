@@ -44,6 +44,12 @@ public interface CouchService<E> {
      * The parameter name to use in the request
      */
     String value();
+
+    /**
+     * True if the value should be encoded as json. If false, the parameter value will be toString'd to send it over the
+     * wire. Defaults to true.
+     */
+    boolean isJson() default true;
   }
 
   /**
@@ -58,7 +64,7 @@ public interface CouchService<E> {
 
   /**
    * Marks a service method or parameter as being used on a couchdb view GET request as
-   * "keys".
+   * "keys". Typically used on a parameter that accepts an array or collection of keys.
    */
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.PARAMETER)
@@ -75,15 +81,15 @@ public interface CouchService<E> {
    * (Not yet supported on a method)
    */
   @Retention(RetentionPolicy.RUNTIME)
-  @Target( {ElementType.PARAMETER/*, ElementType.METHOD*/})
+  @Target( {ElementType.PARAMETER, ElementType.METHOD})
   @CouchRequestParam("limit")
   @Documented
   public @interface Limit {
-    //    /**
-    //     * Value to use as the "limit" parameter. Annotations on the method override possible
-    //     * parameters.
-    //     */
-    //    int value() default -1;
+    /**
+     * Value to use as the "limit" parameter. Annotations on the method override possible
+     * parameters.
+     */
+    int value() default -1;
   }
 
   /**
@@ -91,23 +97,28 @@ public interface CouchService<E> {
    * as "skip". A value need not be provided if used on a parameter, but the annotation
    * is useless on the method without a value.
    * <p/>
-   * (Not yet supported on a method)
+   * From http://wiki.apache.org/couchdb/HTTP_view_API#Querying_Options:
+   * <blockquote>"The skip option should only be used with small values, as skipping a large range of documents this way is
+   * inefficient (it scans the index from the startkey and then skips N elements, but still needs to read all the index
+   * values to do that). For efficient paging you'll need to use startkey and limit. If you expect to have multiple
+   * documents emit identical keys, you'll need to use startkey_docid in addition to startkey to paginate correctly. The
+   * reason is that startkey alone will no longer be sufficient to uniquely identify a row."</blockquote>
    */
   @Retention(RetentionPolicy.RUNTIME)
-  @Target( {ElementType.PARAMETER/*, ElementType.METHOD*/})
+  @Target( {ElementType.PARAMETER, ElementType.METHOD})
   @CouchRequestParam("skip")
   @Documented
   public @interface Skip {
-    //    /**
-    //     * Value to use as the "skip" parameter. Annotations on the method override possible
-    //     * parameters.
-    //     */
-    //    int value() default -1;
+    /**
+     * Value to use as the "skip" parameter. Annotations on the method override possible
+     * parameters.
+     */
+    int value() default -1;
   }
 
   /**
    * Marks a service method or parameter as being used on a couchdb view GET request as
-   * "startkey". In conjunection with endkey and/or limit can be used to implement basic
+   * "startkey". In conjunction with endkey and/or limit can be used to implement basic
    * prefix search
    */
   @Retention(RetentionPolicy.RUNTIME)
@@ -127,4 +138,63 @@ public interface CouchService<E> {
   @Documented
   public @interface EndKey {
   }
+
+  /**
+   * Marks a service method or parameter as being used on a couchdb view GET request as
+   * "startkey_docid". Allows for pagination by id in case of duplicate 'startkey', and
+   * without the performance issues of 'skip'.
+   */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.PARAMETER)
+  @CouchRequestParam("startkey_docid")
+  @Documented
+  public @interface StartKeyDocId {
+  }
+
+  /**
+   * Marks a service method or parameter as being used on a couchdb view GET request as
+   * "endkey_docid". Allows for pagination by id in case of duplicate 'endkey'.
+   */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.PARAMETER)
+  @CouchRequestParam("endkey_docid")
+  @Documented
+  public @interface EndKeyDocId {
+  }
+
+  /**
+   * Changes the direction of a search.
+   */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.PARAMETER, ElementType.METHOD})
+  @CouchRequestParam("descending")
+  @Documented
+  public @interface Descending {
+    boolean value() default false;
+  }
+
+
+  /**
+   * The group option controls whether the reduce function reduces to a set of distinct keys or to a single result row.
+   */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.PARAMETER, ElementType.METHOD})
+  @CouchRequestParam("group")
+  @Documented
+  public @interface Group {
+    boolean value() default false;
+  }
+
+  /**
+   * The group_level argument. See http://wiki.apache.org/couchdb/HTTP_view_API#Querying_Options for additional details.
+   */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.PARAMETER, ElementType.METHOD})
+  @CouchRequestParam("group")
+  @Documented
+  public @interface GroupLevel {
+    int value() default 0;
+  }
+
+
 }

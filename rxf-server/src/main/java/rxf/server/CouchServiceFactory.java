@@ -1,6 +1,7 @@
 package rxf.server;
 
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.internal.Primitives;
 import rxf.server.CouchResultSet.tuple;
 import rxf.server.CouchService.CouchRequestParam;
 import rxf.server.CouchService.View;
@@ -101,11 +102,15 @@ public class CouchServiceFactory {
                 StringBuilder queryBuilder =
                     new StringBuilder(designId).append("/_view/").append(methodName).append("?");
 
+                // read the annotations from the service method
                 Annotation[][] paramAnnotations = m.getParameterAnnotations();
                 if (paramAnnotations.length == 1 && paramAnnotations[0].length == 0) {
-                  //old, annotation-less queries
+                  // exactly one argument, and has no annotations?
+                  // old, annotation-less queries
                   queryBuilder.append("key=%1$s");
                 } else {
+                  // else we assume sane, annotated parameters - if a param is not sane, skip
+                  //TODO emit warning for useless params
                   Map<String, String> queryParams = new TreeMap<String, String>();
                   for (int i = 0; i < paramAnnotations.length; i++) {
                     // look for a CouchRequestParam on this param, if none, ignore
@@ -119,15 +124,16 @@ public class CouchServiceFactory {
                       }
                     }
                   }
-                  //not supporting method annotations yet, unsure how to address a.value()
-                  //                  Annotation[] methodAnnotations = m.getAnnotations();
-                  //                  for (Annotation a : methodAnnotations) {
-                  //                    CouchRequestParam paramData = a.annotationType().getAnnotation(CouchRequestParam.class);
-                  //                    if (paramData != null) {
-                  //                      //probably should kick this through GSON...
-                  //                      queryParams.put(paramData.value(), URLEncoder.encode("" + a.value(), "UTF-8"));
-                  //                    }
-                  //                  }
+                  // after visiting args, check out the annotations on the method itself
+                  Annotation[] methodAnnotations = m.getAnnotations();
+                  for (Annotation a : methodAnnotations) {
+                    CouchRequestParam paramData = a.annotationType().getAnnotation(CouchRequestParam.class);
+                    if (paramData != null) {
+                      Object obj = a.annotationType().getMethod("value").invoke(a);
+                      String val = paramData.isJson() ? CouchMetaDriver.gson().toJson(obj) : obj + "";
+                      queryParams.put(paramData.value(), URLEncoder.encode(val, "UTF-8"));
+                    }
+                  }
                   for (Map.Entry<String, String> param : queryParams.entrySet()) {
                     // write out key = value
                     // note that key is encoded, value is dealt with when the value is created
