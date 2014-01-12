@@ -127,10 +127,12 @@ public class CouchServiceFactory {
                   // after visiting args, check out the annotations on the method itself
                   Annotation[] methodAnnotations = m.getAnnotations();
                   for (Annotation a : methodAnnotations) {
-                    CouchRequestParam paramData = a.annotationType().getAnnotation(CouchRequestParam.class);
+                    CouchRequestParam paramData =
+                        a.annotationType().getAnnotation(CouchRequestParam.class);
                     if (paramData != null) {
                       Object obj = a.annotationType().getMethod("value").invoke(a);
-                      String val = paramData.isJson() ? CouchMetaDriver.gson().toJson(obj) : obj + "";
+                      String val =
+                          paramData.isJson() ? CouchMetaDriver.gson().toJson(obj) : obj + "";
                       queryParams.put(paramData.value(), URLEncoder.encode(val, "UTF-8"));
                     }
                   }
@@ -242,7 +244,8 @@ public class CouchServiceFactory {
             //Object[] cast to make varargs behave
             String format = String.format(stringStringMap.get(name), (Object[]) jsonArgs);
             final ViewFetchTerminalBuilder fire =
-                ViewFetch.$().db(getPathPrefix()).type(valueType).keyType(keyType).view(format).to().fire();
+                ViewFetch.$().db(getPathPrefix()).type(valueType).keyType(keyType).view(format)
+                    .to().fire();
             CouchResultSet<?, ?> rows = fire.rows();
 
             if (method.getGenericReturnType() instanceof Class) {
