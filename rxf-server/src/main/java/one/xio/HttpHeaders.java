@@ -1405,13 +1405,12 @@ public enum HttpHeaders {
   private final ByteBuffer token = HttpMethod.UTF8.encode(header);
   private int tokenLen = token.limit();
 
-
-    /**
-     *
-     * @param headers bytebuf rfc822
-     * @return
-     */
-    public static Map<String, int[]> getHeaders(ByteBuffer headers) {
+  /**
+   *
+   * @param headers bytebuf rfc822
+   * @return
+   */
+  public static Map<String, int[]> getHeaders(ByteBuffer headers) {
     headers.rewind();
     int l = headers.limit();
     Map<String, int[]> linkedHashMap = new LinkedHashMap();

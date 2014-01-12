@@ -3,6 +3,7 @@ package rxf.server.gen;
 import com.google.gson.JsonSyntaxException;
 import one.xio.AsioVisitor;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import rxf.server.CouchService;
@@ -13,6 +14,7 @@ import rxf.server.gen.CouchDriver.DocFetch;
 import rxf.server.web.inf.ProtocolMethodDispatch;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -306,7 +308,7 @@ public class CouchServiceTest {
   @Test
   public void testNonEntityReturnType() throws Exception {
     SlightlyComplexCouchService service =
-            CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
+        CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
 
     for (int i = 0; i < 10; i++) {
       CSFTest a = new CSFTest();
@@ -327,7 +329,7 @@ public class CouchServiceTest {
   @Test
   public void testPrimitiveReturnType() throws Exception {
     SlightlyComplexCouchService service =
-            CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
+        CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
 
     for (int i = 0; i < 10; i++) {
       CSFTest a = new CSFTest();
@@ -343,7 +345,7 @@ public class CouchServiceTest {
   @Test
   public void testComplexObjectReturnType() throws Exception {
     SlightlyComplexCouchService service =
-            CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
+        CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
 
     for (int i = 0; i < 10; i++) {
       CSFTest a = new CSFTest();
@@ -364,7 +366,7 @@ public class CouchServiceTest {
   @Test
   public void testMapReturnTypeParameterizedOnStringAndEntity() throws Exception {
     SlightlyComplexCouchService service =
-            CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
+        CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
 
     for (int i = 0; i < 10; i++) {
       CSFTest a = new CSFTest();
@@ -382,7 +384,7 @@ public class CouchServiceTest {
   @Test
   public void testMapReturnTypeParameterizedOnStringAndString() throws Exception {
     SlightlyComplexCouchService service =
-            CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
+        CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
 
     for (int i = 0; i < 10; i++) {
       CSFTest a = new CSFTest();
@@ -400,7 +402,7 @@ public class CouchServiceTest {
   @Test
   public void testMapReturnTypeParameterizedOnComplexKeyAndString() throws Exception {
     SlightlyComplexCouchService service =
-            CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
+        CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
 
     for (int i = 0; i < 10; i++) {
       CSFTest a = new CSFTest();
@@ -418,7 +420,7 @@ public class CouchServiceTest {
   @Test
   public void testAnnotationParameters() throws Exception {
     SlightlyComplexCouchService service =
-            CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
+        CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
 
     for (int i = 0; i < 10; i++) {
       CSFTest a = new CSFTest();
@@ -432,7 +434,6 @@ public class CouchServiceTest {
     assertNotNull(one);
     assertEquals(1, one.size());
   }
-
 
   public interface SimpleCouchService extends CouchService<CSFTest> {
     @View(map = "function(doc){emit(doc.brand, doc); }")

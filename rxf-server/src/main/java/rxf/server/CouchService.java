@@ -166,19 +166,18 @@ public interface CouchService<E> {
    * Changes the direction of a search.
    */
   @Retention(RetentionPolicy.RUNTIME)
-  @Target({ElementType.PARAMETER, ElementType.METHOD})
+  @Target( {ElementType.PARAMETER, ElementType.METHOD})
   @CouchRequestParam("descending")
   @Documented
   public @interface Descending {
     boolean value() default false;
   }
 
-
   /**
    * The group option controls whether the reduce function reduces to a set of distinct keys or to a single result row.
    */
   @Retention(RetentionPolicy.RUNTIME)
-  @Target({ElementType.PARAMETER, ElementType.METHOD})
+  @Target( {ElementType.PARAMETER, ElementType.METHOD})
   @CouchRequestParam("group")
   @Documented
   public @interface Group {
@@ -189,12 +188,11 @@ public interface CouchService<E> {
    * The group_level argument. See http://wiki.apache.org/couchdb/HTTP_view_API#Querying_Options for additional details.
    */
   @Retention(RetentionPolicy.RUNTIME)
-  @Target({ElementType.PARAMETER, ElementType.METHOD})
+  @Target( {ElementType.PARAMETER, ElementType.METHOD})
   @CouchRequestParam("group")
   @Documented
   public @interface GroupLevel {
     int value() default 0;
   }
-
 
 }
