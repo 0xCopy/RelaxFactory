@@ -65,7 +65,7 @@ public class RelaxFactoryServerImpl implements RelaxFactoryServer {
 
   @Override
   public void init(String hostname, int port, AsioVisitor topLevel) throws UnknownHostException {
-    assert topLevel == null && serverSocketChannel == null : "Can't call init twice";
+    assert this.topLevel == null && this.serverSocketChannel == null : "Can't call init twice";
     this.topLevel = topLevel;
     this.setPort(port);
     this.hostname = InetAddress.getByName(hostname);

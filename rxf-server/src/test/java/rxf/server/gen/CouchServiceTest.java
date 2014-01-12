@@ -1,26 +1,36 @@
 package rxf.server.gen;
 
-import com.google.gson.JsonSyntaxException;
 import one.xio.AsioVisitor;
+import rxf.server.Attachment;
+import rxf.server.CouchService;
+import rxf.server.CouchServiceFactory;
+import rxf.server.gen.CouchDriver.DbDelete;
+import rxf.server.gen.CouchDriver.DocFetch;
+import rxf.server.web.inf.ProtocolMethodDispatch;
+import rxf.shared.CouchTx;
+
+import com.google.gson.JsonSyntaxException;
+
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import rxf.server.CouchService;
-import rxf.server.CouchServiceFactory;
-import rxf.shared.CouchTx;
-import rxf.server.gen.CouchDriver.DbDelete;
-import rxf.server.gen.CouchDriver.DocFetch;
-import rxf.server.web.inf.ProtocolMethodDispatch;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import static one.xio.HttpMethod.*;
-import static org.junit.Assert.*;
+import static one.xio.HttpMethod.getSelector;
+import static one.xio.HttpMethod.init;
+import static one.xio.HttpMethod.setKillswitch;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static rxf.server.BlobAntiPatternObject.setDEBUG_SENDJSON;
 import static rxf.server.driver.CouchMetaDriver.gson;
 
@@ -434,6 +444,92 @@ public class CouchServiceTest {
     assertNotNull(one);
     assertEquals(1, one.size());
   }
+
+  @Test
+  public void testAttachments() throws Exception {
+    SlightlyComplexCouchService service =
+        CouchServiceFactory.get(SlightlyComplexCouchService.class, SOMEDB);
+
+    CSFTest data1 = new CSFTest();
+    data1.brand = "asdf";
+
+    CouchTx tx = service.persist(data1);
+    assert tx.ok();
+
+    data1 = service.find(tx.id());
+
+    tx =
+        service.attachments(data1).addAttachment("package foo.bar.baz;", "foo/bar/baz.java",
+            "text/java");
+    assert tx.ok();
+
+    String content = service.attachments(data1).getAttachment("foo/bar/baz.java");
+    assert content.equals("package foo.bar.baz;");
+  }
+
+  @Test
+  public void testAttachmentObj() throws Exception {
+    AttachmentService service = CouchServiceFactory.get(AttachmentService.class, SOMEDB);
+
+    DataWithAttachments data = new DataWithAttachments();
+    CouchTx tx = service.persist(data);
+    assert tx.ok() : tx.error();
+
+    data = service.find(tx.id());
+    assert data._attachments.size() == 0;
+
+    String content = "a bunch \nof data in a file";
+    tx = service.attachments(data).addAttachment(content, "file.txt", "text/plain");
+    assert tx.ok() : tx.error();
+
+    data = service.find(tx.id());
+
+    assert data._attachments.size() == 1;
+    assert content.length() == data._attachments.get("file.txt").getLength();
+    assert "text/plain".equals(data._attachments.get("file.txt").getContentType());
+
+    //make sure changing other properties doesnt break the attachments map
+    data.data = "asdf";
+    tx = service.persist(data);
+    assert tx.ok() : tx.error();
+
+    data = service.find(tx.id());
+
+    assert data._attachments.size() == 1;
+    assert content.length() == data._attachments.get("file.txt").getLength();
+    assert "text/plain".equals(data._attachments.get("file.txt").getContentType());
+
+    //update an attachment, make sure it takes the new length and same content type
+    String content2 = "new, shorter file";
+    tx = service.attachments(data).updateAttachment(content2, "file.txt", "text/plain");
+    assert tx.ok() : tx.error();
+
+    data = service.find(tx.id());
+    assert data._attachments.size() == 1;
+    assert content2.length() == data._attachments.get("file.txt").getLength();
+    assert "text/plain".equals(data._attachments.get("file.txt").getContentType());
+
+    //modify contenttype, make sure it takes
+    tx = service.attachments(data).updateAttachment("<html></html>", "file.txt", "text/html");
+    assert tx.ok() : tx.error();
+    data = service.find(tx.id());
+    assert "text/html".equals(data._attachments.get("file.txt").getContentType());
+
+    //remove an item from the attachments map, be sure it persists
+    data._attachments.remove("file.txt");
+    tx = service.persist(data);
+    assert tx.ok() : tx.error();
+    data = service.find(tx.id());
+    assert data._attachments.size() == 0;
+  }
+
+  public static class DataWithAttachments {
+    public String _id;
+    public String _rev;
+    public String data;
+    public Map<String, Attachment> _attachments = new HashMap<>();
+  }
+  public interface AttachmentService extends CouchService<DataWithAttachments> { }
 
   public interface SimpleCouchService extends CouchService<CSFTest> {
     @View(map = "function(doc){emit(doc.brand, doc); }")

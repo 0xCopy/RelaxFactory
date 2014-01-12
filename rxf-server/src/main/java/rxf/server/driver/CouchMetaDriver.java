@@ -902,11 +902,13 @@ public enum CouchMetaDriver {
               || !(lastSlashIndex < opaque.lastIndexOf('?') && lastSlashIndex != opaque
                   .indexOf('/')) ? POST : PUT;
       HttpRequest request = state.$req();
+      if (request.headerString(Content$2dType) == null) {
+        request.headerString(Content$2dType, MimeType.json.contentType);
+      }
       ByteBuffer header =
           (ByteBuffer) request.method(method).path(opaque).headerInterest(STATIC_JSON_SEND_HEADERS)
               .headerString(Content$2dLength, String.valueOf(outbound.length)).headerString(Accept,
-                  MimeType.json.contentType)
-              .headerString(Content$2dType, MimeType.json.contentType).as(ByteBuffer.class);
+                  MimeType.json.contentType).as(ByteBuffer.class);
       if (DEBUG_SENDJSON) {
         System.err.println(deepToString(opaque, validjson, UTF8.decode(header.duplicate()), state));
       }
@@ -927,8 +929,7 @@ public enum CouchMetaDriver {
         ByteBuffer header =
             (ByteBuffer) request.path(finalOpaque).headerInterest(STATIC_JSON_SEND_HEADERS)
                 .headerString(Content$2dLength, String.valueOf(outbound.length)).headerString(
-                    Accept, MimeType.json.contentType).headerString(Content$2dType,
-                    MimeType.json.contentType).as(ByteBuffer.class);
+                    Accept, MimeType.json.contentType).as(ByteBuffer.class);
 
         ByteBuffer cursor;
 

@@ -1,8 +1,23 @@
 package rxf.server;
 
+import one.xio.HttpHeaders;
+import rxf.server.driver.CouchMetaDriver;
+import rxf.server.gen.CouchDriver.DocDelete;
+import rxf.server.gen.CouchDriver.DocFetch;
+import rxf.server.gen.CouchDriver.JsonSend;
+import rxf.server.gen.CouchDriver.JsonSend.JsonSendActionBuilder;
 import rxf.shared.CouchTx;
 
-import java.lang.annotation.*;
+import com.google.gson.JsonObject;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Declares a generated service that can be implemented automatically by CouchServiceFactory.
@@ -17,6 +32,108 @@ public interface CouchService<E> {
   E find(String key);
 
   CouchTx persist(E entity);
+
+  Attachments attachments(E entity);
+
+  public static interface Attachments {
+    CouchTx addAttachment(String content, String filename, String contentType);
+
+    Writer addAttachment(String fileName, String contentType);
+
+    CouchTx updateAttachment(String content, String fileName, String contentType);
+
+    Writer updateAttachment(String fileName, String contentType);
+
+    String getAttachment(String fileName);
+
+    CouchTx deleteAttachment(String fileName);
+
+  }
+
+  static class AttachmentsImpl<E> implements Attachments {
+    private final E entity;
+    private String rev;
+    private String id;
+    private String db;
+
+    public AttachmentsImpl(String db, E entity) throws NoSuchFieldException, IllegalAccessException {
+      this.entity = entity;
+      JsonObject obj = CouchMetaDriver.gson().toJsonTree(entity).getAsJsonObject();
+      rev = obj.get("_rev").getAsString();
+      id = obj.get("_id").getAsString();
+      this.db = db;
+    }
+
+    @Override
+    public CouchTx addAttachment(String content, String fileName, String contentType) {
+      JsonSendActionBuilder actionBuilder =
+          JsonSend.$().opaque(db + "/" + id + "/" + fileName + "?rev=" + rev).validjson(content)
+              .to();
+      actionBuilder.state().headerString(HttpHeaders.Content$2dType, contentType);
+      CouchTx tx = actionBuilder.fire().tx();
+      rev = tx.rev();
+      return tx;
+    }
+
+    @Override
+    public Writer addAttachment(final String fileName, final String contentType) {
+      return new StringWriter() {
+        @Override
+        public void close() throws IOException {
+          JsonSendActionBuilder actionBuilder =
+              JsonSend.$().opaque(db + "/" + id + "/" + fileName + "?rev=" + rev).validjson(
+                  getBuffer().toString()).to();
+          actionBuilder.state().headerString(HttpHeaders.Content$2dType, contentType);
+          CouchTx tx = actionBuilder.fire().tx();
+          if (!tx.ok()) {
+            throw new IOException(tx.error());
+          }
+          rev = tx.rev();
+        }
+      };
+    }
+
+    @Override
+    public CouchTx updateAttachment(String content, String fileName, String contentType) {
+      JsonSendActionBuilder actionBuilder =
+          JsonSend.$().opaque(db + "/" + id + "/" + fileName + "?rev=" + rev).validjson(content)
+              .to();
+      actionBuilder.state().headerString(HttpHeaders.Content$2dType, contentType);
+      CouchTx tx = actionBuilder.fire().tx();
+      rev = tx.rev();
+      return tx;
+    }
+
+    @Override
+    public Writer updateAttachment(final String fileName, final String contentType) {
+      return new StringWriter() {
+        @Override
+        public void close() throws IOException {
+          JsonSendActionBuilder actionBuilder =
+              JsonSend.$().opaque(db + "/" + id + "/" + fileName + "?rev=" + rev).validjson(
+                  getBuffer().toString()).to();
+          actionBuilder.state().headerString(HttpHeaders.Content$2dType, contentType);
+          CouchTx tx = actionBuilder.fire().tx();
+          if (!tx.ok()) {
+            throw new IOException(tx.error());
+          }
+          rev = tx.rev();
+        }
+      };
+    }
+
+    @Override
+    public String getAttachment(String fileName) {
+      return DocFetch.$().db(db).docId(id + "/" + fileName).to().fire().json();
+    }
+
+    @Override
+    public CouchTx deleteAttachment(String fileName) {
+      CouchTx tx = DocDelete.$().db(db).docId(id + "/" + fileName).to().fire().tx();
+      rev = tx.rev();
+      return tx;
+    }
+  }
 
   /**
    * Describes the JavaScript view to run in CouchDB when this method is invoked. The
