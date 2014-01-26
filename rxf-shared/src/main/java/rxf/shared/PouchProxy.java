@@ -42,7 +42,7 @@ public class PouchProxy extends JavaScriptObject {
     }
     String s = new StringBuilder().append("{").append(Joiner.on(',').join(list.toArray(new String[0]))) + "}";
     _allDocs(s,
-        new AsyncCallback<JavaScriptObject, >() {
+        new AsyncCallback<JavaScriptObject  >() {
 
           @Override
           public void onFailure(Throwable caught) {
@@ -51,7 +51,8 @@ public class PouchProxy extends JavaScriptObject {
 
           @Override
           public void onSuccess(JavaScriptObject result) {
-            cb.onSuccess(new JsoReader<ViewResults.Results, ViewResults.Results>((ResFactory) GWT.create(factoryClass), ViewResults.Results.class).read(null, result));
+            //TODO: pure autobeans codex work here.
+            // cb.onSuccess(new JsoReader<ViewResults.Results, ViewResults.Results>((ResFactory) GWT.create(factoryClass), ViewResults.Results.class).read(null, result));
           }
         }
 
