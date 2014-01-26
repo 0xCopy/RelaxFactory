@@ -8,7 +8,19 @@
         <version>0.9.7.1</version>
         <artifactId>relaxfactory</artifactId>
     </parent>
-  <packaging>jar</packaging>
+    <dependencies>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>16.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava-gwt</artifactId>
+            <version>16.0</version>
+        </dependency>
+    </dependencies>
+    <packaging>jar</packaging>
     <build>
         <resources>
             <resource>

@@ -17,7 +17,7 @@ public class CouchResultSet<K, V> {
     public String id;
     public K key;
     public V value;
-      public Map<String,?> doc;
+    public Map<String, ?> doc;
   }
 
   public List<tuple<K, V>> rows;

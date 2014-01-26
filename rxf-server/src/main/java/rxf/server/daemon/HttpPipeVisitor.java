@@ -18,7 +18,8 @@ import static one.xio.HttpMethod.UTF8;
  * sent inward the only state monitored is when one side of the connections close.
  */
 public class HttpPipeVisitor extends AsioVisitor.Impl {
-  private static final boolean PROXY_DEBUG = "true".equals(RxfBootstrap.getVar("PROXY_DEBUG", String.valueOf(false)));
+  private static final boolean PROXY_DEBUG =
+      "true".equals(RxfBootstrap.getVar("PROXY_DEBUG", String.valueOf(false)));
   final private ByteBuffer[] b;
   protected String name;
   protected AtomicInteger remaining;
@@ -37,7 +38,8 @@ public class HttpPipeVisitor extends AsioVisitor.Impl {
     SocketChannel channel = (SocketChannel) key.channel();
     if (otherKey.isValid()) {
       int read = channel.read(getInBuffer());
-      if (read == -1) /*key.cancel();*/ key.interestOps(OP_WRITE);
+      if (read == -1) /*key.cancel();*/
+        key.interestOps(OP_WRITE);
       else {
         //if buffer fills up, stop the read option for a bit
         otherKey.interestOps(OP_READ | OP_WRITE);
@@ -89,4 +91,3 @@ public class HttpPipeVisitor extends AsioVisitor.Impl {
     this.limit = limit;
   }
 }
-
