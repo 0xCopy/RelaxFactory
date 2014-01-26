@@ -2,58 +2,27 @@ package rxf.server.gen;
 
 // generated
 
-import com.google.gson.FieldNamingPolicy;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import rxf.server.*;
 import rxf.server.an.DbKeys;
+import rxf.server.driver.CouchMetaDriver;
 
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 import static rxf.server.BlobAntiPatternObject.avoidStarvation;
 
 /**
- *
- *
  * generated drivers
-
- *
-
  */
 public interface CouchDriver {
-  Gson GSON =
-      new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").setFieldNamingPolicy(
-          FieldNamingPolicy.IDENTITY).setPrettyPrinting().create();
-  TimeUnit defaultCollectorTimeUnit = TimeUnit.SECONDS;
 
   //generated items
 
-  java.nio.ByteBuffer DbCreate(java.lang.String db);
-
-  java.nio.ByteBuffer DbDelete(java.lang.String db);
-
-  java.nio.ByteBuffer DocFetch(java.lang.String db, java.lang.String docId);
-
-  java.nio.ByteBuffer RevisionFetch(java.lang.String db, java.lang.String docId);
-
-  java.nio.ByteBuffer DocPersist(java.lang.String db, java.lang.String validjson);
-
-  java.nio.ByteBuffer DocDelete(java.lang.String db, java.lang.String docId, java.lang.String rev);
-
-  java.nio.ByteBuffer DesignDocFetch(java.lang.String db, java.lang.String designDocId);
-
-  java.nio.ByteBuffer ViewFetch(java.lang.String db, java.lang.String view);
-
-  java.nio.ByteBuffer JsonSend(java.lang.String opaque, java.lang.String validjson);
-
-  java.nio.ByteBuffer BlobSend(java.nio.ByteBuffer blob, java.lang.String db,
-      java.lang.String docId, java.lang.String rev, java.lang.String attachname);
-
   public class DbCreate extends DbKeysBuilder {
+    private static final int parmsCount = 1;
+
     private DbCreate() {
     }
 
@@ -61,6 +30,17 @@ public interface CouchDriver {
 
     $() {
       return new DbCreate();
+    }
+
+    public DbCreateActionBuilder to() {
+      if (parms.size() >= parmsCount)
+        return new DbCreateActionBuilder();
+      throw new IllegalArgumentException("required parameters are: [db]");
+    }
+
+    public DbCreate db(java.lang.String stringParam) {
+      parms.put(DbKeys.etype.db, stringParam);
+      return this;
     }
 
     public interface DbCreateTerminalBuilder extends TerminalBuilder {
@@ -85,15 +65,15 @@ public interface CouchDriver {
                 public java.nio.ByteBuffer call() throws Exception {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  return (java.nio.ByteBuffer) rxf.server.driver.CouchMetaDriver.DbCreate.visit(
-                      dbKeysBuilder, actionBuilder);
+                  return rxf.server.driver.CouchMetaDriver.DbCreate.visit(dbKeysBuilder,
+                      actionBuilder);
                 }
               });
 
           public CouchTx tx() {
             try {
-              return (CouchTx) GSON.fromJson(one.xio.HttpMethod.UTF8.decode(
-                  rxf.server.driver.CouchMetaDriver.DbCreate.visit()).toString(), CouchTx.class);
+              return CouchMetaDriver.gson().fromJson(
+                  one.xio.HttpMethod.UTF8.decode(future.get()).toString(), CouchTx.class);
             } catch (Exception e) {
               if (rxf.server.BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();
@@ -103,8 +83,8 @@ public interface CouchDriver {
 
           @Deprecated
           public void oneWay() {
-            final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
-            final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
+            final DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
+            final ActionBuilder actionBuilder = ActionBuilder.get();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
               public void run() {
                 try {
@@ -130,21 +110,11 @@ public interface CouchDriver {
       }
     }
 
-    public DbCreateActionBuilder to() {
-      if (parms.size() >= parmsCount)
-        return new DbCreateActionBuilder();
-      throw new IllegalArgumentException("required parameters are: [db]");
-    }
+  }
 
+  public class DbDelete extends DbKeysBuilder {
     private static final int parmsCount = 1;
 
-    public DbCreate db(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.db, stringParam);
-      return this;
-    }
-
-  }
-  public class DbDelete extends DbKeysBuilder {
     private DbDelete() {
     }
 
@@ -152,6 +122,17 @@ public interface CouchDriver {
 
     $() {
       return new DbDelete();
+    }
+
+    public DbDeleteActionBuilder to() {
+      if (parms.size() >= parmsCount)
+        return new DbDeleteActionBuilder();
+      throw new IllegalArgumentException("required parameters are: [db]");
+    }
+
+    public DbDelete db(java.lang.String stringParam) {
+      parms.put(DbKeys.etype.db, stringParam);
+      return this;
     }
 
     public interface DbDeleteTerminalBuilder extends TerminalBuilder {
@@ -176,15 +157,15 @@ public interface CouchDriver {
                 public java.nio.ByteBuffer call() throws Exception {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  return (java.nio.ByteBuffer) rxf.server.driver.CouchMetaDriver.DbDelete.visit(
-                      dbKeysBuilder, actionBuilder);
+                  return rxf.server.driver.CouchMetaDriver.DbDelete.visit(dbKeysBuilder,
+                      actionBuilder);
                 }
               });
 
           public CouchTx tx() {
             try {
-              return (CouchTx) GSON.fromJson(one.xio.HttpMethod.UTF8.decode(
-                  rxf.server.driver.CouchMetaDriver.DbDelete.visit()).toString(), CouchTx.class);
+              return CouchMetaDriver.gson().fromJson(
+                  one.xio.HttpMethod.UTF8.decode(future.get()).toString(), CouchTx.class);
             } catch (Exception e) {
               if (rxf.server.BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();
@@ -194,8 +175,8 @@ public interface CouchDriver {
 
           @Deprecated
           public void oneWay() {
-            final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
-            final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
+            final DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
+            final ActionBuilder actionBuilder = ActionBuilder.get();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
               public void run() {
                 try {
@@ -221,21 +202,11 @@ public interface CouchDriver {
       }
     }
 
-    public DbDeleteActionBuilder to() {
-      if (parms.size() >= parmsCount)
-        return new DbDeleteActionBuilder();
-      throw new IllegalArgumentException("required parameters are: [db]");
-    }
-
-    private static final int parmsCount = 1;
-
-    public DbDelete db(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.db, stringParam);
-      return this;
-    }
-
   }
+
   public class DocFetch extends DbKeysBuilder {
+    private static final int parmsCount = 2;
+
     private DocFetch() {
     }
 
@@ -243,6 +214,22 @@ public interface CouchDriver {
 
     $() {
       return new DocFetch();
+    }
+
+    public DocFetchActionBuilder to() {
+      if (parms.size() >= parmsCount)
+        return new DocFetchActionBuilder();
+      throw new IllegalArgumentException("required parameters are: [db, docId]");
+    }
+
+    public DocFetch db(java.lang.String stringParam) {
+      parms.put(DbKeys.etype.db, stringParam);
+      return this;
+    }
+
+    public DocFetch docId(java.lang.String stringParam) {
+      parms.put(DbKeys.etype.docId, stringParam);
+      return this;
     }
 
     public interface DocFetchTerminalBuilder extends TerminalBuilder {
@@ -268,14 +255,14 @@ public interface CouchDriver {
                 public java.nio.ByteBuffer call() throws Exception {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  return (java.nio.ByteBuffer) rxf.server.driver.CouchMetaDriver.DocFetch.visit(
-                      dbKeysBuilder, actionBuilder);
+                  return rxf.server.driver.CouchMetaDriver.DocFetch.visit(dbKeysBuilder,
+                      actionBuilder);
                 }
               });
 
           public java.nio.ByteBuffer pojo() {
             try {
-              return (java.nio.ByteBuffer) rxf.server.driver.CouchMetaDriver.DocFetch.visit();
+              return future.get();
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -283,27 +270,12 @@ public interface CouchDriver {
           }
 
           public Future<ByteBuffer> future() {
-            try {
-              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
-                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
-                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
-
-                public java.nio.ByteBuffer call() throws Exception {
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
-                  ActionBuilder.currentAction.set(actionBuilder);
-                  return (java.nio.ByteBuffer) rxf.server.driver.CouchMetaDriver.DocFetch.visit(
-                      dbKeysBuilder, actionBuilder);
-                }
-              });
-            } catch (Exception e) {
-              e.printStackTrace();
-            }
-            return null;
+            return future;
           }
 
           public String json() {
             try {
-              ByteBuffer visit = rxf.server.driver.CouchMetaDriver.DocFetch.visit();
+              ByteBuffer visit = future.get();
               return null == visit ? null : one.xio.HttpMethod.UTF8.decode(avoidStarvation(visit))
                   .toString();
             } catch (Exception e) {
@@ -323,26 +295,11 @@ public interface CouchDriver {
       }
     }
 
-    public DocFetchActionBuilder to() {
-      if (parms.size() >= parmsCount)
-        return new DocFetchActionBuilder();
-      throw new IllegalArgumentException("required parameters are: [db, docId]");
-    }
+  }
 
+  public class RevisionFetch extends DbKeysBuilder {
     private static final int parmsCount = 2;
 
-    public DocFetch db(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.db, stringParam);
-      return this;
-    }
-
-    public DocFetch docId(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.docId, stringParam);
-      return this;
-    }
-
-  }
-  public class RevisionFetch extends DbKeysBuilder {
     private RevisionFetch() {
     }
 
@@ -350,6 +307,22 @@ public interface CouchDriver {
 
     $() {
       return new RevisionFetch();
+    }
+
+    public RevisionFetchActionBuilder to() {
+      if (parms.size() >= parmsCount)
+        return new RevisionFetchActionBuilder();
+      throw new IllegalArgumentException("required parameters are: [db, docId]");
+    }
+
+    public RevisionFetch db(java.lang.String stringParam) {
+      parms.put(DbKeys.etype.db, stringParam);
+      return this;
+    }
+
+    public RevisionFetch docId(java.lang.String stringParam) {
+      parms.put(DbKeys.etype.docId, stringParam);
+      return this;
     }
 
     public interface RevisionFetchTerminalBuilder extends TerminalBuilder {
@@ -373,14 +346,14 @@ public interface CouchDriver {
                 public java.nio.ByteBuffer call() throws Exception {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  return (java.nio.ByteBuffer) rxf.server.driver.CouchMetaDriver.RevisionFetch
-                      .visit(dbKeysBuilder, actionBuilder);
+                  return rxf.server.driver.CouchMetaDriver.RevisionFetch.visit(dbKeysBuilder,
+                      actionBuilder);
                 }
               });
 
           public String json() {
             try {
-              ByteBuffer visit = rxf.server.driver.CouchMetaDriver.RevisionFetch.visit();
+              ByteBuffer visit = future.get();
               return null == visit ? null : one.xio.HttpMethod.UTF8.decode(avoidStarvation(visit))
                   .toString();
             } catch (Exception e) {
@@ -390,22 +363,7 @@ public interface CouchDriver {
           }
 
           public Future<ByteBuffer> future() {
-            try {
-              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
-                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
-                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
-
-                public java.nio.ByteBuffer call() throws Exception {
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
-                  ActionBuilder.currentAction.set(actionBuilder);
-                  return (java.nio.ByteBuffer) rxf.server.driver.CouchMetaDriver.RevisionFetch
-                      .visit(dbKeysBuilder, actionBuilder);
-                }
-              });
-            } catch (Exception e) {
-              e.printStackTrace();
-            }
-            return null;
+            return future;
           }
         };
       }
@@ -419,26 +377,11 @@ public interface CouchDriver {
       }
     }
 
-    public RevisionFetchActionBuilder to() {
-      if (parms.size() >= parmsCount)
-        return new RevisionFetchActionBuilder();
-      throw new IllegalArgumentException("required parameters are: [db, docId]");
-    }
+  }
 
+  public class DocPersist extends DbKeysBuilder {
     private static final int parmsCount = 2;
 
-    public RevisionFetch db(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.db, stringParam);
-      return this;
-    }
-
-    public RevisionFetch docId(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.docId, stringParam);
-      return this;
-    }
-
-  }
-  public class DocPersist extends DbKeysBuilder {
     private DocPersist() {
     }
 
@@ -446,6 +389,32 @@ public interface CouchDriver {
 
     $() {
       return new DocPersist();
+    }
+
+    public DocPersistActionBuilder to() {
+      if (parms.size() >= parmsCount)
+        return new DocPersistActionBuilder();
+      throw new IllegalArgumentException("required parameters are: [db, validjson]");
+    }
+
+    public DocPersist db(java.lang.String stringParam) {
+      parms.put(DbKeys.etype.db, stringParam);
+      return this;
+    }
+
+    public DocPersist validjson(java.lang.String stringParam) {
+      parms.put(DbKeys.etype.validjson, stringParam);
+      return this;
+    }
+
+    public DocPersist docId(java.lang.String stringParam) {
+      parms.put(DbKeys.etype.docId, stringParam);
+      return this;
+    }
+
+    public DocPersist rev(java.lang.String stringParam) {
+      parms.put(DbKeys.etype.rev, stringParam);
+      return this;
     }
 
     public interface DocPersistTerminalBuilder extends TerminalBuilder {
@@ -472,15 +441,15 @@ public interface CouchDriver {
                 public java.nio.ByteBuffer call() throws Exception {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  return (java.nio.ByteBuffer) rxf.server.driver.CouchMetaDriver.DocPersist.visit(
-                      dbKeysBuilder, actionBuilder);
+                  return rxf.server.driver.CouchMetaDriver.DocPersist.visit(dbKeysBuilder,
+                      actionBuilder);
                 }
               });
 
           public CouchTx tx() {
             try {
-              return (CouchTx) GSON.fromJson(one.xio.HttpMethod.UTF8.decode(
-                  rxf.server.driver.CouchMetaDriver.DocPersist.visit()).toString(), CouchTx.class);
+              return CouchMetaDriver.gson().fromJson(
+                  one.xio.HttpMethod.UTF8.decode(future.get()).toString(), CouchTx.class);
             } catch (Exception e) {
               if (rxf.server.BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();
@@ -490,8 +459,8 @@ public interface CouchDriver {
 
           @Deprecated
           public void oneWay() {
-            final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
-            final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
+            final DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
+            final ActionBuilder actionBuilder = ActionBuilder.get();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
               public void run() {
                 try {
@@ -507,22 +476,7 @@ public interface CouchDriver {
           }
 
           public Future<ByteBuffer> future() {
-            try {
-              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
-                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
-                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
-
-                public java.nio.ByteBuffer call() throws Exception {
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
-                  ActionBuilder.currentAction.set(actionBuilder);
-                  return (java.nio.ByteBuffer) rxf.server.driver.CouchMetaDriver.DocPersist.visit(
-                      dbKeysBuilder, actionBuilder);
-                }
-              });
-            } catch (Exception e) {
-              e.printStackTrace();
-            }
-            return null;
+            return future;
           }
         };
       }
@@ -536,36 +490,11 @@ public interface CouchDriver {
       }
     }
 
-    public DocPersistActionBuilder to() {
-      if (parms.size() >= parmsCount)
-        return new DocPersistActionBuilder();
-      throw new IllegalArgumentException("required parameters are: [db, validjson]");
-    }
-
-    private static final int parmsCount = 2;
-
-    public DocPersist db(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.db, stringParam);
-      return this;
-    }
-
-    public DocPersist validjson(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.validjson, stringParam);
-      return this;
-    }
-
-    public DocPersist docId(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.docId, stringParam);
-      return this;
-    }
-
-    public DocPersist rev(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.rev, stringParam);
-      return this;
-    }
-
   }
+
   public class DocDelete extends DbKeysBuilder {
+    private static final int parmsCount = 3;
+
     private DocDelete() {
     }
 
@@ -573,6 +502,27 @@ public interface CouchDriver {
 
     $() {
       return new DocDelete();
+    }
+
+    public DocDeleteActionBuilder to() {
+      if (parms.size() >= parmsCount)
+        return new DocDeleteActionBuilder();
+      throw new IllegalArgumentException("required parameters are: [db, docId, rev]");
+    }
+
+    public DocDelete db(java.lang.String stringParam) {
+      parms.put(DbKeys.etype.db, stringParam);
+      return this;
+    }
+
+    public DocDelete docId(java.lang.String stringParam) {
+      parms.put(DbKeys.etype.docId, stringParam);
+      return this;
+    }
+
+    public DocDelete rev(java.lang.String stringParam) {
+      parms.put(DbKeys.etype.rev, stringParam);
+      return this;
     }
 
     public interface DocDeleteTerminalBuilder extends TerminalBuilder {
@@ -599,15 +549,15 @@ public interface CouchDriver {
                 public java.nio.ByteBuffer call() throws Exception {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  return (java.nio.ByteBuffer) rxf.server.driver.CouchMetaDriver.DocDelete.visit(
-                      dbKeysBuilder, actionBuilder);
+                  return rxf.server.driver.CouchMetaDriver.DocDelete.visit(dbKeysBuilder,
+                      actionBuilder);
                 }
               });
 
           public CouchTx tx() {
             try {
-              return (CouchTx) GSON.fromJson(one.xio.HttpMethod.UTF8.decode(
-                  rxf.server.driver.CouchMetaDriver.DocDelete.visit()).toString(), CouchTx.class);
+              return CouchMetaDriver.gson().fromJson(
+                  one.xio.HttpMethod.UTF8.decode(future.get()).toString(), CouchTx.class);
             } catch (Exception e) {
               if (rxf.server.BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();
@@ -617,8 +567,8 @@ public interface CouchDriver {
 
           @Deprecated
           public void oneWay() {
-            final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
-            final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
+            final DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
+            final ActionBuilder actionBuilder = ActionBuilder.get();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
               public void run() {
                 try {
@@ -634,22 +584,7 @@ public interface CouchDriver {
           }
 
           public Future<ByteBuffer> future() {
-            try {
-              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
-                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
-                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
-
-                public java.nio.ByteBuffer call() throws Exception {
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
-                  ActionBuilder.currentAction.set(actionBuilder);
-                  return (java.nio.ByteBuffer) rxf.server.driver.CouchMetaDriver.DocDelete.visit(
-                      dbKeysBuilder, actionBuilder);
-                }
-              });
-            } catch (Exception e) {
-              e.printStackTrace();
-            }
-            return null;
+            return future;
           }
         };
       }
@@ -663,31 +598,11 @@ public interface CouchDriver {
       }
     }
 
-    public DocDeleteActionBuilder to() {
-      if (parms.size() >= parmsCount)
-        return new DocDeleteActionBuilder();
-      throw new IllegalArgumentException("required parameters are: [db, docId, rev]");
-    }
-
-    private static final int parmsCount = 3;
-
-    public DocDelete db(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.db, stringParam);
-      return this;
-    }
-
-    public DocDelete docId(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.docId, stringParam);
-      return this;
-    }
-
-    public DocDelete rev(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.rev, stringParam);
-      return this;
-    }
-
   }
+
   public class DesignDocFetch extends DbKeysBuilder {
+    private static final int parmsCount = 2;
+
     private DesignDocFetch() {
     }
 
@@ -695,6 +610,22 @@ public interface CouchDriver {
 
     $() {
       return new DesignDocFetch();
+    }
+
+    public DesignDocFetchActionBuilder to() {
+      if (parms.size() >= parmsCount)
+        return new DesignDocFetchActionBuilder();
+      throw new IllegalArgumentException("required parameters are: [db, designDocId]");
+    }
+
+    public DesignDocFetch db(java.lang.String stringParam) {
+      parms.put(DbKeys.etype.db, stringParam);
+      return this;
+    }
+
+    public DesignDocFetch designDocId(java.lang.String stringParam) {
+      parms.put(DbKeys.etype.designDocId, stringParam);
+      return this;
     }
 
     public interface DesignDocFetchTerminalBuilder extends TerminalBuilder {
@@ -720,14 +651,14 @@ public interface CouchDriver {
                 public java.nio.ByteBuffer call() throws Exception {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  return (java.nio.ByteBuffer) rxf.server.driver.CouchMetaDriver.DesignDocFetch
-                      .visit(dbKeysBuilder, actionBuilder);
+                  return rxf.server.driver.CouchMetaDriver.DesignDocFetch.visit(dbKeysBuilder,
+                      actionBuilder);
                 }
               });
 
           public java.nio.ByteBuffer pojo() {
             try {
-              return (java.nio.ByteBuffer) rxf.server.driver.CouchMetaDriver.DesignDocFetch.visit();
+              return future.get();
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -735,27 +666,12 @@ public interface CouchDriver {
           }
 
           public Future<ByteBuffer> future() {
-            try {
-              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
-                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
-                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
-
-                public java.nio.ByteBuffer call() throws Exception {
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
-                  ActionBuilder.currentAction.set(actionBuilder);
-                  return (java.nio.ByteBuffer) rxf.server.driver.CouchMetaDriver.DesignDocFetch
-                      .visit(dbKeysBuilder, actionBuilder);
-                }
-              });
-            } catch (Exception e) {
-              e.printStackTrace();
-            }
-            return null;
+            return future;
           }
 
           public String json() {
             try {
-              ByteBuffer visit = rxf.server.driver.CouchMetaDriver.DesignDocFetch.visit();
+              ByteBuffer visit = future.get();
               return null == visit ? null : one.xio.HttpMethod.UTF8.decode(avoidStarvation(visit))
                   .toString();
             } catch (Exception e) {
@@ -775,26 +691,12 @@ public interface CouchDriver {
       }
     }
 
-    public DesignDocFetchActionBuilder to() {
-      if (parms.size() >= parmsCount)
-        return new DesignDocFetchActionBuilder();
-      throw new IllegalArgumentException("required parameters are: [db, designDocId]");
-    }
+  }
+  //                                         rnewson	"Note: Multiple keys request to a reduce function only supports group=true and NO group_level (identical to group_level=exact). The resulting error is "Multi-key fetchs for reduce view must include group=true""
 
+  public class ViewFetch extends DbKeysBuilder {
     private static final int parmsCount = 2;
 
-    public DesignDocFetch db(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.db, stringParam);
-      return this;
-    }
-
-    public DesignDocFetch designDocId(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.designDocId, stringParam);
-      return this;
-    }
-
-  }
-  public class ViewFetch extends DbKeysBuilder {
     private ViewFetch() {
     }
 
@@ -802,6 +704,32 @@ public interface CouchDriver {
 
     $() {
       return new ViewFetch();
+    }
+
+    public ViewFetchActionBuilder to() {
+      if (parms.size() >= parmsCount)
+        return new ViewFetchActionBuilder();
+      throw new IllegalArgumentException("required parameters are: [db, view]");
+    }
+
+    public ViewFetch db(java.lang.String stringParam) {
+      parms.put(DbKeys.etype.db, stringParam);
+      return this;
+    }
+
+    public ViewFetch view(java.lang.String stringParam) {
+      parms.put(DbKeys.etype.view, stringParam);
+      return this;
+    }
+
+    public ViewFetch type(java.lang.reflect.Type typeParam) {
+      parms.put(DbKeys.etype.type, typeParam);
+      return this;
+    }
+
+    public ViewFetch keyType(java.lang.reflect.Type typeParam) {
+      parms.put(DbKeys.etype.keyType, typeParam);
+      return this;
     }
 
     public interface ViewFetchTerminalBuilder extends TerminalBuilder {
@@ -828,15 +756,15 @@ public interface CouchDriver {
                 public java.nio.ByteBuffer call() throws Exception {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  return (java.nio.ByteBuffer) rxf.server.driver.CouchMetaDriver.ViewFetch.visit(
-                      dbKeysBuilder, actionBuilder);
+                  return rxf.server.driver.CouchMetaDriver.ViewFetch.visit(dbKeysBuilder,
+                      actionBuilder);
                 }
               });
 
           public rxf.server.CouchResultSet rows() {
             try {
-              return GSON.fromJson(one.xio.HttpMethod.UTF8.decode(
-                  avoidStarvation(rxf.server.driver.CouchMetaDriver.ViewFetch.visit())).toString(),
+              return CouchMetaDriver.gson().fromJson(
+                  one.xio.HttpMethod.UTF8.decode(avoidStarvation(future.get())).toString(),
                   new java.lang.reflect.ParameterizedType() {
                     public Type getRawType() {
                       return CouchResultSet.class;
@@ -862,22 +790,7 @@ public interface CouchDriver {
           }
 
           public Future<ByteBuffer> future() {
-            try {
-              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
-                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
-                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
-
-                public java.nio.ByteBuffer call() throws Exception {
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
-                  ActionBuilder.currentAction.set(actionBuilder);
-                  return (java.nio.ByteBuffer) rxf.server.driver.CouchMetaDriver.ViewFetch.visit(
-                      dbKeysBuilder, actionBuilder);
-                }
-              });
-            } catch (Exception e) {
-              e.printStackTrace();
-            }
-            return null;
+            return future;
           }
 
           public void continuousFeed() {
@@ -895,36 +808,11 @@ public interface CouchDriver {
       }
     }
 
-    public ViewFetchActionBuilder to() {
-      if (parms.size() >= parmsCount)
-        return new ViewFetchActionBuilder();
-      throw new IllegalArgumentException("required parameters are: [db, view]");
-    }
+  }
 
+  public class JsonSend extends DbKeysBuilder {
     private static final int parmsCount = 2;
 
-    public ViewFetch db(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.db, stringParam);
-      return this;
-    }
-
-    public ViewFetch view(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.view, stringParam);
-      return this;
-    }
-
-    public ViewFetch type(java.lang.reflect.Type typeParam) {
-      parms.put(DbKeys.etype.type, typeParam);
-      return this;
-    }
-
-    public ViewFetch keyType(java.lang.reflect.Type typeParam) {
-      parms.put(DbKeys.etype.keyType, typeParam);
-      return this;
-    }
-
-  }
-  public class JsonSend extends DbKeysBuilder {
     private JsonSend() {
     }
 
@@ -932,6 +820,32 @@ public interface CouchDriver {
 
     $() {
       return new JsonSend();
+    }
+
+    public JsonSendActionBuilder to() {
+      if (parms.size() >= parmsCount)
+        return new JsonSendActionBuilder();
+      throw new IllegalArgumentException("required parameters are: [opaque, validjson]");
+    }
+
+    public JsonSend opaque(java.lang.String stringParam) {
+      parms.put(DbKeys.etype.opaque, stringParam);
+      return this;
+    }
+
+    public JsonSend validjson(java.lang.String stringParam) {
+      parms.put(DbKeys.etype.validjson, stringParam);
+      return this;
+    }
+
+    public JsonSend type(java.lang.reflect.Type typeParam) {
+      parms.put(DbKeys.etype.type, typeParam);
+      return this;
+    }
+
+    public JsonSend keyType(java.lang.reflect.Type typeParam) {
+      parms.put(DbKeys.etype.keyType, typeParam);
+      return this;
     }
 
     public interface JsonSendTerminalBuilder extends TerminalBuilder {
@@ -965,15 +879,15 @@ public interface CouchDriver {
                 public java.nio.ByteBuffer call() throws Exception {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  return (java.nio.ByteBuffer) rxf.server.driver.CouchMetaDriver.JsonSend.visit(
-                      dbKeysBuilder, actionBuilder);
+                  return rxf.server.driver.CouchMetaDriver.JsonSend.visit(dbKeysBuilder,
+                      actionBuilder);
                 }
               });
 
           public CouchTx tx() {
             try {
-              return (CouchTx) GSON.fromJson(one.xio.HttpMethod.UTF8.decode(
-                  rxf.server.driver.CouchMetaDriver.JsonSend.visit()).toString(), CouchTx.class);
+              return CouchMetaDriver.gson().fromJson(
+                  one.xio.HttpMethod.UTF8.decode(future.get()).toString(), CouchTx.class);
             } catch (Exception e) {
               if (rxf.server.BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();
@@ -983,8 +897,8 @@ public interface CouchDriver {
 
           @Deprecated
           public void oneWay() {
-            final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
-            final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
+            final DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
+            final ActionBuilder actionBuilder = ActionBuilder.get();
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
               public void run() {
                 try {
@@ -1001,8 +915,8 @@ public interface CouchDriver {
 
           public rxf.server.CouchResultSet rows() {
             try {
-              return GSON.fromJson(one.xio.HttpMethod.UTF8.decode(
-                  avoidStarvation(rxf.server.driver.CouchMetaDriver.JsonSend.visit())).toString(),
+              return CouchMetaDriver.gson().fromJson(
+                  one.xio.HttpMethod.UTF8.decode(avoidStarvation(future.get())).toString(),
                   new java.lang.reflect.ParameterizedType() {
                     public Type getRawType() {
                       return CouchResultSet.class;
@@ -1029,7 +943,7 @@ public interface CouchDriver {
 
           public String json() {
             try {
-              ByteBuffer visit = rxf.server.driver.CouchMetaDriver.JsonSend.visit();
+              ByteBuffer visit = future.get();
               return null == visit ? null : one.xio.HttpMethod.UTF8.decode(avoidStarvation(visit))
                   .toString();
             } catch (Exception e) {
@@ -1039,22 +953,7 @@ public interface CouchDriver {
           }
 
           public Future<ByteBuffer> future() {
-            try {
-              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
-                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
-                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
-
-                public java.nio.ByteBuffer call() throws Exception {
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
-                  ActionBuilder.currentAction.set(actionBuilder);
-                  return (java.nio.ByteBuffer) rxf.server.driver.CouchMetaDriver.JsonSend.visit(
-                      dbKeysBuilder, actionBuilder);
-                }
-              });
-            } catch (Exception e) {
-              e.printStackTrace();
-            }
-            return null;
+            return future;
           }
 
           public void continuousFeed() {
@@ -1072,36 +971,11 @@ public interface CouchDriver {
       }
     }
 
-    public JsonSendActionBuilder to() {
-      if (parms.size() >= parmsCount)
-        return new JsonSendActionBuilder();
-      throw new IllegalArgumentException("required parameters are: [opaque, validjson]");
-    }
-
-    private static final int parmsCount = 2;
-
-    public JsonSend opaque(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.opaque, stringParam);
-      return this;
-    }
-
-    public JsonSend validjson(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.validjson, stringParam);
-      return this;
-    }
-
-    public JsonSend keyType(java.lang.reflect.Type typeParam) {
-      parms.put(DbKeys.etype.keyType, typeParam);
-      return this;
-    }
-
-    public JsonSend type(java.lang.reflect.Type typeParam) {
-      parms.put(DbKeys.etype.type, typeParam);
-      return this;
-    }
-
   }
+
   public class BlobSend extends DbKeysBuilder {
+    private static final int parmsCount = 5;
+
     private BlobSend() {
     }
 
@@ -1111,102 +985,12 @@ public interface CouchDriver {
       return new BlobSend();
     }
 
-    public interface BlobSendTerminalBuilder extends TerminalBuilder {
-      CouchTx tx();
-
-      Future<ByteBuffer> future();
-
-      @Deprecated
-      void oneWay();
-    }
-
-    public class BlobSendActionBuilder extends ActionBuilder {
-      public BlobSendActionBuilder() {
-        super();
-      }
-
-      public BlobSendTerminalBuilder fire() {
-        return new BlobSendTerminalBuilder() {
-          Future<ByteBuffer> future =
-              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
-                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
-                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
-
-                public java.nio.ByteBuffer call() throws Exception {
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
-                  ActionBuilder.currentAction.set(actionBuilder);
-                  return (java.nio.ByteBuffer) rxf.server.driver.CouchMetaDriver.BlobSend.visit(
-                      dbKeysBuilder, actionBuilder);
-                }
-              });
-
-          public CouchTx tx() {
-            try {
-              return (CouchTx) GSON.fromJson(one.xio.HttpMethod.UTF8.decode(
-                  rxf.server.driver.CouchMetaDriver.BlobSend.visit()).toString(), CouchTx.class);
-            } catch (Exception e) {
-              if (rxf.server.BlobAntiPatternObject.DEBUG_SENDJSON)
-                e.printStackTrace();
-            }
-            return null;
-          }
-
-          public Future<ByteBuffer> future() {
-            try {
-              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
-                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
-                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
-
-                public java.nio.ByteBuffer call() throws Exception {
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
-                  ActionBuilder.currentAction.set(actionBuilder);
-                  return (java.nio.ByteBuffer) rxf.server.driver.CouchMetaDriver.BlobSend.visit(
-                      dbKeysBuilder, actionBuilder);
-                }
-              });
-            } catch (Exception e) {
-              e.printStackTrace();
-            }
-            return null;
-          }
-
-          @Deprecated
-          public void oneWay() {
-            final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
-            final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
-            BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
-              public void run() {
-                try {
-
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
-                  ActionBuilder.currentAction.set(actionBuilder);
-                  future.get();
-                } catch (Exception e) {
-                  e.printStackTrace();
-                }
-              }
-            });
-          }
-        };
-      }
-
-      public BlobSendActionBuilder state(Rfc822HeaderState state) {
-        return (BlobSendActionBuilder) super.state(state);
-      }
-
-      public BlobSendActionBuilder key(java.nio.channels.SelectionKey key) {
-        return (BlobSendActionBuilder) super.key(key);
-      }
-    }
-
     public BlobSendActionBuilder to() {
       if (parms.size() >= parmsCount)
         return new BlobSendActionBuilder();
       throw new IllegalArgumentException(
           "required parameters are: [blob, db, docId, rev, attachname]");
     }
-
-    private static final int parmsCount = 5;
 
     public BlobSend blob(java.nio.ByteBuffer bytebufferParam) {
       parms.put(DbKeys.etype.blob, bytebufferParam);
@@ -1241,6 +1025,79 @@ public interface CouchDriver {
     public BlobSend mimetype(java.lang.String stringParam) {
       parms.put(DbKeys.etype.mimetype, stringParam);
       return this;
+    }
+
+    public interface BlobSendTerminalBuilder extends TerminalBuilder {
+      CouchTx tx();
+
+      Future<ByteBuffer> future();
+
+      @Deprecated
+      void oneWay();
+    }
+
+    public class BlobSendActionBuilder extends ActionBuilder {
+      public BlobSendActionBuilder() {
+        super();
+      }
+
+      public BlobSendTerminalBuilder fire() {
+        return new BlobSendTerminalBuilder() {
+          Future<ByteBuffer> future =
+              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
+                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
+                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
+
+                public java.nio.ByteBuffer call() throws Exception {
+                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+                  ActionBuilder.currentAction.set(actionBuilder);
+                  return rxf.server.driver.CouchMetaDriver.BlobSend.visit(dbKeysBuilder,
+                      actionBuilder);
+                }
+              });
+
+          public CouchTx tx() {
+            try {
+              return CouchMetaDriver.gson().fromJson(
+                  one.xio.HttpMethod.UTF8.decode(future.get()).toString(), CouchTx.class);
+            } catch (Exception e) {
+              if (rxf.server.BlobAntiPatternObject.DEBUG_SENDJSON)
+                e.printStackTrace();
+            }
+            return null;
+          }
+
+          public Future<ByteBuffer> future() {
+            return future;
+          }
+
+          @Deprecated
+          public void oneWay() {
+            final DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
+            final ActionBuilder actionBuilder = ActionBuilder.get();
+            BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
+              public void run() {
+                try {
+
+                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+                  ActionBuilder.currentAction.set(actionBuilder);
+                  future.get();
+                } catch (Exception e) {
+                  e.printStackTrace();
+                }
+              }
+            });
+          }
+        };
+      }
+
+      public BlobSendActionBuilder state(Rfc822HeaderState state) {
+        return (BlobSendActionBuilder) super.state(state);
+      }
+
+      public BlobSendActionBuilder key(java.nio.channels.SelectionKey key) {
+        return (BlobSendActionBuilder) super.key(key);
+      }
     }
 
   }
