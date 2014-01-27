@@ -172,7 +172,7 @@ public enum CouchMetaDriver {
         }
       });
       try {
-        cyclicBarrier.await(REALTIME_CUTOFF, getDefaultCollectorTimeUnit());
+        cyclicBarrier.await(REALTIME_CUTOFF, REALTIME_UNIT);
       } catch (Exception e) {
         if (DEBUG_SENDJSON) {
           System.err.println("!!! " + deepToString(this, e) + "\n\tfrom");
@@ -279,7 +279,7 @@ public enum CouchMetaDriver {
         }
       });
       try {
-        cyclicBarrier.await(REALTIME_CUTOFF, getDefaultCollectorTimeUnit());
+        cyclicBarrier.await(REALTIME_CUTOFF, REALTIME_UNIT);
       } catch (Exception e) {
         if (DEBUG_SENDJSON) {
           System.err.println("!!! " + deepToString(this, e) + "\n\tfrom");
@@ -404,7 +404,7 @@ public enum CouchMetaDriver {
         }
       });
       try {
-        cyclicBarrier.await(REALTIME_CUTOFF, getDefaultCollectorTimeUnit());
+        cyclicBarrier.await(REALTIME_CUTOFF, REALTIME_UNIT);
       } catch (Throwable e) {
         if (DEBUG_SENDJSON) {
           System.err.println("!!! " + deepToString(this, e) + "\n\tfrom");
@@ -503,7 +503,7 @@ public enum CouchMetaDriver {
         }
       });
       try {
-        cyclicBarrier.await(REALTIME_CUTOFF, getDefaultCollectorTimeUnit());
+        cyclicBarrier.await(REALTIME_CUTOFF, REALTIME_UNIT);
       } catch (Exception e) {
         if (DEBUG_SENDJSON) {
           System.err.println("!!! " + deepToString(this, e) + "\n\tfrom");
@@ -628,7 +628,7 @@ public enum CouchMetaDriver {
         }
       });
       try {
-        cyclicBarrier.await(REALTIME_CUTOFF, getDefaultCollectorTimeUnit());
+        cyclicBarrier.await(REALTIME_CUTOFF, REALTIME_UNIT);
       } catch (Exception e) {
         if (DEBUG_SENDJSON) {
           System.err.println("!!! " + deepToString(this, e) + "\n\tfrom");
@@ -862,7 +862,7 @@ public enum CouchMetaDriver {
         }
       });
       try {
-        cyclicBarrier.await(REALTIME_CUTOFF, getDefaultCollectorTimeUnit());
+        cyclicBarrier.await(REALTIME_CUTOFF, REALTIME_UNIT);
       } catch (Exception e) {
         if (DEBUG_SENDJSON) {
           System.err.println("!!! " + deepToString(this, e) + "\n\tfrom");
@@ -1028,7 +1028,7 @@ public enum CouchMetaDriver {
         }
       });
       try {
-        cyclicBarrier.await(REALTIME_CUTOFF, getDefaultCollectorTimeUnit());
+        cyclicBarrier.await(REALTIME_CUTOFF, REALTIME_UNIT);
       } catch (Exception e) {
         if (DEBUG_SENDJSON) {
           System.err.println("!!! " + deepToString(this, e) + "\n\tfrom");
@@ -1162,7 +1162,7 @@ public enum CouchMetaDriver {
       });
 
       try {
-        cyclicBarrier.await(REALTIME_CUTOFF, getDefaultCollectorTimeUnit());
+        cyclicBarrier.await(REALTIME_CUTOFF, REALTIME_UNIT);
       } catch (Exception e) {
         if (DEBUG_SENDJSON) {
           System.err.println("!!! " + deepToString(this, e) + "\n\tfrom");
@@ -1177,18 +1177,16 @@ public enum CouchMetaDriver {
   public static final byte[] CE_TERMINAL = "\n0\r\n\r\n".getBytes(UTF8);
   //"premature optimization" s/mature/view/
   public static final String[] STATIC_VF_HEADERS =
-      Rfc822HeaderState.staticHeaderStrings(new HttpHeaders[] {
-          ETag, Content$2dLength, Transfer$2dEncoding});
+      Rfc822HeaderState.staticHeaderStrings(ETag, Content$2dLength, Transfer$2dEncoding);
   public static final String[] STATIC_JSON_SEND_HEADERS =
-      Rfc822HeaderState.staticHeaderStrings(new HttpHeaders[] {
-          ETag, Content$2dLength, Content$2dEncoding});
+      Rfc822HeaderState.staticHeaderStrings(ETag, Content$2dLength, Content$2dEncoding);
   public static final String[] STATIC_CONTENT_LENGTH_ARR =
-      Rfc822HeaderState.staticHeaderStrings(new HttpHeaders[] {Content$2dLength});
+      Rfc822HeaderState.staticHeaderStrings(Content$2dLength);
   public static final byte[] HEADER_TERMINATOR = "\r\n\r\n".getBytes(UTF8);
-  public static final TimeUnit defaultCollectorTimeUnit;
+  public static final TimeUnit  REALTIME_UNIT = TimeUnit.valueOf(RxfBootstrap.getVar("REALTIME_UNIT", isDEBUG_SENDJSON()?TimeUnit.HOURS.name():TimeUnit.SECONDS.name()));
   public static final AtomicInteger ATOMIC_INTEGER = new AtomicInteger(0);
   public static final int REALTIME_CUTOFF =
-      Integer.parseInt(RxfBootstrap.getVar("RXF_REALTIME_CUTOFF", "3"));;
+      Integer.parseInt(RxfBootstrap.getVar("RXF_REALTIME_CUTOFF", "3"));
   public static final String PCOUNT = "-0xdeadbeef.2";
   public static final String GENERATED_METHODS = "/*generated methods vsd78vs0fd078fv0sa78*/";
   public static final String IFACE_FIRE_TARGETS = "/*fire interface ijnoifnj453oijnfiojn h*/";
@@ -1202,37 +1200,23 @@ public enum CouchMetaDriver {
             .setFieldNamingPolicy(
                 FieldNamingPolicy
                     .valueOf(RxfBootstrap.getVar("GSON_FIELDNAMINGPOLICY", "IDENTITY")));
-    if ("true" == RxfBootstrap.getVar("GSON_PRETTY", "true"))
+    if ("true".equals(RxfBootstrap.getVar("GSON_PRETTY", "true")))
       gsonBuilder.setPrettyPrinting();
-    if ("true" == RxfBootstrap.getVar("GSON_NULLS", "false"))
+    if ("true".equals(RxfBootstrap.getVar("GSON_NULLS", "false")))
       gsonBuilder.serializeNulls();
-    if ("true" == RxfBootstrap.getVar("GSON_NANS", "false"))
+    if ("true".equals(RxfBootstrap.getVar("GSON_NANS", "false")))
       gsonBuilder.serializeSpecialFloatingPointValues();
     BUILDER = gsonBuilder;
   }
 
   private static Gson GSON = BUILDER.create();
 
-  static {
-    String rxf_timeout_unit = RxfBootstrap.getVar("RXF_TIMEOUT_UNIT");
-    TimeUnit timeUnit =
-        null == rxf_timeout_unit ? TimeUnit.SECONDS : TimeUnit.valueOf(rxf_timeout_unit);
-    defaultCollectorTimeUnit = null == timeUnit ? TimeUnit.SECONDS : timeUnit;
-  }
 
   private static String s1 = "";
 
   public static String scrub(String scrubMe) {
 
     return null == scrubMe ? null : scrubMe.trim().replace("//", "/").replace("..", ".");
-  }
-
-  public static int getDefaultCollectorTimeAmount() {
-    return REALTIME_CUTOFF;
-  }
-
-  public static TimeUnit getDefaultCollectorTimeUnit() {
-    return isDEBUG_SENDJSON() ? TimeUnit.HOURS : defaultCollectorTimeUnit;
   }
 
   public static void main(String... args) throws NoSuchFieldException {
