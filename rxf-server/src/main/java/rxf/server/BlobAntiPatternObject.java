@@ -38,37 +38,15 @@ public class BlobAntiPatternObject {
 
     static {
 
-        final String rxf_var = "RXF_COUCH_PREFIX";
-        String rxfcouchprefix = RxfBootstrap.getVar(rxf_var);
-        if(null==rxfcouchprefix)
-        try {
-            try {
-                setLOOPBACK((InetAddress) InetAddress.class.getMethod(
-                        "getLoopBackAddress").invoke(null));
-                System.err.println("java 7 LOOPBACK detected");
-            } catch (NoSuchMethodException e) {
-                setLOOPBACK(InetAddress.getByAddress(new byte[]{127, 0, 0, 1}));
-                System.err.println("java 6 LOOPBACK detected");
-            } catch (InvocationTargetException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            }
-            setCOUCHADDR(new InetSocketAddress(LOOPBACK,
-                    5984));
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }           else{
-            URI uri = null;
-            try {
-                uri = new URI(rxfcouchprefix);
-                int port = uri.getPort();
-                port= -1 != port ? port : 80;
-                setCOUCHADDR(new InetSocketAddress(uri.getHost(),port));
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
-            }
-        }
+        String rxfcouchprefix = RxfBootstrap.getVar("RXF_COUCH_PREFIX","http://localhost:5894");
+      try {
+        URI uri = new URI(rxfcouchprefix);
+        int port = uri.getPort();
+          port= -1 != port ? port : 80;
+          setCOUCHADDR(new InetSocketAddress(uri.getHost(),port));
+      } catch (URISyntaxException e) {
+          e.printStackTrace();
+      }
 
     }
 

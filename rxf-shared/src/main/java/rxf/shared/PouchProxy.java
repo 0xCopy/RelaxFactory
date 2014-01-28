@@ -17,67 +17,65 @@ import java.util.Map;
 @SuppressWarnings("ToArrayCallWithZeroLengthArrayArgument")
 public class PouchProxy extends JavaScriptObject {
 
-
   protected PouchProxy() {
   }
 
-
   native public static PouchProxy _create(String dbSpec) /*-{
-      return new $wnd.PouchDB(dbSpec)
-  }-*/;
+                                                         return new $wnd.PouchDB(dbSpec)
+                                                         }-*/;
 
   /*continuous:true,*/
   public final native void _replicateFrom(String dbSpec, AsyncCallback<PouchProxy> cb)/*-{
-      var ret = this;
-      this.replicate.from(dbSpec, null == cb ? {} : { complete: function () {
-          cb.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;)(ret);
-      } });
-  }-*/;
+                                                                                      var ret = this;
+                                                                                      this.replicate.from(dbSpec, null == cb ? {} : { complete: function () {
+                                                                                      cb.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;)(ret);
+                                                                                      } });
+                                                                                      }-*/;
 
-  final   <ResFactory extends AutoBeanFactory>void allDocs(EnumMap<AllDocOptions, ?> options, final AsyncCallback<ViewResults.Results> cb, final Class<ResFactory>factoryClass) {
+  final <ResFactory extends AutoBeanFactory> void allDocs(EnumMap<AllDocOptions, ?> options,
+      final AsyncCallback<ViewResults.Results> cb, final Class<ResFactory> factoryClass) {
 
     List<String> list = new ArrayList<String>();
     for (Map.Entry<AllDocOptions, ?> allDocOptionsEntry : options.entrySet()) {
       list.add(allDocOptionsEntry.getKey().express(allDocOptionsEntry.getValue()));
     }
-    String s = new StringBuilder().append("{").append(Joiner.on(',').join(list.toArray(new String[0]))) + "}";
-    _allDocs(s,
-        new AsyncCallback<JavaScriptObject  >() {
+    String s =
+        new StringBuilder().append("{").append(Joiner.on(',').join(list.toArray(new String[0])))
+            + "}";
+    _allDocs(s, new AsyncCallback<JavaScriptObject>() {
 
-          @Override
-          public void onFailure(Throwable caught) {
-            Window.alert(caught.getMessage());
-          }
+      @Override
+      public void onFailure(Throwable caught) {
+        Window.alert(caught.getMessage());
+      }
 
-          @Override
-          public void onSuccess(JavaScriptObject result) {
-            //TODO: pure autobeans codex work here.
-            // cb.onSuccess(new JsoReader<ViewResults.Results, ViewResults.Results>((ResFactory) GWT.create(factoryClass), ViewResults.Results.class).read(null, result));
-          }
-        }
+      @Override
+      public void onSuccess(JavaScriptObject result) {
+        //TODO: pure autobeans codex work here.
+        // cb.onSuccess(new JsoReader<ViewResults.Results, ViewResults.Results>((ResFactory) GWT.create(factoryClass), ViewResults.Results.class).read(null, result));
+      }
+    }
 
     );
   }
-
 
   /**
    * Fetch multiple documents, deleted document are only included if options.keys is specified.
    */
   final native public void _allDocs(String jsonOptions, AsyncCallback<JavaScriptObject> cb)/*-{
-      this.allDocs(eval('(' + jsonOptions + ')'), function (e, r) {
+                                                                                           this.allDocs(eval('(' + jsonOptions + ')'), function (e, r) {
 
-          if (!!e) {
-              cb.@com.google.gwt.user.client.rpc.AsyncCallback::onFailure(Ljava/lang/Throwable;)(@java.io.IOException::new(Ljava/lang/String;)(e.toSource()));
-          } else {
-              cb.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;)(r);
-          }
-      })
-  }-*/;
+                                                                                           if (!!e) {
+                                                                                           cb.@com.google.gwt.user.client.rpc.AsyncCallback::onFailure(Ljava/lang/Throwable;)(@java.io.IOException::new(Ljava/lang/String;)(e.toSource()));
+                                                                                           } else {
+                                                                                           cb.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;)(r);
+                                                                                           }
+                                                                                           })
+                                                                                           }-*/;
 
   public final void replicateFrom(String dbSpec, AsyncCallback<PouchProxy> pouchProxyAsyncCallback) {
     _replicateFrom(dbSpec, pouchProxyAsyncCallback);
   }
-
 
   public static enum AllDocOptions {
 
@@ -102,7 +100,7 @@ public class PouchProxy extends JavaScriptObject {
     /**
      * Get documents with keys in a certain range descending: Reverse the order of the output table
      */
-    startkey,                                                                            /*: Get documents with keys in a certain range descending: Reverse the order of the output table */
+    startkey, /*: Get documents with keys in a certain range descending: Reverse the order of the output table */
     /**
      * Get documents with keys in a certain range descending: Reverse the order of the output table
      */
@@ -144,6 +142,5 @@ public class PouchProxy extends JavaScriptObject {
       return "\"+val+\"";
     }
   }
-
 
 }

@@ -54,8 +54,10 @@ import static rxf.server.an.DbKeys.etype.*;
  * </ol>
  * <p/>
  * <p/>
- * to() - setup the request: provide early access to the header state to tweak whatever you want. This can then be used after fire() to read out the header state from the response
- * fire() - execution of the visitor, access to results, future, (errors?). If results is null, check error. If you use future, its your own damn problem
+ * <ul>DSEL addendum:
+ * <li>to() - setup the request: provide early access to the header state to tweak whatever you want. This can then be used after fire() to read out the header state from the response
+ *<li> fire() - execution of the visitor, access to results, future, (errors?). If results is null, check error. If you use future, its your own damn problem
+ * </ul>
  * User: jim
  * Date: 5/24/12
  * Time: 3:09 PM
@@ -77,9 +79,7 @@ public enum CouchMetaDriver {
       final SocketChannel channel = createCouchConnection();
       enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
         // *******************************
-        // *******************************
         // pathological buffersize traits
-        // *******************************
         // *******************************
 
         String db = (String) dbKeysBuilder.get(etype.db);
@@ -1183,7 +1183,9 @@ public enum CouchMetaDriver {
   public static final String[] STATIC_CONTENT_LENGTH_ARR =
       Rfc822HeaderState.staticHeaderStrings(Content$2dLength);
   public static final byte[] HEADER_TERMINATOR = "\r\n\r\n".getBytes(UTF8);
-  public static final TimeUnit  REALTIME_UNIT = TimeUnit.valueOf(RxfBootstrap.getVar("REALTIME_UNIT", isDEBUG_SENDJSON()?TimeUnit.HOURS.name():TimeUnit.SECONDS.name()));
+  public static final TimeUnit REALTIME_UNIT =
+      TimeUnit.valueOf(RxfBootstrap.getVar("REALTIME_UNIT", isDEBUG_SENDJSON() ? TimeUnit.HOURS
+          .name() : TimeUnit.SECONDS.name()));
   public static final AtomicInteger ATOMIC_INTEGER = new AtomicInteger(0);
   public static final int REALTIME_CUTOFF =
       Integer.parseInt(RxfBootstrap.getVar("RXF_REALTIME_CUTOFF", "3"));
@@ -1210,7 +1212,6 @@ public enum CouchMetaDriver {
   }
 
   private static Gson GSON = BUILDER.create();
-
 
   private static String s1 = "";
 

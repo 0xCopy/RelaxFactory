@@ -5,9 +5,10 @@ public class RxfBootstrap {
   public static String getVar(String rxf_var, String... defaultVal) {
     String javapropname =
         "rxf.server."
-            + rxf_var.toLowerCase().replaceAll("^rxf_(server_){0,1}", "").replace('_', '.');
+            + rxf_var.toLowerCase().replaceAll("^rxf_(server_)?", "").replace('_', '.');
+    String rxfenv = System.getenv(rxf_var);
     String var =
-        null == System.getenv(rxf_var) ? System.getProperty(javapropname) : System.getenv(rxf_var);
+        null == rxfenv ? System.getProperty(javapropname) : rxfenv;
     var = null == var && defaultVal.length > 0 ? defaultVal[0] : var;
     if (null != var) {
       System.setProperty(javapropname, var);
