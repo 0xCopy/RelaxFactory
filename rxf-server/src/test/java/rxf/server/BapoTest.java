@@ -4,7 +4,7 @@ import org.junit.Test;
 
 import java.nio.channels.SocketChannel;
 
-import static one.xio.HttpMethod.setKillswitch;
+import static one.xio.NioFsm.setKillswitch;
 import static org.junit.Assert.assertNotNull;
 import static rxf.server.BlobAntiPatternObject.createCouchConnection;
 import static rxf.server.BlobAntiPatternObject.recycleChannel;

@@ -9,8 +9,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import one.xio.AsioVisitor;
-import one.xio.HttpMethod;
 
+import one.xio.NioFsm;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -37,7 +37,7 @@ public class CouchServiceProviderTest {
   @BeforeClass
   public static void setUp() throws Exception {
     BlobAntiPatternObject.setDEBUG_SENDJSON(true);
-    HttpMethod.killswitch = false;
+    NioFsm.killswitch = false;
     exec = Executors.newScheduledThreadPool(2);
     exec.submit(new Runnable() {
       public void run() {
@@ -60,8 +60,8 @@ public class CouchServiceProviderTest {
   @AfterClass
   public static void tearDown() throws Exception {
     try {
-      HttpMethod.killswitch = true;
-      HttpMethod.getSelector().close();
+      NioFsm.killswitch = true;
+      NioFsm.getSelector().close();
       exec.shutdown();
     } catch (Exception ignore) {
     }

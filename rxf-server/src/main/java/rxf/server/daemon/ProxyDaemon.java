@@ -2,7 +2,7 @@ package rxf.server.daemon;
 
 import one.xio.AsioVisitor;
 import one.xio.HttpHeaders;
-import one.xio.HttpMethod;
+import one.xio.NioFsm;
 import rxf.server.BlobAntiPatternObject;
 import rxf.server.Rfc822HeaderState;
 
@@ -17,7 +17,6 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.nio.channels.SelectionKey.*;
@@ -130,7 +129,7 @@ public class ProxyDaemon extends AsioVisitor.Impl {
     ServerSocketChannel c = (ServerSocketChannel) key.channel();
     final SocketChannel accept = c.accept();
     accept.configureBlocking(false);
-    HttpMethod.enqueue(accept, OP_READ, this);
+    NioFsm.enqueue(accept, OP_READ, this);
   }
 
   @Override

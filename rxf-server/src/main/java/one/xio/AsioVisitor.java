@@ -29,7 +29,7 @@ public interface AsioVisitor {
   class Impl implements AsioVisitor {
     {
       if ($DBG)
-        $origins.put(this, HttpMethod.wheresWaldo(4));
+        $origins.put(this, NioFsm.wheresWaldo(4));
     }
 
     public Impl preRead(Object... env) {
@@ -77,7 +77,7 @@ public interface AsioVisitor {
       ServerSocketChannel c = (ServerSocketChannel) key.channel();
       final SocketChannel accept = c.accept();
       accept.configureBlocking(false);
-      HttpMethod.enqueue(accept, OP_READ | OP_WRITE, key.attachment());
+      NioFsm.enqueue(accept, OP_READ | OP_WRITE, key.attachment());
 
     }
   }

@@ -1,6 +1,6 @@
 package rxf.server;
 
-import one.xio.HttpMethod;
+import one.xio.NioFsm;
 import rxf.server.driver.RxfBootstrap;
 
 import java.io.IOException;
@@ -76,7 +76,7 @@ public class BlobAntiPatternObject {
 
     public static SocketChannel createCouchConnection() {
         SocketChannel ret = null;
-        while (!HttpMethod.killswitch) {
+        while (!NioFsm.killswitch) {
             SocketChannel poll = (SocketChannel) couchConnections.poll();
             if (null != poll && poll.isConnected())
             {ret=poll;break;}

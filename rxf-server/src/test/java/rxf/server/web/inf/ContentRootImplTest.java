@@ -4,6 +4,7 @@ import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
 import one.xio.AsioVisitor;
+import one.xio.NioFsm;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -17,7 +18,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import static java.nio.channels.SelectionKey.OP_ACCEPT;
 import static one.xio.HttpHeaders.If$2dModified$2dSince;
 import static one.xio.HttpHeaders.If$2dUnmodified$2dSince;
-import static one.xio.HttpMethod.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static rxf.server.BlobAntiPatternObject.setDEBUG_SENDJSON;
@@ -35,7 +35,7 @@ public class ContentRootImplTest {
     wc = new WebConversation();
 
     setDEBUG_SENDJSON(true);
-    setKillswitch(false);
+    NioFsm.setKillswitch(false);
 
     serverSocketChannel = ServerSocketChannel.open();
     final InetSocketAddress serverSocket = new InetSocketAddress(host, 0);
@@ -49,8 +49,8 @@ public class ContentRootImplTest {
         AsioVisitor topLevel = new ProtocolMethodDispatch();
         try {
 
-          enqueue(serverSocketChannel, OP_ACCEPT);
-          init(topLevel);
+          NioFsm.enqueue(serverSocketChannel, OP_ACCEPT);
+          NioFsm.init(topLevel);
 
         } catch (Exception e) {
           System.out.println("failed startup");
@@ -63,8 +63,8 @@ public class ContentRootImplTest {
   @AfterClass
   static public void tearDown() throws Exception {
     try {
-      setKillswitch(true);
-      getSelector().close();
+      NioFsm.setKillswitch(true);
+      NioFsm.getSelector().close();
       serverSocketChannel.close();
 
       exec.shutdown();

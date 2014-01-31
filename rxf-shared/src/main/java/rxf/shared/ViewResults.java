@@ -8,7 +8,15 @@ import java.util.Map;
 
 public interface ViewResults {
 
-  interface Response{boolean getOk();String getId();String getRev();String getError();}
+  interface Response {
+    boolean getOk();
+
+    String getId();
+
+    String getRev();
+
+    String getError();
+  }
   /**
    * {
    * "total_rows": 1,
@@ -20,10 +28,15 @@ public interface ViewResults {
   interface Results {
     interface Record {
       String getId();
+
       Long getSeq();
+
       String getKey();
+
       List<Splittable> getChanges();
+
       Splittable getValue();
+
       Splittable getDoc();
     }
 

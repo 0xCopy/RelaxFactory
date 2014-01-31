@@ -2,6 +2,7 @@ package rxf.server.web.inf;
 
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpMethod;
+import one.xio.NioFsm;
 import rxf.server.*;
 import rxf.server.Rfc822HeaderState.HttpRequest;
 
@@ -106,7 +107,7 @@ public class ProtocolMethodDispatch extends Impl {
     ServerSocketChannel channel = (ServerSocketChannel) key.channel();
     SocketChannel accept = channel.accept();
     accept.configureBlocking(false);
-    HttpMethod.enqueue(accept, OP_READ, this);
+    NioFsm.enqueue(accept, OP_READ, this);
 
   }
 

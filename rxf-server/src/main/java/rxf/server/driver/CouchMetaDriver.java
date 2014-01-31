@@ -3,11 +3,8 @@ package rxf.server.driver;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import one.xio.*;
 import one.xio.AsioVisitor.Impl;
-import one.xio.HttpHeaders;
-import one.xio.HttpMethod;
-import one.xio.HttpStatus;
-import one.xio.MimeType;
 import org.intellij.lang.annotations.Language;
 import rxf.server.*;
 import rxf.server.Rfc822HeaderState.HttpRequest;
@@ -15,6 +12,7 @@ import rxf.server.Rfc822HeaderState.HttpResponse;
 import rxf.server.an.DbKeys;
 import rxf.server.an.DbKeys.etype;
 import rxf.server.an.DbTask;
+import rxf.server.gen.CouchDriver;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -36,6 +34,7 @@ import static one.xio.HttpMethod.*;
 import static rxf.server.BlobAntiPatternObject.*;
 import static rxf.server.DbTerminal.*;
 import static rxf.server.an.DbKeys.etype.*;
+import static rxf.server.gen.CouchDriver.fsm;
 
 /**
  * confers traits on an oo platform...
@@ -66,229 +65,10 @@ public enum CouchMetaDriver {
   @DbTask( {tx, oneWay})
   @DbKeys( {db})
   DbCreate {
-    public ByteBuffer visit(final DbKeysBuilder dbKeysBuilder, final ActionBuilder actionBuilder)
-        throws Exception {
-      final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
-      final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
-      //      final Rfc822HeaderState state = actionBuilder.state();
-      //      final ByteBuffer header = state.$req().method(PUT).path("/" + dbKeysBuilder.get(db))
-      //          .headerString(Content$2dLength, "0")
-      //          .asRequestHeaderByteBuffer();
-      final SocketChannel channel = createCouchConnection();
-      enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
-        // *******************************
-        // *******************************
-        // pathological buffersize traits
-        // *******************************
-        // *******************************
-
-        String db = (String) dbKeysBuilder.get(etype.db);
-        String id = (String) dbKeysBuilder.get(docId);
-        HttpRequest request = actionBuilder.state().$req();
-        private HttpResponse response;
-        ByteBuffer header = (ByteBuffer) request.method(PUT).path("/" + db)
-        //          .headerString(Content$2dLength, "0")
-            .as(ByteBuffer.class);
-
-        public void onWrite(SelectionKey key) throws Exception {
-          int write = channel.write(header);
-          assert !header.hasRemaining();
-          header.clear();
-          response = request.headerInterest(STATIC_JSON_SEND_HEADERS).$res();
-
-          key.interestOps(OP_READ);/*WRITE-READ implicit turnaround in 1xio won't need .selector().wakeup()*/
-        }
-
-        ByteBuffer cursor;
-
-        public void onRead(SelectionKey key) throws Exception {
-          if (null == cursor) {
-            //geometric,  vulnerable to dev/null if not max'd here.
-            header =
-                null == header ? ByteBuffer.allocateDirect(getReceiveBufferSize()) : header
-                    .hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2)
-                    .put((ByteBuffer) header.flip());
-
-            int read = channel.read(header);
-            ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
-            response.apply((ByteBuffer) flip);
-
-            if (BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, response.headerBuf())) {
-              cursor = (ByteBuffer) flip.slice();
-              header = null;
-
-              if (DEBUG_SENDJSON) {
-                System.err.println(deepToString(response.statusEnum(), response, UTF8
-                    .decode((ByteBuffer) cursor.duplicate().rewind())));
-              }
-
-              HttpStatus httpStatus = response.statusEnum();
-              switch (httpStatus) {
-                case $200:
-                case $201:
-                  int remaining = Integer.parseInt(response.headerString(Content$2dLength));
-
-                  if (remaining == cursor.remaining()) {
-                    deliver();
-                  } else {
-                    cursor = ByteBuffer.allocateDirect(remaining).put(cursor);
-                  }
-                  break;
-                default: //error
-                  cyclicBarrier.reset();
-                  channel.close();
-              }
-            }
-          } else {
-            int read = channel.read(cursor);
-            switch (read) {
-              case -1:
-                cyclicBarrier.reset();
-
-                channel.close();
-                return;
-            }
-            if (!cursor.hasRemaining()) {
-              cursor.flip();
-              deliver();
-            }
-          }
-        }
-
-        private void deliver() {
-          payload.set(cursor);
-          recycleChannel(channel);
-          EXECUTOR_SERVICE.submit(new Runnable() {
-
-            public void run() {
-
-              try {
-                cyclicBarrier.await();
-              } catch (Throwable e) {
-                e.printStackTrace();
-              }
-            }
-          });
-        }
-      });
-      try {
-        cyclicBarrier.await(REALTIME_CUTOFF, getDefaultCollectorTimeUnit());
-      } catch (Exception e) {
-        if (DEBUG_SENDJSON) {
-          System.err.println("!!! " + deepToString(this, e) + "\n\tfrom");
-          dbKeysBuilder.trace().printStackTrace();
-        }
-      }
-      return payload.get();
-    }
-
   },
   @DbTask( {tx, oneWay})
   @DbKeys( {db})
   DbDelete {
-    public ByteBuffer visit(final DbKeysBuilder dbKeysBuilder, final ActionBuilder actionBuilder)
-        throws Exception {
-      final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
-      final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
-
-      final SocketChannel channel = createCouchConnection();
-
-      enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
-        final HttpRequest request = actionBuilder.state().$req();
-        ByteBuffer header =
-            (ByteBuffer) request.method(DELETE).pathResCode("/" + dbKeysBuilder.get(db)).as(
-                ByteBuffer.class);
-        ByteBuffer cursor;
-        public HttpResponse response;
-
-        public void onWrite(SelectionKey key) throws Exception {
-          int write = channel.write(header);
-          assert !header.hasRemaining();
-          header.clear();
-          response = request.headerInterest(STATIC_JSON_SEND_HEADERS).$res();
-
-          key.interestOps(OP_READ);/*WRITE-READ implicit turnaround in 1xio won't need .selector().wakeup()*/
-        }
-
-        public void onRead(SelectionKey key) throws Exception {
-          if (null == cursor) {
-            //geometric,  vulnerable to dev/null if not max'd here.
-            header =
-                null == header ? ByteBuffer.allocateDirect(getReceiveBufferSize()) : header
-                    .hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2)
-                    .put((ByteBuffer) header.flip());
-
-            int read = channel.read(header);
-            ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
-            response.apply((ByteBuffer) flip);
-
-            if (BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, response.headerBuf())) {
-              cursor = (ByteBuffer) flip.slice();
-              header = null;
-
-              if (DEBUG_SENDJSON) {
-                System.err.println(deepToString(response.statusEnum(), response, UTF8
-                    .decode((ByteBuffer) cursor.duplicate().rewind())));
-              }
-
-              HttpStatus httpStatus = response.statusEnum();
-              switch (httpStatus) {
-                case $200:
-                  int remaining = Integer.parseInt(response.headerString(Content$2dLength));
-
-                  if (remaining == cursor.remaining()) {
-                    deliver();
-                  } else {
-                    cursor = ByteBuffer.allocateDirect(remaining).put(cursor);
-                  }
-                  break;
-                default: //error
-                  cyclicBarrier.reset();
-                  channel.close();
-              }
-            }
-          } else {
-            int read = channel.read(cursor);
-            switch (read) {
-              case -1:
-                cyclicBarrier.reset();
-
-                channel.close();
-                return;
-            }
-            if (!cursor.hasRemaining()) {
-              cursor.flip();
-              deliver();
-            }
-          }
-        }
-
-        private void deliver() {
-          recycleChannel(channel);
-          payload.set(cursor);
-          EXECUTOR_SERVICE.submit(new Runnable() {
-
-            public void run() {
-              try {
-                cyclicBarrier.await();
-              } catch (Throwable e) {
-                e.printStackTrace();
-              }
-            }
-          });
-        }
-      });
-      try {
-        cyclicBarrier.await(REALTIME_CUTOFF, getDefaultCollectorTimeUnit());
-      } catch (Exception e) {
-        if (DEBUG_SENDJSON) {
-          System.err.println("!!! " + deepToString(this, e) + "\n\tfrom");
-          dbKeysBuilder.trace().printStackTrace();
-        }
-      }
-      return payload.get();
-    }
-
   },
 
   @DbTask( {pojo, future, json})
@@ -300,7 +80,7 @@ public enum CouchMetaDriver {
 
       final SocketChannel channel = createCouchConnection();
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
-      enqueue(channel, OP_CONNECT | OP_WRITE, new Impl() {
+      fsm.enqueue(channel, OP_CONNECT | OP_WRITE, new Impl() {
         // *******************************
         // *******************************
         // pathological buffersize traits
@@ -424,7 +204,7 @@ public enum CouchMetaDriver {
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
       final SocketChannel channel = createCouchConnection();
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
-      enqueue(channel, OP_CONNECT | OP_WRITE, new Impl() {
+      fsm.enqueue(channel, OP_CONNECT | OP_WRITE, new Impl() {
         // *******************************
         // *******************************
         // pathological buffersize traits
@@ -538,7 +318,7 @@ public enum CouchMetaDriver {
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
       final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
       final SocketChannel channel = createCouchConnection();
-      enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
+      fsm.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
 
         // *******************************
         // *******************************
@@ -663,7 +443,7 @@ public enum CouchMetaDriver {
       final String db = scrub('/' + (String) dbKeysBuilder.get(etype.db));
       Class type = (Class) dbKeysBuilder.get(etype.type);
       final SocketChannel channel = createCouchConnection();
-      enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
+      fsm.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
 
         /**
          * holds un-rewound raw buffers.  must potentially be backtracked to fulfill CE_TERMINAL.length token check under pathological fragmentation
@@ -923,7 +703,7 @@ public enum CouchMetaDriver {
       }
       final SocketChannel channel = createCouchConnection();
       final String finalOpaque = opaque;
-      enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
+      fsm.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
 
         // *******************************
         // *******************************
@@ -1073,7 +853,7 @@ public enum CouchMetaDriver {
       final String ctype = x;
       final SocketChannel channel = createCouchConnection();
       final AtomicReference<ByteBuffer> res = new AtomicReference<ByteBuffer>();
-      enqueue(channel, OP_WRITE, new Impl() {
+      fsm.enqueue(channel, OP_WRITE, new Impl() {
         @Override
         public void onWrite(SelectionKey key) throws Exception {
 
@@ -1174,6 +954,8 @@ public enum CouchMetaDriver {
     }
 
   };
+
+
   public static final byte[] CE_TERMINAL = "\n0\r\n\r\n".getBytes(UTF8);
   //"premature optimization" s/mature/view/
   public static final String[] STATIC_VF_HEADERS =

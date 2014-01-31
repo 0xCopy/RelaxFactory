@@ -2,7 +2,7 @@ package rxf.server.gen;
 
 import com.google.gson.JsonSyntaxException;
 import one.xio.AsioVisitor;
-import one.xio.HttpMethod;
+import one.xio.NioFsm;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -34,13 +34,13 @@ public class CouchDriverTest {
   @BeforeClass
   static public void setUp() throws Exception {
     BlobAntiPatternObject.DEBUG_SENDJSON = true;
-    HttpMethod.killswitch = false;
+    NioFsm.killswitch = false;
     exec = Executors.newScheduledThreadPool(2);
     exec.submit(new Runnable() {
       public void run() {
         AsioVisitor topLevel = new ProtocolMethodDispatch();
         try {
-          HttpMethod.init(topLevel);
+          NioFsm.init(topLevel);
         } catch (Exception e) {
           fail();
         }
@@ -79,8 +79,8 @@ public class CouchDriverTest {
     //    DbDelete.$().db(SOMEDB).to().fire().oneWay();
 
     try {
-      HttpMethod.killswitch = true;
-      HttpMethod.getSelector().close();
+      NioFsm.killswitch = true;
+      NioFsm.getSelector().close();
       //      HttpMethod.broke = null;
       exec.shutdown();
       //Thread.sleep(4000);//more than 3 seconds, standard timeout

@@ -2,6 +2,7 @@ package rxf.server.gen;
 
 import com.google.gson.JsonSyntaxException;
 import one.xio.AsioVisitor;
+import one.xio.NioFsm;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -19,7 +20,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import static one.xio.HttpMethod.*;
 import static org.junit.Assert.*;
 import static rxf.server.BlobAntiPatternObject.setDEBUG_SENDJSON;
 import static rxf.server.driver.CouchMetaDriver.gson;
@@ -36,13 +36,13 @@ public class CouchServiceTest {
   @BeforeClass
   static public void setUp() throws Exception {
     setDEBUG_SENDJSON(true);
-    setKillswitch(false);
+    NioFsm.setKillswitch(false);
     exec = Executors.newScheduledThreadPool(2);
     exec.submit(new Runnable() {
       public void run() {
         AsioVisitor topLevel = new ProtocolMethodDispatch();
         try {
-          init(topLevel);
+          NioFsm.init(topLevel);
         } catch (Exception e) {
           fail();
         }
@@ -82,8 +82,8 @@ public class CouchServiceTest {
   static public void tearDown() throws Exception {
 
     try {
-      setKillswitch(true);
-      getSelector().close();
+      NioFsm.setKillswitch(true);
+      NioFsm.getSelector().close();
       exec.shutdown();
     } catch (Exception ignore) {
     }

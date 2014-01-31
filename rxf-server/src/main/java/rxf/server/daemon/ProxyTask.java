@@ -1,6 +1,6 @@
 package rxf.server.daemon;
 
-import one.xio.HttpMethod;
+import one.xio.NioFsm;
 import rxf.server.BlobAntiPatternObject;
 
 import java.net.InetSocketAddress;
@@ -24,11 +24,11 @@ public class ProxyTask implements Runnable {
       InetSocketAddress socketAddress;
       ServerSocketChannel serverSocketChannel;
       for (String proxyPort : proxyPorts) {
-        HttpMethod.enqueue(ServerSocketChannel.open().bind(
+        NioFsm.enqueue(ServerSocketChannel.open().bind(
             new InetSocketAddress(Integer.parseInt(proxyPort)), 4096).setOption(
             StandardSocketOptions.SO_REUSEADDR, Boolean.TRUE)
         /*.setOption(StandardSocketOptions.TCP_NODELAY, Boolean.TRUE)*/
-        .configureBlocking(false), SelectionKey.OP_ACCEPT, new ProxyDaemon(this));
+            .configureBlocking(false), SelectionKey.OP_ACCEPT, new ProxyDaemon(this));
       }
 
     } catch (Throwable e) {
