@@ -4,7 +4,6 @@ import one.xio.HttpMethod;
 import rxf.server.driver.RxfBootstrap;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
@@ -50,12 +49,12 @@ public class BlobAntiPatternObject {
 
     }
 
-    private static Deque couchConnections = new LinkedList<>();
+    private static Deque<SocketChannel> couchConnections = new LinkedList<>();
 
     public static SocketChannel createCouchConnection() {
         SocketChannel ret = null;
         while (!HttpMethod.killswitch) {
-            SocketChannel poll = (SocketChannel) couchConnections.poll();
+            SocketChannel poll = couchConnections.poll();
             if (null != poll && poll.isConnected())
             {ret=poll;break;}
             try {
