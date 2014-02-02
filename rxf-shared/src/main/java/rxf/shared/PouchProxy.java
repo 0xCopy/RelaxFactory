@@ -14,6 +14,61 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ usage:
+ <code>                    String dbSpec = "http://" + Window.Location.getHost() + "/api/campaigns";
+                    final PouchProxy campaigns = PouchProxy._create("campaigns");
+                    campaigns.replicateFrom(dbSpec, new AsyncCallback<PouchProxy>() {
+                        @Override
+                        public void onFailure(Throwable caught) {
+                        }
+
+                        @Override
+                        public void onSuccess(PouchProxy result) {
+                            campaigns.allDocs(new EnumMap<PouchProxy.AllDocOptions, Object>(PouchProxy.AllDocOptions.class) {{
+                                                  put(PouchProxy.AllDocOptions.include_docs, true);
+                                              }}, new AsyncCallback<ViewResults.Results>() {
+                                                  @Override
+                                                  public void onFailure(Throwable caught) {
+                                                      caught.fillInStackTrace();
+                                                      Window.alert(caught.getLocalizedMessage());
+                                                  }
+
+                                                  @Override
+                                                  public void onSuccess(final ViewResults.Results result) {
+
+                                                      GWT.runAsync(new RunAsyncCallback() {
+                                                          @Override
+                                                          public void onFailure(Throwable reason) {
+                                                              //To change body of implemented methods use File | Settings | File Templates.
+                                                          }
+
+                                                          @Override
+                                                          public void onSuccess() {
+                                                              List<ViewResults.Results.Record> rows = result.getRows();
+                                                              int size = rows.size();
+                                                              ArrayList<Campaign> arr = new ArrayList<Campaign>();
+                                                              for (ViewResults.Results.Record r : rows) {
+                                                                  Campaign doc = AutoBeanCodex.decode((ResFactory) GWT.create(ResFactory.class), Campaign.class, r.getDoc()).as();
+                                                                  arr.add(doc);
+                                                              }
+                                                              CampaignView campaignView = new CampaignView();
+                                                              RootPanel.get().add(campaignView);
+                                                              campaignView.init(arr);
+
+                                                          }
+                                                      });
+
+                                                  }
+                                              }
+                            );
+                        }
+                    });
+</code>
+
+
+
+ */
 @SuppressWarnings("ToArrayCallWithZeroLengthArrayArgument")
 public class PouchProxy extends JavaScriptObject {
 
