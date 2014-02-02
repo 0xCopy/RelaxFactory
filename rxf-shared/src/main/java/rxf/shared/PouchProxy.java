@@ -1,13 +1,10 @@
 package rxf.shared;
 
 import com.google.common.base.Joiner;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.web.bindery.autobean.shared.AutoBean;
 import com.google.web.bindery.autobean.shared.AutoBeanFactory;
-import com.google.web.bindery.autobean.shared.Splittable;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -15,59 +12,49 @@ import java.util.List;
 import java.util.Map;
 
 /**
- usage:
- <code>                    String dbSpec = "http://" + Window.Location.getHost() + "/api/campaigns";
-                    final PouchProxy campaigns = PouchProxy._create("campaigns");
-                    campaigns.replicateFrom(dbSpec, new AsyncCallback<PouchProxy>() {
-                        @Override
-                        public void onFailure(Throwable caught) {
-                        }
+ * usage:
+ * <pre>
+   String dbSpec = "http://" + Window.Location.getHost() + "/api/campaigns";
+ final PouchProxy campaigns = PouchProxy._create("campaigns");
+ campaigns.replicateFrom(dbSpec, new AsyncCallback<PouchProxy>() {
 
-                        @Override
-                        public void onSuccess(PouchProxy result) {
-                            campaigns.allDocs(new EnumMap<PouchProxy.AllDocOptions, Object>(PouchProxy.AllDocOptions.class) {{
-                                                  put(PouchProxy.AllDocOptions.include_docs, true);
-                                              }}, new AsyncCallback<ViewResults.Results>() {
-                                                  @Override
-                                                  public void onFailure(Throwable caught) {
-                                                      caught.fillInStackTrace();
-                                                      Window.alert(caught.getLocalizedMessage());
-                                                  }
-
-                                                  @Override
-                                                  public void onSuccess(final ViewResults.Results result) {
-
-                                                      GWT.runAsync(new RunAsyncCallback() {
-                                                          @Override
-                                                          public void onFailure(Throwable reason) {
-                                                              //To change body of implemented methods use File | Settings | File Templates.
-                                                          }
-
-                                                          @Override
-                                                          public void onSuccess() {
-                                                              List<ViewResults.Results.Record> rows = result.getRows();
-                                                              int size = rows.size();
-                                                              ArrayList<Campaign> arr = new ArrayList<Campaign>();
-                                                              for (ViewResults.Results.Record r : rows) {
-                                                                  Campaign doc = AutoBeanCodex.decode((ResFactory) GWT.create(ResFactory.class), Campaign.class, r.getDoc()).as();
-                                                                  arr.add(doc);
-                                                              }
-                                                              CampaignView campaignView = new CampaignView();
-                                                              RootPanel.get().add(campaignView);
-                                                              campaignView.init(arr);
-
-                                                          }
-                                                      });
-
-                                                  }
-                                              }
-                            );
-                        }
-                    });
-</code>
-
-
-
+ @Override public void onFailure(Throwable caught) {
+ }
+ @Override public void onSuccess(PouchProxy result) {
+ campaigns.allDocs(new EnumMap<PouchProxy.AllDocOptions, Object>(PouchProxy.AllDocOptions.class) {{
+ put(PouchProxy.AllDocOptions.include_docs, true);
+ }}, new AsyncCallback<ViewResults.Results>() {
+ @Override public void onFailure(Throwable caught) {
+ caught.fillInStackTrace();
+ Window.alert(caught.getLocalizedMessage());
+ }
+ @Override public void onSuccess(final ViewResults.Results result) {
+ <p/>
+ GWT.runAsync(new RunAsyncCallback() {
+ @Override public void onFailure(Throwable reason) {
+ //To change body of implemented methods use File | Settings | File Templates.
+ }
+ @Override public void onSuccess() {
+ List<ViewResults.Results.Record> rows = result.getRows();
+ int size = rows.size();
+ ArrayList<Campaign> arr = new ArrayList<Campaign>();
+ for (ViewResults.Results.Record r : rows) {
+ Campaign doc = AutoBeanCodex.decode((ResFactory) GWT.create(ResFactory.class), Campaign.class, r.getDoc()).as();
+ arr.add(doc);
+ }
+ CampaignView campaignView = new CampaignView();
+ RootPanel.get().add(campaignView);
+ campaignView.init(arr);
+ <p/>
+ }
+ });
+ <p/>
+ }
+ }
+ );
+ }
+ });
+ </pre>
  */
 @SuppressWarnings("ToArrayCallWithZeroLengthArrayArgument")
 public class PouchProxy extends JavaScriptObject {
@@ -76,19 +63,19 @@ public class PouchProxy extends JavaScriptObject {
   }
 
   native public static PouchProxy _create(String dbSpec) /*-{
-                                                         return new $wnd.PouchDB(dbSpec)
-                                                         }-*/;
+      return new $wnd.PouchDB(dbSpec)
+  }-*/;
 
   /*continuous:true,*/
   public final native void _replicateFrom(String dbSpec, AsyncCallback<PouchProxy> cb)/*-{
-                                                                                      var ret = this;
-                                                                                      this.replicate.from(dbSpec, null == cb ? {} : { complete: function () {
-                                                                                      cb.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;)(ret);
-                                                                                      } });
-                                                                                      }-*/;
+      var ret = this;
+      this.replicate.from(dbSpec, null == cb ? {} : { complete: function () {
+          cb.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;)(ret);
+      } });
+  }-*/;
 
   final <ResFactory extends AutoBeanFactory> void allDocs(EnumMap<AllDocOptions, ?> options,
-      final AsyncCallback<ViewResults.Results> cb, final Class<ResFactory> factoryClass) {
+                                                          final AsyncCallback<ViewResults.Results> cb, final Class<ResFactory> factoryClass) {
 
     List<String> list = new ArrayList<String>();
     for (Map.Entry<AllDocOptions, ?> allDocOptionsEntry : options.entrySet()) {
@@ -118,15 +105,15 @@ public class PouchProxy extends JavaScriptObject {
    * Fetch multiple documents, deleted document are only included if options.keys is specified.
    */
   final native public void _allDocs(String jsonOptions, AsyncCallback<JavaScriptObject> cb)/*-{
-                                                                                           this.allDocs(eval('(' + jsonOptions + ')'), function (e, r) {
+      this.allDocs(eval('(' + jsonOptions + ')'), function (e, r) {
 
-                                                                                           if (!!e) {
-                                                                                           cb.@com.google.gwt.user.client.rpc.AsyncCallback::onFailure(Ljava/lang/Throwable;)(@java.io.IOException::new(Ljava/lang/String;)(e.toSource()));
-                                                                                           } else {
-                                                                                           cb.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;)(r);
-                                                                                           }
-                                                                                           })
-                                                                                           }-*/;
+          if (!!e) {
+              cb.@com.google.gwt.user.client.rpc.AsyncCallback::onFailure(Ljava/lang/Throwable;)(@java.io.IOException::new(Ljava/lang/String;)(e.toSource()));
+          } else {
+              cb.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;)(r);
+          }
+      })
+  }-*/;
 
   public final void replicateFrom(String dbSpec, AsyncCallback<PouchProxy> pouchProxyAsyncCallback) {
     _replicateFrom(dbSpec, pouchProxyAsyncCallback);
