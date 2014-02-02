@@ -1,6 +1,7 @@
 package rxf.server.daemon;
 
 import one.xio.AsioVisitor;
+import rxf.server.PreRead;
 import rxf.server.driver.RxfBootstrap;
 
 import java.nio.ByteBuffer;
@@ -17,16 +18,16 @@ import static one.xio.HttpMethod.UTF8;
  * this visitor shovels data from the outward selector to the inward selector, and vice versa.  once the headers are
  * sent inward the only state monitored is when one side of the connections close.
  */
-public class HttpPipeVisitor extends AsioVisitor.Impl {
+public class HttpPipeVisitor extends AsioVisitor.Impl implements PreRead {
   private static final boolean PROXY_DEBUG =
       "true".equals(RxfBootstrap.getVar("PROXY_DEBUG", String.valueOf(false)));
   final private ByteBuffer[] b;
   protected String name;
-  protected AtomicInteger remaining;
+  public AtomicInteger remaining;
   SelectionKey otherKey;
   private boolean limit;
 
-  HttpPipeVisitor(String name, SelectionKey otherKey, ByteBuffer... b) {
+  public HttpPipeVisitor(String name, SelectionKey otherKey, ByteBuffer... b) {
     this.name = name;
     this.otherKey = otherKey;
     this.b = b;

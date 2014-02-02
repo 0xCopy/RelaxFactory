@@ -62,8 +62,8 @@ public class ProxyDaemon extends AsioVisitor.Impl {
 
   private InetSocketAddress preallocAddr;
 
-  public ProxyDaemon(ProxyTask proxyTask) {
-    this.proxyTask = proxyTask;
+  public ProxyDaemon(ProxyTask... proxyTask) {
+    this.proxyTask = proxyTask.length > 0 ? proxyTask[0] : new ProxyTask();
 
     if (PROXY_PORT != 0)
       try {
@@ -71,7 +71,6 @@ public class ProxyDaemon extends AsioVisitor.Impl {
       } catch (UnknownHostException e) {
         e.printStackTrace();
       }
-
   }
 
   /**
@@ -83,10 +82,11 @@ public class ProxyDaemon extends AsioVisitor.Impl {
    */
   public static void pipe(SelectionKey innerKey, final SelectionKey outerKey, final ByteBuffer... b) {
     String s = "pipe-" + counter;
-    final HttpPipeVisitor ib = new HttpPipeVisitor(s + "-in", innerKey, b);
+    final ByteBuffer ob = b.length > 1 ? b[1] : ByteBuffer.allocate(4 << 10);
+    final HttpPipeVisitor ib = new HttpPipeVisitor(s + "-in", innerKey, b[0], ob);
     outerKey.interestOps(OP_READ).attach(ib);
     innerKey.interestOps(OP_WRITE);
-    innerKey.attach(new HttpPipeVisitor(s + "-out", outerKey, b[1], b[0]) {
+    innerKey.attach(new HttpPipeVisitor(s + "-out", outerKey, ob, b[0]) {
       public boolean fail;
 
       @Override

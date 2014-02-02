@@ -37,7 +37,7 @@ public class BlobAntiPatternObject {
 
     static {
 
-        String rxfcouchprefix = RxfBootstrap.getVar("RXF_COUCH_PREFIX","http://localhost:5894");
+        String rxfcouchprefix = RxfBootstrap.getVar("RXF_COUCH_PREFIX","http://localhost:5984");
       try {
         URI uri = new URI(rxfcouchprefix);
         int port = uri.getPort();
@@ -62,6 +62,7 @@ public class BlobAntiPatternObject {
                 channel.configureBlocking(false);
                 ret=channel;break;
             } catch (Exception e) {
+              e.printStackTrace();
             } finally {
             }
         }
