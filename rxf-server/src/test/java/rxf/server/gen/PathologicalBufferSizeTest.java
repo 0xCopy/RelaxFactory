@@ -5,7 +5,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import rxf.server.BlobAntiPatternObject;
-import rxf.server.CouchTx;
+import rxf.shared.CouchTx;
 import rxf.server.driver.CouchMetaDriver;
 import rxf.server.gen.CouchDriver.DbCreate;
 import rxf.server.gen.CouchDriver.DbDelete;

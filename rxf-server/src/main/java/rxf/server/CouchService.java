@@ -1,5 +1,7 @@
 package rxf.server;
 
+import rxf.shared.CouchTx;
+
 import java.lang.annotation.*;
 
 /**

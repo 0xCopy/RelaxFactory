@@ -97,7 +97,8 @@ public class PouchProxy extends JavaScriptObject {
       public void onSuccess(JavaScriptObject result) {
         //TODO: pure autobeans codex work here.
         // cb.onSuccess(new JsoReader<ViewResults.Results, ViewResults.Results>((ResFactory) GWT.create(factoryClass), ViewResults.Results.class).read(null, result));
-     }});
+      }
+    });
   }
 
   /**

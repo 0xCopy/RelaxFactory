@@ -11,6 +11,7 @@ import rxf.server.gen.CouchDriver.DocPersist.DocPersistActionBuilder;
 import rxf.server.gen.CouchDriver.DocPersist.DocPersistTerminalBuilder;
 import rxf.server.gen.CouchDriver.JsonSend.JsonSendTerminalBuilder;
 import rxf.server.gen.CouchDriver.ViewFetch.ViewFetchTerminalBuilder;
+import rxf.shared.CouchTx;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;

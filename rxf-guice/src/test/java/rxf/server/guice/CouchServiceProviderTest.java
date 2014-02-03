@@ -20,7 +20,7 @@ import org.junit.Test;
 
 import rxf.server.BlobAntiPatternObject;
 import rxf.server.CouchService;
-import rxf.server.CouchTx;
+import rxf.shared.CouchTx;
 import rxf.server.RelaxFactoryServerImpl;
 import rxf.server.gen.CouchDriver;
 import rxf.server.web.inf.ProtocolMethodDispatch;

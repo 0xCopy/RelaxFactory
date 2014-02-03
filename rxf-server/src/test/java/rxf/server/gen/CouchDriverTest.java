@@ -8,7 +8,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import rxf.server.BlobAntiPatternObject;
 import rxf.server.CouchResultSet;
-import rxf.server.CouchTx;
+import rxf.shared.CouchTx;
 import rxf.server.driver.CouchMetaDriver;
 import rxf.server.gen.CouchDriver.*;
 import rxf.server.gen.CouchDriver.ViewFetch.ViewFetchTerminalBuilder;

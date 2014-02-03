@@ -1,4 +1,4 @@
-package rxf.server;
+package rxf.shared;
 
 public class CouchTx {
   private Boolean ok;

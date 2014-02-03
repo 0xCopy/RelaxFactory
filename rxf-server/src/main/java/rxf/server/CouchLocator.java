@@ -3,6 +3,7 @@ package rxf.server;
 import com.google.web.bindery.requestfactory.shared.Locator;
 import rxf.server.gen.CouchDriver.DocFetch;
 import rxf.server.gen.CouchDriver.DocPersist;
+import rxf.shared.CouchTx;
 
 import java.util.List;
 

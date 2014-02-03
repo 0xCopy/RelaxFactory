@@ -5,6 +5,7 @@ package rxf.server.gen;
 import rxf.server.*;
 import rxf.server.an.DbKeys;
 import rxf.server.driver.CouchMetaDriver;
+import rxf.shared.CouchTx;
 
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;

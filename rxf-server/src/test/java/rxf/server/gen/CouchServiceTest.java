@@ -8,7 +8,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import rxf.server.CouchService;
 import rxf.server.CouchServiceFactory;
-import rxf.server.CouchTx;
+import rxf.shared.CouchTx;
 import rxf.server.gen.CouchDriver.DbDelete;
 import rxf.server.gen.CouchDriver.DocFetch;
 import rxf.server.web.inf.ProtocolMethodDispatch;
