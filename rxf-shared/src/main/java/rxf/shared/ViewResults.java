@@ -17,6 +17,7 @@ public interface ViewResults {
 
     String getError();
   }
+
   /**
    * {
    * "total_rows": 1,
@@ -46,7 +47,7 @@ public interface ViewResults {
     List<Record> getRows();
   }
 
-  public Map<String, String> getErr();
+  Map<String, String> getErr();
 
-  public Results getResults();
+  Results getResults();
 }

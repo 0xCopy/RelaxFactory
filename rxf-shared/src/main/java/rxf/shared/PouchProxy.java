@@ -2,9 +2,14 @@ package rxf.shared;
 
 import com.google.common.base.Joiner;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.shared.GWT;
+import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.web.bindery.autobean.shared.AutoBean;
+import com.google.web.bindery.autobean.shared.AutoBeanCodex;
 import com.google.web.bindery.autobean.shared.AutoBeanFactory;
+import com.google.web.bindery.autobean.shared.Splittable;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -76,8 +81,8 @@ public class PouchProxy extends JavaScriptObject {
       } });
   }-*/;
 
-  final <ResFactory extends AutoBeanFactory> void allDocs(EnumMap<AllDocOptions, ?> options,
-      final AsyncCallback<ViewResults.Results> cb, final Class<ResFactory> factoryClass) {
+  public final PouchProxy allDocs(EnumMap<AllDocOptions, ?> options,
+      final AsyncCallback<ViewResults.Results> cb) {
 
     List<String> list = new ArrayList<String>();
     for (Map.Entry<AllDocOptions, ?> allDocOptionsEntry : options.entrySet()) {
@@ -95,10 +100,30 @@ public class PouchProxy extends JavaScriptObject {
 
       @Override
       public void onSuccess(JavaScriptObject result) {
-        //TODO: pure autobeans codex work here.
-        // cb.onSuccess(new JsoReader<ViewResults.Results, ViewResults.Results>((ResFactory) GWT.create(factoryClass), ViewResults.Results.class).read(null, result));
+
+        PouchResultsFactory resFactory = GWT.create(PouchResultsFactory.class);
+        Class<ViewResults.Results> resultsClass = ViewResults.Results.class;
+        AutoBean<ViewResults.Results> decode;
+
+        if (!GWT.isScript()) {
+
+          String x = new JSONObject(result).toString();
+          System.err.println(x);
+          decode = AutoBeanCodex.decode(resFactory, resultsClass, x);
+        } else
+          //        cb.onSuccess(new JsoReader<ViewResults.Results, ViewResults.Results>(resFactory, resultsClass).read(null, result));
+          decode = AutoBeanCodex.decode(resFactory, resultsClass, (Splittable) result.cast());
+        System.err.println("decoded successfully");
+        cb.onSuccess(decode.as());
       }
     });
+    return this;
+  }
+
+  static public interface PouchResultsFactory extends AutoBeanFactory {
+    AutoBean<ViewResults.Results> pouchResults();
+
+    AutoBean<ViewResults.Results> pouchResults(ViewResults.Results x);
   }
 
   /**
@@ -116,8 +141,10 @@ public class PouchProxy extends JavaScriptObject {
       })
   }-*/;
 
-  public final void replicateFrom(String dbSpec, AsyncCallback<PouchProxy> pouchProxyAsyncCallback) {
+  public final PouchProxy replicateFrom(String dbSpec,
+      AsyncCallback<PouchProxy> pouchProxyAsyncCallback) {
     _replicateFrom(dbSpec, pouchProxyAsyncCallback);
+    return this;
   }
 
   public static enum AllDocOptions {
