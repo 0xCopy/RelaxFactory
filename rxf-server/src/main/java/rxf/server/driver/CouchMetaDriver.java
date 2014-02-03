@@ -1184,7 +1184,7 @@ public enum CouchMetaDriver {
       Rfc822HeaderState.staticHeaderStrings(Content$2dLength);
   public static final byte[] HEADER_TERMINATOR = "\r\n\r\n".getBytes(UTF8);
   public static final TimeUnit REALTIME_UNIT =
-      TimeUnit.valueOf(RxfBootstrap.getVar("REALTIME_UNIT", isDEBUG_SENDJSON() ? TimeUnit.HOURS
+      TimeUnit.valueOf(RxfBootstrap.getVar("RXF_REALTIME_UNIT", isDEBUG_SENDJSON() ? TimeUnit.HOURS
           .name() : TimeUnit.SECONDS.name()));
   public static final AtomicInteger ATOMIC_INTEGER = new AtomicInteger(0);
   public static final int REALTIME_CUTOFF =
