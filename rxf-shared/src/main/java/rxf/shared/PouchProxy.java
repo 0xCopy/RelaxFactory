@@ -64,7 +64,7 @@ public class PouchProxy extends JavaScriptObject {
 
   native public static PouchProxy _create(String dbSpec)
   /*-{
-      return new PouchDB(dbSpec)
+      return new $wnd.PouchDB(dbSpec)
   }-*/;
 
   /*continuous:true,*/

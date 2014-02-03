@@ -4,4 +4,5 @@
     <inherits name="com.google.common.base.Base"/>
     <script src="pouchdb.js"/>
     <source path="shared"/>
+    <public path="public"/>
 </module>
