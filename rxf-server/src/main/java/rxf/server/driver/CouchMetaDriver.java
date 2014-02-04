@@ -1208,7 +1208,12 @@ public enum CouchMetaDriver {
       gsonBuilder.serializeNulls();
     if ("true".equals(RxfBootstrap.getVar("GSON_NANS", "false")))
       gsonBuilder.serializeSpecialFloatingPointValues();
+
     BUILDER = gsonBuilder;
+  }
+  public static Gson gson() {
+
+    return 0 == ATOMIC_INTEGER.incrementAndGet() % 10000 ? GSON = BUILDER.create() : GSON;
   }
 
   private static Gson GSON = BUILDER.create();
@@ -1260,10 +1265,6 @@ public enum CouchMetaDriver {
     System.out.println(s);
   }
 
-  public static Gson gson() {
-
-    return 0 == ATOMIC_INTEGER.incrementAndGet() % 10000 ? GSON = BUILDER.create() : GSON;
-  }
 
   public ByteBuffer visit() throws Exception {
     DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();

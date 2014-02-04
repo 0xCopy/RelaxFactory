@@ -67,6 +67,26 @@ public class PouchProxy extends JavaScriptObject {
   protected PouchProxy() {
   }
 
+  public final PouchProxy fetchDoc(String docId, AsyncCallback<Splittable> callback, FetchOptions... options) {
+
+
+
+    return this;
+  }
+
+  final native void _fetchDoc(String docId, AsyncCallback<Splittable> callback, FetchOptions... options) /*-{
+    var o=Array.prototype.map(options,function (op){op.@rxf.shared.PouchProxy.FetchOptions::name()()});
+
+      this.get(docId,o,callback.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;)
+      );
+  }-*/;
+
+  public final PouchProxy replicateFrom(String dbSpec,
+                                        AsyncCallback<PouchProxy> pouchProxyAsyncCallback) {
+    _replicateFrom(dbSpec, pouchProxyAsyncCallback);
+    return this;
+  }
+
   native public static PouchProxy _create(String dbSpec)
   /*-{
       return new $wnd.PouchDB(dbSpec)
@@ -82,7 +102,7 @@ public class PouchProxy extends JavaScriptObject {
   }-*/;
 
   public final PouchProxy allDocs(EnumMap<AllDocOptions, ?> options,
-      final AsyncCallback<ViewResults.Results> cb) {
+                                  final AsyncCallback<ViewResults.Results> cb) {
 
     List<String> list = new ArrayList<String>();
     for (Map.Entry<AllDocOptions, ?> allDocOptionsEntry : options.entrySet()) {
@@ -140,12 +160,6 @@ public class PouchProxy extends JavaScriptObject {
           }
       })
   }-*/;
-
-  public final PouchProxy replicateFrom(String dbSpec,
-      AsyncCallback<PouchProxy> pouchProxyAsyncCallback) {
-    _replicateFrom(dbSpec, pouchProxyAsyncCallback);
-    return this;
-  }
 
   public static enum AllDocOptions {
 
@@ -213,4 +227,37 @@ public class PouchProxy extends JavaScriptObject {
     }
   }
 
+
+  /**
+   * Created with IntelliJ IDEA.
+   * User: jim
+   * Date: 2/4/14
+   * Time: 1:37 AM
+   * To change this template use File | Settings | File Templates.
+   */
+  public static enum FetchOptions {
+    /**
+     * Fetch specific revision of a document. Defaults to winning revision (see couchdb guide.
+     */rev,
+    /**
+     * Include revision history of the document
+     */revs,
+    /**
+     * Include a list of revisions of the document, and their availability.
+     */revs_info,
+    /**
+     * Fetch all leaf revisions if openrevs="all" or fetch all leaf revisions specified in openrevs array. Leaves will be returned in the same order as specified in input array
+     */open_revs,
+    /**
+     * If specified conflicting leaf revisions will be attached in _conflicts array
+     */conflicts,
+    /**
+     * Include attachment data
+     */attachments,
+    /**
+     * Include sequence number of the revision in the database
+     */local_seq,
+
+
+  }
 }
