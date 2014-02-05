@@ -1193,7 +1193,7 @@ public enum CouchMetaDriver {
   public static final String GENERATED_METHODS = "/*generated methods vsd78vs0fd078fv0sa78*/";
   public static final String IFACE_FIRE_TARGETS = "/*fire interface ijnoifnj453oijnfiojn h*/";
   public static final String FIRE_METHODS = "/*embedded fire terminals j63l4k56jn4k3jn5l63l456jn*/";
-  public static GsonBuilder BUILDER;
+  private static GsonBuilder BUILDER;
 
   static {
     GsonBuilder gsonBuilder =
@@ -1209,14 +1209,30 @@ public enum CouchMetaDriver {
     if ("true".equals(RxfBootstrap.getVar("GSON_NANS", "false")))
       gsonBuilder.serializeSpecialFloatingPointValues();
 
-    BUILDER = gsonBuilder;
+    builder(gsonBuilder);
   }
+
+  /**
+   * a lazy singleton that churns at an increment of 10k usages to free up potential threadlocals or other statics.
+   * @return Gson object
+   */
   public static Gson gson() {
 
-    return 0 == ATOMIC_INTEGER.incrementAndGet() % 10000 ? GSON = BUILDER.create() : GSON;
+    return (null == GSON || 0 == ATOMIC_INTEGER.incrementAndGet() % 10000) ? GSON =
+        builder().create() : GSON;
   }
 
-  private static Gson GSON = BUILDER.create();
+  /**allow non-rxf code on registration of type adapters to null the gson used by the driver.
+   *
+   * @param v null to rebuild with new TypeAdapters
+   */
+
+  public static void gson(Gson v) {
+
+    GSON = v;
+  }
+
+  private static Gson GSON = builder().create();
 
   private static String s1 = "";
 
@@ -1259,12 +1275,27 @@ public enum CouchMetaDriver {
             s += ',';
         }
         s += " );\n";
-        s1 += "\n" + couchDriver.builder();
+        s1 += "\n" + couchDriver.generateDriver();
       }
     s += s1 + "}";
     System.out.println(s);
   }
 
+  /**
+   * the CouchDriver needs a builder that a client may access soas to register gson TypeAdapters.
+   * @return the builder
+   */
+  public static GsonBuilder builder() {
+    return BUILDER;
+  }
+
+  /**
+   * sets the GsonBuilder for the driver and those depending on its gson marshalling.
+   * @param BUILDER
+   */
+  public static void builder(GsonBuilder BUILDER) {
+    CouchMetaDriver.BUILDER = BUILDER;
+  }
 
   public ByteBuffer visit() throws Exception {
     DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
@@ -1283,7 +1314,7 @@ public enum CouchMetaDriver {
     throw new AbstractMethodError();
   }
 
-  public String builder() throws NoSuchFieldException {
+  public String generateDriver() throws NoSuchFieldException {
     Field field = CouchMetaDriver.class.getField(name());
 
     String s = null;

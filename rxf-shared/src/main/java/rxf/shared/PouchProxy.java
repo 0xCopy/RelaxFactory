@@ -67,22 +67,22 @@ public class PouchProxy extends JavaScriptObject {
   protected PouchProxy() {
   }
 
-  public final PouchProxy fetchDoc(String docId, AsyncCallback<Splittable> callback, FetchOptions... options) {
-
-
+  public final PouchProxy fetchDoc(String docId, AsyncCallback<Splittable> callback,
+      FetchOptions... options) {
 
     return this;
   }
 
-  final native void _fetchDoc(String docId, AsyncCallback<Splittable> callback, FetchOptions... options) /*-{
-    var o=Array.prototype.map(options,function (op){op.@rxf.shared.PouchProxy.FetchOptions::name()()});
+  final native void _fetchDoc(String docId, AsyncCallback<Splittable> callback,
+      FetchOptions... options) /*-{
+                               var o=Array.prototype.map(options,function (op){op.@rxf.shared.PouchProxy.FetchOptions::name()()});
 
-      this.get(docId,o,callback.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;)
-      );
-  }-*/;
+                               this.get(docId,o,callback.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;)
+                               );
+                               }-*/;
 
   public final PouchProxy replicateFrom(String dbSpec,
-                                        AsyncCallback<PouchProxy> pouchProxyAsyncCallback) {
+      AsyncCallback<PouchProxy> pouchProxyAsyncCallback) {
     _replicateFrom(dbSpec, pouchProxyAsyncCallback);
     return this;
   }
@@ -102,7 +102,7 @@ public class PouchProxy extends JavaScriptObject {
   }-*/;
 
   public final PouchProxy allDocs(EnumMap<AllDocOptions, ?> options,
-                                  final AsyncCallback<ViewResults.Results> cb) {
+      final AsyncCallback<ViewResults.Results> cb) {
 
     List<String> list = new ArrayList<String>();
     for (Map.Entry<AllDocOptions, ?> allDocOptionsEntry : options.entrySet()) {
@@ -227,7 +227,6 @@ public class PouchProxy extends JavaScriptObject {
     }
   }
 
-
   /**
    * Created with IntelliJ IDEA.
    * User: jim
@@ -238,26 +237,32 @@ public class PouchProxy extends JavaScriptObject {
   public static enum FetchOptions {
     /**
      * Fetch specific revision of a document. Defaults to winning revision (see couchdb guide.
-     */rev,
+     */
+    rev,
     /**
      * Include revision history of the document
-     */revs,
+     */
+    revs,
     /**
      * Include a list of revisions of the document, and their availability.
-     */revs_info,
+     */
+    revs_info,
     /**
      * Fetch all leaf revisions if openrevs="all" or fetch all leaf revisions specified in openrevs array. Leaves will be returned in the same order as specified in input array
-     */open_revs,
+     */
+    open_revs,
     /**
      * If specified conflicting leaf revisions will be attached in _conflicts array
-     */conflicts,
+     */
+    conflicts,
     /**
      * Include attachment data
-     */attachments,
+     */
+    attachments,
     /**
      * Include sequence number of the revision in the database
-     */local_seq,
-
+     */
+    local_seq,
 
   }
 }

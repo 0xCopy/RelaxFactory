@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Module builder to facilitate declaring {@link CouchService} types and the entities they will manage.
+ * Module generateDriver to facilitate declaring {@link CouchService} types and the entities they will manage.
  * When created, will wire up the {@link CouchServiceFactory} to create requested service instances.
  */
 public class CouchModuleBuilder {
@@ -22,7 +22,7 @@ public class CouchModuleBuilder {
       new ArrayList<Class<? extends CouchService<?>>>();
 
   /**
-   * Creates a new builder. No namespace has been declared, a String constant must be bound to
+   * Creates a new generateDriver. No namespace has been declared, a String constant must be bound to
    * {@literal @Named(} {@value #NAMESPACE}) to allow this to correctly create service instances.
    */
   public CouchModuleBuilder() {
@@ -30,7 +30,7 @@ public class CouchModuleBuilder {
   }
 
   /**
-   * Creates a new builder, with the given namespace for all databases.
+   * Creates a new generateDriver, with the given namespace for all databases.
    *
    * @param namespace
    */
