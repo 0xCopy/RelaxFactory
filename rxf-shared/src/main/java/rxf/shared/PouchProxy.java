@@ -10,6 +10,7 @@ import com.google.web.bindery.autobean.shared.AutoBean;
 import com.google.web.bindery.autobean.shared.AutoBeanCodex;
 import com.google.web.bindery.autobean.shared.AutoBeanFactory;
 import com.google.web.bindery.autobean.shared.Splittable;
+import rxf.shared.ViewResults;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -67,42 +68,129 @@ public class PouchProxy extends JavaScriptObject {
   protected PouchProxy() {
   }
 
+  /**
+   * <ul>
+   * Fetch multiple documents, deleted document are only included if options.keys is specified.
+   * <p/>
+   * <li> options.include_docs: Include the document in each row in the doc field
+   * <li> options.conflicts: Include conflicts in the _conflicts field of a doc
+   * <li> options.startkey & options.endkey: Get documents with keys in a certain range
+   * <li> options.descending: Reverse the order of the output table
+   * <li> options.keys: array of keys you want to get
+   * <ul><li> neither startkey nor endkey can be specified with this option
+   * <li> the rows are returned in the same order as the supplied "keys" array
+   * <li> the row for a deleted document will have the revision ID of the deletion, and an extra key "deleted":true in the "value" property
+   * <li> the row for a nonexistent document will just contain an "error" property with the value "not_found"
+   * </ul>
+   * <li> options.attachments: Include attachment data
+   *
+   * @param docId
+   * @param callback
+   * @param options
+   * @return
+   */
   public final PouchProxy fetchDoc(String docId, AsyncCallback<Splittable> callback,
-      FetchOptions... options) {
+                                   FetchOptions... options) {
 
-    return this;
+    return _fetchDoc(docId, callback, options);
   }
 
-  final native void _fetchDoc(String docId, AsyncCallback<Splittable> callback,
-      FetchOptions... options) /*-{
-                               var o=Array.prototype.map(options,function (op){op.@rxf.shared.PouchProxy.FetchOptions::name()()});
+  private final native PouchProxy _fetchDoc(String docId, AsyncCallback<Splittable> callback,
+                                            FetchOptions... options) /*-{
+      var o = Array.prototype.map(options, function (op) {
+          op.@rxf.shared.PouchProxy.FetchOptions::name()()
+      });
 
-                               this.get(docId,o,callback.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;)
-                               );
-                               }-*/;
+      this.get(docId, o, callback.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;)
+      );
+      return this;
+  }-*/;
 
   public final PouchProxy replicateFrom(String dbSpec,
-      AsyncCallback<PouchProxy> pouchProxyAsyncCallback) {
-    _replicateFrom(dbSpec, pouchProxyAsyncCallback);
-    return this;
+                                        AsyncCallback<PouchProxy> pouchProxyAsyncCallback) {
+    return _replicateFrom(dbSpec, pouchProxyAsyncCallback);
+
   }
 
-  native public static PouchProxy _create(String dbSpec)
+
+  final native public static PouchProxy create(String dbSpec)
   /*-{
       return new $wnd.PouchDB(dbSpec)
   }-*/;
 
-  /*continuous:true,*/
-  public final native void _replicateFrom(String dbSpec, AsyncCallback<PouchProxy> cb)
+
+  /**
+   * Create a new document or update an existing document. If the document already exists you must specify its revision _rev, otherwise a conflict will occur.
+   * <p/>
+   * There are some restrictions on valid property names of the documents, these are explained here.
+   */
+  final public <T> PouchProxy put(AutoBean<T> t, AsyncCallback<PouchProxy> cb) {
+    JavaScriptObject o;
+    if (!GWT.isScript()) {
+      o=parse(AutoBeanCodex.encode(t).getPayload());
+    } else
+      o = (JavaScriptObject) t;
+
+    PouchProxy pouchProxy = _put(o, cb);
+    return pouchProxy;
+  }
+
+  /**
+   * Create a new document or update an existing document. If the document already exists you must specify its revision _rev, otherwise a conflict will occur.
+   * <p/>
+   * There are some restrictions on valid property names of the documents, these are explained here.
+   */
+  final public <T> PouchProxy post(AutoBean<T> t, AsyncCallback<PouchProxy> cb) {
+    JavaScriptObject o;
+    if (!GWT.isScript()) {
+      o=parse(AutoBeanCodex.encode(t).getPayload());
+    } else
+      o = (JavaScriptObject) t;
+
+    PouchProxy pouchProxy = _post(o, cb);
+    return pouchProxy;
+  }
+  protected native final JavaScriptObject parse(String json)
+  /*-{
+      return JSON.parse(json)
+
+  }-*/;
+
+  protected native final PouchProxy _put(JavaScriptObject autobean, AsyncCallback<PouchProxy> cb)
+  /*-{
+      this.put(autobean, function (err, response) {
+          if (null != err)
+              cb.@com.google.gwt.user.client.rpc.AsyncCallback::onFailure(Ljava/lang/Throwable;)(@java.io.IOException::new(Ljava/lang/String;)(err.toSource()));
+          else
+              cb.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;)(this);
+      });
+      return this;
+  }-*/;
+
+  protected native final PouchProxy _post(JavaScriptObject autobean, AsyncCallback<PouchProxy> cb)
+  /*-{
+      this.post(autobean, function (err, response) {
+          if (null != err)
+              cb.@com.google.gwt.user.client.rpc.AsyncCallback::onFailure(Ljava/lang/Throwable;)(@java.io.IOException::new(Ljava/lang/String;)(err.toSource()));
+          else
+              cb.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;)(this);
+      });
+      return this;
+  }-*/;
+
+
+  public final native PouchProxy _replicateFrom(String dbSpec, AsyncCallback<PouchProxy> cb)
   /*-{
       var ret = this;
       this.replicate.from(dbSpec, null == cb ? {} : { complete: function () {
           cb.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;)(ret);
       } });
+      return this;
   }-*/;
 
+
   public final PouchProxy allDocs(EnumMap<AllDocOptions, ?> options,
-      final AsyncCallback<ViewResults.Results> cb) {
+                                  final AsyncCallback<ViewResults.Results> cb) {
 
     List<String> list = new ArrayList<String>();
     for (Map.Entry<AllDocOptions, ?> allDocOptionsEntry : options.entrySet()) {
@@ -131,7 +219,6 @@ public class PouchProxy extends JavaScriptObject {
           System.err.println(x);
           decode = AutoBeanCodex.decode(resFactory, resultsClass, x);
         } else
-          //        cb.onSuccess(new JsoReader<ViewResults.Results, ViewResults.Results>(resFactory, resultsClass).read(null, result));
           decode = AutoBeanCodex.decode(resFactory, resultsClass, (Splittable) result.cast());
         System.err.println("decoded successfully");
         cb.onSuccess(decode.as());
@@ -209,7 +296,7 @@ public class PouchProxy extends JavaScriptObject {
       }
     },
     /**
-     * Include attachmain driver ment data
+     * Include attachment data
      */
     attachments {
       @Override
@@ -264,5 +351,9 @@ public class PouchProxy extends JavaScriptObject {
      */
     local_seq,
 
+  }
+
+  enum PutOptions {
+    reserved
   }
 }
