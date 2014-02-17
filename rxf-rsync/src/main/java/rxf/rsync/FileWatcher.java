@@ -1,10 +1,8 @@
 
-package rxf.rsync
-    ;
+package rxf.rsync;
 
 
 import com.google.common.hash.Hashing;
-
 import javolution.util.FastMap;
 import one.xio.AsioVisitor;
 import one.xio.HttpMethod;
@@ -34,8 +32,8 @@ import static rxf.server.driver.RxfBootstrap.getVar;
 
 public class FileWatcher {
   public static final Path NORMALIZE = Paths.get(getVar("FILEWATCHER_DIR", Paths.get(".").toAbsolutePath().normalize().toString()));
-  public static final String FILEWATCHER_DB = getVar("FILEWATCHER_DB", "scoria");
-  public static final String FILEWATCHER_DOCID = getVar("FILEWATCHER_DOCID", "user");
+  public static final String FILEWATCHER_DB = getVar("FILEWATCHER_DB", "mirror");
+  public static final String FILEWATCHER_DOCID = getVar("FILEWATCHER_DOCID", "app");
   public static final ScheduledExecutorService SCHEDULED_EXECUTOR_SERVICE = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
   private final WatchService watcher;
   private final Map<WatchKey, Path> keys;
@@ -43,7 +41,6 @@ public class FileWatcher {
   private boolean trace = false;
   private Timer timer = new Timer();
 
-  // JIM: Are you OK with this?
   private Path dir = null;
 
   @SuppressWarnings("unchecked")
@@ -91,7 +88,6 @@ public class FileWatcher {
    * Creates a WatchService and registers the given directory
    */
   FileWatcher(Path dir, boolean recursive) throws IOException {
-    // JIM: Are you OK with this?
     this.dir = dir;
 
     this.watcher = FileSystems.getDefault().newWatchService();
