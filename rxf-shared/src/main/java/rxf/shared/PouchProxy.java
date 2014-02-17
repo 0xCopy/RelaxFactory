@@ -38,7 +38,7 @@ import java.util.Map;
  * <p/>
  * GWT.runAsync(new RunAsyncCallback() {
  * @Override public void onFailure(Throwable reason) {
- * //To change body of implemented methods use File | Settings | File Templates.
+ *
  * }
  * @Override public void onSuccess() {
  * List<ViewResults.Results.Record> rows = result.getRows();
@@ -89,50 +89,61 @@ public class PouchProxy extends JavaScriptObject {
    * @param options
    * @return
    */
-  public final PouchProxy fetchDoc(String docId, AsyncCallback<Splittable> callback,
-                                   FetchOptions... options) {
+  public final PouchProxy fetchDoc(String docId, AsyncCallback<JavaScriptObject> callback,
+      EnumMap<FetchOptions, String> options) {
 
     return _fetchDoc(docId, callback, options);
   }
 
-  private final native PouchProxy _fetchDoc(String docId, AsyncCallback<Splittable> callback,
-                                            FetchOptions... options) /*-{
-      var o = Array.prototype.map(options, function (op) {
-          op.@rxf.shared.PouchProxy.FetchOptions::name()()
-      });
+  private native PouchProxy _fetchDoc(String docId, AsyncCallback<JavaScriptObject> callback,
+      EnumMap<FetchOptions, String> options) /*-{
+                                             //todo var o = Array.prototype.map(options, function (op) {
+                                             // op.@cydesign.strombolian.client.pouchdb.PouchProxy.FetchOptions::name()()
+                                             // });
 
-      this.get(docId, o, callback.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;)
-      );
-      return this;
-  }-*/;
+                                             this.get(docId, function(err,doc){
+
+                                             if (null != err) {
+                                             callback.@com.google.gwt.user.client.rpc.AsyncCallback::onFailure(Ljava/lang/Throwable;)(err);
+                                             } else {
+                                             callback.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;)(doc);
+                                             }
+                                             });
+                                             return this;
+                                             }-*/;
 
   public final PouchProxy replicateFrom(String dbSpec,
-                                        AsyncCallback<PouchProxy> pouchProxyAsyncCallback) {
+      AsyncCallback<PouchProxy> pouchProxyAsyncCallback) {
     return _replicateFrom(dbSpec, pouchProxyAsyncCallback);
 
   }
 
+  // TODO: JIM, please verify this (Alex)
+  public final PouchProxy replicateTo(String dbSpec,
+      AsyncCallback<PouchProxy> pouchProxyAsyncCallback) {
+    return _replicateTo(dbSpec, pouchProxyAsyncCallback);
+  }
 
   final native public static PouchProxy create(String dbSpec)
   /*-{
       return new $wnd.PouchDB(dbSpec)
   }-*/;
 
-
   /**
    * Create a new document or update an existing document. If the document already exists you must specify its revision _rev, otherwise a conflict will occur.
    * <p/>
    * There are some restrictions on valid property names of the documents, these are explained here.
    */
-  final public <T> PouchProxy put(AutoBean<T> t, AsyncCallback<PouchProxy> cb) {
+  final public <T> PouchProxy put(AutoBean<T> t, AsyncCallback<String> cb) {
     JavaScriptObject o;
     if (!GWT.isScript()) {
-      o=parse(AutoBeanCodex.encode(t).getPayload());
-    } else
+      System.out.println(AutoBeanCodex.encode(t));
+      System.out.println(AutoBeanCodex.encode(t).getPayload());
+      o = parse(AutoBeanCodex.encode(t).getPayload());
+    } else {
       o = (JavaScriptObject) t;
-
-    PouchProxy pouchProxy = _put(o, cb);
-    return pouchProxy;
+    }
+    return _put(o, cb);
   }
 
   /**
@@ -140,44 +151,43 @@ public class PouchProxy extends JavaScriptObject {
    * <p/>
    * There are some restrictions on valid property names of the documents, these are explained here.
    */
-  final public <T> PouchProxy post(AutoBean<T> t, AsyncCallback<PouchProxy> cb) {
+  final public <T> PouchProxy post(AutoBean<T> t, AsyncCallback<String> cb) {
     JavaScriptObject o;
     if (!GWT.isScript()) {
-      o=parse(AutoBeanCodex.encode(t).getPayload());
-    } else
+      o = parse(AutoBeanCodex.encode(t).getPayload());
+    } else {
       o = (JavaScriptObject) t;
-
-    PouchProxy pouchProxy = _post(o, cb);
-    return pouchProxy;
+    }
+    return _post(o, cb);
   }
-  protected native final JavaScriptObject parse(String json)
+
+  public native final JavaScriptObject parse(String json)
   /*-{
       return JSON.parse(json)
 
   }-*/;
 
-  protected native final PouchProxy _put(JavaScriptObject autobean, AsyncCallback<PouchProxy> cb)
+  protected native final PouchProxy _put(JavaScriptObject autobean, AsyncCallback<String> cb)
   /*-{
       this.put(autobean, function (err, response) {
-          if (null != err)
+          if (null != err) {
               cb.@com.google.gwt.user.client.rpc.AsyncCallback::onFailure(Ljava/lang/Throwable;)(@java.io.IOException::new(Ljava/lang/String;)(err.toSource()));
-          else
-              cb.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;)(this);
+          } else
+              cb.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;)(JSON.stringify(response));
       });
       return this;
   }-*/;
 
-  protected native final PouchProxy _post(JavaScriptObject autobean, AsyncCallback<PouchProxy> cb)
+  protected native final PouchProxy _post(JavaScriptObject autobean, AsyncCallback<String> cb)
   /*-{
       this.post(autobean, function (err, response) {
           if (null != err)
-              cb.@com.google.gwt.user.client.rpc.AsyncCallback::onFailure(Ljava/lang/Throwable;)(@java.io.IOException::new(Ljava/lang/String;)(err.toSource()));
+              cb.@com.google.gwt.user.client.rpc.AsyncCallback::onFailure(Ljava/lang/Throwable;)(@java.io.IOException::new(Ljava/lang/String;)(err.ftoSource()));
           else
-              cb.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;)(this);
+              cb.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;)(JSON.stringify(response));
       });
       return this;
   }-*/;
-
 
   public final native PouchProxy _replicateFrom(String dbSpec, AsyncCallback<PouchProxy> cb)
   /*-{
@@ -188,9 +198,18 @@ public class PouchProxy extends JavaScriptObject {
       return this;
   }-*/;
 
+  // TODO: JIM, please verify this (Alex)
+  public final native PouchProxy _replicateTo(String dbSpec, AsyncCallback<PouchProxy> cb)
+  /*-{
+      var ret = this;
+      this.replicate.to(dbSpec, null == cb ? {} : { complete: function () {
+          cb.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;)(ret);
+      } });
+      return this;
+  }-*/;
 
   public final PouchProxy allDocs(EnumMap<AllDocOptions, ?> options,
-                                  final AsyncCallback<ViewResults.Results> cb) {
+      final AsyncCallback<ViewResults.Results> cb) {
 
     List<String> list = new ArrayList<String>();
     for (Map.Entry<AllDocOptions, ?> allDocOptionsEntry : options.entrySet()) {
@@ -220,7 +239,7 @@ public class PouchProxy extends JavaScriptObject {
           decode = AutoBeanCodex.decode(resFactory, resultsClass, x);
         } else
           decode = AutoBeanCodex.decode(resFactory, resultsClass, (Splittable) result.cast());
-        System.err.println("decoded successfully");
+        //        System.err.println("decoded successfully");
         cb.onSuccess(decode.as());
       }
     });

@@ -19,11 +19,11 @@ import static one.xio.HttpMethod.UTF8;
  * sent inward the only state monitored is when one side of the connections close.
  */
 public class HttpPipeVisitor extends AsioVisitor.Impl implements PreRead {
-  private static final boolean PROXY_DEBUG =
+  public static final boolean PROXY_DEBUG =
       "true".equals(RxfBootstrap.getVar("PROXY_DEBUG", String.valueOf(false)));
   final private ByteBuffer[] b;
   protected String name;
-  public AtomicInteger remaining;
+  //  public AtomicInteger remaining;
   SelectionKey otherKey;
   private boolean limit;
 
@@ -31,7 +31,6 @@ public class HttpPipeVisitor extends AsioVisitor.Impl implements PreRead {
     this.name = name;
     this.otherKey = otherKey;
     this.b = b;
-
   }
 
   @Override
@@ -40,10 +39,14 @@ public class HttpPipeVisitor extends AsioVisitor.Impl implements PreRead {
     if (otherKey.isValid()) {
       int read = channel.read(getInBuffer());
       if (read == -1) /*key.cancel();*/
+      {
+        channel.shutdownInput();
         key.interestOps(OP_WRITE);
-      else {
+        channel.write(ByteBuffer.allocate(0));
+      } else {
         //if buffer fills up, stop the read option for a bit
         otherKey.interestOps(OP_READ | OP_WRITE);
+        channel.write(ByteBuffer.allocate(0));
       }
     } else {
       key.cancel();
@@ -60,18 +63,18 @@ public class HttpPipeVisitor extends AsioVisitor.Impl implements PreRead {
     }
     int write = channel.write(flip);
 
-    if (-1 == write || isLimit() && null != remaining && 0 == remaining.get()) {
+    if (-1 == write || isLimit() /*&& null != remaining && 0 == remaining.get()*/) {
       key.cancel();
     } else {
-      if (isLimit() && null != remaining) {
-        this.remaining.getAndAdd(-write);
-        if (1 > remaining.get()) {
-          key.channel().close();
-          otherKey.channel().close();
-          return;
-        }
-      }
-      key.interestOps(OP_READ | (getOutBuffer().hasRemaining() ? OP_WRITE : 0));
+      //      if (isLimit() /*&& null != remaining*/) {
+      //        /*this.remaining.getAndAdd(-write);*//*
+      //        if (1 > remaining.get()) */{
+      //          key.channel().close();
+      //          otherKey.channel().close();
+      //          return;
+      //        }
+      //      }
+      key.interestOps(OP_READ | OP_WRITE);// (getOutBuffer().hasRemaining() ? OP_WRITE : 0));
       getOutBuffer().compact();
     }
   }

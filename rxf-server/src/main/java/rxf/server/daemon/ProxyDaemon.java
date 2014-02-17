@@ -84,7 +84,7 @@ public class ProxyDaemon extends AsioVisitor.Impl {
     String s = "pipe-" + counter;
     final ByteBuffer ob = b.length > 1 ? b[1] : ByteBuffer.allocate(4 << 10);
     final HttpPipeVisitor ib = new HttpPipeVisitor(s + "-in", innerKey, b[0], ob);
-    outerKey.interestOps(OP_READ).attach(ib);
+    outerKey.interestOps(OP_READ | OP_WRITE).attach(ib);
     innerKey.interestOps(OP_WRITE);
     innerKey.attach(new HttpPipeVisitor(s + "-out", outerKey, ob, b[0]) {
       public boolean fail;
@@ -103,20 +103,8 @@ public class ProxyDaemon extends AsioVisitor.Impl {
               Rfc822HeaderState.HttpResponse httpResponse =
                   new Rfc822HeaderState().headerInterest(HttpHeaders.Content$2dLength).apply(
                       (ByteBuffer) getInBuffer().duplicate().flip()).$res();
-              if (BlobAntiPatternObject.suffixMatchChunks(TERMINATOR, httpResponse.headerBuf()
-                  .duplicate())) {
-                try {
-                  HttpHeaders content$2dLength = HttpHeaders.Content$2dLength;
-                  int limit = httpResponse.headerBuf().limit();
-                  int initialValue =
-                      Integer.parseInt(httpResponse.headerString(content$2dLength)) + limit;
-                  ib.remaining = new AtomicInteger(initialValue);
-                  ib.setLimit(true);
-                } catch (Throwable e) {
-                  fail = true;
-                }
-
-              }
+              //              if (BlobAntiPatternObject.suffixMatchChunks(TERMINATOR, httpResponse.headerBuf()
+              //                                .duplicate())) ;
               break;
           }
         }

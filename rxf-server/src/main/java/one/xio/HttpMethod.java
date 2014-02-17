@@ -118,17 +118,17 @@ public enum HttpMethod {
           AsioVisitor m = inferAsioVisitor(protocoldecoder, key);
 
           if (key.isValid() && key.isWritable()) {
-            if (!((SocketChannel) channel).socket().isOutputShutdown()) {
-              m.onWrite(key);
-            } else {
+            if (((SocketChannel) channel).socket().isOutputShutdown()) {
               key.cancel();
+            } else {
+              m.onWrite(key);
             }
           }
           if (key.isValid() && key.isReadable()) {
-            if (!((SocketChannel) channel).socket().isInputShutdown()) {
-              m.onRead(key);
-            } else {
+            if (((SocketChannel) channel).socket().isInputShutdown()) {
               key.cancel();
+            } else {
+              m.onRead(key);
             }
           }
           if (key.isValid() && key.isAcceptable()) {
