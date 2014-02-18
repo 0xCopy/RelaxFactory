@@ -7,8 +7,7 @@
     <artifactId>relaxfactory</artifactId>
     <version>0.9.7.2.2</version>
   </parent>
-  <groupId>rxf</groupId>
-  <artifactId>rxf-rsync</artifactId>
+    <artifactId>rxf-rsync</artifactId>
   <name>rxf-rsync</name>
   <url>http://maven.apache.org</url>
   <properties>
@@ -34,7 +33,7 @@
       <dependency>
           <groupId>rxf</groupId>
           <artifactId>rxf-server</artifactId>
-          <version>0.9.7.1</version>
+          <version>${project.parent.version}</version>
       </dependency>
   </dependencies>
 </project>
