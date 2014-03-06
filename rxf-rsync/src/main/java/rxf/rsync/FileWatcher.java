@@ -1,4 +1,3 @@
-
 package rxf.rsync;
 
 
@@ -7,6 +6,7 @@ import javolution.util.FastMap;
 import one.xio.AsioVisitor;
 import one.xio.HttpMethod;
 import one.xio.MimeType;
+import rxf.server.driver.RxfBootstrap;
 import rxf.server.gen.CouchDriver;
 import rxf.server.web.inf.ProtocolMethodDispatch;
 import rxf.shared.CouchTx;
@@ -24,16 +24,15 @@ import static com.google.common.io.BaseEncoding.base64;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.nio.file.StandardWatchEventKinds.*;
 import static rxf.server.driver.CouchMetaDriver.gson;
-import static rxf.server.driver.RxfBootstrap.getVar;
 
 /**
- * Example to watch a directory (or tree) for changes to files.
+ * Example to watch a directory (or createTree) for changes to files.
  */
 
 public class FileWatcher {
-  public static final Path NORMALIZE = Paths.get(getVar("FILEWATCHER_DIR", Paths.get(".").toAbsolutePath().normalize().toString()));
-  public static final String FILEWATCHER_DB = getVar("FILEWATCHER_DB", "mirror");
-  public static final String FILEWATCHER_DOCID = getVar("FILEWATCHER_DOCID", "app");
+  public static final Path NORMALIZE = Paths.get(RxfBootstrap.getVar("FILEWATCHER_DIR", Paths.get(".").toAbsolutePath().normalize().toString()));
+  public static final String FILEWATCHER_DB = RxfBootstrap.getVar("FILEWATCHER_DB", "scoria");
+  public static final String FILEWATCHER_DOCID = RxfBootstrap.getVar("FILEWATCHER_DOCID", "user");
   public static final ScheduledExecutorService SCHEDULED_EXECUTOR_SERVICE = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
   private final WatchService watcher;
   private final Map<WatchKey, Path> keys;
@@ -72,7 +71,7 @@ public class FileWatcher {
    * Register the given directory, and all its sub-directories, with the
    * WatchService.
    */
-  private void registerAll(final Path start) throws IOException {
+  private void registerAll(Path start) throws IOException {
     // register directory and sub-directories
     Files.walkFileTree(start, new SimpleFileVisitor<Path>() {
       @Override
@@ -88,6 +87,7 @@ public class FileWatcher {
    * Creates a WatchService and registers the given directory
    */
   FileWatcher(Path dir, boolean recursive) throws IOException {
+    // JIM: Are you OK with this?
     this.dir = dir;
 
     this.watcher = FileSystems.getDefault().newWatchService();
@@ -141,7 +141,7 @@ public class FileWatcher {
         // Context for directory entry event is the file name of entry
         WatchEvent<Path> ev = cast(event);
         Path name = ev.context();
-        final Path child = dir.resolve(name);
+        Path child = dir.resolve(name);
 
         // print out event
         if (first) System.out.format("%s: %s\n", event.kind().name(), child);
@@ -190,7 +190,7 @@ public class FileWatcher {
         }, 2000, 2000);
       }
 
-      // reset key and remove from set if directory no longer accessible
+      // reset key and remove via set if directory no longer accessible
       boolean valid = key.reset();
       if (!valid) {
         keys.remove(key);
@@ -222,7 +222,31 @@ public class FileWatcher {
 
       boolean changed = false;
       int c = 0;
-      for (Map.Entry<Path, Boolean> entry : delta.entrySet()) {
+      TreeSet<Map.Entry<Path, Boolean>> bySize = new TreeSet<Map.Entry<Path, Boolean>>(new Comparator<Map.Entry<Path, Boolean>>() {
+        @Override
+        public int compare(Map.Entry<Path, Boolean> o1, Map.Entry<Path, Boolean> o2) {
+          try {
+            return -(int)
+                (
+                    (Files.isRegularFile(o2.getKey()) ? Files.size(o2.getKey()) : -1)
+                        -
+                        (Files.isRegularFile(o1.getKey()) ? Files.size(o1.getKey()) : -1)
+                );
+          } catch (IOException e) {
+
+          } finally {
+          }
+          return 0;
+
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+          return false;
+        }
+      });
+      bySize.addAll(delta.entrySet());
+      for (Map.Entry<Path, Boolean> entry : bySize) {
         Path key = entry.getKey();
         String s = NORMALIZE.relativize(key).toString();
 
@@ -261,7 +285,7 @@ public class FileWatcher {
               }
               delta.entrySet().remove(entry);
             } catch (IOException e) {
-              e.printStackTrace(); //todo: review for a purpose
+              e.printStackTrace();
             }
             if (c > 10) {
               break;
