@@ -56,7 +56,7 @@ import static rxf.server.an.DbKeys.etype.*;
  * <p/>
  * <ul>DSEL addendum:
  * <li>to() - setup the request: provide early access to the header state to tweak whatever you want. This can then be used after fire() to read out the header state from the response
- *<li> fire() - execution of the visitor, access to results, future, (errors?). If results is null, check error. If you use future, its your own damn problem
+ * <li> fire() - execution of the visitor, access to results, future, (errors?). If results is null, check error. If you use future, its your own damn problem
  * </ul>
  * User: jim
  * Date: 5/24/12
@@ -706,10 +706,13 @@ public enum CouchMetaDriver {
         public void onRead(SelectionKey key) throws IOException {
           if (null == cursor) {
             //geometric,  vulnerable to dev/null if not max'd here.
-            header =
-                null == header ? ByteBuffer.allocateDirect(getReceiveBufferSize()) : header
-                    .hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2)
-                    .put((ByteBuffer) header.flip());
+            if (null == header)
+              header = ByteBuffer.allocateDirect(getReceiveBufferSize());
+            else if (header.hasRemaining())
+              header = header;
+            else
+              header =
+                  ByteBuffer.allocateDirect(header.capacity() * 2).put((ByteBuffer) header.flip());
 
             int read = channel.read(header);
             ByteBuffer flip = (ByteBuffer) header.duplicate().flip();

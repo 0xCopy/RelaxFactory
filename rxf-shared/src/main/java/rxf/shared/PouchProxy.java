@@ -67,12 +67,12 @@ public class PouchProxy extends JavaScriptObject {
   }
 
   public static native <P> JavaScriptObject wrapSuccesFailCallback(AsyncCallback<P> cb)/*-{
-      return  $entry(    function (e, r) {var err=e,response=r;
-          if (err)
-              ( cb.@com.google.gwt.user.client.rpc.AsyncCallback::onFailure(Ljava/lang/Throwable;)(@java.lang.Exception::new(Ljava/lang/String;)(JSON.stringify(err) )));
-          else (cb.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;)(response))
-      })
-  }-*/;
+                                                                                       return  $entry(    function (e, r) {var err=e,response=r;
+                                                                                       if (err)
+                                                                                       ( cb.@com.google.gwt.user.client.rpc.AsyncCallback::onFailure(Ljava/lang/Throwable;)(@java.lang.Exception::new(Ljava/lang/String;)(JSON.stringify(err) )));
+                                                                                       else (cb.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;)(response))
+                                                                                       })
+                                                                                       }-*/;
 
   public static final native JavaScriptObject parse(String json)
   /*-{
@@ -116,8 +116,8 @@ public class PouchProxy extends JavaScriptObject {
   }
 
   public static native void _delete(String name)/*-{
-      $wnd.PouchDB.destroy(name);
-  }-*/;
+                                                $wnd.PouchDB.destroy(name);
+                                                }-*/;
 
   /**
    * <ul>
@@ -148,14 +148,14 @@ public class PouchProxy extends JavaScriptObject {
   }
 
   private native PouchProxy _fetchDoc(String docId, AsyncCallback<Splittable> callback,
-                                      JavaScriptObject options) /*-{
-      this.get(docId, options,
-          $entry(   function (err, doc) { var e=err;var d=doc;
-              if (err) (callback.@com.google.gwt.user.client.rpc.AsyncCallback::onFailure(Ljava/lang/Throwable;))(e); else if (@com.google.gwt.core.client.GWT::isScript()()) (callback.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;))(d);
-              else  (callback.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;))(@com.google.web.bindery.autobean.shared.impl.StringQuoter::split(Ljava/lang/String;)(JSON.stringify(d)));
-          }));
-      return this;
-  }-*/;
+      JavaScriptObject options) /*-{
+                                this.get(docId, options,
+                                $entry(   function (err, doc) { var e=err;var d=doc;
+                                if (err) (callback.@com.google.gwt.user.client.rpc.AsyncCallback::onFailure(Ljava/lang/Throwable;))(e); else if (@com.google.gwt.core.client.GWT::isScript()()) (callback.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;))(d);
+                                else  (callback.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;))(@com.google.web.bindery.autobean.shared.impl.StringQuoter::split(Ljava/lang/String;)(JSON.stringify(d)));
+                                }));
+                                return this;
+                                }-*/;
 
   /**
    * Create a new document or update an existing document. If the document already exists you must specify its revision _rev, otherwise a conflict will occur.

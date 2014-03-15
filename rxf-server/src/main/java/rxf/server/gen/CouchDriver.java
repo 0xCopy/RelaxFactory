@@ -2,17 +2,24 @@ package rxf.server.gen;
 
 // generated
 
+import one.xio.HttpMethod;
 import rxf.server.*;
 import rxf.server.an.DbKeys;
 import rxf.server.driver.CouchMetaDriver;
+import rxf.server.driver.RxfBootstrap;
 import rxf.shared.CouchTx;
 
+import java.io.*;
 import java.lang.reflect.Type;
+import java.net.URL;
+import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 import static rxf.server.BlobAntiPatternObject.avoidStarvation;
+import static rxf.server.an.DbKeys.etype.db;
+import static rxf.server.an.DbKeys.etype.view;
 
 /**
  * generated drivers
@@ -742,12 +749,15 @@ public interface CouchDriver {
 
     }
 
+    static String rxfcouchprefix = RxfBootstrap.getVar("RXF_COUCH_PREFIX", "http://localhost:5984");
+
     public class ViewFetchActionBuilder extends ActionBuilder {
       public ViewFetchActionBuilder() {
         super();
       }
 
       public ViewFetchTerminalBuilder fire() {
+
         return new ViewFetchTerminalBuilder() {
           Future<ByteBuffer> future =
               BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
@@ -757,15 +767,24 @@ public interface CouchDriver {
                 public java.nio.ByteBuffer call() throws Exception {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  return rxf.server.driver.CouchMetaDriver.ViewFetch.visit(dbKeysBuilder,
-                      actionBuilder);
+                  URL url = new URL(rxfcouchprefix +  CouchMetaDriver.scrub( "/"+dbKeysBuilder.get(db) + '/' + dbKeysBuilder.get(view)));
+                  byte[] bytes = new byte[4 << 10];
+                  try (InputStream inputStream = url.openStream(); ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
+                    int read  ;
+                    while (-1 != (read = inputStream.read(bytes))) {
+                      byteArrayOutputStream.write(bytes, 0, read);
+                    }
+                    return ByteBuffer.wrap(byteArrayOutputStream.toByteArray());
+                  }
                 }
               });
 
           public rxf.server.CouchResultSet rows() {
             try {
+              ByteBuffer buf = future.get();
+              System.err.println("???? "+ HttpMethod.UTF8.decode(buf));
               return CouchMetaDriver.gson().fromJson(
-                  one.xio.HttpMethod.UTF8.decode(avoidStarvation(future.get())).toString(),
+                  one.xio.HttpMethod.UTF8.decode(avoidStarvation(buf)).toString(),
                   new java.lang.reflect.ParameterizedType() {
                     public Type getRawType() {
                       return CouchResultSet.class;
