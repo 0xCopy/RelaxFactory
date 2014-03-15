@@ -749,7 +749,10 @@ public interface CouchDriver {
 
     }
 
-    static String rxfcouchprefix = RxfBootstrap.getVar("RXF_COUCH_PREFIX", "http://localhost:5984");
+    final static String rxfcouchprefix =
+        RxfBootstrap.getVar("RXF_COUCH_PREFIX", "http://localhost:5984");
+    final static boolean RXF_VIEWS_ASYNC =
+        RxfBootstrap.getVar("RXF_VIEWS_ASYNC", "false").equals("true");
 
     public class ViewFetchActionBuilder extends ActionBuilder {
       public ViewFetchActionBuilder() {
@@ -767,15 +770,19 @@ public interface CouchDriver {
                 public java.nio.ByteBuffer call() throws Exception {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  URL url = new URL(rxfcouchprefix +  CouchMetaDriver.scrub( "/"+dbKeysBuilder.get(db) + '/' + dbKeysBuilder.get(view)));
-                  byte[] bytes = new byte[4 << 10];
-                  try (InputStream inputStream = url.openStream(); ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
-                    int read  ;
-                    while (-1 != (read = inputStream.read(bytes))) {
-                      byteArrayOutputStream.write(bytes, 0, read);
+                  if (!RXF_VIEWS_ASYNC) {
+
+                    URL url = new URL(rxfcouchprefix + CouchMetaDriver.scrub("/" + dbKeysBuilder.get(db) + '/' + dbKeysBuilder.get(view)));
+                    byte[] bytes = new byte[4 << 10];
+                    try (InputStream inputStream = url.openStream(); ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
+                      int read;
+                      while (-1 != (read = inputStream.read(bytes))) {
+                        byteArrayOutputStream.write(bytes, 0, read);
+                      }
+                      return ByteBuffer.wrap(byteArrayOutputStream.toByteArray());
                     }
-                    return ByteBuffer.wrap(byteArrayOutputStream.toByteArray());
                   }
+                  return CouchMetaDriver.ViewFetch.visit(dbKeysBuilder, actionBuilder);
                 }
               });
 

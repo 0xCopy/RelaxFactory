@@ -3,11 +3,8 @@ package rxf.server.driver;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import one.xio.*;
 import one.xio.AsioVisitor.Impl;
-import one.xio.HttpHeaders;
-import one.xio.HttpMethod;
-import one.xio.HttpStatus;
-import one.xio.MimeType;
 import org.intellij.lang.annotations.Language;
 import rxf.server.*;
 import rxf.server.Rfc822HeaderState.HttpRequest;
@@ -671,9 +668,8 @@ public enum CouchMetaDriver {
 
         List<ByteBuffer> list = new ArrayList<ByteBuffer>();
         final Impl prev = this;
-        private HttpRequest request;
+
         private ByteBuffer header;
-        private HttpResponse response;
         private ByteBuffer cursor;
 
         private void simpleDeploy(ByteBuffer buffer) {
@@ -689,7 +685,7 @@ public enum CouchMetaDriver {
 
         public void onWrite(SelectionKey key) throws Exception {
 
-          request = actionBuilder.state().$req();
+          HttpRequest request = actionBuilder.state().$req();
 
           header =
               (ByteBuffer) request.method(GET)
@@ -697,79 +693,12 @@ public enum CouchMetaDriver {
                       MimeType.json.contentType).as(ByteBuffer.class);
           int wrote = channel.write(header);
           assert !header.hasRemaining();
-          header.clear();
-          response = (HttpResponse) request.$res();
-          response.headerInterest(STATIC_VF_HEADERS);
+          header = null;
           key.interestOps(OP_READ);
         }
 
         public void onRead(SelectionKey key) throws IOException {
-          if (null == cursor) {
-            //geometric,  vulnerable to dev/null if not max'd here.
-            if (null == header)
-              header = ByteBuffer.allocateDirect(getReceiveBufferSize());
-            else if (header.hasRemaining())
-              header = header;
-            else
-              header =
-                  ByteBuffer.allocateDirect(header.capacity() * 2).put((ByteBuffer) header.flip());
-
-            int read = channel.read(header);
-            ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
-            response.apply((ByteBuffer) flip);
-
-            ByteBuffer currentBuff = response.headerBuf();
-            if (BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, currentBuff)) {
-              cursor = (ByteBuffer) flip.slice();
-              header = null;
-
-              if (DEBUG_SENDJSON) {
-                System.err.println(deepToString(response.statusEnum(), response, UTF8
-                    .decode((ByteBuffer) cursor.duplicate().rewind())));
-              }
-
-              HttpStatus httpStatus = response.statusEnum();
-              switch (httpStatus) {
-                case $200:
-                  if (response.headerStrings().containsKey(Content$2dLength.getHeader())) { //rarity but for empty rowsets
-                    String remainingString = response.headerString(Content$2dLength);
-                    final int remaining = Integer.parseInt(remainingString);
-                    if (cursor.remaining() == remaining) {
-                      ByteBuffer slice = cursor.slice();
-                      simpleDeploy(slice);
-                    } else {
-                      //windows workaround?
-                      key.attach(new Impl() {
-                        private ByteBuffer cursor1 =
-                            cursor.capacity() > remaining ? (ByteBuffer) cursor.limit(remaining)
-                                : ByteBuffer.allocateDirect(remaining).put(cursor);
-
-                        public void onRead(SelectionKey key) throws Exception {
-                          int read1 = channel.read(cursor1);
-                          switch (read1) {
-                            case -1:
-                              cyclicBarrier.reset();
-                              channel.close();
-                              break;
-                          }
-                          if (!cursor1.hasRemaining()) {
-                            ByteBuffer flip1 = (ByteBuffer) cursor1.flip();
-                            simpleDeploy(flip1);
-                          }
-                        }
-                      });
-                    }
-                  }
-                  cursor = cursor.slice().compact();
-                  break;
-                default:
-                  cyclicBarrier.reset();
-                  recycleChannel(channel);
-                  return;
-              }
-            }
-            return;
-          } else
+          if (null != cursor) {
             try {
               int read = channel.read(cursor);
               if (-1 == read) {
@@ -782,6 +711,75 @@ public enum CouchMetaDriver {
             } catch (Throwable e) {
               e.printStackTrace();
             }
+          } else {
+            //geometric,  vulnerable to dev/null if not max'd here.
+            if (null == header)
+              header = ByteBuffer.allocateDirect(getReceiveBufferSize());
+            else if (!header.hasRemaining()) {
+              header =
+                  ByteBuffer.allocateDirect(header.capacity() * 2).put((ByteBuffer) header.flip());
+            }
+
+            int read = channel.read(header);
+            ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
+            HttpResponse response =
+                (HttpResponse) new Rfc822HeaderState().$res().headerInterest(STATIC_VF_HEADERS);
+            response.apply((ByteBuffer) flip);
+
+            ByteBuffer currentBuff = response.headerBuf();
+            if (!BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, currentBuff)) {
+              HttpMethod.getSelector().wakeup();
+              return;
+            }
+            cursor = (ByteBuffer) flip.slice();
+            header = null;
+            actionBuilder.state(response);
+            if (DEBUG_SENDJSON) {
+              System.err.println(deepToString(response.statusEnum(), response, UTF8
+                  .decode((ByteBuffer) cursor.duplicate().rewind())));
+            }
+
+            HttpStatus httpStatus = response.statusEnum();
+            switch (httpStatus) {
+              case $200:
+                if (response.headerStrings().containsKey(Content$2dLength.getHeader())) { //rarity but for empty rowsets
+                  String remainingString = response.headerString(Content$2dLength);
+                  final int remaining = Integer.parseInt(remainingString);
+                  if (cursor.remaining() == remaining) {
+                    ByteBuffer slice = cursor.slice();
+                    simpleDeploy(slice);
+                  } else {
+                    //windows workaround?
+                    key.attach(new Impl() {
+                      private ByteBuffer cursor1 =
+                          cursor.capacity() > remaining ? (ByteBuffer) cursor.limit(remaining)
+                              : ByteBuffer.allocateDirect(remaining).put(cursor);
+
+                      public void onRead(SelectionKey key) throws Exception {
+                        int read1 = channel.read(cursor1);
+                        switch (read1) {
+                          case -1:
+                            cyclicBarrier.reset();
+                            channel.close();
+                            break;
+                        }
+                        if (!cursor1.hasRemaining()) {
+                          ByteBuffer flip1 = (ByteBuffer) cursor1.flip();
+                          simpleDeploy(flip1);
+                        }
+                      }
+                    });
+                  }
+                }
+                cursor = cursor.slice().compact();
+                break;
+              default:
+                cyclicBarrier.reset();
+                recycleChannel(channel);
+                return;
+            }
+            return;
+          }
           //token suffix check
           boolean suffixMatches =
               BlobAntiPatternObject.suffixMatchChunks(CE_TERMINAL, cursor.duplicate(), list
@@ -1217,6 +1215,7 @@ public enum CouchMetaDriver {
 
   /**
    * a lazy singleton that churns at an increment of 10k usages to free up potential threadlocals or other statics.
+   *
    * @return Gson object
    */
   public static Gson gson() {
@@ -1225,7 +1224,8 @@ public enum CouchMetaDriver {
         builder().create() : GSON;
   }
 
-  /**allow non-rxf code on registration of type adapters to null the gson used by the driver.
+  /**
+   * allow non-rxf code on registration of type adapters to null the gson used by the driver.
    *
    * @param v null to rebuild with new TypeAdapters
    */
@@ -1255,7 +1255,7 @@ public enum CouchMetaDriver {
             + "import java.nio.ByteBuffer;\n" + "import java.util.concurrent.Callable;\n"
             + "import java.util.concurrent.Future;\n" + "import java.util.concurrent.TimeUnit;\n"
             + "\n" + "import static rxf.server.BlobAntiPatternObject.avoidStarvation;\n" + "\n"
-            + "/** \n * \n * \n * generated drivers\n \n * \n \n" + " */\n"
+            + "/** * \n * \n * \n * generated drivers\n \n * \n \n " + " */\n"
             + "public interface CouchDriver {\n" + "      Gson GSON = new GsonBuilder()\n"
             + "            .setDateFormat(\"yyyy-MM-dd'T'HH:mm:ss.SSSZ\")\n"
             + "            .setFieldNamingPolicy(FieldNamingPolicy.IDENTITY)\n"
@@ -1286,6 +1286,7 @@ public enum CouchMetaDriver {
 
   /**
    * the CouchDriver needs a builder that a client may access soas to register gson TypeAdapters.
+   *
    * @return the builder
    */
   public static GsonBuilder builder() {
@@ -1294,6 +1295,7 @@ public enum CouchMetaDriver {
 
   /**
    * sets the GsonBuilder for the driver and those depending on its gson marshalling.
+   *
    * @param BUILDER
    */
   public static void builder(GsonBuilder BUILDER) {
