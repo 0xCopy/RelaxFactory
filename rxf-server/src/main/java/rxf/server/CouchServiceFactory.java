@@ -79,7 +79,7 @@ public class CouchServiceFactory {
 
             //harvest, construct a view instance based on the interface. Probably not cheap, should be avoided.
             CouchDesignDoc design = new CouchDesignDoc();
-            String designId = design.id = "_design/" + getEntityName();
+            String designId = design.id = "_design/" + serviceInterface.getName();
             CouchDesignDoc existingDesignDoc = null;
 
             String pathPrefix1 = getPathPrefix();
