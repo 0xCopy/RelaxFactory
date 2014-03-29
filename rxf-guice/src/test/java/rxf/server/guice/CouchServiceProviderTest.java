@@ -4,6 +4,8 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
 import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -50,11 +52,11 @@ public class CouchServiceProviderTest {
         }
       }
     });
-    EXECUTOR_SERVICE.schedule(new Runnable() {
+    new Timer().schedule(new TimerTask(){
       public void run() {
         Assert.fail();
       }
-    }, 5, TimeUnit.SECONDS);
+    }, 5000);
   }
 
   @AfterClass

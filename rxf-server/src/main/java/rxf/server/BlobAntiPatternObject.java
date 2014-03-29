@@ -10,6 +10,7 @@ import java.nio.channels.SocketChannel;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.LinkedList;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -25,15 +26,17 @@ import static rxf.server.RelaxFactoryServerImpl.wheresWaldo;
  */
 public class BlobAntiPatternObject {
 
-    public static final int CONNECTION_POOL_SIZE = Integer.parseInt(RxfBootstrap.getVar("RXF_CONNECTION_POOL_SIZE", "20"));
-    public static boolean DEBUG_SENDJSON = System.getenv().containsKey("DEBUG_SENDJSON");
-    public static InetAddress LOOPBACK;
-    public static int receiveBufferSize;
-    public static int sendBufferSize;
+  public static final boolean RXF_CACHED_THREADPOOL = "true".equals(RxfBootstrap.getVar("RXF_CACHED_THREADPOOL", "false"));
+  public static final int CONNECTION_POOL_SIZE = Integer.parseInt(RxfBootstrap.getVar("RXF_CONNECTION_POOL_SIZE", "20"));
+  public static boolean DEBUG_SENDJSON = System.getenv().containsKey("DEBUG_SENDJSON");
+  public static InetAddress LOOPBACK;
+  public static int receiveBufferSize;
 
-    public static InetSocketAddress COUCHADDR;
-    public static ScheduledExecutorService EXECUTOR_SERVICE =
-            Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() + 3);
+    public static int sendBufferSize;
+  public static InetSocketAddress COUCHADDR;
+  public static ExecutorService EXECUTOR_SERVICE = RXF_CACHED_THREADPOOL ?
+            Executors.newCachedThreadPool():
+            Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() + 3);
 
     static {
 
@@ -208,7 +211,7 @@ public class BlobAntiPatternObject {
         BlobAntiPatternObject.COUCHADDR = COUCHADDR;
     }
 
-    public static ScheduledExecutorService getEXECUTOR_SERVICE() {
+    public static ExecutorService getEXECUTOR_SERVICE() {
         return EXECUTOR_SERVICE;
     }
 
