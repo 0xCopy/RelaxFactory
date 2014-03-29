@@ -4,6 +4,7 @@ import com.google.gson.annotations.SerializedName;
 import com.google.gson.internal.Primitives;
 import rxf.server.CouchResultSet.tuple;
 import rxf.server.CouchService.CouchRequestParam;
+import rxf.server.CouchService.AttachmentsImpl;
 import rxf.server.CouchService.View;
 import rxf.server.driver.CouchMetaDriver;
 import rxf.server.gen.CouchDriver.*;
@@ -79,7 +80,7 @@ public class CouchServiceFactory {
 
             //harvest, construct a view instance based on the interface. Probably not cheap, should be avoided.
             CouchDesignDoc design = new CouchDesignDoc();
-            String designId = design.id = "_design/" + getEntityName();
+            String designId = design.id = "_design/" + serviceInterface.getName();
             CouchDesignDoc existingDesignDoc = null;
 
             String pathPrefix1 = getPathPrefix();
@@ -293,6 +294,15 @@ public class CouchServiceFactory {
           DocPersistTerminalBuilder fire = to.fire();
           CouchTx tx = fire.tx();
           return tx;
+        } else if ("attachments".equals(method.getName())) {
+          try {
+            return new AttachmentsImpl(getPathPrefix(), (E) args[0]);
+          } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+          } catch (IllegalAccessException e) {
+            e.printStackTrace();
+          }
+          return null;
         } else {
           assert "find" == (method.getName().intern());
           String doc = DocFetch.$().db(getPathPrefix()).docId((String) args[0]).to().fire().json();

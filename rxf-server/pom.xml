@@ -72,6 +72,11 @@
             <version>1.7.2</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>javolution</groupId>
+            <artifactId>javolution</artifactId>
+            <version>5.5.1</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

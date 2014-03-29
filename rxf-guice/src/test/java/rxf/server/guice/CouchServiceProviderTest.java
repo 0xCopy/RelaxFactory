@@ -52,7 +52,7 @@ public class CouchServiceProviderTest {
         }
       }
     });
-    new Timer().schedule(new TimerTask(){
+    new Timer().schedule(new TimerTask() {
       public void run() {
         Assert.fail();
       }

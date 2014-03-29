@@ -69,7 +69,7 @@ public class CouchModuleBuilder {
         assert hasAnEntity(serviceType);
         CouchServiceProvider<S> provider = new CouchServiceProvider<S>(serviceType);
         requestInjection(provider);
-        bind(serviceType).toProvider(provider);
+        bind(serviceType).toProvider(provider).asEagerSingleton();
       }
 
       /**

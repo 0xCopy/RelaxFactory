@@ -78,6 +78,13 @@ public class RxfModule extends AbstractModule {
       public void with(Class<? extends AsioVisitor> implKey) {
         defs.add(new VisitorDef(verb, regex, Key.get(implKey)));
       }
+
+      @Override
+      public void with(AsioVisitor impl) {
+        Key<AsioVisitor> key = Key.get(AsioVisitor.class, UniqueAnnotations.create());
+        bind(key).toInstance(impl);
+        defs.add(new VisitorDef(verb, regex, key));
+      }
     };
   }
 
@@ -101,7 +108,8 @@ public class RxfModule extends AbstractModule {
     void with(Class<? extends AsioVisitor> implKey);
 
     void with(Key<? extends AsioVisitor> implKey);
-    //		void with(AsioVisitor implKey);
+
+    void with(AsioVisitor impl);
   }
 
 }
