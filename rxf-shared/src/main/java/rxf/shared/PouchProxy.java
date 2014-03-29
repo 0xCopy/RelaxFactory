@@ -21,23 +21,23 @@ import java.util.Set;
  * final PouchProxy campaigns = PouchProxy._create("campaigns");
  * campaigns.replicateFrom(dbSpec, new AsyncCallback<PouchProxy>() {
  *
- * @Override public void onFailure(Throwable caught) {
+ *   public void onFailure(Throwable caught) {
  * }
- * @Override public void onSuccess(PouchProxy result) {
+ *   public void onSuccess(PouchProxy result) {
  * campaigns.allDocs(new EnumMap<PouchProxy.AllDocOptions, Object>(PouchProxy.AllDocOptions.class) {{
  * put(PouchProxy.AllDocOptions.include_docs, true);
  * }}, new AsyncCallback<ViewResults.Results>() {
- * @Override public void onFailure(Throwable caught) {
+ *   public void onFailure(Throwable caught) {
  * caught.fillInStackTrace();
  * Window.alert(caught.getLocalizedMessage());
  * }
- * @Override public void onSuccess(final ViewResults.Results result) {
- * <p/>
+ *   public void onSuccess(final ViewResults.Results result) {
+ *
  * GWT.runAsync(new RunAsyncCallback() {
- * @Override public void onFailure(Throwable reason) {
- * <p/>
+ *   public void onFailure(Throwable reason) {
+ *
  * }
- * @Override public void onSuccess() {
+ *   public void onSuccess() {
  * List<ViewResults.Results.Record> rows = result.getRows();
  * int size = rows.size();
  * ArrayList<Campaign> arr = new ArrayList<Campaign>();
@@ -48,10 +48,10 @@ import java.util.Set;
  * CampaignView campaignView = new CampaignView();
  * RootPanel.get().add(campaignView);
  * campaignView.init(arr);
- * <p/>
+ *
  * }
  * });
- * <p/>
+ *
  * }
  * }
  * );
@@ -67,12 +67,13 @@ public class PouchProxy extends JavaScriptObject {
   }
 
   public static native <P> JavaScriptObject wrapSuccesFailCallback(AsyncCallback<P> cb)/*-{
-                                                                                       return  $entry(    function (e, r) {var err=e,response=r;
-                                                                                       if (err)
-                                                                                       ( cb.@com.google.gwt.user.client.rpc.AsyncCallback::onFailure(Ljava/lang/Throwable;)(@java.lang.Exception::new(Ljava/lang/String;)(JSON.stringify(err) )));
-                                                                                       else (cb.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;)(response))
-                                                                                       })
-                                                                                       }-*/;
+      return  $entry(function (e, r) {
+          var err = e, response = r;
+          if (err)
+              ( cb.@com.google.gwt.user.client.rpc.AsyncCallback::onFailure(Ljava/lang/Throwable;)(@java.lang.Exception::new(Ljava/lang/String;)(JSON.stringify(err))));
+          else (cb.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;)(response))
+      })
+  }-*/;
 
   public static final native JavaScriptObject parse(String json)
   /*-{
@@ -116,8 +117,12 @@ public class PouchProxy extends JavaScriptObject {
   }
 
   public static native void _delete(String name)/*-{
-                                                $wnd.PouchDB.destroy(name);
-                                                }-*/;
+      $wnd.PouchDB.destroy(name);
+  }-*/;
+
+  public static native String b64decode(String a) /*-{
+      return window.atob(a);
+  }-*/;
 
   /**
    * <ul>
@@ -148,14 +153,16 @@ public class PouchProxy extends JavaScriptObject {
   }
 
   private native PouchProxy _fetchDoc(String docId, AsyncCallback<Splittable> callback,
-      JavaScriptObject options) /*-{
-                                this.get(docId, options,
-                                $entry(   function (err, doc) { var e=err;var d=doc;
-                                if (err) (callback.@com.google.gwt.user.client.rpc.AsyncCallback::onFailure(Ljava/lang/Throwable;))(e); else if (@com.google.gwt.core.client.GWT::isScript()()) (callback.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;))(d);
-                                else  (callback.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;))(@com.google.web.bindery.autobean.shared.impl.StringQuoter::split(Ljava/lang/String;)(JSON.stringify(d)));
-                                }));
-                                return this;
-                                }-*/;
+                                      JavaScriptObject options) /*-{
+      this.get(docId, options,
+          $entry(function (err, doc) {
+              var e = err;
+              var d = doc;
+              if (err) (callback.@com.google.gwt.user.client.rpc.AsyncCallback::onFailure(Ljava/lang/Throwable;))(e); else if (@com.google.gwt.core.client.GWT::isScript()()) (callback.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;))(d);
+              else  (callback.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;))(@com.google.web.bindery.autobean.shared.impl.StringQuoter::split(Ljava/lang/String;)(JSON.stringify(d)));
+          }));
+      return this;
+  }-*/;
 
   /**
    * Create a new document or update an existing document. If the document already exists you must specify its revision _rev, otherwise a conflict will occur.
@@ -191,7 +198,8 @@ public class PouchProxy extends JavaScriptObject {
 
   protected final native PouchProxy _put(JavaScriptObject autobean, AsyncCallback<String> cb)
   /*-{
-      this.put(autobean, $entry(function (err, response) {var e=err,r=response;
+      this.put(autobean, $entry(function (err, response) {
+          var e = err, r = response;
           if (err) (cb.@com.google.gwt.user.client.rpc.AsyncCallback::onFailure(Ljava/lang/Throwable;))(@java.io.IOException::new(Ljava/lang/String;))(JSON.stringify(e));
           else
               (cb.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;))(JSON.stringify(r));
@@ -202,8 +210,10 @@ public class PouchProxy extends JavaScriptObject {
   protected final native PouchProxy _post(JavaScriptObject autobean, AsyncCallback<String> cb)
   /*-{
       this.post(autobean,
-          $entry (
-              function (err, response) {var e=err;var r=response;
+          $entry(
+              function (err, response) {
+                  var e = err;
+                  var r = response;
                   if (err)
                       (cb.@com.google.gwt.user.client.rpc.AsyncCallback::onFailure(Ljava/lang/Throwable;)(@java.io.IOException::new(Ljava/lang/String;))(JSON.stringify(e)));
                   else
@@ -216,14 +226,13 @@ public class PouchProxy extends JavaScriptObject {
 
     String alldocOptions;
     alldocOptions =
-        options == null ? "{}" : AutoBeanCodex.encode(generic.allDocs(options)).getPayload();
+        null == options ? "{}" : AutoBeanCodex.encode(generic.allDocs(options)).getPayload();
     _allDocs(alldocOptions, new AsyncCallback<JavaScriptObject>() {
-      @Override
+
       public void onFailure(Throwable caught) {
         Window.alert(caught.getMessage());
       }
 
-      @Override
       public void onSuccess(JavaScriptObject result) {
 
         PouchAutobeanFactory resFactory = GWT.create(PouchAutobeanFactory.class);
@@ -251,7 +260,8 @@ public class PouchProxy extends JavaScriptObject {
   /*-{
       var parse = JSON.parse(alldocOptions);
       this.allDocs(parse,
-          $entry (function (e1, r1) {var e=e1,r=r1;
+          $entry(function (e1, r1) {
+              var e = e1, r = r1;
               if (e) {
                   (cb.@com.google.gwt.user.client.rpc.AsyncCallback::onFailure(Ljava/lang/Throwable;)(@java.io.IOException::new(Ljava/lang/String;))(e.toSource()));
               } else {
@@ -374,7 +384,7 @@ public class PouchProxy extends JavaScriptObject {
 
   }
 
-  public static interface AllDocOptions {
+  public interface AllDocOptions {
     /**
      * Include the document in each row in the doc field
      */
@@ -418,14 +428,11 @@ public class PouchProxy extends JavaScriptObject {
 
   }
 
-  public static abstract class AllAllDocOptions implements AllDocOptions {
-    @Override
-    public boolean isInclude_docs() {
-      return true;
-    }
-  }
+  public interface ViewResults {
 
-  public static interface ViewResults {
+    Map<String, String> getErr();
+
+    Results getResults();
 
     interface Response {
       boolean getOk();
@@ -446,6 +453,11 @@ public class PouchProxy extends JavaScriptObject {
      */
 
     interface Results {
+      @AutoBean.PropertyName("total_rows")
+      double getTotalRows();
+
+      List<Record> getRows();
+
       interface Record {
         String getId();
 
@@ -459,15 +471,13 @@ public class PouchProxy extends JavaScriptObject {
 
         Splittable getDoc();
       }
-
-      @AutoBean.PropertyName("total_rows")
-      double getTotalRows();
-
-      List<Record> getRows();
     }
+  }
 
-    Map<String, String> getErr();
+  public abstract static class AllAllDocOptions implements AllDocOptions {
 
-    Results getResults();
+    public boolean isInclude_docs() {
+      return true;
+    }
   }
 }

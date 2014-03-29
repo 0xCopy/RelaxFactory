@@ -6,7 +6,6 @@ import javolution.util.FastMap;
 import one.xio.AsioVisitor;
 import one.xio.HttpMethod;
 import one.xio.MimeType;
-import rxf.server.driver.RxfBootstrap;
 import rxf.server.gen.CouchDriver;
 import rxf.server.web.inf.ProtocolMethodDispatch;
 import rxf.shared.CouchTx;
@@ -24,23 +23,29 @@ import static com.google.common.io.BaseEncoding.base64;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.nio.file.StandardWatchEventKinds.*;
 import static rxf.server.driver.CouchMetaDriver.gson;
+import static rxf.server.driver.RxfBootstrap.getVar;
 
 /**
  * Example to watch a directory (or createTree) for changes to files.
  */
 
 public class FileWatcher {
-  public static final Path NORMALIZE = Paths.get(RxfBootstrap.getVar("FILEWATCHER_DIR", Paths.get(".").toAbsolutePath().normalize().toString()));
-  public static final String FILEWATCHER_DB = RxfBootstrap.getVar("FILEWATCHER_DB", "scoria");
-  public static final String FILEWATCHER_DOCID = RxfBootstrap.getVar("FILEWATCHER_DOCID", "user");
+  public static final Path NORMALIZE = Paths.get(getVar("FILEWATCHER_DIR", Paths.get(".").toAbsolutePath().normalize().toString()));
+  public static final String FILEWATCHER_DB = getVar("FILEWATCHER_DB", "db");
+  public static final String FILEWATCHER_DOCID = getVar("FILEWATCHER_DOCID", "doc");
+  public static String FILEWATCHER_IGNORE_EXAMPLE = getVar("FILEWATCHER_IGNORE_EXAMPLE", ".jar .war .class .java .symbolMap manifest.txt .log .bak compilation-mappings.txt web.xml");
+  public static final String IGNORE = getVar("FILEWATCHER_IGNORE", "").trim();
+  public static String[] FILEWATCHER_IGNORE = IGNORE.isEmpty() ? new String[0] : (IGNORE.split(" +"));
+
+
   public static final ScheduledExecutorService SCHEDULED_EXECUTOR_SERVICE = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
   private final WatchService watcher;
   private final Map<WatchKey, Path> keys;
   private final boolean recursive;
-  private boolean trace = false;
+  private boolean trace;
   private Timer timer = new Timer();
 
-  private Path dir = null;
+  private Path root;
 
   @SuppressWarnings("unchecked")
   static <T> WatchEvent<T> cast(WatchEvent<?> event) {
@@ -54,7 +59,7 @@ public class FileWatcher {
     WatchKey key = dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
     if (trace) {
       Path prev = keys.get(key);
-      if (prev == null) {
+      if (null == prev) {
         System.out.format("register: %s\n", dir);
       } else {
         if (!dir.equals(prev)) {
@@ -74,7 +79,7 @@ public class FileWatcher {
   private void registerAll(Path start) throws IOException {
     // register directory and sub-directories
     Files.walkFileTree(start, new SimpleFileVisitor<Path>() {
-      @Override
+
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
           throws IOException {
         register(dir);
@@ -86,20 +91,20 @@ public class FileWatcher {
   /**
    * Creates a WatchService and registers the given directory
    */
-  FileWatcher(Path dir, boolean recursive) throws IOException {
+  FileWatcher(Path root, boolean recursive) throws IOException {
     // JIM: Are you OK with this?
-    this.dir = dir;
+    this.root = root;
 
     this.watcher = FileSystems.getDefault().newWatchService();
     this.keys = new HashMap<>();
     this.recursive = recursive;
 
     if (recursive) {
-      System.out.format("Scanning %s ...\n", dir);
-      registerAll(dir);
+      System.out.format("Scanning %s ...\n", root);
+      registerAll(root);
       System.out.println("Done.");
     } else {
-      register(dir);
+      register(root);
     }
 
     // enable trace after initial registration
@@ -122,7 +127,7 @@ public class FileWatcher {
       }
 
       Path dir = keys.get(key);
-      if (dir == null) {
+      if (null == dir) {
         System.err.println("WatchKey not recognized!!");
         continue;
       }
@@ -141,30 +146,34 @@ public class FileWatcher {
         // Context for directory entry event is the file name of entry
         WatchEvent<Path> ev = cast(event);
         Path name = ev.context();
-        Path child = dir.resolve(name);
+        Path child = (name);
 
         // print out event
         if (first) System.out.format("%s: %s\n", event.kind().name(), child);
         first = false;
         // if directory is created, and watching recursively, then
         // register it and its sub-directories
-        if (recursive && (kind == ENTRY_CREATE)) {
-          try {
-            if (Files.isDirectory(child, NOFOLLOW_LINKS)) {
-              registerAll(child);
+
+
+        if (Files.isDirectory(child)) {
+          if (kind == ENTRY_CREATE) {
+            try {
+              if (recursive && Files.isDirectory(child, NOFOLLOW_LINKS)) {
+                registerAll(child);
+              }
+
+            } catch (IOException x) {
+              // ignore to keep sample readbale
             }
 
-          } catch (IOException x) {
-            // ignore to keep sample readbale
-          }
-
+          } else if (kind == ENTRY_DELETE) keys.remove(key);
         }
 //        Path relativize = child.relativize(NORMALIZE);
-        if (!Files.isDirectory(child)) {
+        if (Files.isRegularFile(child)) {
           System.out.println("putting child: " + child);
-          if (/*kind == ENTRY_CREATE || */kind == ENTRY_MODIFY) {
+          if (/*kind == ENTRY_CREATE || */ kind == ENTRY_MODIFY) {
 
-            delta.put(child, true);
+            delta.put(child, isAvoided(child));
 
           } else if (kind == ENTRY_DELETE) {
             delta.put(child, false);
@@ -173,15 +182,11 @@ public class FileWatcher {
 
         timer.cancel();
         timer = new Timer();
-        // timer.schedule(new TimerTask() {
         timer.scheduleAtFixedRate(new TimerTask() {
-          @Override
+
           public void run() {
             processDelta();
-//            if (!delta.isEmpty()) {
-//              timer.cancel();
-//              SCHEDULED_EXECUTOR_SERVICE.submit(this);
-//            }
+
             System.out.println("remaining: " + delta.size());
             if (delta.isEmpty()) {
               timer.cancel();
@@ -223,7 +228,7 @@ public class FileWatcher {
       boolean changed = false;
       int c = 0;
       TreeSet<Map.Entry<Path, Boolean>> bySize = new TreeSet<Map.Entry<Path, Boolean>>(new Comparator<Map.Entry<Path, Boolean>>() {
-        @Override
+
         public int compare(Map.Entry<Path, Boolean> o1, Map.Entry<Path, Boolean> o2) {
           try {
             return -(int)
@@ -240,7 +245,7 @@ public class FileWatcher {
 
         }
 
-        @Override
+
         public boolean equals(Object obj) {
           return false;
         }
@@ -255,17 +260,17 @@ public class FileWatcher {
           delta.entrySet().remove(entry);
           attachments.remove(s);
           changed = true;
-          if (c++ > 10) {
+          if (10 < c++) {
             break;
           }
         } else {
-          assert attachments != null : "attachments are null.";
-          assert s != null : "null key";
+          assert null != attachments : "attachments are null.";
+          assert null != s : "null key";
           Map<String, String> fromCouch = attachments.get(s);
           if (null == fromCouch || Boolean.TRUE.equals(keepOrDelete)) {
             try {
               byte[] bytes = Files.readAllBytes(key);
-              if (fromCouch == null || !("md5-" + base64().encode(Hashing.md5().hashBytes(bytes).asBytes())).equals(fromCouch.get("digest"))) {
+              if (null == fromCouch || !("md5-" + base64().encode(Hashing.md5().hashBytes(bytes).asBytes())).equals(fromCouch.get("digest"))) {
                 changed = true;
                 MimeType mimeType = null;
                 try {
@@ -279,7 +284,7 @@ public class FileWatcher {
                 String data = base64().encode(bytes);
 
                 map.put("data", data);
-                attachments.put(File.separatorChar != ('/') ? s.replace(File.separatorChar, '/') : s, map);
+                attachments.put(('/') != File.separatorChar ? s.replace(File.separatorChar, '/') : s, map);
 
                 c++;
               }
@@ -287,7 +292,7 @@ public class FileWatcher {
             } catch (IOException e) {
               e.printStackTrace();
             }
-            if (c > 10) {
+            if (10 < c) {
               break;
             }
           }
@@ -319,7 +324,7 @@ public class FileWatcher {
     Map<String, Boolean> existingFiles = new TreeMap<>();
     // Check for new or changed files
     try {
-      Files.walkFileTree(dir, new ProvisioningFileVisitor(attachments, existingFiles));
+      Files.walkFileTree(root, new ProvisioningFileVisitor(attachments, existingFiles));
     } catch (IOException e) {
       // TODO: What should I do in case of an error?
       e.printStackTrace();
@@ -333,37 +338,37 @@ public class FileWatcher {
       }
     }
 
-    while (delta.size() > 0) {
+    while (0 < delta.size()) {
       processDelta();
     }
   }
 
   private class ProvisioningFileVisitor extends SimpleFileVisitor<Path> {
-    private Map<String, Map<String, String>> attachments = null;
-    private Map<String, Boolean> existingFiles = null;
+    private Map<String, Map<String, String>> attachments;
+    private Map<String, Boolean> existingFiles;
 
     public ProvisioningFileVisitor(Map<String, Map<String, String>> attachments, Map<String, Boolean> existingFiles) {
       this.attachments = attachments;
       this.existingFiles = existingFiles;
     }
 
-    @Override
+
     public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
       Path relative = NORMALIZE.relativize(file);
       String relativeString = relative.toString();
-      if (existingFiles != null) {
+      if (null != existingFiles) {
         existingFiles.put(relativeString, true);
       }
       if (!attachments.containsKey(relativeString)) {
         System.out.println("Found new: " + relative);
-        delta.put(file, true);
+        delta.put(file, isAvoided(relative));
       } else {
         try {
           byte[] bytes = Files.readAllBytes(file);
           String couchDigest = attachments.get(relativeString).get("digest");
-          if (couchDigest == null || !("md5-" + base64().encode(Hashing.md5().hashBytes(bytes).asBytes())).equals(couchDigest)) {
+          if (null == couchDigest || !("md5-" + base64().encode(Hashing.md5().hashBytes(bytes).asBytes())).equals(couchDigest)) {
             System.out.println("Found changed:  " + relative);
-            delta.put(file, true);
+            delta.put(file, isAvoided(file));
           }
         } catch (Exception ex) {
           ex.printStackTrace();
@@ -371,6 +376,16 @@ public class FileWatcher {
       }
       return FileVisitResult.CONTINUE;
     }
+  }
+
+  private Boolean isAvoided(Path file) {
+    for (String s : FILEWATCHER_IGNORE) {
+      if (file.toString().endsWith(s)) {
+        System.err.println("skipping: " + file);
+        return false;
+      }
+    }
+    return true;
   }
 
   static {//boilerplate

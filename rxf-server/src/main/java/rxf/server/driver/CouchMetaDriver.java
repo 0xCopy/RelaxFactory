@@ -792,18 +792,6 @@ public enum CouchMetaDriver {
             recycleChannel(channel);
             return;
           }
-          /*
-                          final ByteBuffer tmp = (ByteBuffer) cursor.duplicate();
-                          final int position = tmp.position();
-                          tmp.flip();
-                          String decode = UTF8.decode(((ByteBuffer) tmp.position(position - CE_TERMINAL.length()))).toString();
-                          if (CE_TERMINAL.equals(decode.toString())) {
-                          list.add(cursor);
-                          deliver();
-                          recycleChannel(channel);
-                          return;
-                          }
-           */
           if (!cursor.hasRemaining()) {
             list.add(cursor);
             cursor = ByteBuffer.allocateDirect(getReceiveBufferSize());
