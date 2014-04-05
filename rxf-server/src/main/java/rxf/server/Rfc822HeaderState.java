@@ -838,15 +838,15 @@ public class Rfc822HeaderState {
    * @return http addHeaderInterest for use with http 1.1
    */
   public String asRequestHeaderString() {
-    TextBuilder stringBuilder = new TextBuilder();
-    stringBuilder.append(methodProtocol()).append(SPC).append(pathResCode()).append(SPC).append(
-        null == protocolStatus() ? HTTP_1_1 : protocolStatus()).append(CRLF).toString();
+    TextBuilder builder = new TextBuilder();
+    builder.append(methodProtocol()).append(SPC).append(pathResCode()).append(SPC).append(
+        null == protocolStatus() ? HTTP_1_1 : protocolStatus()).append(CRLF);
     for (Entry<String, String> stringStringEntry : headerStrings().entrySet())
-      stringBuilder.append(stringStringEntry.getKey()).append(COLONSPC).append(
-          stringStringEntry.getValue()).append(CRLF).toString();
+      builder.append(stringStringEntry.getKey()).append(COLONSPC).append(
+          stringStringEntry.getValue()).append(CRLF);
 
-    stringBuilder.append(CRLF);
-    return stringBuilder.toString();
+    builder.append(CRLF);
+    return builder.toString();
   }
 
   /**

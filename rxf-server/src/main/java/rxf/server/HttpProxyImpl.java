@@ -34,12 +34,10 @@ public class HttpProxyImpl extends Impl {
     browserKey.selector().wakeup();
     browserKey.interestOps(OP_READ);
     String path;
-    ByteBuffer headers;
-    ByteBuffer dst;
     Rfc822HeaderState state = null;
     for (Object o : Arrays.asList(browserKey.attachment())) {
       if (o instanceof Rfc822HeaderState) {
-        ActionBuilder.get().state((Rfc822HeaderState) o);
+        ActionBuilder.get().state(state = (Rfc822HeaderState) o);
         break;
       }
     }

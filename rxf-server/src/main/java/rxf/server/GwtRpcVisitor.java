@@ -118,12 +118,10 @@ public class GwtRpcVisitor extends Impl implements PreRead, SerializationPolicyP
               payload =
                   RPC.invokeAndEncodeResponse(delegate, rpcRequest.getMethod(), rpcRequest
                       .getParameters(), rpcRequest.getSerializationPolicy(), rpcRequest.getFlags());
-            } catch (IncompatibleRemoteServiceException ex) {
-              payload = RPC.encodeResponseForFailure(null, ex);
-            } catch (RpcTokenException ex) {
+            } catch (IncompatibleRemoteServiceException | RpcTokenException ex) {
               payload = RPC.encodeResponseForFailure(null, ex);
             }
-            ByteBuffer pbuf = (ByteBuffer) UTF8.encode(payload).rewind();
+              ByteBuffer pbuf = (ByteBuffer) UTF8.encode(payload).rewind();
             final int limit = pbuf.rewind().limit();
             Rfc822HeaderState.HttpResponse res = req.$res();
             res.status(HttpStatus.$200);
@@ -147,11 +145,8 @@ public class GwtRpcVisitor extends Impl implements PreRead, SerializationPolicyP
       });
       return;
     }
-    int write = channel.write(cursor);
+    channel.write(cursor);
     if (!cursor.hasRemaining()) {
-      /*Socket socket = channel.socket();
-         socket.getOutputStream().flush();
-         socket.close();*/
       key.interestOps(SelectionKey.OP_READ).attach(null);
     }
 

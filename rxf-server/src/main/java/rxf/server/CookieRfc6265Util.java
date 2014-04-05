@@ -86,12 +86,9 @@ public enum CookieRfc6265Util {
     public Serializable value(ByteBuffer input) {
       input = (ByteBuffer) input.duplicate().rewind();
       do {
-        while (input.hasRemaining() && Character.isWhitespace(((ByteBuffer) input.mark()).get())) {
-          //skip
-        }
+        while (input.hasRemaining() && Character.isWhitespace(((ByteBuffer) input.mark()).get()));
         int begin = input.reset().position();
-        while (input.hasRemaining() && '=' != ((ByteBuffer) input.mark()).get()) {
-        }
+        while (input.hasRemaining() && '=' != ((ByteBuffer) input.mark()).get());
 
         return ByteBuffer.allocate(
             ((ByteBuffer) input.reset().flip().position(begin)).slice().limit()).put(input).array();
@@ -109,18 +106,14 @@ public enum CookieRfc6265Util {
     public Serializable value(ByteBuffer input) {
       input = (ByteBuffer) input.duplicate().rewind();
       do {
-        while (input.hasRemaining() && '=' != input.get()) {
-        }
-        while (input.hasRemaining() && Character.isWhitespace(((ByteBuffer) input.mark()).get())) {
-        }
+        while (input.hasRemaining() && '=' != input.get());
+        while (input.hasRemaining() && Character.isWhitespace(((ByteBuffer) input.mark()).get()));
         int begin = input.reset().position();
-        while (input.hasRemaining() && ';' != ((ByteBuffer) input.mark()).get()) {
-        }
+        while (input.hasRemaining() && ';' != ((ByteBuffer) input.mark()).get());
 
         return ByteBuffer.allocate(
             ((ByteBuffer) input.reset().flip().position(begin)).slice().limit()).put(input).array();
       } while (input.hasRemaining());
-
     }
   },
   /**
@@ -150,24 +143,18 @@ public enum CookieRfc6265Util {
     @Override
     public Serializable value(ByteBuffer input) {
       input = input.slice();
-      while (input.hasRemaining() && Character.isWhitespace(((ByteBuffer) input.mark()).get())) {
-        //skip
-      }
+      while (input.hasRemaining() && Character.isWhitespace(((ByteBuffer) input.mark()).get()));
       input = ((ByteBuffer) input.reset()).slice();
       byte b;
       while (input.hasRemaining() && !Character.isWhitespace(b = ((ByteBuffer) input.mark()).get())
-          && '=' != b) {
-        //follow
-      }
+          && '=' != b);
 
       int position = input.reset().position();
       int limit = token.limit();
 
       if (position == limit) {
 
-        while (input.hasRemaining() && '=' != input.get()) {
-          //seek
-        }
+        while (input.hasRemaining() && '=' != input.get());
 
         CharBuffer parseme = UTF8.decode(input.slice());
         Date date = null;
@@ -207,24 +194,18 @@ public enum CookieRfc6265Util {
     @Override
     public Serializable value(ByteBuffer input) {
       input = input.slice();
-      while (input.hasRemaining() && Character.isWhitespace(((ByteBuffer) input.mark()).get())) {
-        //skip
-      }
+      while (input.hasRemaining() && Character.isWhitespace(((ByteBuffer) input.mark()).get()));
       input = ((ByteBuffer) input.reset()).slice();
       byte b;
       while (input.hasRemaining() && !Character.isWhitespace(b = ((ByteBuffer) input.mark()).get())
-          && '=' != b) {
-        //follow
-      }
+          && '=' != b);
 
       int position = input.reset().position();
       int limit = token.limit();
 
       if (position == limit) {
 
-        while (input.hasRemaining() && '=' != input.get()) {
-          //seek
-        }
+        while (input.hasRemaining() && '=' != input.get());
 
         CharBuffer parseme = UTF8.decode(input.slice());
         Long l = null;
@@ -267,24 +248,18 @@ public enum CookieRfc6265Util {
     @Override
     public Serializable value(ByteBuffer input) {
       input = input.slice();
-      while (input.hasRemaining() && Character.isWhitespace(((ByteBuffer) input.mark()).get())) {
-        //skip
-      }
+      while (input.hasRemaining() && Character.isWhitespace(((ByteBuffer) input.mark()).get()));
       input = ((ByteBuffer) input.reset()).slice();
       byte b;
       while (input.hasRemaining() && !Character.isWhitespace(b = ((ByteBuffer) input.mark()).get())
-          && '=' != b) {
-        //follow
-      }
+          && '=' != b);
 
       int position = input.reset().position();
       int limit = token.limit();
 
       if (position == limit) {
 
-        while (input.hasRemaining() && '=' != input.get()) {
-          //seek
-        }
+        while (input.hasRemaining() && '=' != input.get());
 
         return ByteBuffer.allocate((input = input.slice()).limit()).put(input).array();
       }
@@ -316,24 +291,18 @@ public enum CookieRfc6265Util {
     @Override
     public Serializable value(ByteBuffer input) {
       input = input.slice();
-      while (input.hasRemaining() && Character.isWhitespace(((ByteBuffer) input.mark()).get())) {
-        //skip
-      }
+      while (input.hasRemaining() && Character.isWhitespace(((ByteBuffer) input.mark()).get()));
       input = ((ByteBuffer) input.reset()).slice();
       byte b;
       while (input.hasRemaining() && !Character.isWhitespace(b = ((ByteBuffer) input.mark()).get())
-          && '=' != b) {
-        //follow
-      }
+          && '=' != b);
 
       int position = input.reset().position();
       int limit = token.limit();
 
       if (position == limit) {
 
-        while (input.hasRemaining() && '=' != input.get()) {
-          //seek
-        }
+        while (input.hasRemaining() && '=' != input.get());
 
         return ByteBuffer.allocate((input = input.slice()).limit()).put(input).array();
       }
@@ -355,23 +324,16 @@ public enum CookieRfc6265Util {
       ByteBuffer tok = token.duplicate();
       byte b;
       do {
-        while (input.hasRemaining() && Character.isWhitespace(((ByteBuffer) input.mark()).get())) {
-          //skip
-        }
+        while (input.hasRemaining() && Character.isWhitespace(((ByteBuffer) input.mark()).get()));
         tok.rewind();
         while (tok.hasRemaining() && input.hasRemaining()
-            && tok.get() == Character.toLowerCase(input.get())) {
-          //cmp
-        }
+            && tok.get() == Character.toLowerCase(input.get()));
         if (!tok.hasRemaining()) {
           boolean keep = false;
           while (input.hasRemaining() && ';' != (b = ((ByteBuffer) input.mark()).get())
-              && (keep = Character.isWhitespace(b))) {
-            //skip
-          }
-          if (keep) {
+              && (keep = Character.isWhitespace(b)));
+          if (keep)
             return Boolean.TRUE;
-          }
         }
       } while (input.hasRemaining());
 
@@ -393,20 +355,14 @@ public enum CookieRfc6265Util {
       ByteBuffer tok = token.duplicate();
       byte b;
       do {
-        while (input.hasRemaining() && Character.isWhitespace(((ByteBuffer) input.mark()).get())) {
-          //skip
-        }
+        while (input.hasRemaining() && Character.isWhitespace(((ByteBuffer) input.mark()).get()));
         tok.rewind();
         while (tok.hasRemaining() && input.hasRemaining()
-            && tok.get() == Character.toLowerCase(input.get())) {
-          //cmp
-        }
+            && tok.get() == Character.toLowerCase(input.get()));
         if (!tok.hasRemaining()) {
           boolean keep = false;
           while (input.hasRemaining() && ';' != (b = ((ByteBuffer) input.mark()).get())
-              && (keep = Character.isWhitespace(b))) {
-            //skip
-          }
+              && (keep = Character.isWhitespace(b)));
           if (keep) {
             return Boolean.TRUE;
           }
@@ -420,17 +376,16 @@ public enum CookieRfc6265Util {
   ByteBuffer token = UTF8.encode(key);
 
   public static EnumMap<CookieRfc6265Util, Serializable> parseSetCookie(ByteBuffer input) {
-    ArrayList<ByteBuffer> a = new ArrayList<ByteBuffer>();
+    ArrayList<ByteBuffer> a = new ArrayList<>();
     while (input.hasRemaining()) {
       int begin = input.position();
       byte b = 0;
-      while (input.hasRemaining() && ';' != (b = ((ByteBuffer) input.mark()).get())) {
-      }
+      while (input.hasRemaining() && ';' != (b = ((ByteBuffer) input.mark()).get()));
       a.add(((ByteBuffer) (b == ';' ? input.duplicate().reset() : input.duplicate()).flip()
           .position(begin)).slice());
     }
     EnumMap<CookieRfc6265Util, Serializable> res;
-    res = new EnumMap<CookieRfc6265Util, Serializable>(CookieRfc6265Util.class);
+    res = new EnumMap<>(CookieRfc6265Util.class);
     Iterator<ByteBuffer> iterator = a.iterator();
     ByteBuffer next = iterator.next();
     Serializable n = Name.value(next);
@@ -466,15 +421,12 @@ public enum CookieRfc6265Util {
     ByteBuffer buf = input.duplicate().slice();
 
     while (buf.hasRemaining()) {
-      while (buf.hasRemaining() && Character.isWhitespace(((ByteBuffer) buf.mark()).get())) {
-      }
+      while (buf.hasRemaining() && Character.isWhitespace(((ByteBuffer) buf.mark()).get()));
       int keyBegin = buf.reset().position();
 
-      while (buf.hasRemaining() && '=' != ((ByteBuffer) buf.mark()).get()) {
-      }
+      while (buf.hasRemaining() && '=' != ((ByteBuffer) buf.mark()).get());
       ByteBuffer ckey = ((ByteBuffer) buf.duplicate().reset().flip().position(keyBegin)).slice();
-      while (buf.hasRemaining() && Character.isWhitespace(((ByteBuffer) buf.mark()).get())) {
-      }
+      while (buf.hasRemaining() && Character.isWhitespace(((ByteBuffer) buf.mark()).get()));
       int vBegin = buf.reset().position();
 
       while (buf.hasRemaining()) {
@@ -496,7 +448,7 @@ public enum CookieRfc6265Util {
             while (filt.hasRemaining() && ckey.hasRemaining() && filt.get() == ckey.get());
             if (!filt.hasRemaining() && !ckey.hasRemaining()) {
               ret =
-                  new Pair(new Pair(ckey.reset(), ((ByteBuffer) buf.duplicate().reset().flip()
+                  new Pair<Pair<Object, ByteBuffer>, Pair<?, ?>>(new Pair<>(ckey.reset(), ((ByteBuffer) buf.duplicate().reset().flip()
                       .position(vBegin)).slice()), ret);
               break;
             }
@@ -504,7 +456,7 @@ public enum CookieRfc6265Util {
         }
       } else
         ret =
-            new Pair(new Pair(ckey, ((ByteBuffer) buf.duplicate().reset().flip().position(vBegin))
+            new Pair<Pair<ByteBuffer, ByteBuffer>, Pair<?, ?>>(new Pair<>(ckey, ((ByteBuffer) buf.duplicate().reset().flip().position(vBegin))
                 .slice()), ret);
     }
     return (Pair<Pair<ByteBuffer, ByteBuffer>, ? extends Pair>) ret;

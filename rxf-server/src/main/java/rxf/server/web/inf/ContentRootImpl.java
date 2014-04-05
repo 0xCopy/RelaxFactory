@@ -170,11 +170,11 @@ public class ContentRootImpl extends Impl implements PreRead {
       res.status(HttpStatus.$200).headerString(Content$2dType,
           ((null == mimeType) ? MimeType.bin : mimeType).contentType).headerString(
           Content$2dLength, String.valueOf(length)).headerString(Connection, "close").headerString(
-          Date, DateHeaderParser.formatHttpHeaderDate(fdate));;
+          Date, DateHeaderParser.formatHttpHeaderDate(fdate));
       if (null != ceString)
         res.headerString(Content$2dEncoding, ceString);
       ByteBuffer response = res.as(ByteBuffer.class);
-      int write = channel.write(response);
+      channel.write(response);
       final int sendBufferSize = BlobAntiPatternObject.getSendBufferSize();
       final long[] progress = {fileChannel.transferTo(0, sendBufferSize, channel)};
       key.interestOps(OP_WRITE | OP_CONNECT);
@@ -199,9 +199,9 @@ public class ContentRootImpl extends Impl implements PreRead {
       key.interestOps(OP_WRITE).attach(new Impl() {
 
         public void onWrite(SelectionKey key) throws Exception {
-          int write =
-              channel.write(req.$res().status(HttpStatus.$404).headerString(Content$2dLength, "0")
-                  .as(ByteBuffer.class));
+
+          channel.write(req.$res().status(HttpStatus.$404).headerString(Content$2dLength, "0").as(
+              ByteBuffer.class));
           key.selector().wakeup();
           key.interestOps(OP_READ).attach(null);
         }

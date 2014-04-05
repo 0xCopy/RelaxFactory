@@ -36,40 +36,16 @@ public class ProtocolMethodDispatch extends Impl {
   public static final ByteBuffer NONCE = ByteBuffer.allocateDirect(0);
 
   /**
-   * if you *must* register a new priority ahead of existing patterns, this is how.  otherwise the LinkedHashMap stays ordered as defined.
-   *
-   * @param method
-   * @param pattern
-   * @param impl
-   * @return
-   */
-  public static Map<Pattern, Class<? extends Impl>> precedeAllWith(HttpMethod method,
-      Pattern pattern, Class<? extends Impl> impl) {
-    Map<Pattern, Class<? extends Impl>> patternImplMap = NAMESPACE.get(method);
-    Map<Pattern, Class<? extends Impl>> ret = new LinkedHashMap<Pattern, Class<? extends Impl>>();
-    ret.put(pattern, impl);
-    if (null == patternImplMap)
-      patternImplMap = new LinkedHashMap<Pattern, Class<? extends Impl>>();
-
-    for (Entry<Pattern, Class<? extends Impl>> patternImplEntry : patternImplMap.entrySet()) {
-      ret.put(patternImplEntry.getKey(), patternImplEntry.getValue());
-    }
-    NAMESPACE.put(method, ret);
-    return patternImplMap;
-
-  }
-
-  /**
    * the PUT protocol handlers, only static for the sake of javadocs
    */
   public static Map<Pattern, Class<? extends Impl>> POSTmap =
-      new LinkedHashMap<Pattern, Class<? extends Impl>>();
+      new LinkedHashMap<>();
 
   /**
    * the GET protocol handlers, only static for the sake of javadocs
    */
   public static Map<Pattern, Class<? extends Impl>> GETmap =
-      new LinkedHashMap<Pattern, Class<? extends Impl>>();
+      new LinkedHashMap<>();
 
   static {
     NAMESPACE.put(POST, POSTmap);
@@ -99,7 +75,7 @@ public class ProtocolMethodDispatch extends Impl {
      */
     GETmap.put(ContentRootCacheImpl.CACHE_PATTERN, ContentRootCacheImpl.class);
     GETmap.put(ContentRootNoCacheImpl.NOCACHE_PATTERN, ContentRootNoCacheImpl.class);
-    GETmap.put(Pattern.compile(".*"), ContentRootImpl.class/*(COUCH_DEFAULT_FS_ROOT)*/);
+    GETmap.put(Pattern.compile(".*"), ContentRootImpl.class );
   }
 
   public void onAccept(SelectionKey key) throws IOException {
@@ -156,12 +132,8 @@ public class ProtocolMethodDispatch extends Impl {
         impl = value.newInstance();
         Object a[] = {impl, httpRequest, cursor};
         key.attach(a);
-        if (PreRead.class.isAssignableFrom(value)) {
-          impl.onRead(key);
-        };
-
+        if (PreRead.class.isAssignableFrom(value)) impl.onRead(key);
         key.selector().wakeup();
-
         return;
       }
 
