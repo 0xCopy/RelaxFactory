@@ -687,13 +687,12 @@ public enum CouchMetaDriver {
 
           HttpRequest request = actionBuilder.state().$req();
 
-          header =
+          ByteBuffer header =
               (ByteBuffer) request.method(GET)
                   .path(scrub('/' + db + '/' + dbKeysBuilder.get(view))).headerString(Accept,
                       MimeType.json.contentType).as(ByteBuffer.class);
           int wrote = channel.write(header);
-          assert !header.hasRemaining();
-          header = null;
+          assert !header.hasRemaining() : "Failed to complete write in one pass, need to re-interest(READ)";
           key.interestOps(OP_READ);
         }
 
@@ -702,8 +701,10 @@ public enum CouchMetaDriver {
             try {
               int read = channel.read(cursor);
               if (-1 == read) {
-                if (cursor.position() > 0)
+                // we were asked to read again, but no more content to read, just deliver what we already saw
+                if (cursor.position() > 0) {
                   list.add(cursor);
+                }
                 deliver();
                 recycleChannel(channel);
                 return;
@@ -711,8 +712,26 @@ public enum CouchMetaDriver {
             } catch (Throwable e) {
               e.printStackTrace();
             }
+            //token suffix check, see if we're at the end
+            boolean suffixMatches =
+                BlobAntiPatternObject.suffixMatchChunks(CE_TERMINAL, cursor, list
+                    .toArray(new ByteBuffer[list.size()]));
+
+            if (suffixMatches) {
+              if (cursor.position() > 0) {
+                list.add(cursor);
+              }
+              deliver();
+              recycleChannel(channel);
+              return;
+            }
+            if (!cursor.hasRemaining()) {
+              list.add(cursor);
+              cursor = ByteBuffer.allocateDirect(getReceiveBufferSize());
+            }
           } else {
             //geometric,  vulnerable to dev/null if not max'd here.
+            //can only happen if server returns pathologically large headers
             if (null == header)
               header = ByteBuffer.allocateDirect(getReceiveBufferSize());
             else if (!header.hasRemaining()) {
@@ -728,11 +747,11 @@ public enum CouchMetaDriver {
 
             ByteBuffer currentBuff = response.headerBuf();
             if (!BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, currentBuff)) {
+              //not enough content to finish loading headers, wait for more
               HttpMethod.getSelector().wakeup();
               return;
             }
             cursor = (ByteBuffer) flip.slice();
-            header = null;
             actionBuilder.state(response);
             if (DEBUG_SENDJSON) {
               System.err.println(deepToString(response.statusEnum(), response, UTF8
@@ -746,8 +765,8 @@ public enum CouchMetaDriver {
                   String remainingString = response.headerString(Content$2dLength);
                   final int remaining = Integer.parseInt(remainingString);
                   if (cursor.remaining() == remaining) {
-                    ByteBuffer slice = cursor.slice();
-                    simpleDeploy(slice);
+                    // No chunked encoding, all read in one pass, deploy the body without ce-parsing
+                    simpleDeploy(cursor.slice());
                   } else {
                     //windows workaround?
                     key.attach(new Impl() {
@@ -770,31 +789,31 @@ public enum CouchMetaDriver {
                       }
                     });
                   }
+                } else {
+                  // if we're in this block it means that there was no content-length set, which means
+                  // we're reading chunked data.
+
+                  //since we sliced above to get the reference to cursor, we need to move the cursor to the end
+                  boolean suffixMatches =
+                      BlobAntiPatternObject.suffixMatchChunks(CE_TERMINAL, (ByteBuffer) cursor
+                          .duplicate().position(cursor.limit()));
+                  if (suffixMatches) {
+                    // 'fast forward' to the end of the cursor, since deliver will flip() which will end at current
+                    // position, instead of just copying as is. A cleaner fix might be to change the first loop
+                    // in deliver
+                    cursor.position(cursor.limit());
+                    list.add(cursor);
+                    deliver();
+                    recycleChannel(channel);
+                  } else {
+                    cursor.compact();
+                  }
                 }
-                cursor = cursor.slice().compact();
                 break;
               default:
                 cyclicBarrier.reset();
                 recycleChannel(channel);
-                return;
             }
-            return;
-          }
-          //token suffix check
-          boolean suffixMatches =
-              BlobAntiPatternObject.suffixMatchChunks(CE_TERMINAL, cursor.duplicate(), list
-                  .toArray(new ByteBuffer[list.size()]));
-
-          if (suffixMatches) {
-            if (cursor.position() > 0)
-              list.add(cursor);
-            deliver();
-            recycleChannel(channel);
-            return;
-          }
-          if (!cursor.hasRemaining()) {
-            list.add(cursor);
-            cursor = ByteBuffer.allocateDirect(getReceiveBufferSize());
           }
         }
 

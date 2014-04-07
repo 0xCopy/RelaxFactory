@@ -148,7 +148,7 @@ public class CouchServiceTest {
     }
   }
 
-  @Test(timeout = 1000)
+  @Test()
   public void testSimpleFinder() {
     try {
       SimpleCouchService service = null;
