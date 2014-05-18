@@ -60,8 +60,7 @@ public class HttpProxyImpl extends Impl {
         @Override
         public void onRead(final SelectionKey couchKey) throws Exception {
           SocketChannel channel = (SocketChannel) couchKey.channel();
-          final ByteBuffer dst =
-              ByteBuffer.allocateDirect(BlobAntiPatternObject.getReceiveBufferSize());
+          final ByteBuffer dst = ByteBuffer.allocateDirect(4 << 10);
           int read = channel.read(dst);
           Rfc822HeaderState proxyState = new Rfc822HeaderState(HEADER_INTEREST);
           final int total = Integer.parseInt(proxyState.headerString(Content$2dLength));
@@ -76,9 +75,7 @@ public class HttpProxyImpl extends Impl {
 
           couchKey.selector().wakeup();
           couchKey.interestOps(OP_READ).attach(new Impl() {
-            final ByteBuffer sharedBuf =
-                ByteBuffer.allocateDirect(Math.min(total, BlobAntiPatternObject
-                    .getReceiveBufferSize()));
+            final ByteBuffer sharedBuf = ByteBuffer.allocateDirect(Math.min(total, 4 << 10));
             private Impl browserSlave = new Impl() {
               @Override
               public void onWrite(SelectionKey key) throws Exception {

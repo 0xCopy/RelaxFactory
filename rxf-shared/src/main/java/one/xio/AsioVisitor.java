@@ -1,5 +1,7 @@
 package one.xio;
 
+import rxf.web.inf.ProtocolMethodDispatch;
+
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
@@ -29,7 +31,7 @@ public interface AsioVisitor {
   class Impl implements AsioVisitor {
     {
       if ($DBG)
-        $origins.put(this, HttpMethod.wheresWaldo(4));
+        $origins.put(this, ProtocolMethodDispatch.wheresWaldo(4));
     }
 
     public Impl preRead(Object... env) {
@@ -43,9 +45,8 @@ public interface AsioVisitor {
     @Override
     public void onRead(SelectionKey key) throws Exception {
       System.err.println("fail: " + key.toString());
-      final SocketChannel channel = (SocketChannel) key.channel();
-      final int receiveBufferSize = channel.socket().getReceiveBufferSize();
-      final String trim =
+      int receiveBufferSize = 4 << 10;
+      String trim =
           HttpMethod.UTF8.decode(ByteBuffer.allocateDirect(receiveBufferSize)).toString().trim();
 
       throw new UnsupportedOperationException("found " + trim + " in "
@@ -66,7 +67,7 @@ public interface AsioVisitor {
 
     @Override
     public void onWrite(SelectionKey key) throws Exception {
-      final SocketChannel channel = (SocketChannel) key.channel();
+      SocketChannel channel = (SocketChannel) key.channel();
       System.err.println("buffer underrun?: " + channel.socket().getRemoteSocketAddress());
       throw new UnsupportedOperationException("found in " + getClass().getCanonicalName());
     }
@@ -75,7 +76,7 @@ public interface AsioVisitor {
     public void onAccept(SelectionKey key) throws Exception {
 
       ServerSocketChannel c = (ServerSocketChannel) key.channel();
-      final SocketChannel accept = c.accept();
+      SocketChannel accept = c.accept();
       accept.configureBlocking(false);
       HttpMethod.enqueue(accept, OP_READ | OP_WRITE, key.attachment());
 

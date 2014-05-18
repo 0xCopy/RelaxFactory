@@ -39,7 +39,7 @@ public class Rfc6455WsInitiator {
    */
   Rfc822HeaderState parseInitiatorRequest(Rfc822HeaderState.HttpRequest httpRequest, URL ws_uri, String host, String wsProto) throws URISyntaxException {
 
-    HttpMethod httpMethod = httpRequest.method();
+    HttpMethod httpMethod = HttpMethod.valueOf(httpRequest.method());
     switch (httpMethod) {
         case GET:
             String protocol = httpRequest.protocol();

@@ -12,14 +12,14 @@ import rxf.server.guice.CouchModuleBuilder;
 import rxf.server.guice.InjectingServiceLayerDecorator;
 import rxf.server.guice.RFServiceLayerModule;
 import rxf.server.guice.RxfModule;
-import rxf.server.web.inf.ContentRootCacheImpl;
-import rxf.server.web.inf.ContentRootImpl;
-import rxf.server.web.inf.ContentRootNoCacheImpl;
+import rxf.web.inf.ContentRootCacheImpl;
+import rxf.web.inf.ContentRootImpl;
+import rxf.web.inf.ContentRootNoCacheImpl;
 
 import java.util.regex.Pattern;
 
-import static rxf.server.web.inf.ContentRootCacheImpl.CACHE_PATTERN;
-import static rxf.server.web.inf.ContentRootNoCacheImpl.NOCACHE_PATTERN;
+import static rxf.web.inf.ContentRootCacheImpl.CACHE_PATTERN;
+import static rxf.web.inf.ContentRootNoCacheImpl.NOCACHE_PATTERN;
 
 public class DealModule extends AbstractModule {
 

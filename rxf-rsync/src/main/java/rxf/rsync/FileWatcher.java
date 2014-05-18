@@ -7,7 +7,7 @@ import one.xio.AsioVisitor;
 import one.xio.HttpMethod;
 import one.xio.MimeType;
 import rxf.server.gen.CouchDriver;
-import rxf.server.web.inf.ProtocolMethodDispatch;
+import rxf.web.inf.ProtocolMethodDispatch;
 import rxf.shared.CouchTx;
 
 import java.io.File;
@@ -23,7 +23,7 @@ import static com.google.common.io.BaseEncoding.base64;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.nio.file.StandardWatchEventKinds.*;
 import static rxf.server.driver.CouchMetaDriver.gson;
-import static rxf.server.driver.RxfBootstrap.getVar;
+import static rxf.server.RxfBootstrap.getVar;
 
 /**
  * Example to watch a directory (or createTree) for changes to files.

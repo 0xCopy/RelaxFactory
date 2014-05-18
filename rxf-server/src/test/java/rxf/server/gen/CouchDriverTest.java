@@ -12,7 +12,7 @@ import rxf.shared.CouchTx;
 import rxf.server.driver.CouchMetaDriver;
 import rxf.server.gen.CouchDriver.*;
 import rxf.server.gen.CouchDriver.ViewFetch.ViewFetchTerminalBuilder;
-import rxf.server.web.inf.ProtocolMethodDispatch;
+import rxf.web.inf.ProtocolMethodDispatch;
 
 import java.util.Map;
 import java.util.concurrent.Executors;

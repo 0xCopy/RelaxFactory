@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>rxf</groupId>
     <artifactId>relaxfactory</artifactId>
-    <version>0.9.7.3</version>
+    <version>0.9.9.0</version>
     <packaging>pom</packaging>
     <properties>
         <gwt.draftCompile>false</gwt.draftCompile>
@@ -154,8 +154,12 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.0</version>
                     <configuration>
+                        <source>1.8</source>
+                        <target>1.8</target>
+<!--
                         <source>${java.specification.version}</source>
                         <target>${java.specification.version}</target>
+-->
                     </configuration>
                 </plugin>
 
@@ -170,8 +174,8 @@
                     <version>1.6</version>
                     <configuration>
                         <compileInBackground>true</compileInBackground>
-                        <jdkName>1.7</jdkName>
-                        <jdkLevel>JDK_1_7</jdkLevel>
+                        <jdkName>1.8</jdkName>
+                        <jdkLevel>JDK_1_8</jdkLevel>
                         <downloadSources>true</downloadSources>
                         <downloadJavadocs>true</downloadJavadocs>
                         <assertNotNull>false</assertNotNull>

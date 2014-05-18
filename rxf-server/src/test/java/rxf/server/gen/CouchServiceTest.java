@@ -6,7 +6,7 @@ import rxf.server.CouchService;
 import rxf.server.CouchServiceFactory;
 import rxf.server.gen.CouchDriver.DbDelete;
 import rxf.server.gen.CouchDriver.DocFetch;
-import rxf.server.web.inf.ProtocolMethodDispatch;
+import rxf.web.inf.ProtocolMethodDispatch;
 import rxf.shared.CouchTx;
 
 import com.google.gson.JsonSyntaxException;

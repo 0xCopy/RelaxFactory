@@ -1,4 +1,4 @@
-package rxf.server.web.inf;
+package rxf.web.inf;
 
 import one.xio.HttpHeaders;
 import rxf.server.DateHeaderParser;

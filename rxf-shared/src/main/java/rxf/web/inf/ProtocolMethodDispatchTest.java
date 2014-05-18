@@ -1,4 +1,4 @@
-package rxf.server.web.inf;
+package rxf.web.inf;
 
 import org.junit.Assert;
 import org.junit.Test;

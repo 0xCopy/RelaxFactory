@@ -65,7 +65,7 @@ public class OAuthHandler extends Impl implements PreRead {
             }
             key.attach(this);
         }
-        cursor = null == cursor ? ByteBuffer.allocateDirect(getReceiveBufferSize()) : cursor.hasRemaining() ? cursor : ByteBuffer.allocateDirect(cursor.capacity() << 2).put((ByteBuffer) cursor.rewind());
+        cursor = null == cursor ? ByteBuffer.allocateDirect(4<<10) : cursor.hasRemaining() ? cursor : ByteBuffer.allocateDirect(cursor.capacity() << 2).put((ByteBuffer) cursor.rewind());
         int read = channel.read(cursor);
         if (-1 == read) {
             key.cancel();

@@ -1,4 +1,4 @@
-package rxf.server.driver;
+package rxf.server;
 
 public class RxfBootstrap {
 

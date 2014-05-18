@@ -22,7 +22,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import static rxf.server.BlobAntiPatternObject.deepToString;
+import static rxf.web.inf.ProtocolMethodDispatch.deepToString;
 import static rxf.server.BlobAntiPatternObject.getDefaultOrgName;
 
 /**

@@ -55,23 +55,6 @@ public enum HttpMethod {
       selector1.wakeup();
   }
 
-  public static String wheresWaldo(int... depth) {
-    int d = depth.length > 0 ? depth[0] : 2;
-    Throwable throwable = new Throwable();
-    Throwable throwable1 = throwable.fillInStackTrace();
-    StackTraceElement[] stackTrace = throwable1.getStackTrace();
-    String ret = "";
-    for (int i = 2, end = min(stackTrace.length - 1, d); i <= end; i++) {
-      StackTraceElement stackTraceElement = stackTrace[i];
-      ret +=
-          "\tat " + stackTraceElement.getClassName() + "." + stackTraceElement.getMethodName()
-              + "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber()
-              + ")\n";
-
-    }
-    return ret;
-  }
-
   public static void init(AsioVisitor protocoldecoder, String... a) throws IOException {
 
     setSelector(Selector.open());

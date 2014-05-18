@@ -3,7 +3,6 @@ package rxf.server.daemon;
 import one.xio.AsioVisitor;
 import one.xio.HttpHeaders;
 import one.xio.HttpMethod;
-import rxf.server.BlobAntiPatternObject;
 import rxf.server.Rfc822HeaderState;
 
 import java.net.InetAddress;
@@ -17,12 +16,10 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.nio.channels.SelectionKey.*;
 import static one.xio.HttpMethod.UTF8;
-import static rxf.server.driver.RxfBootstrap.getVar;
+import static rxf.server.RxfBootstrap.getVar;
 
 /**
  * <ul>
@@ -138,7 +135,7 @@ public class ProxyDaemon extends AsioVisitor.Impl {
           (Rfc822HeaderState.HttpRequest) new Rfc822HeaderState().$req().headerInterest(
               HttpHeaders.Host).apply((ByteBuffer) cursor.duplicate().flip());
       ByteBuffer headersBuf = req.headerBuf();
-      if (BlobAntiPatternObject.suffixMatchChunks(TERMINATOR, headersBuf)) {
+      if (Rfc822HeaderState.suffixMatchChunks(TERMINATOR, headersBuf)) {
 
         int climit = cursor.position();
         if (PROXY_DEBUG) {

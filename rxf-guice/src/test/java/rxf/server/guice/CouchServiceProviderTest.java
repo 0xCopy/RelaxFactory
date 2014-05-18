@@ -2,13 +2,11 @@ package rxf.server.guice;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
-import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import one.xio.AsioVisitor;
 import one.xio.HttpMethod;
@@ -25,7 +23,7 @@ import rxf.server.CouchService;
 import rxf.shared.CouchTx;
 import rxf.server.RelaxFactoryServerImpl;
 import rxf.server.gen.CouchDriver;
-import rxf.server.web.inf.ProtocolMethodDispatch;
+import rxf.web.inf.ProtocolMethodDispatch;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;

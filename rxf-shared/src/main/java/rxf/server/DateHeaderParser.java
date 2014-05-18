@@ -52,7 +52,7 @@ public enum DateHeaderParser {
     format = dateFormat;
     format.setLenient(true);
     //for unit tests we want GMT as predictable.  for other println's we want local tz
-    if (BlobAntiPatternObject.isDEBUG_SENDJSON())
+    if (false)
       format.setTimeZone(TimeZone.getTimeZone("GMT"));
   }
 
@@ -78,7 +78,7 @@ public enum DateHeaderParser {
       try {
         return dateHeaderParser.format.parse(source);
       } catch (ParseException e) {
-        if (BlobAntiPatternObject.isDEBUG_SENDJSON()) {
+        if (false) {
           System.err.println(".--" + dateHeaderParser.name() + " failed parse: " + source);
 
         }

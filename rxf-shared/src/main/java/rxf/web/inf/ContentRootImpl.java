@@ -1,4 +1,4 @@
-package rxf.server.web.inf;
+package rxf.web.inf;
 
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpStatus;
@@ -6,7 +6,6 @@ import one.xio.MimeType;
 import rxf.server.*;
 import rxf.server.Rfc822HeaderState.HttpRequest;
 import rxf.server.Rfc822HeaderState.HttpResponse;
-import rxf.server.driver.CouchMetaDriver;
 
 import java.io.File;
 import java.io.RandomAccessFile;
@@ -19,7 +18,6 @@ import java.nio.channels.SocketChannel;
 import static java.lang.Math.min;
 import static java.nio.channels.SelectionKey.*;
 import static one.xio.HttpHeaders.*;
-import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
 
 /**
  * User: jim
@@ -30,6 +28,7 @@ public class ContentRootImpl extends Impl implements PreRead {
 
   public static final String SLASHDOTSLASH = File.separator + "." + File.separator;
   public static final String DOUBLESEP = File.separator + File.separator;
+  private static final boolean DEBUG_SENDJSON = false;
   private String rootPath = CouchNamespace.COUCH_DEFAULT_FS_ROOT;
   private ByteBuffer cursor;
   private SocketChannel channel;
@@ -78,9 +77,8 @@ public class ContentRootImpl extends Impl implements PreRead {
       key.attach(this);
     }
     cursor =
-        null == cursor ? ByteBuffer.allocateDirect(getReceiveBufferSize()) : cursor.hasRemaining()
-            ? cursor : ByteBuffer.allocateDirect(cursor.capacity() << 1).put(
-                (ByteBuffer) cursor.rewind());
+        null == cursor ? ByteBuffer.allocateDirect(4 << 10) : cursor.hasRemaining() ? cursor
+            : ByteBuffer.allocateDirect(cursor.capacity() << 1).put((ByteBuffer) cursor.rewind());
     int read = channel.read(cursor);
     if (read == -1)
       key.cancel();
@@ -89,8 +87,8 @@ public class ContentRootImpl extends Impl implements PreRead {
     req =
         (HttpRequest) new Rfc822HeaderState().addHeaderInterest(Accept$2dEncoding,
             If$2dModified$2dSince, If$2dUnmodified$2dSince).$req().apply((ByteBuffer) flip);
-    if (!BlobAntiPatternObject
-        .suffixMatchChunks(CouchMetaDriver.HEADER_TERMINATOR, req.headerBuf())) {
+    if (!Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, req
+        .headerBuf())) {
       return;
     }
     cursor = ((ByteBuffer) flip).slice();
@@ -146,7 +144,7 @@ public class ContentRootImpl extends Impl implements PreRead {
         if (accepts.contains(compType.name())) {
           File f = new File(file.getAbsoluteFile() + "." + compType.suffix);
           if (f.isFile() && f.canRead()) {
-            if (BlobAntiPatternObject.DEBUG_SENDJSON) {
+            if (DEBUG_SENDJSON) {
               System.err.println("sending compressed archive: " + f.getAbsolutePath());
             }
             ceString = (compType.name());
@@ -175,7 +173,7 @@ public class ContentRootImpl extends Impl implements PreRead {
         res.headerString(Content$2dEncoding, ceString);
       ByteBuffer response = res.as(ByteBuffer.class);
       channel.write(response);
-      final int sendBufferSize = BlobAntiPatternObject.getSendBufferSize();
+      final int sendBufferSize = 4 << 10;
       final long[] progress = {fileChannel.transferTo(0, sendBufferSize, channel)};
       key.interestOps(OP_WRITE | OP_CONNECT);
       key.selector().wakeup();

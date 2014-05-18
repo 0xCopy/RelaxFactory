@@ -2,7 +2,6 @@ package rxf.server;
 
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpMethod;
-import rxf.server.driver.RxfBootstrap;
 
 import java.util.EnumMap;
 import java.util.Map;

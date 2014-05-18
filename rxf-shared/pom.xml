@@ -5,7 +5,7 @@
     <artifactId>rxf-shared</artifactId>
     <parent>
         <groupId>rxf</groupId>
-        <version>0.9.7.3</version>
+        <version>0.9.9.0</version>
         <artifactId>relaxfactory</artifactId>
     </parent>
     <dependencies>
@@ -18,6 +18,26 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava-gwt</artifactId>
             <version>16.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.2.4</version>
+        </dependency>
+        <dependency>
+            <groupId>javolution</groupId>
+            <artifactId>javolution</artifactId>
+            <version>5.5.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.httpunit</groupId>
+            <artifactId>httpunit</artifactId>
+            <version>1.7.2</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
         </dependency>
     </dependencies>
     <packaging>jar</packaging>

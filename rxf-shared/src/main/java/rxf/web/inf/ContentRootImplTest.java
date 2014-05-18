@@ -1,4 +1,4 @@
-package rxf.server.web.inf;
+package rxf.web.inf;
 
 import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.WebConversation;
@@ -20,7 +20,6 @@ import static one.xio.HttpHeaders.If$2dUnmodified$2dSince;
 import static one.xio.HttpMethod.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-import static rxf.server.BlobAntiPatternObject.setDEBUG_SENDJSON;
 
 public class ContentRootImplTest {
   private static final String host = "localhost";
@@ -34,7 +33,7 @@ public class ContentRootImplTest {
   static public void setUp() throws Exception {
     wc = new WebConversation();
 
-    setDEBUG_SENDJSON(true);
+    //    setDEBUG_SENDJSON(true);
     setKillswitch(false);
 
     serverSocketChannel = ServerSocketChannel.open();

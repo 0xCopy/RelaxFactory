@@ -448,7 +448,7 @@ public enum CookieRfc6265Util {
             while (filt.hasRemaining() && ckey.hasRemaining() && filt.get() == ckey.get());
             if (!filt.hasRemaining() && !ckey.hasRemaining()) {
               ret =
-                  new Pair<Pair<Object, ByteBuffer>, Pair<?, ?>>(new Pair<>(ckey.reset(), ((ByteBuffer) buf.duplicate().reset().flip()
+                  new Pair<Pair<Object, ByteBuffer>, Pair>(new Pair(ckey.reset(), ((ByteBuffer) buf.duplicate().reset().flip()
                       .position(vBegin)).slice()), ret);
               break;
             }

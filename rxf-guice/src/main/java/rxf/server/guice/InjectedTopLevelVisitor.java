@@ -3,11 +3,11 @@ package rxf.server.guice;
 import com.google.inject.*;
 import one.xio.AsioVisitor;
 import one.xio.HttpMethod;
-import rxf.server.BlobAntiPatternObject;
 import rxf.server.PreRead;
 import rxf.server.RelaxFactoryServerImpl;
 import rxf.server.Rfc822HeaderState;
 import rxf.server.Rfc822HeaderState.HttpRequest;
+import rxf.web.inf.ProtocolMethodDispatch;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -59,7 +59,7 @@ public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
   public void onRead(SelectionKey key) throws Exception {
     final SocketChannel channel = (SocketChannel) key.channel();
 
-    ByteBuffer cursor = ByteBuffer.allocateDirect(BlobAntiPatternObject.getReceiveBufferSize());
+    ByteBuffer cursor = ByteBuffer.allocateDirect(4 << 10);
     int read = channel.read(cursor);
     if (-1 == read) {
       ((SocketChannel) key.channel()).socket().close();//cancel();
@@ -73,7 +73,7 @@ public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
       Rfc822HeaderState state = new Rfc822HeaderState().apply((ByteBuffer) cursor.flip());
       httpRequest = state.$req();
       if (isDEBUG_SENDJSON()) {
-        System.err.println(BlobAntiPatternObject.deepToString(UTF8.decode((ByteBuffer) httpRequest
+        System.err.println(ProtocolMethodDispatch.deepToString(UTF8.decode((ByteBuffer) httpRequest
             .headerBuf().duplicate().rewind())));
       }
       String method1 = httpRequest.method();
@@ -119,7 +119,7 @@ public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
         key.interestOps(OP_READ).attach(null);
       }
     });
-    System.err.println(BlobAntiPatternObject.deepToString("!!!1!1!!", "404", path, "using",
+    System.err.println(ProtocolMethodDispatch.deepToString("!!!1!1!!", "404", path, "using",
         NAMESPACE));
   }
 }

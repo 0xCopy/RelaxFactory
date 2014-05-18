@@ -17,6 +17,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import org.intellij.lang.annotations.Language;
+import rxf.web.inf.ProtocolMethodDispatch;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -109,7 +110,7 @@ public enum CouchMetaDriver {
           if (null == cursor) {
             //geometric,  vulnerable to dev/null if not max'd here.
             header =
-                null == header ? ByteBuffer.allocateDirect(getReceiveBufferSize()) : header
+                null == header ? ByteBuffer.allocateDirect(4<<10) : header
                     .hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2)
                     .put((ByteBuffer) header.flip());
 
@@ -117,13 +118,13 @@ public enum CouchMetaDriver {
             ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
             response.apply((ByteBuffer) flip);
 
-            if (BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, response.headerBuf())) {
+            if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response.headerBuf())) {
               cursor = (ByteBuffer) flip.slice();
               header = null;
 
               if (DEBUG_SENDJSON) {
-                System.err.println(deepToString(response.statusEnum(), response, UTF8
-                    .decode((ByteBuffer) cursor.duplicate().rewind())));
+                System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, UTF8
+                        .decode((ByteBuffer) cursor.duplicate().rewind())));
               }
 
               HttpStatus httpStatus = response.statusEnum();
@@ -169,7 +170,7 @@ public enum CouchMetaDriver {
         phaser.awaitAdvanceInterruptibly(phaser.arrive(), REALTIME_CUTOFF, REALTIME_UNIT);
       } catch (Exception e) {
         if (DEBUG_SENDJSON) {
-          System.err.println("!!! " + deepToString(this, e) + "\n\tfrom");
+          System.err.println("!!! " + ProtocolMethodDispatch.deepToString(this, e) + "\n\tfrom");
           dbKeysBuilder.trace().printStackTrace();
         }
       }
@@ -208,7 +209,7 @@ public enum CouchMetaDriver {
           if (null == cursor) {
             //geometric,  vulnerable to dev/null if not max'd here.
             header =
-                null == header ? ByteBuffer.allocateDirect(getReceiveBufferSize()) : header
+                null == header ? ByteBuffer.allocateDirect(4<<10) : header
                     .hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2)
                     .put((ByteBuffer) header.flip());
 
@@ -216,13 +217,13 @@ public enum CouchMetaDriver {
             ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
             response.apply((ByteBuffer) flip);
 
-            if (BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, response.headerBuf())) {
+            if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response.headerBuf())) {
               cursor = (ByteBuffer) flip.slice();
               header = null;
 
               if (DEBUG_SENDJSON) {
-                System.err.println(deepToString(response.statusEnum(), response, UTF8
-                    .decode((ByteBuffer) cursor.duplicate().rewind())));
+                System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, UTF8
+                        .decode((ByteBuffer) cursor.duplicate().rewind())));
               }
 
               HttpStatus httpStatus = response.statusEnum();
@@ -267,7 +268,7 @@ public enum CouchMetaDriver {
         phaser.awaitAdvanceInterruptibly(phaser.arrive(), REALTIME_CUTOFF, REALTIME_UNIT);
       } catch (Exception e) {
         if (DEBUG_SENDJSON) {
-          System.err.println("!!! " + deepToString(this, e) + "\n\tfrom");
+          System.err.println("!!! " + ProtocolMethodDispatch.deepToString(this, e) + "\n\tfrom");
           dbKeysBuilder.trace().printStackTrace();
         }
       }
@@ -313,7 +314,7 @@ public enum CouchMetaDriver {
           if (null == cursor) { //haven't started body yet
             //geometric,  vulnerable to dev/null if not max'd here.
             if (null == header) {
-              header = ByteBuffer.allocateDirect(getReceiveBufferSize());
+              header = ByteBuffer.allocateDirect(4<<10);
             } else {
               header =
                   header.hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2)
@@ -331,13 +332,13 @@ public enum CouchMetaDriver {
             HttpResponse response = request.headerInterest(STATIC_JSON_SEND_HEADERS).$res();
             response.apply((ByteBuffer) flip);
 
-            if (BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, response.headerBuf())) {
+            if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response.headerBuf())) {
               cursor = (ByteBuffer) flip.slice();
               header = null;
 
               if (DEBUG_SENDJSON) {
-                System.err.println(deepToString(response.statusEnum(), response, this, UTF8
-                    .decode((ByteBuffer) cursor.duplicate().rewind())));
+                System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, this, UTF8
+                        .decode((ByteBuffer) cursor.duplicate().rewind())));
               }
 
               HttpStatus httpStatus = response.statusEnum();
@@ -383,7 +384,7 @@ public enum CouchMetaDriver {
         phaser.awaitAdvanceInterruptibly(phaser.arrive(), REALTIME_CUTOFF, REALTIME_UNIT);
       } catch (TimeoutException | InterruptedException e) {
         if (DEBUG_SENDJSON) {
-          System.err.println("!!! " + deepToString(this, e) + "\n\tfrom");
+          System.err.println("!!! " + ProtocolMethodDispatch.deepToString(this, e) + "\n\tfrom");
           dbKeysBuilder.trace().printStackTrace();
         }
       }
@@ -429,7 +430,7 @@ public enum CouchMetaDriver {
           if (null == cursor) {
             //geometric,  vulnerable to dev/null if not max'd here.
             header =
-                null == header ? ByteBuffer.allocateDirect(getReceiveBufferSize()) : header
+                null == header ? ByteBuffer.allocateDirect(4<<10) : header
                     .hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2)
                     .put((ByteBuffer) header.flip());
 
@@ -438,11 +439,11 @@ public enum CouchMetaDriver {
               ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
               response.apply((ByteBuffer) flip);
 
-              if (BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, response.headerBuf())) {
+              if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response.headerBuf())) {
                 try {
                   if (DEBUG_SENDJSON) {
-                    System.err.println(deepToString("??? ", UTF8.decode((ByteBuffer) flip
-                        .duplicate().rewind())));
+                    System.err.println(ProtocolMethodDispatch.deepToString("??? ", UTF8.decode((ByteBuffer) flip
+                            .duplicate().rewind())));
                   }
                   if (response.statusEnum() == HttpStatus.$200) {
                     payload.set(UTF8.encode(response.dequotedHeader(ETag.getHeader())));
@@ -475,7 +476,7 @@ public enum CouchMetaDriver {
         phaser.awaitAdvanceInterruptibly(phaser.arrive(), REALTIME_CUTOFF, REALTIME_UNIT);
       } catch (Exception e) {
         if (DEBUG_SENDJSON) {
-          System.err.println("!!! " + deepToString(this, e) + "\n\tfrom");
+          System.err.println("!!! " + ProtocolMethodDispatch.deepToString(this, e) + "\n\tfrom");
           dbKeysBuilder.trace().printStackTrace();
         }
       }
@@ -537,7 +538,7 @@ public enum CouchMetaDriver {
           if (null == cursor) {
             //geometric,  vulnerable to dev/null if not max'd here.
             header =
-                null == header ? ByteBuffer.allocateDirect(getReceiveBufferSize()) : header
+                null == header ? ByteBuffer.allocateDirect(4<<10) : header
                     .hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2)
                     .put((ByteBuffer) header.flip());
 
@@ -551,13 +552,13 @@ public enum CouchMetaDriver {
             ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
             response.apply((ByteBuffer) flip);
 
-            if (BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, response.headerBuf())) {
+            if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response.headerBuf())) {
               cursor = (ByteBuffer) flip.slice();
               header = null;
 
               if (DEBUG_SENDJSON) {
-                System.err.println(deepToString(response.statusEnum(), response, UTF8
-                    .decode((ByteBuffer) cursor.duplicate().rewind())));
+                System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, UTF8
+                        .decode((ByteBuffer) cursor.duplicate().rewind())));
               }
 
               int remaining = Integer.parseInt(response.headerString(Content$2dLength));
@@ -591,7 +592,7 @@ public enum CouchMetaDriver {
         phaser.awaitAdvanceInterruptibly(phaser.arrive(), REALTIME_CUTOFF, REALTIME_UNIT);
       } catch (Exception e) {
         if (DEBUG_SENDJSON) {
-          System.err.println("!!! " + deepToString(this, e) + "\n\tfrom");
+          System.err.println("!!! " + ProtocolMethodDispatch.deepToString(this, e) + "\n\tfrom");
           dbKeysBuilder.trace().printStackTrace();
         }
       }
@@ -674,8 +675,8 @@ public enum CouchMetaDriver {
             }
             //token suffix check, see if we're at the end
             boolean suffixMatches =
-                BlobAntiPatternObject.suffixMatchChunks(CE_TERMINAL, cursor, list
-                    .toArray(new ByteBuffer[list.size()]));
+                Rfc822HeaderState.suffixMatchChunks(CE_TERMINAL, cursor, list
+                        .toArray(new ByteBuffer[list.size()]));
 
             if (suffixMatches) {
               if (cursor.position() > 0) {
@@ -688,13 +689,13 @@ public enum CouchMetaDriver {
             }
             if (!cursor.hasRemaining()) {
               list.add(cursor);
-              cursor = ByteBuffer.allocateDirect(getReceiveBufferSize());
+              cursor = ByteBuffer.allocateDirect(4<<10);
             }
           } else {
             //geometric,  vulnerable to dev/null if not max'd here.
             //can only happen if server returns pathologically large headers
             if (null == header)
-              header = ByteBuffer.allocateDirect(getReceiveBufferSize());
+              header = ByteBuffer.allocateDirect(4<<10);
             else if (!header.hasRemaining()) {
               header =
                   ByteBuffer.allocateDirect(header.capacity() * 2).put((ByteBuffer) header.flip());
@@ -707,7 +708,7 @@ public enum CouchMetaDriver {
             response.apply((ByteBuffer) flip);
 
             ByteBuffer currentBuff = response.headerBuf();
-            if (!BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, currentBuff)) {
+            if (!Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, currentBuff)) {
               //not enough content to finish loading headers, wait for more
               HttpMethod.getSelector().wakeup();
               return;
@@ -715,8 +716,8 @@ public enum CouchMetaDriver {
             cursor = (ByteBuffer) flip.slice();
             actionBuilder.state(response);
             if (DEBUG_SENDJSON) {
-              System.err.println(deepToString(response.statusEnum(), response, UTF8
-                  .decode((ByteBuffer) cursor.duplicate().rewind())));
+              System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, UTF8
+                      .decode((ByteBuffer) cursor.duplicate().rewind())));
             }
 
             HttpStatus httpStatus = response.statusEnum();
@@ -756,8 +757,8 @@ public enum CouchMetaDriver {
 
                   //since we sliced above to get the reference to cursor, we need to move the cursor to the end
                   boolean suffixMatches =
-                      BlobAntiPatternObject.suffixMatchChunks(CE_TERMINAL, (ByteBuffer) cursor
-                          .duplicate().position(cursor.limit()));
+                      Rfc822HeaderState.suffixMatchChunks(CE_TERMINAL, (ByteBuffer) cursor
+                              .duplicate().position(cursor.limit()));
                   if (suffixMatches) {
                     // 'fast forward' to the end of the cursor, since deliver will flip() which will end at current
                     // position, instead of just copying as is. A cleaner fix might be to change the first loop
@@ -783,7 +784,7 @@ public enum CouchMetaDriver {
         phaser.awaitAdvanceInterruptibly(phaser.arrive(), REALTIME_CUTOFF, REALTIME_UNIT);
       } catch (Exception e) {
         if (DEBUG_SENDJSON) {
-          System.err.println("!!! " + deepToString(this, e) + "\n\tfrom");
+          System.err.println("!!! " + ProtocolMethodDispatch.deepToString(this, e) + "\n\tfrom");
           dbKeysBuilder.trace().printStackTrace();
         }
       }
@@ -887,7 +888,7 @@ public enum CouchMetaDriver {
               .headerString(Content$2dLength, String.valueOf(outbound.length)).headerString(Accept,
                   MimeType.json.contentType).as(ByteBuffer.class);
       if (DEBUG_SENDJSON) {
-        System.err.println(deepToString(opaque, validjson, UTF8.decode(header.duplicate()), state));
+        System.err.println(ProtocolMethodDispatch.deepToString(opaque, validjson, UTF8.decode(header.duplicate()), state));
       }
       final SocketChannel channel = createCouchConnection();
       final String finalOpaque = opaque;
@@ -928,7 +929,7 @@ public enum CouchMetaDriver {
           if (null == cursor) {
             //geometric,  vulnerable to /dev/zero if not max'd here.
             header =
-                null == header ? ByteBuffer.allocateDirect(getReceiveBufferSize()) : header
+                null == header ? ByteBuffer.allocateDirect(4<<10) : header
                     .hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2)
                     .put((ByteBuffer) header.flip());
 
@@ -936,19 +937,19 @@ public enum CouchMetaDriver {
               int read = channel.read(header);
             } catch (IOException e) {
               phaser.forceTermination();//.reset();
-              deepToString(this, e);
+              ProtocolMethodDispatch.deepToString(this, e);
               channel.close();
             }
             ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
             response.apply((ByteBuffer) flip);
 
-            if (BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, response.headerBuf())) {
+            if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response.headerBuf())) {
               cursor = (ByteBuffer) flip.slice();
               header = null;
 
               if (DEBUG_SENDJSON) {
-                System.err.println(deepToString(response.statusEnum(), response, UTF8
-                    .decode((ByteBuffer) cursor.duplicate().rewind())));
+                System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, UTF8
+                        .decode((ByteBuffer) cursor.duplicate().rewind())));
               }
 
               HttpStatus httpStatus = response.statusEnum();
@@ -993,7 +994,7 @@ public enum CouchMetaDriver {
         phaser.awaitAdvanceInterruptibly(phaser.arrive(), REALTIME_CUTOFF, REALTIME_UNIT);
       } catch (TimeoutException | InterruptedException e) {
         if (DEBUG_SENDJSON) {
-          System.err.println("!!! " + deepToString(this, e) + "\n\tfrom");
+          System.err.println("!!! " + ProtocolMethodDispatch.deepToString(this, e) + "\n\tfrom");
           dbKeysBuilder.trace().printStackTrace();
         }
       }
@@ -1050,7 +1051,7 @@ public enum CouchMetaDriver {
 
         @Override
         public void onRead(SelectionKey key) throws Exception {
-          ByteBuffer[] byteBuffer = {ByteBuffer.allocateDirect(getReceiveBufferSize())};
+          ByteBuffer[] byteBuffer = {ByteBuffer.allocateDirect(4<<10)};
           int read = channel.read(byteBuffer[0]);
           HttpResponse httpResponse = request.$res();
 
@@ -1083,7 +1084,7 @@ public enum CouchMetaDriver {
                 public void onRead(SelectionKey key) throws Exception {
 
                   if (cursor == null)
-                    cursor = ByteBuffer.allocateDirect(getReceiveBufferSize());
+                    cursor = ByteBuffer.allocateDirect(4<<10);
                   int read = channel.read(cursor);
                   if (-1 == read) {
                     phaser.forceTermination();
@@ -1099,8 +1100,8 @@ public enum CouchMetaDriver {
                   ByteBuffer flip = (ByteBuffer) cursor.duplicate().flip();
                   response.apply(flip);
                   finish =
-                      BlobAntiPatternObject.suffixMatchChunks(HEADER_TERMINATOR, response
-                          .headerBuf());
+                      Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response
+                              .headerBuf());
                   if (finish) {
                     switch (response.statusEnum()) {
                       case $201:
@@ -1127,7 +1128,7 @@ public enum CouchMetaDriver {
         phaser.awaitAdvanceInterruptibly(phaser.arrive(), REALTIME_CUTOFF, REALTIME_UNIT);
       } catch (Exception e) {
         if (DEBUG_SENDJSON) {
-          System.err.println("!!! " + deepToString(this, e) + "\n\tfrom");
+          System.err.println("!!! " + ProtocolMethodDispatch.deepToString(this, e) + "\n\tfrom");
           dbKeysBuilder.trace().printStackTrace();
         }
       }
@@ -1144,8 +1145,7 @@ public enum CouchMetaDriver {
       Rfc822HeaderState.staticHeaderStrings(ETag, Content$2dLength, Content$2dEncoding);
   public static final String[] STATIC_CONTENT_LENGTH_ARR =
       Rfc822HeaderState.staticHeaderStrings(Content$2dLength);
-  public static final byte[] HEADER_TERMINATOR = "\r\n\r\n".getBytes(UTF8);
-  public static final TimeUnit REALTIME_UNIT =
+    public static final TimeUnit REALTIME_UNIT =
       TimeUnit.valueOf(RxfBootstrap.getVar("RXF_REALTIME_UNIT", isDEBUG_SENDJSON() ? TimeUnit.HOURS
           .name() : TimeUnit.SECONDS.name()));
   public static final AtomicInteger ATOMIC_INTEGER = new AtomicInteger(0);
@@ -1211,11 +1211,11 @@ public enum CouchMetaDriver {
     String s =
         "package rxf.server.gen;\n" + "//generated\n" + "\n"
             + "import com.google.gson.FieldNamingPolicy;\n" + "import com.google.gson.Gson;\n"
-            + "import com.google.gson.GsonBuilder;\n" + "import rxf.server.*;\n"
-            + "import rxf.server.an.DbKeys;\n" + "\n" + "import java.lang.reflect.Type;\n"
-            + "import java.nio.ByteBuffer;\n" + "import java.util.concurrent.Callable;\n"
-            + "import java.util.concurrent.Future;\n" + "import java.util.concurrent.TimeUnit;\n"
-            + "\n" + "import static rxf.server.BlobAntiPatternObject.avoidStarvation;\n" + "\n"
+            + "import com.google.gson.GsonBuilder;\n" + "\n"
+            + "\n" + "\n" + "\n"
+            + "\n" + "\n"
+            + "\n" + "import java.util.concurrent.TimeUnit; \n"
+            + "\n" + "" + ""
             + "/** * \n * \n * \n * generated drivers\n \n * \n \n " + " */\n"
             + "public interface CouchDriver {\n" + "      Gson GSON = new GsonBuilder()\n"
             + "            .setDateFormat(\"yyyy-MM-dd'T'HH:mm:ss.SSSZ\")\n"

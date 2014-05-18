@@ -1,10 +1,11 @@
 package rxf.server;
 
+import com.google.gson.Gson;
 import javolution.text.TextBuilder;
 import one.xio.HttpHeaders;
 import one.xio.HttpMethod;
 import one.xio.HttpStatus;
-import rxf.server.web.inf.ProtocolMethodDispatch;
+import rxf.web.inf.ProtocolMethodDispatch;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -21,15 +22,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import static java.lang.Math.abs;
 import static java.util.Arrays.asList;
 import static one.xio.HttpMethod.UTF8;
-import static rxf.server.driver.CouchMetaDriver.gson;
 
 /**
  * this is a utility class to parse a HttpRequest header or
  * $res header according to declared need of
  * header/cookies downstream.
- * <p/>
- * much of what is in {@link BlobAntiPatternObject} can
- * be teased into this class peicemeal.
  * <p/>
  * since java string parsing can be expensive and addHeaderInterest
  * can be numerous this class is designed to parse only
@@ -56,6 +53,64 @@ public class Rfc822HeaderState {
   public static final char CR = '\r';
   public static final char LF = '\n';
   public static final String CRLF = "" + CR + LF;
+
+  /**
+   * 'do the right thing' when handed a buffer with no remaining bytes.
+   *
+   * @param buf
+   * @return
+   */
+  public static ByteBuffer avoidStarvation(ByteBuffer buf) {
+    if (0 == buf.remaining()) {
+      buf.rewind();
+    }
+    return buf;
+  }
+
+  public static String dequote(String s) {
+    String ret = s;
+    if (null != s && ret.startsWith("\"") && ret.endsWith("\"")) {
+      ret = ret.substring(1, ret.lastIndexOf('"'));
+    }
+
+    return ret;
+  }
+
+  /**
+   * byte-compare of suffixes
+   *
+   * @param terminator  the token used to terminate presumably unbounded growth of a list of buffers
+   * @param currentBuff current ByteBuffer which does not necessarily require a list to perform suffix checks.
+   * @param prev        a linked list which holds previous chunks
+   * @return whether the suffix composes the tail bytes of current and prev buffers.
+   */
+  public static boolean suffixMatchChunks(byte[] terminator, ByteBuffer currentBuff,
+      ByteBuffer... prev) {
+    ByteBuffer tb = currentBuff;
+    int prevMark = prev.length;
+    int bl = terminator.length;
+    int rskip = 0;
+    int i = bl - 1;
+    while (0 <= i) {
+      rskip++;
+      int comparisonOffset = tb.position() - rskip;
+      if (0 > comparisonOffset) {
+        prevMark--;
+        if (0 <= prevMark) {
+          tb = prev[prevMark];
+          rskip = 0;
+          i++;
+        } else {
+          return false;
+
+        }
+      } else if (terminator[i] != tb.get(comparisonOffset)) {
+        return false;
+      }
+      i--;
+    }
+    return true;
+  }
 
   public String headerString(HttpHeaders httpHeader) {
     return headerString(httpHeader.getHeader()); //To change body of created methods use File | Settings | File Templates.
@@ -226,8 +281,7 @@ public class Rfc822HeaderState {
         Pair<ByteBuffer, ByteBuffer> a1 = pair.getA();
         ByteBuffer a = (ByteBuffer) a1.getA();
         if (a.equals(k)) {
-          return String.valueOf(UTF8.decode(BlobAntiPatternObject.avoidStarvation((ByteBuffer) a1
-              .getB())));
+          return String.valueOf(UTF8.decode(avoidStarvation((ByteBuffer) a1.getB())));
         }
         pair = pair.getB();
       }
@@ -326,7 +380,7 @@ public class Rfc822HeaderState {
 
   @Override
   public String toString() {
-    return gson().toJson(this);
+    return new Gson().toJson(this);
   }
 
   public <T> T as(final Class<T> clazz) {
@@ -512,7 +566,7 @@ public class Rfc822HeaderState {
    */
   public Pair<ByteBuffer, ? extends Pair> headerExtract(ByteBuffer hdrEnc) {
     hdrEnc = (ByteBuffer) hdrEnc.asReadOnlyBuffer().rewind();
-    ByteBuffer buf = BlobAntiPatternObject.avoidStarvation(headerBuf());
+    ByteBuffer buf = avoidStarvation(headerBuf());
 
     Pair<ByteBuffer, ? extends Pair> ret = null;
     int hdrTokenEnd = hdrEnc.limit();
@@ -879,7 +933,7 @@ public class Rfc822HeaderState {
    */
   public String dequotedHeader(String headerKey) {
     String s = headerString(headerKey);
-    return BlobAntiPatternObject.dequote(s);
+    return dequote(s);
   }
 
   /**
