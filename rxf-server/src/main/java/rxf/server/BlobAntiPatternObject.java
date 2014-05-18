@@ -12,7 +12,6 @@ import java.util.Deque;
 import java.util.LinkedList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 import static rxf.server.CouchNamespace.COUCH_DEFAULT_ORGNAME;
 import static rxf.server.RelaxFactoryServerImpl.wheresWaldo;
@@ -55,35 +54,43 @@ public class BlobAntiPatternObject {
     private static Deque<SocketChannel> couchConnections = new LinkedList<>();
 
     public static SocketChannel createCouchConnection() {
-        SocketChannel ret = null;
-        while (!HttpMethod.killswitch) {
-            SocketChannel poll = couchConnections.poll();
-            if (null != poll && poll.isConnected())
-            {ret=poll;break;}
-            try {
-                SocketChannel channel = SocketChannel.open(getCOUCHADDR());
-                channel.configureBlocking(false);
-                ret=channel;break;
-            } catch (Exception e) {
-              e.printStackTrace();
-            } finally {
-            }
+      while (!HttpMethod.killswitch) {
+        SocketChannel poll = couchConnections.poll();
+        if (null != poll) {
+          // If there was at least one entry, try to use that
+          // Note that we check both connected&&open, its possible to be connected but not open, at least in 1.7.0_45
+          if (poll.isConnected() && poll.isOpen()) {
+            return poll;
+          }
+          //non null entry, but invalid, continue in loop to grab the next...
+        } else {
+          // no recycled connections available for reuse, make a new one
+          try {
+            SocketChannel channel = SocketChannel.open(getCOUCHADDR());
+            channel.configureBlocking(false);
+            return channel;
+          } catch (Exception e) {
+            // if something went wrong in the process of creating the connection, continue in loop...
+            e.printStackTrace();
+          }
         }
-//        GSONThreadLocalImmolater.immolate();
-        return ret;
+      }
+      // killswitch, return null
+      return null;
     }
 
     public static void recycleChannel(SocketChannel channel) {
-        try {
-            if (CONNECTION_POOL_SIZE >= couchConnections.size() && channel.isConnected()) {
-                couchConnections.addLast(channel);
-            } else {
-                channel.close();
-            }
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+      try {
+        // Note that we check both connected&&open, its possible to be connected but not open, at least in 1.7.0_45
+        if (CONNECTION_POOL_SIZE >= couchConnections.size() && channel.isConnected() && channel.isOpen()) {
+          couchConnections.addLast(channel);
+        } else {
+          channel.close();
         }
+      } catch (IOException e) {
+        //eat all exceptions, recycle should be brain-dead easy
+        e.printStackTrace();
+      }
     }
 
     public static <T> String deepToString(T... d) {

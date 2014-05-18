@@ -48,8 +48,7 @@ public interface AsioVisitor {
       final String trim =
           HttpMethod.UTF8.decode(ByteBuffer.allocateDirect(receiveBufferSize)).toString().trim();
 
-      throw new UnsupportedOperationException("found " + trim + " in "
-          + getClass().getCanonicalName());
+      throw new UnsupportedOperationException("found " + trim + " in " + getClass().getName());
     }
 
     /**
@@ -68,7 +67,7 @@ public interface AsioVisitor {
     public void onWrite(SelectionKey key) throws Exception {
       final SocketChannel channel = (SocketChannel) key.channel();
       System.err.println("buffer underrun?: " + channel.socket().getRemoteSocketAddress());
-      throw new UnsupportedOperationException("found in " + getClass().getCanonicalName());
+      throw new UnsupportedOperationException("found in " + getClass().getName());
     }
 
     @Override

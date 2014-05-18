@@ -41,6 +41,7 @@ public enum HttpMethod {
    */
   public static void enqueue(SelectableChannel channel, int op, Object... s) {
     assert channel != null && !killswitch : "Server appears to have shut down, cannot enqueue";
+    assert channel.isOpen() : "Can't enqueue a closed channel";
     if (Thread.currentThread() == selectorThread)
       try {
         channel.register(getSelector(), op, s);
