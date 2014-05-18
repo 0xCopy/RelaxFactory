@@ -772,7 +772,7 @@ public interface CouchDriver {
           public rxf.server.CouchResultSet rows() {
             try {
               ByteBuffer buf = future.get();
-             // System.err.println("???? "+ HttpMethod.UTF8.decode(buf));
+              // System.err.println("???? "+ HttpMethod.UTF8.decode(buf));
               return CouchMetaDriver.gson().fromJson(
                   one.xio.HttpMethod.UTF8.decode(avoidStarvation(buf)).toString(),
                   new java.lang.reflect.ParameterizedType() {
