@@ -619,6 +619,7 @@ public enum CouchMetaDriver {
     public ByteBuffer visit(final DbKeysBuilder dbKeysBuilder, final ActionBuilder actionBuilder)
         throws Exception {
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
+      final AtomicReference<List<ByteBuffer>> cePayload = new AtomicReference<List<ByteBuffer>>();
       final Phaser phaser = new Phaser(2);
       final String db = scrub('/' + (String) dbKeysBuilder.get(etype.db));
       Class type = (Class) dbKeysBuilder.get(etype.type);
@@ -663,7 +664,8 @@ public enum CouchMetaDriver {
                 if (cursor.position() > 0) {
                   list.add(cursor);
                 }
-                deliver();
+                cePayload.set(list);
+                phaser.arrive();
                 recycleChannel(channel);
                 return;
               }
@@ -679,7 +681,8 @@ public enum CouchMetaDriver {
               if (cursor.position() > 0) {
                 list.add(cursor);
               }
-              deliver();
+              cePayload.set(list);
+              phaser.arrive();
               recycleChannel(channel);
               return;
             }
@@ -761,7 +764,8 @@ public enum CouchMetaDriver {
                     // in deliver
                     cursor.position(cursor.limit());
                     list.add(cursor);
-                    deliver();
+                    cePayload.set(list);
+                    phaser.arrive();
                     recycleChannel(channel);
                   } else {
                     cursor.compact();
@@ -774,52 +778,6 @@ public enum CouchMetaDriver {
             }
           }
         }
-
-        private void deliver() {
-          int sum = 0;
-          for (ByteBuffer byteBuffer : list) {
-            sum += byteBuffer.flip().limit();
-          }
-          ByteBuffer outbound = ByteBuffer.allocate(sum);
-          for (ByteBuffer byteBuffer : list) {
-            ByteBuffer put = outbound.put(byteBuffer);
-          }
-          if (DEBUG_SENDJSON) {
-            System.err.println(UTF8.decode((ByteBuffer) outbound.duplicate().flip()));
-          }
-          ByteBuffer src = ((ByteBuffer) outbound.rewind()).duplicate();
-          int endl = 0;
-          while (sum > 0 && src.hasRemaining()) {
-            if (DEBUG_SENDJSON)
-              System.err.println("outbound:----\n"
-                  + UTF8.decode(outbound.duplicate()).toString() + "\n----");
-
-            byte b = 0;
-            boolean first = true;
-            while (src.hasRemaining() && ('\n' != (b = src.get()) || first))
-              if (first && !Character.isWhitespace(b)) {
-                first = false;
-              }
-
-            int i =
-                Integer.parseInt(UTF8.decode((ByteBuffer) src.duplicate().flip()).toString()
-                    .trim(), 0x10);
-            src = ((ByteBuffer) src.compact().position(i)).slice();
-            endl += i;
-            sum -= i;
-            if (0 == i)
-              break;
-          }
-
-          ByteBuffer retval = (ByteBuffer) outbound.clear().limit(endl);
-
-          if (DEBUG_SENDJSON) {
-            System.err.println(UTF8.decode(retval.duplicate()));
-          }
-
-          payload.set(retval);
-          phaser.arrive();
-        }
       });
       try {
         phaser.awaitAdvanceInterruptibly(phaser.arrive(), REALTIME_CUTOFF, REALTIME_UNIT);
@@ -829,7 +787,55 @@ public enum CouchMetaDriver {
           dbKeysBuilder.trace().printStackTrace();
         }
       }
-      return payload.get();
+      ByteBuffer simple = payload.get();
+      if (simple != null) {
+        return simple;
+      }
+      List<ByteBuffer> list = cePayload.get();
+      if (list == null) {
+        return null;
+      }
+      int sum = 0;
+      for (ByteBuffer byteBuffer : list) {
+        sum += byteBuffer.flip().limit();
+      }
+      ByteBuffer outbound = ByteBuffer.allocate(sum);
+      for (ByteBuffer byteBuffer : list) {
+        ByteBuffer put = outbound.put(byteBuffer);
+      }
+      if (DEBUG_SENDJSON) {
+        System.err.println(UTF8.decode((ByteBuffer) outbound.duplicate().flip()));
+      }
+      ByteBuffer src = ((ByteBuffer) outbound.rewind()).duplicate();
+      int endl = 0;
+      while (sum > 0 && src.hasRemaining()) {
+        if (DEBUG_SENDJSON)
+          System.err.println("outbound:----\n"
+                  + UTF8.decode(outbound.duplicate()).toString() + "\n----");
+
+        byte b = 0;
+        boolean first = true;
+        while (src.hasRemaining() && ('\n' != (b = src.get()) || first))
+          if (first && !Character.isWhitespace(b)) {
+            first = false;
+          }
+
+        int i =
+                Integer.parseInt(UTF8.decode((ByteBuffer) src.duplicate().flip()).toString()
+                        .trim(), 0x10);
+        src = ((ByteBuffer) src.compact().position(i)).slice();
+        endl += i;
+        sum -= i;
+        if (0 == i)
+          break;
+      }
+
+      ByteBuffer retval = (ByteBuffer) outbound.clear().limit(endl);
+
+      if (DEBUG_SENDJSON) {
+        System.err.println(UTF8.decode(retval.duplicate()));
+      }
+      return retval;
     }
   },
   //training day for the Terminal rewrites
