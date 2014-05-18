@@ -2,8 +2,9 @@ package one.xio;
 
 import java.net.URLDecoder;
 import java.nio.ByteBuffer;
-import java.util.LinkedHashMap;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * User: jim
@@ -1400,10 +1401,18 @@ public enum HttpHeaders {
    * The HTTP access authentication process is described in "HTTP Authentication: Basic and Digest Access Authentication" [43]. User agents are advised to take special care in parsing the WWW- Authenticate field value as it might contain more than one challenge, or if more than one WWW-Authenticate header field is provided, the contents of a challenge itself can contain a comma-separated list of authentication parameters.
    */
 
-  WWW$2dAuthenticate, X$2dForwarded$2dFor, ;
+  WWW$2dAuthenticate, X$2dForwarded$2dFor,
+
+  //ws here,,,,
+  //     Upgrade/*: websocket*/,
+  //    Connection/*: Upgrade*/,
+  Sec$2dWebSocket$2dKey/*: dGhlIHNhbXBsZSBub25jZQ==*/, Origin/*: http://example.com*/, Sec$2dWebSocket$2dProtocol/*: chat, superchat*/, Sec$2dWebSocket$2dVersion/*: 13*/, Sec$2dWebSocket$2dAccept,
+
+  ;
   private final String header = URLDecoder.decode(name().replace('$', '%'));
-  private final ByteBuffer token = HttpMethod.UTF8.encode(header);
+  private final ByteBuffer token = StandardCharsets.UTF_8.encode(header);
   private int tokenLen = token.limit();
+  private int sendBufferSize;
 
   /**
    *
@@ -1413,7 +1422,7 @@ public enum HttpHeaders {
   public static Map<String, int[]> getHeaders(ByteBuffer headers) {
     headers.rewind();
     int l = headers.limit();
-    Map<String, int[]> linkedHashMap = new LinkedHashMap();
+    Map<String, int[]> linkedHashMap = new TreeMap();
     while (headers.hasRemaining() && '\n' != headers.get());
     while (headers.hasRemaining()) {
       int p1 = headers.position();
@@ -1423,7 +1432,8 @@ public enum HttpHeaders {
       int p3 = headers.position();
 
       String key =
-          HttpMethod.UTF8.decode((ByteBuffer) headers.position(p1).limit(p2 - 1)).toString().trim();
+          StandardCharsets.UTF_8.decode((ByteBuffer) headers.position(p1).limit(p2 - 1)).toString()
+              .trim();
       if (key.length() > 0) {
         linkedHashMap.put(key, new int[] {p2, p3});
       }
@@ -1477,5 +1487,9 @@ public enum HttpHeaders {
     }
 
     return ret;
+  }
+
+  static public int getSendBufferSize() {
+    return 4 << 10;
   }
 }
