@@ -1146,11 +1146,11 @@ public enum CouchMetaDriver {
   public static final String[] STATIC_CONTENT_LENGTH_ARR =
       Rfc822HeaderState.staticHeaderStrings(Content$2dLength);
     public static final TimeUnit REALTIME_UNIT =
-      TimeUnit.valueOf(RxfBootstrap.getVar("RXF_REALTIME_UNIT", isDEBUG_SENDJSON() ? TimeUnit.HOURS
-          .name() : TimeUnit.SECONDS.name()));
+      TimeUnit.valueOf(Config.get("RXF_REALTIME_UNIT", isDEBUG_SENDJSON() ? TimeUnit.HOURS
+              .name() : TimeUnit.SECONDS.name()));
   public static final AtomicInteger ATOMIC_INTEGER = new AtomicInteger(0);
   public static final int REALTIME_CUTOFF =
-      Integer.parseInt(RxfBootstrap.getVar("RXF_REALTIME_CUTOFF", "3"));
+      Integer.parseInt(Config.get("RXF_REALTIME_CUTOFF", "3"));
   public static final String PCOUNT = "-0xdeadbeef.2";
   public static final String GENERATED_METHODS = "/*generated methods vsd78vs0fd078fv0sa78*/";
   public static final String IFACE_FIRE_TARGETS = "/*fire interface ijnoifnj453oijnfiojn h*/";
@@ -1160,15 +1160,15 @@ public enum CouchMetaDriver {
   static {
     GsonBuilder gsonBuilder =
         new GsonBuilder().setDateFormat(
-            RxfBootstrap.getVar("GSON_DATEFORMAT", "yyyy-MM-dd'T'HH:mm:ss.SSSZ"))
+            Config.get("GSON_DATEFORMAT", "yyyy-MM-dd'T'HH:mm:ss.SSSZ"))
             .setFieldNamingPolicy(
                 FieldNamingPolicy
-                    .valueOf(RxfBootstrap.getVar("GSON_FIELDNAMINGPOLICY", "IDENTITY")));
-    if ("true".equals(RxfBootstrap.getVar("GSON_PRETTY", "true")))
+                    .valueOf(Config.get("GSON_FIELDNAMINGPOLICY", "IDENTITY")));
+    if ("true".equals(Config.get("GSON_PRETTY", "true")))
       gsonBuilder.setPrettyPrinting();
-    if ("true".equals(RxfBootstrap.getVar("GSON_NULLS", "false")))
+    if ("true".equals(Config.get("GSON_NULLS", "false")))
       gsonBuilder.serializeNulls();
-    if ("true".equals(RxfBootstrap.getVar("GSON_NANS", "false")))
+    if ("true".equals(Config.get("GSON_NANS", "false")))
       gsonBuilder.serializeSpecialFloatingPointValues();
 
     builder(gsonBuilder);

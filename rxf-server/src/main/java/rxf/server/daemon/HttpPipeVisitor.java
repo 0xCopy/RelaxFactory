@@ -2,7 +2,7 @@ package rxf.server.daemon;
 
 import one.xio.AsioVisitor;
 import rxf.server.PreRead;
-import rxf.server.RxfBootstrap;
+import rxf.server.Config;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -20,7 +20,7 @@ import static one.xio.HttpMethod.UTF8;
 @PreRead
 public class HttpPipeVisitor extends AsioVisitor.Impl {
   public static final boolean PROXY_DEBUG =
-      "true".equals(RxfBootstrap.getVar("PROXY_DEBUG", String.valueOf(false)));
+      "true".equals(Config.get("PROXY_DEBUG", String.valueOf(false)));
   final private ByteBuffer[] b;
   protected String name;
   //  public AtomicInteger remaining;

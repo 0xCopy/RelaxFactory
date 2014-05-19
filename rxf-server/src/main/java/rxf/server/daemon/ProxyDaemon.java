@@ -19,7 +19,7 @@ import java.util.Map;
 
 import static java.nio.channels.SelectionKey.*;
 import static one.xio.HttpMethod.UTF8;
-import static rxf.server.RxfBootstrap.getVar;
+import static rxf.server.Config.get;
 
 /**
  * <ul>
@@ -41,10 +41,10 @@ public class ProxyDaemon extends AsioVisitor.Impl {
    */
   public static final int HOSTPREFIXLEN = "Host: ".length();
 
-  public static final int PROXY_PORT = Integer.parseInt(getVar("PROXY_PORT", "0"));
-  public static final String PROXY_HOST = getVar("PROXY_HOST", "127.0.0.1");
-  private static final boolean RPS_SHOW = "true".equals(getVar("RPS_SHOW", "true"));
-  private static final boolean PROXY_DEBUG = "true".equals(getVar("PROXY_DEBUG", "false"));
+  public static final int PROXY_PORT = Integer.parseInt(get("PROXY_PORT", "0"));
+  public static final String PROXY_HOST = get("PROXY_HOST", "127.0.0.1");
+  private static final boolean RPS_SHOW = "true".equals(get("RPS_SHOW", "true"));
+  private static final boolean PROXY_DEBUG = "true".equals(get("PROXY_DEBUG", "false"));
   /**
    * master counter for stats on inbound requests
    */

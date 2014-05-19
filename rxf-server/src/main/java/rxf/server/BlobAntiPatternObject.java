@@ -25,8 +25,8 @@ import static rxf.server.CouchNamespace.COUCH_DEFAULT_ORGNAME;
  */
 public class BlobAntiPatternObject {
 
-  public static final boolean RXF_CACHED_THREADPOOL = "true".equals(RxfBootstrap.getVar("RXF_CACHED_THREADPOOL", "false"));
-  public static final int CONNECTION_POOL_SIZE = Integer.parseInt(RxfBootstrap.getVar("RXF_CONNECTION_POOL_SIZE", "20"));
+  public static final boolean RXF_CACHED_THREADPOOL = "true".equals(Config.get("RXF_CACHED_THREADPOOL", "false"));
+  public static final int CONNECTION_POOL_SIZE = Integer.parseInt(Config.get("RXF_CONNECTION_POOL_SIZE", "20"));
   public static boolean DEBUG_SENDJSON = System.getenv().containsKey("DEBUG_SENDJSON");
   public static InetAddress LOOPBACK;
   public static int receiveBufferSize;
@@ -39,7 +39,7 @@ public class BlobAntiPatternObject {
 
     static {
 
-        String rxfcouchprefix = RxfBootstrap.getVar("RXF_COUCH_PREFIX","http://localhost:5984");
+        String rxfcouchprefix = Config.get("RXF_COUCH_PREFIX", "http://localhost:5984");
       try {
         URI uri = new URI(rxfcouchprefix);
         int port = uri.getPort();

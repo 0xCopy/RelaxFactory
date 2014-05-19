@@ -1,8 +1,8 @@
 package rxf.server;
 
-public class RxfBootstrap {
+public class Config {
 
-  public static String getVar(String rxf_var, String... defaultVal) {
+  public static String get(String rxf_var, String... defaultVal) {
     String javapropname =
         "rxf.server." + rxf_var.toLowerCase().replaceAll("^rxf_(server_)?", "").replace('_', '.');
     String rxfenv = System.getenv(rxf_var);

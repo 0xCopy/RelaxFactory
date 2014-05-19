@@ -23,18 +23,18 @@ import static com.google.common.io.BaseEncoding.base64;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.nio.file.StandardWatchEventKinds.*;
 import static rxf.server.driver.CouchMetaDriver.gson;
-import static rxf.server.RxfBootstrap.getVar;
+import static rxf.server.Config.get;
 
 /**
  * Example to watch a directory (or createTree) for changes to files.
  */
 
 public class FileWatcher {
-  public static final Path NORMALIZE = Paths.get(getVar("FILEWATCHER_DIR", Paths.get(".").toAbsolutePath().normalize().toString()));
-  public static final String FILEWATCHER_DB = getVar("FILEWATCHER_DB", "db");
-  public static final String FILEWATCHER_DOCID = getVar("FILEWATCHER_DOCID", "doc");
-  public static String FILEWATCHER_IGNORE_EXAMPLE = getVar("FILEWATCHER_IGNORE_EXAMPLE", ".jar .war .class .java .symbolMap manifest.txt .log .bak compilation-mappings.txt web.xml");
-  public static final String IGNORE = getVar("FILEWATCHER_IGNORE", "").trim();
+  public static final Path NORMALIZE = Paths.get(get("FILEWATCHER_DIR", Paths.get(".").toAbsolutePath().normalize().toString()));
+  public static final String FILEWATCHER_DB = get("FILEWATCHER_DB", "db");
+  public static final String FILEWATCHER_DOCID = get("FILEWATCHER_DOCID", "doc");
+  public static String FILEWATCHER_IGNORE_EXAMPLE = get("FILEWATCHER_IGNORE_EXAMPLE", ".jar .war .class .java .symbolMap manifest.txt .log .bak compilation-mappings.txt web.xml");
+  public static final String IGNORE = get("FILEWATCHER_IGNORE", "").trim();
   public static String[] FILEWATCHER_IGNORE = IGNORE.isEmpty() ? new String[0] : (IGNORE.split(" +"));
 
 
