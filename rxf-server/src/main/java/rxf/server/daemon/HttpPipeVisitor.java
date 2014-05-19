@@ -1,7 +1,7 @@
 package rxf.server.daemon;
 
 import one.xio.AsioVisitor;
-import rxf.server.PreRead;
+import rxf.shared.PreRead;
 import rxf.server.Config;
 
 import java.nio.ByteBuffer;

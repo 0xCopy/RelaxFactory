@@ -3,6 +3,7 @@ package rxf.server;
 import one.xio.HttpHeaders;
 import org.junit.Assert;
 import org.junit.Test;
+import rxf.shared.Pair;
 
 import java.io.Serializable;
 import java.nio.ByteBuffer;

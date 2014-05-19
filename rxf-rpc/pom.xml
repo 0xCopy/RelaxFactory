@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>rxf-server</artifactId>
+    <artifactId>rxf-rpc</artifactId>
     <parent>
         <groupId>rxf</groupId>
         <version>0.9.9.0</version>
@@ -14,15 +14,9 @@
     </properties>
     <dependencies>
         <dependency>
-            <artifactId>rxf-rpc</artifactId>
-            <exclusions>
-                <exclusion>
-                    <artifactId>json</artifactId>
-                    <groupId>org.json</groupId>
-                </exclusion>
-            </exclusions>
-            <groupId>${parent.groupId}</groupId>
-            <version>${parent.version}</version>
+            <artifactId>rxf-core</artifactId>
+            <groupId>${project.groupId}</groupId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>jetbrains</groupId>
@@ -52,12 +46,6 @@
             <artifactId>requestfactory-server</artifactId>
             <version>${gwt.version}</version>
             <scope>provided</scope>
-            <exclusions>
-                <exclusion>
-                    <artifactId>json</artifactId>
-                    <groupId>org.json</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <!-- see sample projects for correct placement -->
         <dependency>
@@ -83,12 +71,6 @@
             <artifactId>httpunit</artifactId>
             <version>1.7.2</version>
             <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <artifactId>junit</artifactId>
-                    <groupId>junit</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>javolution</groupId>

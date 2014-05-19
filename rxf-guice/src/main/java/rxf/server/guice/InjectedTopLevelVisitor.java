@@ -3,7 +3,7 @@ package rxf.server.guice;
 import com.google.inject.*;
 import one.xio.AsioVisitor;
 import one.xio.HttpMethod;
-import rxf.server.PreRead;
+import rxf.shared.PreRead;
 import rxf.server.RelaxFactoryServerImpl;
 import rxf.server.Rfc822HeaderState;
 import rxf.server.Rfc822HeaderState.HttpRequest;

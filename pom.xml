@@ -66,7 +66,7 @@
         </profile>
     </profiles>
     <repositories>
-        <repository>
+        <!--<repository>
             <id>gwt-maven-rewraps</id>
             <url>http://gwt-maven-rewraps.googlecode.com/git/</url>
             <snapshots>
@@ -75,7 +75,7 @@
             <releases>
                 <enabled>true</enabled>
             </releases>
-        </repository>
+        </repository>-->
         <repository>
             <id>sonatype-snapshots</id>
             <url>http://oss.sonatype.org/content/repositories/snapshots</url>
@@ -88,21 +88,6 @@
         </repository>
     </repositories>
     <pluginRepositories>
-        <pluginRepository>
-            <id>gwt-maven-rewraps</id>
-            <url>http://gwt-maven-rewraps.googlecode.com/git/</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-        </pluginRepository>
-        <!--<pluginRepository>-->
-        <!--<id>maven-java-formatter-plugin</id>-->
-        <!--<name>Maven2 Java Formatter Plugin repository</name>-->
-        <!--<url>https://raw.github.com/benalexau/maven-java-formatter-plugin/master/releases/</url>-->
-        <!--</pluginRepository>-->
         <pluginRepository>
             <id>maven-idea-plugin-repo</id>
             <url>http://maven-idea-plugin.googlecode.com/svn/maven-repo</url>
@@ -142,9 +127,12 @@
     </dependencies>
     <modules>
         <module>rxf-shared</module>
+        <module>rxf-pouch</module>
+        <module>rxf-core</module>
+        <module>rxf-rpc</module>
         <module>rxf-server</module>
         <module>rxf-guice</module>
-    <module>rxf-rsync</module>
+        <module>rxf-rsync</module>
   </modules>
     <build>
         <pluginManagement>
