@@ -15,7 +15,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
 import static rxf.server.BlobAntiPatternObject.*;
-import static one.xio.HttpMethod.UTF8;
+import static rxf.server.Server.UTF8;
 
 /**
  * User: jim

@@ -4,8 +4,8 @@ package rxf.rsync;
 import com.google.common.hash.Hashing;
 import javolution.util.FastMap;
 import one.xio.AsioVisitor;
-import one.xio.HttpMethod;
 import one.xio.MimeType;
+import rxf.server.Server;
 import rxf.server.gen.CouchDriver;
 import rxf.web.inf.ProtocolMethodDispatch;
 import rxf.shared.CouchTx;
@@ -395,7 +395,7 @@ public class FileWatcher {
         //class initializers fire here
         AsioVisitor topLevel = new ProtocolMethodDispatch();
         try {
-          HttpMethod.init(topLevel);
+          Server.init(topLevel);
         } catch (Exception ignored) {
         }
       }

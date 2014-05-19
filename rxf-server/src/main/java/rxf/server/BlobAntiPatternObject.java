@@ -1,7 +1,5 @@
 package rxf.server;
 
-import one.xio.HttpMethod;
-
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -55,7 +53,7 @@ public class BlobAntiPatternObject {
 
     public static SocketChannel createCouchConnection() {
         SocketChannel ret = null;
-        while (!HttpMethod.killswitch) {
+        while (!Server.killswitch) {
             SocketChannel poll = couchConnections.poll();
             if (null != poll && poll.isConnected())
             {ret=poll;break;}

@@ -11,7 +11,7 @@ import java.nio.channels.SocketChannel;
 
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
-import static one.xio.HttpMethod.UTF8;
+import static rxf.server.Server.UTF8;
 
 /**
  * this visitor shovels data from the outward selector to the inward selector, and vice versa.  once the headers are

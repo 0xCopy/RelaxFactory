@@ -9,7 +9,7 @@ import java.util.Date;
 import java.util.EnumMap;
 import java.util.Iterator;
 
-import static one.xio.HttpMethod.UTF8;
+import static rxf.server.Server.UTF8;
 
 /**
  * This enum defines the HTTP Cookie and Set-Cookie header fields.

@@ -73,8 +73,8 @@ public interface CouchDriver {
 
           public CouchTx tx() {
             try {
-              return CouchMetaDriver.gson().fromJson(
-                  one.xio.HttpMethod.UTF8.decode(future.get()).toString(), CouchTx.class);
+              return CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
+                  CouchTx.class);
             } catch (Exception e) {
               if (rxf.server.BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();
@@ -165,8 +165,8 @@ public interface CouchDriver {
 
           public CouchTx tx() {
             try {
-              return CouchMetaDriver.gson().fromJson(
-                  one.xio.HttpMethod.UTF8.decode(future.get()).toString(), CouchTx.class);
+              return CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
+                  CouchTx.class);
             } catch (Exception e) {
               if (rxf.server.BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();
@@ -277,8 +277,7 @@ public interface CouchDriver {
           public String json() {
             try {
               ByteBuffer visit = future.get();
-              return null == visit ? null : one.xio.HttpMethod.UTF8.decode(avoidStarvation(visit))
-                  .toString();
+              return null == visit ? null : Server.UTF8.decode(avoidStarvation(visit)).toString();
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -355,8 +354,7 @@ public interface CouchDriver {
           public String json() {
             try {
               ByteBuffer visit = future.get();
-              return null == visit ? null : one.xio.HttpMethod.UTF8.decode(avoidStarvation(visit))
-                  .toString();
+              return null == visit ? null : Server.UTF8.decode(avoidStarvation(visit)).toString();
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -449,8 +447,8 @@ public interface CouchDriver {
 
           public CouchTx tx() {
             try {
-              return CouchMetaDriver.gson().fromJson(
-                  one.xio.HttpMethod.UTF8.decode(future.get()).toString(), CouchTx.class);
+              return CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
+                  CouchTx.class);
             } catch (Exception e) {
               if (rxf.server.BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();
@@ -557,8 +555,8 @@ public interface CouchDriver {
 
           public CouchTx tx() {
             try {
-              return CouchMetaDriver.gson().fromJson(
-                  one.xio.HttpMethod.UTF8.decode(future.get()).toString(), CouchTx.class);
+              return CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
+                  CouchTx.class);
             } catch (Exception e) {
               if (rxf.server.BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();
@@ -673,8 +671,7 @@ public interface CouchDriver {
           public String json() {
             try {
               ByteBuffer visit = future.get();
-              return null == visit ? null : one.xio.HttpMethod.UTF8.decode(avoidStarvation(visit))
-                  .toString();
+              return null == visit ? null : Server.UTF8.decode(avoidStarvation(visit)).toString();
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -767,7 +764,7 @@ public interface CouchDriver {
               ByteBuffer buf = future.get();
               // System.err.println("???? "+ HttpMethod.UTF8.decode(buf));
               return CouchMetaDriver.gson().fromJson(
-                  one.xio.HttpMethod.UTF8.decode(avoidStarvation(buf)).toString(),
+                  Server.UTF8.decode(avoidStarvation(buf)).toString(),
                   new java.lang.reflect.ParameterizedType() {
                     public Type getRawType() {
                       return CouchResultSet.class;
@@ -889,8 +886,8 @@ public interface CouchDriver {
 
           public CouchTx tx() {
             try {
-              return CouchMetaDriver.gson().fromJson(
-                  one.xio.HttpMethod.UTF8.decode(future.get()).toString(), CouchTx.class);
+              return CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
+                  CouchTx.class);
             } catch (Exception e) {
               if (rxf.server.BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();
@@ -919,7 +916,7 @@ public interface CouchDriver {
           public rxf.server.CouchResultSet rows() {
             try {
               return CouchMetaDriver.gson().fromJson(
-                  one.xio.HttpMethod.UTF8.decode(avoidStarvation(future.get())).toString(),
+                  Server.UTF8.decode(avoidStarvation(future.get())).toString(),
                   new java.lang.reflect.ParameterizedType() {
                     public Type getRawType() {
                       return CouchResultSet.class;
@@ -947,8 +944,7 @@ public interface CouchDriver {
           public String json() {
             try {
               ByteBuffer visit = future.get();
-              return null == visit ? null : one.xio.HttpMethod.UTF8.decode(avoidStarvation(visit))
-                  .toString();
+              return null == visit ? null : Server.UTF8.decode(avoidStarvation(visit)).toString();
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -1061,8 +1057,8 @@ public interface CouchDriver {
 
           public CouchTx tx() {
             try {
-              return CouchMetaDriver.gson().fromJson(
-                  one.xio.HttpMethod.UTF8.decode(future.get()).toString(), CouchTx.class);
+              return CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
+                  CouchTx.class);
             } catch (Exception e) {
               if (rxf.server.BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();

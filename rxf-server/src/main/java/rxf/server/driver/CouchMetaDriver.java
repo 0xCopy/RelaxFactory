@@ -82,89 +82,89 @@ public enum CouchMetaDriver {
       //          .headerString(Content$2dLength, "0")
       //          .asRequestHeaderByteBuffer();
       final SocketChannel channel = createCouchConnection();
-      enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
-        // *******************************
-        // pathological buffersize traits
-        // *******************************
+      rxf.server.Server.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
+          // *******************************
+          // pathological buffersize traits
+          // *******************************
 
-        String db = (String) dbKeysBuilder.get(etype.db);
-        String id = (String) dbKeysBuilder.get(docId);
-        HttpRequest request = actionBuilder.state().$req();
-        private HttpResponse response;
-        ByteBuffer header = (ByteBuffer) request.method(PUT).path("/" + db)
-        //          .headerString(Content$2dLength, "0")
-            .as(ByteBuffer.class);
+          String db = (String) dbKeysBuilder.get(etype.db);
+          String id = (String) dbKeysBuilder.get(docId);
+          HttpRequest request = actionBuilder.state().$req();
+          private HttpResponse response;
+          ByteBuffer header = (ByteBuffer) request.method(PUT).path("/" + db)
+                  //          .headerString(Content$2dLength, "0")
+                  .as(ByteBuffer.class);
 
-        public void onWrite(SelectionKey key) throws Exception {
-          int write = channel.write(header);
-          assert !header.hasRemaining();
-          header.clear();
-          response = request.headerInterest(STATIC_JSON_SEND_HEADERS).$res();
+          public void onWrite(SelectionKey key) throws Exception {
+              int write = channel.write(header);
+              assert !header.hasRemaining();
+              header.clear();
+              response = request.headerInterest(STATIC_JSON_SEND_HEADERS).$res();
 
-          key.interestOps(OP_READ);/*WRITE-READ implicit turnaround in 1xio won't need .selector().wakeup()*/
-        }
-
-        ByteBuffer cursor;
-
-        public void onRead(SelectionKey key) throws Exception {
-          if (null == cursor) {
-            //geometric,  vulnerable to dev/null if not max'd here.
-            header =
-                null == header ? ByteBuffer.allocateDirect(4<<10) : header
-                    .hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2)
-                    .put((ByteBuffer) header.flip());
-
-            int read = channel.read(header);
-            ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
-            response.apply((ByteBuffer) flip);
-
-            if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response.headerBuf())) {
-              cursor = (ByteBuffer) flip.slice();
-              header = null;
-
-              if (DEBUG_SENDJSON) {
-                System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, UTF8
-                        .decode((ByteBuffer) cursor.duplicate().rewind())));
-              }
-
-              HttpStatus httpStatus = response.statusEnum();
-              switch (httpStatus) {
-                case $200:
-                case $201:
-                  int remaining = Integer.parseInt(response.headerString(Content$2dLength));
-
-                  if (remaining == cursor.remaining()) {
-                    deliver();
-                  } else {
-                    cursor = ByteBuffer.allocateDirect(remaining).put(cursor);
-                  }
-                  break;
-                default: //error
-                  phaser.forceTermination();
-                  channel.close();
-              }
-            }
-          } else {
-            int read = channel.read(cursor);
-            switch (read) {
-              case -1:
-                phaser.forceTermination();
-
-                channel.close();
-                return;
-            }
-            if (!cursor.hasRemaining()) {
-              cursor.flip();
-              deliver();
-            }
+              key.interestOps(OP_READ);/*WRITE-READ implicit turnaround in 1xio won't need .selector().wakeup()*/
           }
-        }
 
-        private void deliver() {
-          payload.set(cursor);
-          recycleChannel(channel);
-          phaser.arrive();
-        }
+          ByteBuffer cursor;
+
+          public void onRead(SelectionKey key) throws Exception {
+              if (null == cursor) {
+                  //geometric,  vulnerable to dev/null if not max'd here.
+                  header =
+                          null == header ? ByteBuffer.allocateDirect(4 << 10) : header
+                                  .hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2)
+                                  .put((ByteBuffer) header.flip());
+
+                  int read = channel.read(header);
+                  ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
+                  response.apply((ByteBuffer) flip);
+
+                  if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response.headerBuf())) {
+                      cursor = (ByteBuffer) flip.slice();
+                      header = null;
+
+                      if (DEBUG_SENDJSON) {
+                          System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, rxf.server.Server.UTF8
+                                  .decode((ByteBuffer) cursor.duplicate().rewind())));
+                      }
+
+                      HttpStatus httpStatus = response.statusEnum();
+                      switch (httpStatus) {
+                          case $200:
+                          case $201:
+                              int remaining = Integer.parseInt(response.headerString(Content$2dLength));
+
+                              if (remaining == cursor.remaining()) {
+                                  deliver();
+                              } else {
+                                  cursor = ByteBuffer.allocateDirect(remaining).put(cursor);
+                              }
+                              break;
+                          default: //error
+                              phaser.forceTermination();
+                              channel.close();
+                      }
+                  }
+              } else {
+                  int read = channel.read(cursor);
+                  switch (read) {
+                      case -1:
+                          phaser.forceTermination();
+
+                          channel.close();
+                          return;
+                  }
+                  if (!cursor.hasRemaining()) {
+                      cursor.flip();
+                      deliver();
+                  }
+              }
+          }
+
+          private void deliver() {
+              payload.set(cursor);
+              recycleChannel(channel);
+              phaser.arrive();
+          }
       });
       try {
         phaser.awaitAdvanceInterruptibly(phaser.arrive(), REALTIME_CUTOFF, REALTIME_UNIT);
@@ -188,81 +188,81 @@ public enum CouchMetaDriver {
 
       final SocketChannel channel = createCouchConnection();
 
-      enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
-        final HttpRequest request = actionBuilder.state().$req();
-        ByteBuffer header =
-            (ByteBuffer) request.method(DELETE).pathResCode("/" + dbKeysBuilder.get(db)).as(
-                ByteBuffer.class);
-        ByteBuffer cursor;
-        public HttpResponse response;
+      rxf.server.Server.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
+          final HttpRequest request = actionBuilder.state().$req();
+          ByteBuffer header =
+                  (ByteBuffer) request.method(DELETE).pathResCode("/" + dbKeysBuilder.get(db)).as(
+                          ByteBuffer.class);
+          ByteBuffer cursor;
+          public HttpResponse response;
 
-        public void onWrite(SelectionKey key) throws Exception {
-          int write = channel.write(header);
-          assert !header.hasRemaining();
-          header.clear();
-          response = request.headerInterest(STATIC_JSON_SEND_HEADERS).$res();
+          public void onWrite(SelectionKey key) throws Exception {
+              int write = channel.write(header);
+              assert !header.hasRemaining();
+              header.clear();
+              response = request.headerInterest(STATIC_JSON_SEND_HEADERS).$res();
 
-          key.interestOps(OP_READ);/*WRITE-READ implicit turnaround in 1xio won't need .selector().wakeup()*/
-        }
-
-        public void onRead(SelectionKey key) throws Exception {
-          if (null == cursor) {
-            //geometric,  vulnerable to dev/null if not max'd here.
-            header =
-                null == header ? ByteBuffer.allocateDirect(4<<10) : header
-                    .hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2)
-                    .put((ByteBuffer) header.flip());
-
-            int read = channel.read(header);
-            ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
-            response.apply((ByteBuffer) flip);
-
-            if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response.headerBuf())) {
-              cursor = (ByteBuffer) flip.slice();
-              header = null;
-
-              if (DEBUG_SENDJSON) {
-                System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, UTF8
-                        .decode((ByteBuffer) cursor.duplicate().rewind())));
-              }
-
-              HttpStatus httpStatus = response.statusEnum();
-              switch (httpStatus) {
-                case $200:
-                  int remaining = Integer.parseInt(response.headerString(Content$2dLength));
-
-                  if (remaining == cursor.remaining()) {
-                    deliver();
-                  } else {
-                    cursor = ByteBuffer.allocateDirect(remaining).put(cursor);
-                  }
-                  break;
-                default: //error
-                  phaser.forceTermination();
-                  channel.close();
-              }
-            }
-          } else {
-            int read = channel.read(cursor);
-            switch (read) {
-              case -1:
-                phaser.forceTermination();
-
-                channel.close();
-                return;
-            }
-            if (!cursor.hasRemaining()) {
-              cursor.flip();
-              deliver();
-            }
+              key.interestOps(OP_READ);/*WRITE-READ implicit turnaround in 1xio won't need .selector().wakeup()*/
           }
-        }
 
-        private void deliver() {
-          recycleChannel(channel);
-          payload.set(cursor);
-          phaser.arrive();
-        }
+          public void onRead(SelectionKey key) throws Exception {
+              if (null == cursor) {
+                  //geometric,  vulnerable to dev/null if not max'd here.
+                  header =
+                          null == header ? ByteBuffer.allocateDirect(4 << 10) : header
+                                  .hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2)
+                                  .put((ByteBuffer) header.flip());
+
+                  int read = channel.read(header);
+                  ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
+                  response.apply((ByteBuffer) flip);
+
+                  if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response.headerBuf())) {
+                      cursor = (ByteBuffer) flip.slice();
+                      header = null;
+
+                      if (DEBUG_SENDJSON) {
+                          System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, rxf.server.Server.UTF8
+                                  .decode((ByteBuffer) cursor.duplicate().rewind())));
+                      }
+
+                      HttpStatus httpStatus = response.statusEnum();
+                      switch (httpStatus) {
+                          case $200:
+                              int remaining = Integer.parseInt(response.headerString(Content$2dLength));
+
+                              if (remaining == cursor.remaining()) {
+                                  deliver();
+                              } else {
+                                  cursor = ByteBuffer.allocateDirect(remaining).put(cursor);
+                              }
+                              break;
+                          default: //error
+                              phaser.forceTermination();
+                              channel.close();
+                      }
+                  }
+              } else {
+                  int read = channel.read(cursor);
+                  switch (read) {
+                      case -1:
+                          phaser.forceTermination();
+
+                          channel.close();
+                          return;
+                  }
+                  if (!cursor.hasRemaining()) {
+                      cursor.flip();
+                      deliver();
+                  }
+              }
+          }
+
+          private void deliver() {
+              recycleChannel(channel);
+              payload.set(cursor);
+              phaser.arrive();
+          }
       });
       try {
         phaser.awaitAdvanceInterruptibly(phaser.arrive(), REALTIME_CUTOFF, REALTIME_UNIT);
@@ -286,99 +286,99 @@ public enum CouchMetaDriver {
 
       final SocketChannel channel = createCouchConnection();
       final Phaser phaser = new Phaser(2);
-      enqueue(channel, OP_CONNECT | OP_WRITE, new Impl() {
-        // *******************************
-        // *******************************
-        // pathological buffersize traits
-        // *******************************
-        // *******************************
+      rxf.server.Server.enqueue(channel, OP_CONNECT | OP_WRITE, new Impl() {
+          // *******************************
+          // *******************************
+          // pathological buffersize traits
+          // *******************************
+          // *******************************
 
-        String db = (String) dbKeysBuilder.get(etype.db);
-        String id = (String) dbKeysBuilder.get(docId);
-        HttpRequest request = actionBuilder.state().$req();
-        ByteBuffer header =
-            (ByteBuffer) request.path(scrub("/" + db + (null == id ? "" : "/" + id))).method(GET)
-                .addHeaderInterest(STATIC_CONTENT_LENGTH_ARR).as(ByteBuffer.class);
+          String db = (String) dbKeysBuilder.get(etype.db);
+          String id = (String) dbKeysBuilder.get(docId);
+          HttpRequest request = actionBuilder.state().$req();
+          ByteBuffer header =
+                  (ByteBuffer) request.path(scrub("/" + db + (null == id ? "" : "/" + id))).method(GET)
+                          .addHeaderInterest(STATIC_CONTENT_LENGTH_ARR).as(ByteBuffer.class);
 
-        public void onWrite(SelectionKey key) throws Exception {
-          int write = channel.write(header);
-          assert !header.hasRemaining();
-          header = null;
-
-          key.interestOps(OP_READ);/*WRITE-READ implicit turnaround in 1xio won't need .selector().wakeup()*/
-        }
-
-        ByteBuffer cursor;
-
-        public void onRead(SelectionKey key) throws Exception {
-          if (null == cursor) { //haven't started body yet
-            //geometric,  vulnerable to dev/null if not max'd here.
-            if (null == header) {
-              header = ByteBuffer.allocateDirect(4<<10);
-            } else {
-              header =
-                  header.hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2)
-                      .put((ByteBuffer) header.flip());
-            }
-
-            int read = channel.read(header);
-            if (-1 == read) {//nothing else to read from the header, never started body, something is wrong
-              phaser.forceTermination();
-              key.cancel();
-              channel.close();
-              return;
-            }
-            ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
-            HttpResponse response = request.headerInterest(STATIC_JSON_SEND_HEADERS).$res();
-            response.apply((ByteBuffer) flip);
-
-            if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response.headerBuf())) {
-              cursor = (ByteBuffer) flip.slice();
+          public void onWrite(SelectionKey key) throws Exception {
+              int write = channel.write(header);
+              assert !header.hasRemaining();
               header = null;
 
-              if (DEBUG_SENDJSON) {
-                System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, this, UTF8
-                        .decode((ByteBuffer) cursor.duplicate().rewind())));
-              }
-
-              HttpStatus httpStatus = response.statusEnum();
-              switch (httpStatus) {
-                case $200:
-                  int remaining = Integer.parseInt(response.headerString(Content$2dLength));
-
-                  if (remaining == cursor.remaining()) {//we have all of the body already, just deliver
-                    deliver();
-                  } else { //we need more, allocate a buffer the size we need, and put what we already have
-                    cursor = ByteBuffer.allocateDirect(remaining).put(cursor);
-                  }
-                  break;
-                default: //error
-                  phaser.forceTermination();
-                  channel.close();
-              }
-            }
-          } else {//we've already begun the body, but didn't finish, and may do so now
-            //read further of the body
-            int read = channel.read(cursor);
-            switch (read) {//if we didn't actually read, something is wrong
-              case -1:
-                phaser.forceTermination();
-                channel.close();
-                return;
-            }
-            if (!cursor.hasRemaining()) {//we've read to the end, flip to beginning and deliver
-              cursor.flip();
-              deliver();
-            }
+              key.interestOps(OP_READ);/*WRITE-READ implicit turnaround in 1xio won't need .selector().wakeup()*/
           }
-        }
 
-        private void deliver() {
-          assert null != cursor;
-          payload.set((ByteBuffer) cursor.rewind());
-          phaser.arrive();
-          recycleChannel(channel);
-        }
+          ByteBuffer cursor;
+
+          public void onRead(SelectionKey key) throws Exception {
+              if (null == cursor) { //haven't started body yet
+                  //geometric,  vulnerable to dev/null if not max'd here.
+                  if (null == header) {
+                      header = ByteBuffer.allocateDirect(4 << 10);
+                  } else {
+                      header =
+                              header.hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2)
+                                      .put((ByteBuffer) header.flip());
+                  }
+
+                  int read = channel.read(header);
+                  if (-1 == read) {//nothing else to read from the header, never started body, something is wrong
+                      phaser.forceTermination();
+                      key.cancel();
+                      channel.close();
+                      return;
+                  }
+                  ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
+                  HttpResponse response = request.headerInterest(STATIC_JSON_SEND_HEADERS).$res();
+                  response.apply((ByteBuffer) flip);
+
+                  if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response.headerBuf())) {
+                      cursor = (ByteBuffer) flip.slice();
+                      header = null;
+
+                      if (DEBUG_SENDJSON) {
+                          System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, this, rxf.server.Server.UTF8
+                                  .decode((ByteBuffer) cursor.duplicate().rewind())));
+                      }
+
+                      HttpStatus httpStatus = response.statusEnum();
+                      switch (httpStatus) {
+                          case $200:
+                              int remaining = Integer.parseInt(response.headerString(Content$2dLength));
+
+                              if (remaining == cursor.remaining()) {//we have all of the body already, just deliver
+                                  deliver();
+                              } else { //we need more, allocate a buffer the size we need, and put what we already have
+                                  cursor = ByteBuffer.allocateDirect(remaining).put(cursor);
+                              }
+                              break;
+                          default: //error
+                              phaser.forceTermination();
+                              channel.close();
+                      }
+                  }
+              } else {//we've already begun the body, but didn't finish, and may do so now
+                  //read further of the body
+                  int read = channel.read(cursor);
+                  switch (read) {//if we didn't actually read, something is wrong
+                      case -1:
+                          phaser.forceTermination();
+                          channel.close();
+                          return;
+                  }
+                  if (!cursor.hasRemaining()) {//we've read to the end, flip to beginning and deliver
+                      cursor.flip();
+                      deliver();
+                  }
+              }
+          }
+
+          private void deliver() {
+              assert null != cursor;
+              payload.set((ByteBuffer) cursor.rewind());
+              phaser.arrive();
+              recycleChannel(channel);
+          }
       });
       try {
         phaser.awaitAdvanceInterruptibly(phaser.arrive(), REALTIME_CUTOFF, REALTIME_UNIT);
@@ -401,76 +401,76 @@ public enum CouchMetaDriver {
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
       final SocketChannel channel = createCouchConnection();
       final Phaser phaser = new Phaser(2);
-      enqueue(channel, OP_CONNECT | OP_WRITE, new Impl() {
-        // *******************************
-        // *******************************
-        // pathological buffersize traits
-        // *******************************
-        // *******************************
+      rxf.server.Server.enqueue(channel, OP_CONNECT | OP_WRITE, new Impl() {
+          // *******************************
+          // *******************************
+          // pathological buffersize traits
+          // *******************************
+          // *******************************
 
-        String db = (String) dbKeysBuilder.get(etype.db);
-        String id = (String) dbKeysBuilder.get(docId);
-        HttpRequest request = actionBuilder.state().$req();
-        final String scrub = scrub("/" + db + (null != id ? "/" + id : ""));
-        ByteBuffer header = (ByteBuffer) request.path(scrub).method(HEAD).as(ByteBuffer.class);
-        public HttpResponse response;
-        public ByteBuffer cursor;
+          String db = (String) dbKeysBuilder.get(etype.db);
+          String id = (String) dbKeysBuilder.get(docId);
+          HttpRequest request = actionBuilder.state().$req();
+          final String scrub = scrub("/" + db + (null != id ? "/" + id : ""));
+          ByteBuffer header = (ByteBuffer) request.path(scrub).method(HEAD).as(ByteBuffer.class);
+          public HttpResponse response;
+          public ByteBuffer cursor;
 
-        public void onWrite(SelectionKey key) throws Exception {
-          int write = channel.write(header);
-          assert !header.hasRemaining();
-          header.clear();
-          response = request.headerInterest(ETag).$res();
+          public void onWrite(SelectionKey key) throws Exception {
+              int write = channel.write(header);
+              assert !header.hasRemaining();
+              header.clear();
+              response = request.headerInterest(ETag).$res();
 
-          key.interestOps(OP_READ);/*WRITE-READ implicit turnaround in 1xio won't need .selector().wakeup()*/
-        }
-
-        public void onRead(SelectionKey key) throws Exception {
-
-          if (null == cursor) {
-            //geometric,  vulnerable to dev/null if not max'd here.
-            header =
-                null == header ? ByteBuffer.allocateDirect(4<<10) : header
-                    .hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2)
-                    .put((ByteBuffer) header.flip());
-
-            int read = channel.read(header);
-            if (-1 != read) {
-              ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
-              response.apply((ByteBuffer) flip);
-
-              if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response.headerBuf())) {
-                try {
-                  if (DEBUG_SENDJSON) {
-                    System.err.println(ProtocolMethodDispatch.deepToString("??? ", UTF8.decode((ByteBuffer) flip
-                            .duplicate().rewind())));
-                  }
-                  if (response.statusEnum() == HttpStatus.$200) {
-                    payload.set(UTF8.encode(response.dequotedHeader(ETag.getHeader())));
-                  } else {//error message, pass null back to indicate no rev
-                    payload.set(null);
-                  }
-                } catch (Exception e) {
-                  if (DEBUG_SENDJSON) {
-                    e.printStackTrace();
-                    Throwable trace = dbKeysBuilder.trace();
-                    if (trace != null) {
-                      System.err.println("\tfrom:");
-                      trace.printStackTrace();
-                    }
-                  }
-
-                }
-                recycleChannel(channel);
-                //assumes quoted
-                phaser.arrive();
-              }
-            } else {
-              phaser.forceTermination();
-              channel.close();
-            }
+              key.interestOps(OP_READ);/*WRITE-READ implicit turnaround in 1xio won't need .selector().wakeup()*/
           }
-        }
+
+          public void onRead(SelectionKey key) throws Exception {
+
+              if (null == cursor) {
+                  //geometric,  vulnerable to dev/null if not max'd here.
+                  header =
+                          null == header ? ByteBuffer.allocateDirect(4 << 10) : header
+                                  .hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2)
+                                  .put((ByteBuffer) header.flip());
+
+                  int read = channel.read(header);
+                  if (-1 != read) {
+                      ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
+                      response.apply((ByteBuffer) flip);
+
+                      if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response.headerBuf())) {
+                          try {
+                              if (DEBUG_SENDJSON) {
+                                  System.err.println(ProtocolMethodDispatch.deepToString("??? ", rxf.server.Server.UTF8.decode((ByteBuffer) flip
+                                          .duplicate().rewind())));
+                              }
+                              if (response.statusEnum() == HttpStatus.$200) {
+                                  payload.set(rxf.server.Server.UTF8.encode(response.dequotedHeader(ETag.getHeader())));
+                              } else {//error message, pass null back to indicate no rev
+                                  payload.set(null);
+                              }
+                          } catch (Exception e) {
+                              if (DEBUG_SENDJSON) {
+                                  e.printStackTrace();
+                                  Throwable trace = dbKeysBuilder.trace();
+                                  if (trace != null) {
+                                      System.err.println("\tfrom:");
+                                      trace.printStackTrace();
+                                  }
+                              }
+
+                          }
+                          recycleChannel(channel);
+                          //assumes quoted
+                          phaser.arrive();
+                      }
+                  } else {
+                      phaser.forceTermination();
+                      channel.close();
+                  }
+              }
+          }
       });
       try {
         phaser.awaitAdvanceInterruptibly(phaser.arrive(), REALTIME_CUTOFF, REALTIME_UNIT);
@@ -508,85 +508,86 @@ public enum CouchMetaDriver {
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
       final Phaser phaser = new Phaser(2);
       final SocketChannel channel = createCouchConnection();
-      enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
+      rxf.server.Server.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
 
-        // *******************************
-        // *******************************
-        // pathological buffersize traits
-        // *******************************
-        // *******************************
+          // *******************************
+          // *******************************
+          // pathological buffersize traits
+          // *******************************
+          // *******************************
 
-        final HttpRequest request = actionBuilder.state().$req();
-        public LinkedList<ByteBuffer> list;
-        private HttpResponse response;
-        ByteBuffer header =
-            (ByteBuffer) request.path(
-                scrub("/" + dbKeysBuilder.get(db) + "/" + dbKeysBuilder.get(docId) + "?rev="
-                    + dbKeysBuilder.get(rev))).method(DELETE).as(ByteBuffer.class);
-        ByteBuffer cursor;
+          final HttpRequest request = actionBuilder.state().$req();
+          public LinkedList<ByteBuffer> list;
+          private HttpResponse response;
+          ByteBuffer header =
+                  (ByteBuffer) request.path(
+                          scrub("/" + dbKeysBuilder.get(db) + "/" + dbKeysBuilder.get(docId) + "?rev="
+                                  + dbKeysBuilder.get(rev))
+                  ).method(DELETE).as(ByteBuffer.class);
+          ByteBuffer cursor;
 
-        public void onWrite(SelectionKey key) throws Exception {
-          int write = channel.write(header);
-          assert !header.hasRemaining();
-          header.clear();
-          response = request.headerInterest(STATIC_CONTENT_LENGTH_ARR).$res();
+          public void onWrite(SelectionKey key) throws Exception {
+              int write = channel.write(header);
+              assert !header.hasRemaining();
+              header.clear();
+              response = request.headerInterest(STATIC_CONTENT_LENGTH_ARR).$res();
 
-          key.interestOps(OP_READ);/*WRITE-READ implicit turnaround in 1xio won't need .selector().wakeup()*/
-        }
-
-        public void onRead(SelectionKey key) throws Exception {
-          if (null == cursor) {
-            //geometric,  vulnerable to dev/null if not max'd here.
-            header =
-                null == header ? ByteBuffer.allocateDirect(4<<10) : header
-                    .hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2)
-                    .put((ByteBuffer) header.flip());
-
-            int read = channel.read(header);
-            switch (read) {
-              case -1:
-                phaser.forceTermination();
-                channel.close();
-                break;
-            }
-            ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
-            response.apply((ByteBuffer) flip);
-
-            if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response.headerBuf())) {
-              cursor = (ByteBuffer) flip.slice();
-              header = null;
-
-              if (DEBUG_SENDJSON) {
-                System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, UTF8
-                        .decode((ByteBuffer) cursor.duplicate().rewind())));
-              }
-
-              int remaining = Integer.parseInt(response.headerString(Content$2dLength));
-
-              if (remaining == cursor.remaining()) {
-                deliver();
-              } else {
-                cursor = ByteBuffer.allocateDirect(remaining).put(cursor);
-              }
-            }
-          } else {
-            int read = channel.read(cursor);
-            if (!cursor.hasRemaining()) {
-              cursor.flip();
-              deliver();
-            }
+              key.interestOps(OP_READ);/*WRITE-READ implicit turnaround in 1xio won't need .selector().wakeup()*/
           }
-        }
 
-        private LinkedList<ByteBuffer> getReadList() {
-          return this.list == null ? new LinkedList<ByteBuffer>() : this.list;
-        }
+          public void onRead(SelectionKey key) throws Exception {
+              if (null == cursor) {
+                  //geometric,  vulnerable to dev/null if not max'd here.
+                  header =
+                          null == header ? ByteBuffer.allocateDirect(4 << 10) : header
+                                  .hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2)
+                                  .put((ByteBuffer) header.flip());
 
-        private void deliver() {
-          payload.set(cursor);
-          recycleChannel(channel);
-          phaser.arrive();
-        }
+                  int read = channel.read(header);
+                  switch (read) {
+                      case -1:
+                          phaser.forceTermination();
+                          channel.close();
+                          break;
+                  }
+                  ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
+                  response.apply((ByteBuffer) flip);
+
+                  if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response.headerBuf())) {
+                      cursor = (ByteBuffer) flip.slice();
+                      header = null;
+
+                      if (DEBUG_SENDJSON) {
+                          System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, rxf.server.Server.UTF8
+                                  .decode((ByteBuffer) cursor.duplicate().rewind())));
+                      }
+
+                      int remaining = Integer.parseInt(response.headerString(Content$2dLength));
+
+                      if (remaining == cursor.remaining()) {
+                          deliver();
+                      } else {
+                          cursor = ByteBuffer.allocateDirect(remaining).put(cursor);
+                      }
+                  }
+              } else {
+                  int read = channel.read(cursor);
+                  if (!cursor.hasRemaining()) {
+                      cursor.flip();
+                      deliver();
+                  }
+              }
+          }
+
+          private LinkedList<ByteBuffer> getReadList() {
+              return this.list == null ? new LinkedList<ByteBuffer>() : this.list;
+          }
+
+          private void deliver() {
+              payload.set(cursor);
+              recycleChannel(channel);
+              phaser.arrive();
+          }
       });
       try {
         phaser.awaitAdvanceInterruptibly(phaser.arrive(), REALTIME_CUTOFF, REALTIME_UNIT);
@@ -625,160 +626,160 @@ public enum CouchMetaDriver {
       final String db = scrub('/' + (String) dbKeysBuilder.get(etype.db));
       Class type = (Class) dbKeysBuilder.get(etype.type);
       final SocketChannel channel = createCouchConnection();
-      enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
+      rxf.server.Server.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
 
-        /**
-         * holds un-rewound raw buffers.  must potentially be backtracked to fulfill CE_TERMINAL.length token check under pathological fragmentation
-         */
+          /**
+           * holds un-rewound raw buffers.  must potentially be backtracked to fulfill CE_TERMINAL.length token check under pathological fragmentation
+           */
 
-        List<ByteBuffer> list = new ArrayList<ByteBuffer>();
-        final Impl prev = this;
+          List<ByteBuffer> list = new ArrayList<ByteBuffer>();
+          final Impl prev = this;
 
-        private ByteBuffer header;
-        private ByteBuffer cursor;
+          private ByteBuffer header;
+          private ByteBuffer cursor;
 
-        private void simpleDeploy(ByteBuffer buffer) {
-          payload.set((ByteBuffer) buffer);
-          phaser.arrive();
-          recycleChannel(channel);
-        }
-
-        public void onWrite(SelectionKey key) throws Exception {
-
-          HttpRequest request = actionBuilder.state().$req();
-
-          ByteBuffer header =
-              (ByteBuffer) request.method(GET)
-                  .path(scrub('/' + db + '/' + dbKeysBuilder.get(view))).headerString(Accept,
-                      MimeType.json.contentType).as(ByteBuffer.class);
-          int wrote = channel.write(header);
-          assert !header.hasRemaining() : "Failed to complete write in one pass, need to re-interest(READ)";
-          key.interestOps(OP_READ);
-        }
-
-        public void onRead(SelectionKey key) throws IOException {
-          if (null != cursor) {
-            try {
-              int read = channel.read(cursor);
-              if (-1 == read) {
-                // we were asked to read again, but no more content to read, just deliver what we already saw
-                if (cursor.position() > 0) {
-                  list.add(cursor);
-                }
-                cePayload.set(list);
-                phaser.arrive();
-                recycleChannel(channel);
-                return;
-              }
-            } catch (Throwable e) {
-              e.printStackTrace();
-            }
-            //token suffix check, see if we're at the end
-            boolean suffixMatches =
-                Rfc822HeaderState.suffixMatchChunks(CE_TERMINAL, cursor, list
-                        .toArray(new ByteBuffer[list.size()]));
-
-            if (suffixMatches) {
-              if (cursor.position() > 0) {
-                list.add(cursor);
-              }
-              cePayload.set(list);
+          private void simpleDeploy(ByteBuffer buffer) {
+              payload.set((ByteBuffer) buffer);
               phaser.arrive();
               recycleChannel(channel);
-              return;
-            }
-            if (!cursor.hasRemaining()) {
-              list.add(cursor);
-              cursor = ByteBuffer.allocateDirect(4<<10);
-            }
-          } else {
-            //geometric,  vulnerable to dev/null if not max'd here.
-            //can only happen if server returns pathologically large headers
-            if (null == header)
-              header = ByteBuffer.allocateDirect(4<<10);
-            else if (!header.hasRemaining()) {
-              header =
-                  ByteBuffer.allocateDirect(header.capacity() * 2).put((ByteBuffer) header.flip());
-            }
-
-            int read = channel.read(header);
-            ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
-            HttpResponse response =
-                (HttpResponse) new Rfc822HeaderState().$res().headerInterest(STATIC_VF_HEADERS);
-            response.apply((ByteBuffer) flip);
-
-            ByteBuffer currentBuff = response.headerBuf();
-            if (!Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, currentBuff)) {
-              //not enough content to finish loading headers, wait for more
-              HttpMethod.getSelector().wakeup();
-              return;
-            }
-            cursor = (ByteBuffer) flip.slice();
-            actionBuilder.state(response);
-            if (DEBUG_SENDJSON) {
-              System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, UTF8
-                      .decode((ByteBuffer) cursor.duplicate().rewind())));
-            }
-
-            HttpStatus httpStatus = response.statusEnum();
-            switch (httpStatus) {
-              case $200:
-                if (response.headerStrings().containsKey(Content$2dLength.getHeader())) { //rarity but for empty rowsets
-                  String remainingString = response.headerString(Content$2dLength);
-                  final int remaining = Integer.parseInt(remainingString);
-                  if (cursor.remaining() == remaining) {
-                    // No chunked encoding, all read in one pass, deploy the body without ce-parsing
-                    simpleDeploy(cursor.slice());
-                  } else {
-                    //windows workaround?
-                    key.attach(new Impl() {
-                      private ByteBuffer cursor1 =
-                          cursor.capacity() > remaining ? (ByteBuffer) cursor.limit(remaining)
-                              : ByteBuffer.allocateDirect(remaining).put(cursor);
-
-                      public void onRead(SelectionKey key) throws Exception {
-                        int read1 = channel.read(cursor1);
-                        switch (read1) {
-                          case -1:
-                            phaser.forceTermination();
-                            channel.close();
-                            break;
-                        }
-                        if (!cursor1.hasRemaining()) {
-                          ByteBuffer flip1 = (ByteBuffer) cursor1.flip();
-                          simpleDeploy(flip1);
-                        }
-                      }
-                    });
-                  }
-                } else {
-                  // if we're in this block it means that there was no content-length set, which means
-                  // we're reading chunked data.
-
-                  //since we sliced above to get the reference to cursor, we need to move the cursor to the end
-                  boolean suffixMatches =
-                      Rfc822HeaderState.suffixMatchChunks(CE_TERMINAL, (ByteBuffer) cursor
-                              .duplicate().position(cursor.limit()));
-                  if (suffixMatches) {
-                    // 'fast forward' to the end of the cursor, since deliver will flip() which will end at current
-                    // position, instead of just copying as is. A cleaner fix might be to change the first loop
-                    // in deliver
-                    cursor.position(cursor.limit());
-                    list.add(cursor);
-                    cePayload.set(list);
-                    phaser.arrive();
-                    recycleChannel(channel);
-                  } else {
-                    cursor.compact();
-                  }
-                }
-                break;
-              default:
-                phaser.forceTermination();
-                recycleChannel(channel);
-            }
           }
-        }
+
+          public void onWrite(SelectionKey key) throws Exception {
+
+              HttpRequest request = actionBuilder.state().$req();
+
+              ByteBuffer header =
+                      (ByteBuffer) request.method(GET)
+                              .path(scrub('/' + db + '/' + dbKeysBuilder.get(view))).headerString(Accept,
+                                      MimeType.json.contentType).as(ByteBuffer.class);
+              int wrote = channel.write(header);
+              assert !header.hasRemaining() : "Failed to complete write in one pass, need to re-interest(READ)";
+              key.interestOps(OP_READ);
+          }
+
+          public void onRead(SelectionKey key) throws IOException {
+              if (null != cursor) {
+                  try {
+                      int read = channel.read(cursor);
+                      if (-1 == read) {
+                          // we were asked to read again, but no more content to read, just deliver what we already saw
+                          if (cursor.position() > 0) {
+                              list.add(cursor);
+                          }
+                          cePayload.set(list);
+                          phaser.arrive();
+                          recycleChannel(channel);
+                          return;
+                      }
+                  } catch (Throwable e) {
+                      e.printStackTrace();
+                  }
+                  //token suffix check, see if we're at the end
+                  boolean suffixMatches =
+                          Rfc822HeaderState.suffixMatchChunks(CE_TERMINAL, cursor, list
+                                  .toArray(new ByteBuffer[list.size()]));
+
+                  if (suffixMatches) {
+                      if (cursor.position() > 0) {
+                          list.add(cursor);
+                      }
+                      cePayload.set(list);
+                      phaser.arrive();
+                      recycleChannel(channel);
+                      return;
+                  }
+                  if (!cursor.hasRemaining()) {
+                      list.add(cursor);
+                      cursor = ByteBuffer.allocateDirect(4 << 10);
+                  }
+              } else {
+                  //geometric,  vulnerable to dev/null if not max'd here.
+                  //can only happen if server returns pathologically large headers
+                  if (null == header)
+                      header = ByteBuffer.allocateDirect(4 << 10);
+                  else if (!header.hasRemaining()) {
+                      header =
+                              ByteBuffer.allocateDirect(header.capacity() * 2).put((ByteBuffer) header.flip());
+                  }
+
+                  int read = channel.read(header);
+                  ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
+                  HttpResponse response =
+                          (HttpResponse) new Rfc822HeaderState().$res().headerInterest(STATIC_VF_HEADERS);
+                  response.apply((ByteBuffer) flip);
+
+                  ByteBuffer currentBuff = response.headerBuf();
+                  if (!Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, currentBuff)) {
+                      //not enough content to finish loading headers, wait for more
+                      rxf.server.Server.getSelector().wakeup();
+                      return;
+                  }
+                  cursor = (ByteBuffer) flip.slice();
+                  actionBuilder.state(response);
+                  if (DEBUG_SENDJSON) {
+                      System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, rxf.server.Server.UTF8
+                              .decode((ByteBuffer) cursor.duplicate().rewind())));
+                  }
+
+                  HttpStatus httpStatus = response.statusEnum();
+                  switch (httpStatus) {
+                      case $200:
+                          if (response.headerStrings().containsKey(Content$2dLength.getHeader())) { //rarity but for empty rowsets
+                              String remainingString = response.headerString(Content$2dLength);
+                              final int remaining = Integer.parseInt(remainingString);
+                              if (cursor.remaining() == remaining) {
+                                  // No chunked encoding, all read in one pass, deploy the body without ce-parsing
+                                  simpleDeploy(cursor.slice());
+                              } else {
+                                  //windows workaround?
+                                  key.attach(new Impl() {
+                                      private ByteBuffer cursor1 =
+                                              cursor.capacity() > remaining ? (ByteBuffer) cursor.limit(remaining)
+                                                      : ByteBuffer.allocateDirect(remaining).put(cursor);
+
+                                      public void onRead(SelectionKey key) throws Exception {
+                                          int read1 = channel.read(cursor1);
+                                          switch (read1) {
+                                              case -1:
+                                                  phaser.forceTermination();
+                                                  channel.close();
+                                                  break;
+                                          }
+                                          if (!cursor1.hasRemaining()) {
+                                              ByteBuffer flip1 = (ByteBuffer) cursor1.flip();
+                                              simpleDeploy(flip1);
+                                          }
+                                      }
+                                  });
+                              }
+                          } else {
+                              // if we're in this block it means that there was no content-length set, which means
+                              // we're reading chunked data.
+
+                              //since we sliced above to get the reference to cursor, we need to move the cursor to the end
+                              boolean suffixMatches =
+                                      Rfc822HeaderState.suffixMatchChunks(CE_TERMINAL, (ByteBuffer) cursor
+                                              .duplicate().position(cursor.limit()));
+                              if (suffixMatches) {
+                                  // 'fast forward' to the end of the cursor, since deliver will flip() which will end at current
+                                  // position, instead of just copying as is. A cleaner fix might be to change the first loop
+                                  // in deliver
+                                  cursor.position(cursor.limit());
+                                  list.add(cursor);
+                                  cePayload.set(list);
+                                  phaser.arrive();
+                                  recycleChannel(channel);
+                              } else {
+                                  cursor.compact();
+                              }
+                          }
+                          break;
+                      default:
+                          phaser.forceTermination();
+                          recycleChannel(channel);
+                  }
+              }
+          }
       });
       try {
         phaser.awaitAdvanceInterruptibly(phaser.arrive(), REALTIME_CUTOFF, REALTIME_UNIT);
@@ -805,14 +806,14 @@ public enum CouchMetaDriver {
         ByteBuffer put = outbound.put(byteBuffer);
       }
       if (DEBUG_SENDJSON) {
-        System.err.println(UTF8.decode((ByteBuffer) outbound.duplicate().flip()));
+        System.err.println(rxf.server.Server.UTF8.decode((ByteBuffer) outbound.duplicate().flip()));
       }
       ByteBuffer src = ((ByteBuffer) outbound.rewind()).duplicate();
       int endl = 0;
       while (sum > 0 && src.hasRemaining()) {
         if (DEBUG_SENDJSON)
           System.err.println("outbound:----\n"
-                  + UTF8.decode(outbound.duplicate()).toString() + "\n----");
+                  + rxf.server.Server.UTF8.decode(outbound.duplicate()).toString() + "\n----");
 
         byte b = 0;
         boolean first = true;
@@ -822,7 +823,7 @@ public enum CouchMetaDriver {
           }
 
         int i =
-                Integer.parseInt(UTF8.decode((ByteBuffer) src.duplicate().flip()).toString()
+                Integer.parseInt(rxf.server.Server.UTF8.decode((ByteBuffer) src.duplicate().flip()).toString()
                         .trim(), 0x10);
         src = ((ByteBuffer) src.compact().position(i)).slice();
         endl += i;
@@ -834,7 +835,7 @@ public enum CouchMetaDriver {
       ByteBuffer retval = (ByteBuffer) outbound.clear().limit(endl);
 
       if (DEBUG_SENDJSON) {
-        System.err.println(UTF8.decode(retval.duplicate()));
+        System.err.println(rxf.server.Server.UTF8.decode(retval.duplicate()));
       }
       return retval;
     }
@@ -873,7 +874,7 @@ public enum CouchMetaDriver {
       validjson = validjson == null ? "{}" : validjson;
 
       Rfc822HeaderState state = actionBuilder.state();
-      final byte[] outbound = validjson.getBytes(UTF8);
+      final byte[] outbound = validjson.getBytes(rxf.server.Server.UTF8);
 
       HttpMethod method =
           1 == slashCounter
@@ -888,107 +889,107 @@ public enum CouchMetaDriver {
               .headerString(Content$2dLength, String.valueOf(outbound.length)).headerString(Accept,
                   MimeType.json.contentType).as(ByteBuffer.class);
       if (DEBUG_SENDJSON) {
-        System.err.println(ProtocolMethodDispatch.deepToString(opaque, validjson, UTF8.decode(header.duplicate()), state));
+        System.err.println(ProtocolMethodDispatch.deepToString(opaque, validjson, rxf.server.Server.UTF8.decode(header.duplicate()), state));
       }
       final SocketChannel channel = createCouchConnection();
       final String finalOpaque = opaque;
-      enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
+      rxf.server.Server.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
 
-        // *******************************
-        // *******************************
-        // pathological buffersize traits
-        // *******************************
-        // *******************************
+          // *******************************
+          // *******************************
+          // pathological buffersize traits
+          // *******************************
+          // *******************************
 
-        String db = (String) dbKeysBuilder.get(etype.db);
-        String id = (String) dbKeysBuilder.get(docId);
-        HttpRequest request = actionBuilder.state().$req();
-        private HttpResponse response;
-        ByteBuffer header =
-            (ByteBuffer) request.path(finalOpaque).headerInterest(STATIC_JSON_SEND_HEADERS)
-                .headerString(Content$2dLength, String.valueOf(outbound.length)).headerString(
-                    Accept, MimeType.json.contentType).as(ByteBuffer.class);
+          String db = (String) dbKeysBuilder.get(etype.db);
+          String id = (String) dbKeysBuilder.get(docId);
+          HttpRequest request = actionBuilder.state().$req();
+          private HttpResponse response;
+          ByteBuffer header =
+                  (ByteBuffer) request.path(finalOpaque).headerInterest(STATIC_JSON_SEND_HEADERS)
+                          .headerString(Content$2dLength, String.valueOf(outbound.length)).headerString(
+                                  Accept, MimeType.json.contentType).as(ByteBuffer.class);
 
-        ByteBuffer cursor;
+          ByteBuffer cursor;
 
-        public void onWrite(SelectionKey key) throws Exception {
-          if (null == cursor) {
-            int write = channel.write(header);
-            cursor = ByteBuffer.wrap(outbound);
-          }
-          int write = channel.write(cursor);
-          if (!cursor.hasRemaining()) {
-            header.clear();
-            response = request.$res();
-            key.interestOps(OP_READ);
-            cursor = null;
-          }
-        }
-
-        public void onRead(SelectionKey key) throws Exception {
-          if (null == cursor) {
-            //geometric,  vulnerable to /dev/zero if not max'd here.
-            header =
-                null == header ? ByteBuffer.allocateDirect(4<<10) : header
-                    .hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2)
-                    .put((ByteBuffer) header.flip());
-
-            try {
-              int read = channel.read(header);
-            } catch (IOException e) {
-              phaser.forceTermination();//.reset();
-              ProtocolMethodDispatch.deepToString(this, e);
-              channel.close();
-            }
-            ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
-            response.apply((ByteBuffer) flip);
-
-            if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response.headerBuf())) {
-              cursor = (ByteBuffer) flip.slice();
-              header = null;
-
-              if (DEBUG_SENDJSON) {
-                System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, UTF8
-                        .decode((ByteBuffer) cursor.duplicate().rewind())));
+          public void onWrite(SelectionKey key) throws Exception {
+              if (null == cursor) {
+                  int write = channel.write(header);
+                  cursor = ByteBuffer.wrap(outbound);
               }
+              int write = channel.write(cursor);
+              if (!cursor.hasRemaining()) {
+                  header.clear();
+                  response = request.$res();
+                  key.interestOps(OP_READ);
+                  cursor = null;
+              }
+          }
 
-              HttpStatus httpStatus = response.statusEnum();
-              switch (httpStatus) {
-                case $200:
-                case $201:
-                  int remaining = Integer.parseInt(response.headerString(Content$2dLength));
+          public void onRead(SelectionKey key) throws Exception {
+              if (null == cursor) {
+                  //geometric,  vulnerable to /dev/zero if not max'd here.
+                  header =
+                          null == header ? ByteBuffer.allocateDirect(4 << 10) : header
+                                  .hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2)
+                                  .put((ByteBuffer) header.flip());
 
-                  if (remaining == cursor.remaining()) {
-                    deliver();
-                  } else {
-                    cursor = ByteBuffer.allocateDirect(remaining).put(cursor);
+                  try {
+                      int read = channel.read(header);
+                  } catch (IOException e) {
+                      phaser.forceTermination();//.reset();
+                      ProtocolMethodDispatch.deepToString(this, e);
+                      channel.close();
                   }
-                  break;
-                default: //error
-                  phaser.forceTermination();
-                  channel.close();
+                  ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
+                  response.apply((ByteBuffer) flip);
+
+                  if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response.headerBuf())) {
+                      cursor = (ByteBuffer) flip.slice();
+                      header = null;
+
+                      if (DEBUG_SENDJSON) {
+                          System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, rxf.server.Server.UTF8
+                                  .decode((ByteBuffer) cursor.duplicate().rewind())));
+                      }
+
+                      HttpStatus httpStatus = response.statusEnum();
+                      switch (httpStatus) {
+                          case $200:
+                          case $201:
+                              int remaining = Integer.parseInt(response.headerString(Content$2dLength));
+
+                              if (remaining == cursor.remaining()) {
+                                  deliver();
+                              } else {
+                                  cursor = ByteBuffer.allocateDirect(remaining).put(cursor);
+                              }
+                              break;
+                          default: //error
+                              phaser.forceTermination();
+                              channel.close();
+                      }
+                  }
+              } else {
+                  int read = channel.read(cursor);
+                  if (read == -1) {
+                      phaser.forceTermination();
+
+                      channel.close();
+                      return;
+                  }
+                  if (!cursor.hasRemaining()) {
+                      cursor.flip();
+                      deliver();
+                  }
               }
-            }
-          } else {
-            int read = channel.read(cursor);
-            if (read == -1) {
-              phaser.forceTermination();
-
-              channel.close();
-              return;
-            }
-            if (!cursor.hasRemaining()) {
-              cursor.flip();
-              deliver();
-            }
           }
-        }
 
-        void deliver() throws BrokenBarrierException, InterruptedException {
-          payload.set(cursor);
-          phaser.arrive();
-          recycleChannel(channel);
-        }
+          void deliver() throws BrokenBarrierException, InterruptedException {
+              payload.set(cursor);
+              phaser.arrive();
+              recycleChannel(channel);
+          }
       });
       try {
         phaser.awaitAdvanceInterruptibly(phaser.arrive(), REALTIME_CUTOFF, REALTIME_UNIT);
@@ -1030,98 +1031,98 @@ public enum CouchMetaDriver {
       String rev = (String) dbKeysBuilder.get(etype.rev);
       String attachname = dbKeysBuilder.get(etype.attachname);
       final String sb =
-          scrub('/' + db + '/' + docId + '/' + URLEncoder.encode(attachname, UTF8.displayName())
+          scrub('/' + db + '/' + docId + '/' + URLEncoder.encode(attachname, rxf.server.Server.UTF8.displayName())
               + "?rev=" + rev);
 
       final String ctype = x;
       final SocketChannel channel = createCouchConnection();
       final AtomicReference<ByteBuffer> res = new AtomicReference<ByteBuffer>();
-      enqueue(channel, OP_WRITE, new Impl() {
-        @Override
-        public void onWrite(SelectionKey key) throws Exception {
+      rxf.server.Server.enqueue(channel, OP_WRITE, new Impl() {
+          @Override
+          public void onWrite(SelectionKey key) throws Exception {
 
-          int limit = payload.limit();
-          ByteBuffer as =
-              request.method(PUT).path(sb).headerString(Expect, "100-Continue").headerString(
-                  Content$2dType, ctype).headerString(Accept, MimeType.json.contentType)
-                  .headerString(Content$2dLength, String.valueOf(limit)).as(ByteBuffer.class);
-          channel.write((ByteBuffer) as.rewind());
-          key.interestOps(OP_READ);
-        }
-
-        @Override
-        public void onRead(SelectionKey key) throws Exception {
-          ByteBuffer[] byteBuffer = {ByteBuffer.allocateDirect(4<<10)};
-          int read = channel.read(byteBuffer[0]);
-          HttpResponse httpResponse = request.$res();
-
-          Rfc822HeaderState apply = httpResponse.apply((ByteBuffer) byteBuffer[0].flip());
-          HttpStatus httpStatus = httpResponse.statusEnum();
-          switch (httpStatus) {
-            case $100:
-              key.interestOps(OP_WRITE).attach(new Impl() {
-                public HttpResponse response =
-                    (HttpResponse) request.$res().headerInterest(Content$2dLength);
-                public ByteBuffer cursor;
-
-                @Override
-                public void onWrite(SelectionKey key) throws Exception {
-                  channel.write(payload);
-                  if (!payload.hasRemaining()) {
-                    key.interestOps(OP_READ);
-                  }
-                }
-
-                boolean finish = false;
-
-                void deliver() throws InterruptedException, BrokenBarrierException {
-
-                  res.set((ByteBuffer) cursor.rewind());
-                  phaser.arrive();
-                  recycleChannel(channel);
-                }
-
-                public void onRead(SelectionKey key) throws Exception {
-
-                  if (cursor == null)
-                    cursor = ByteBuffer.allocateDirect(4<<10);
-                  int read = channel.read(cursor);
-                  if (-1 == read) {
-                    phaser.forceTermination();
-                    key.cancel();
-                    return;
-                  }
-                  if (finish) {
-                    if (!cursor.hasRemaining()) {
-                      deliver();
-                    }
-                    return;
-                  }
-                  ByteBuffer flip = (ByteBuffer) cursor.duplicate().flip();
-                  response.apply(flip);
-                  finish =
-                      Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response
-                              .headerBuf());
-                  if (finish) {
-                    switch (response.statusEnum()) {
-                      case $201:
-                      case $200:
-                        int i = Integer.parseInt(response.headerString(Content$2dLength));
-                        if (flip.remaining() == i) {
-                          cursor = flip.slice();
-                          deliver();
-                        } else
-                          cursor = ByteBuffer.allocateDirect(i).put(flip);
-                        return;
-                      default:
-                        phaser.forceTermination();
-                        key.cancel();
-                    }
-                  }
-                }
-              });
+              int limit = payload.limit();
+              ByteBuffer as =
+                      request.method(PUT).path(sb).headerString(Expect, "100-Continue").headerString(
+                              Content$2dType, ctype).headerString(Accept, MimeType.json.contentType)
+                              .headerString(Content$2dLength, String.valueOf(limit)).as(ByteBuffer.class);
+              channel.write((ByteBuffer) as.rewind());
+              key.interestOps(OP_READ);
           }
-        }
+
+          @Override
+          public void onRead(SelectionKey key) throws Exception {
+              ByteBuffer[] byteBuffer = {ByteBuffer.allocateDirect(4 << 10)};
+              int read = channel.read(byteBuffer[0]);
+              HttpResponse httpResponse = request.$res();
+
+              Rfc822HeaderState apply = httpResponse.apply((ByteBuffer) byteBuffer[0].flip());
+              HttpStatus httpStatus = httpResponse.statusEnum();
+              switch (httpStatus) {
+                  case $100:
+                      key.interestOps(OP_WRITE).attach(new Impl() {
+                          public HttpResponse response =
+                                  (HttpResponse) request.$res().headerInterest(Content$2dLength);
+                          public ByteBuffer cursor;
+
+                          @Override
+                          public void onWrite(SelectionKey key) throws Exception {
+                              channel.write(payload);
+                              if (!payload.hasRemaining()) {
+                                  key.interestOps(OP_READ);
+                              }
+                          }
+
+                          boolean finish = false;
+
+                          void deliver() throws InterruptedException, BrokenBarrierException {
+
+                              res.set((ByteBuffer) cursor.rewind());
+                              phaser.arrive();
+                              recycleChannel(channel);
+                          }
+
+                          public void onRead(SelectionKey key) throws Exception {
+
+                              if (cursor == null)
+                                  cursor = ByteBuffer.allocateDirect(4 << 10);
+                              int read = channel.read(cursor);
+                              if (-1 == read) {
+                                  phaser.forceTermination();
+                                  key.cancel();
+                                  return;
+                              }
+                              if (finish) {
+                                  if (!cursor.hasRemaining()) {
+                                      deliver();
+                                  }
+                                  return;
+                              }
+                              ByteBuffer flip = (ByteBuffer) cursor.duplicate().flip();
+                              response.apply(flip);
+                              finish =
+                                      Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response
+                                              .headerBuf());
+                              if (finish) {
+                                  switch (response.statusEnum()) {
+                                      case $201:
+                                      case $200:
+                                          int i = Integer.parseInt(response.headerString(Content$2dLength));
+                                          if (flip.remaining() == i) {
+                                              cursor = flip.slice();
+                                              deliver();
+                                          } else
+                                              cursor = ByteBuffer.allocateDirect(i).put(flip);
+                                          return;
+                                      default:
+                                          phaser.forceTermination();
+                                          key.cancel();
+                                  }
+                              }
+                          }
+                      });
+              }
+          }
       });
 
       try {
@@ -1137,7 +1138,7 @@ public enum CouchMetaDriver {
     }
 
   };
-  public static final byte[] CE_TERMINAL = "\n0\r\n\r\n".getBytes(UTF8);
+  public static final byte[] CE_TERMINAL = "\n0\r\n\r\n".getBytes(rxf.server.Server.UTF8);
   //"premature optimization" s/mature/view/
   public static final String[] STATIC_VF_HEADERS =
       Rfc822HeaderState.staticHeaderStrings(ETag, Content$2dLength, Transfer$2dEncoding);

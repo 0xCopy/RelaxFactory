@@ -24,7 +24,7 @@ import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static rxf.server.BlobAntiPatternObject.isDEBUG_SENDJSON;
 import static rxf.server.CouchNamespace.NAMESPACE;
-import static one.xio.HttpMethod.UTF8;
+import static rxf.server.Server.UTF8;
 
 public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
   private final Map<HttpMethod, Map<String, Key<? extends AsioVisitor>>> bindings =

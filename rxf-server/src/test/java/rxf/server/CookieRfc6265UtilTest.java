@@ -10,7 +10,7 @@ import java.util.*;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
-import static one.xio.HttpMethod.UTF8;
+import static rxf.server.Server.UTF8;
 import static org.junit.Assert.assertArrayEquals;
 
 public class CookieRfc6265UtilTest {

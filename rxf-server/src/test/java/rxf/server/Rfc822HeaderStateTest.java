@@ -8,7 +8,7 @@ import java.util.Map;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
-import static one.xio.HttpMethod.UTF8;
+import static rxf.server.Server.UTF8;
 
 public class Rfc822HeaderStateTest {
   @Test

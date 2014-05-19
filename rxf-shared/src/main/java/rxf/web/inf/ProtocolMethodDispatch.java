@@ -5,6 +5,7 @@ import one.xio.HttpMethod;
 import rxf.server.PreRead;
 import rxf.server.Rfc822HeaderState;
 import rxf.server.Rfc822HeaderState.HttpRequest;
+import rxf.server.Server;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -21,7 +22,8 @@ import java.util.regex.Pattern;
 
 import static java.lang.StrictMath.min;
 import static java.nio.channels.SelectionKey.OP_READ;
-import static one.xio.HttpMethod.*;
+import static one.xio.HttpMethod.GET;
+import static one.xio.HttpMethod.POST;
 import static rxf.server.CouchNamespace.NAMESPACE;
 
 /**
@@ -37,7 +39,7 @@ import static rxf.server.CouchNamespace.NAMESPACE;
 public class ProtocolMethodDispatch extends Impl {
 
   public static final ByteBuffer NONCE = ByteBuffer.allocateDirect(0);
-    public static final byte[] HEADER_TERMINATOR = "\r\n\r\n".getBytes(UTF8);
+    public static final byte[] HEADER_TERMINATOR = "\r\n\r\n".getBytes(Server.UTF8);
     private static final boolean DEBUG_SENDJSON = false;
 
     /**
@@ -108,7 +110,7 @@ public class ProtocolMethodDispatch extends Impl {
     ServerSocketChannel channel = (ServerSocketChannel) key.channel();
     SocketChannel accept = channel.accept();
     accept.configureBlocking(false);
-    HttpMethod.enqueue(accept, OP_READ, this);
+    Server.enqueue(accept, OP_READ, this);
 
   }
 
@@ -129,7 +131,7 @@ public class ProtocolMethodDispatch extends Impl {
       Rfc822HeaderState state = new Rfc822HeaderState().apply((ByteBuffer) cursor.flip());
       httpRequest = state.$req();
       if ( DEBUG_SENDJSON) {
-        System.err.println( deepToString(UTF8.decode((ByteBuffer) httpRequest
+        System.err.println( deepToString(Server.UTF8.decode((ByteBuffer) httpRequest
                 .headerBuf().duplicate().rewind())));
       }
       String method1 = httpRequest.method();

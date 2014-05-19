@@ -1,7 +1,6 @@
 package rxf.server;
 
 import one.xio.AsioVisitor;
-import one.xio.HttpMethod;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -35,7 +34,7 @@ public class RelaxFactoryServerImpl implements RelaxFactoryServer {
    */
   public static void enqueue(SelectableChannel channel, int op, Object... s)
       throws ClosedChannelException {
-    HttpMethod.enqueue(channel, op, s);
+    Server.enqueue(channel, op, s);
   }
 
   public static String wheresWaldo(int... depth) {
@@ -56,7 +55,7 @@ public class RelaxFactoryServerImpl implements RelaxFactoryServer {
   }
 
   public static void init(AsioVisitor protocoldecoder, String... a) throws IOException {
-    HttpMethod.init(protocoldecoder, a);
+    Server.init(protocoldecoder, a);
   }
 
   public void setPort(int port) {
@@ -98,7 +97,7 @@ public class RelaxFactoryServerImpl implements RelaxFactoryServer {
 
   @Override
   public void stop() throws IOException {
-    HttpMethod.killswitch = true;
+    Server.killswitch = true;
     serverSocketChannel.close();
   }
 

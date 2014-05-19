@@ -2,8 +2,8 @@ package rxf.server.daemon;
 
 import one.xio.AsioVisitor;
 import one.xio.HttpHeaders;
-import one.xio.HttpMethod;
 import rxf.server.Rfc822HeaderState;
+import rxf.server.Server;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -18,7 +18,7 @@ import java.util.Arrays;
 import java.util.Map;
 
 import static java.nio.channels.SelectionKey.*;
-import static one.xio.HttpMethod.UTF8;
+import static rxf.server.Server.UTF8;
 import static rxf.server.Config.get;
 
 /**
@@ -115,7 +115,7 @@ public class ProxyDaemon extends AsioVisitor.Impl {
     ServerSocketChannel c = (ServerSocketChannel) key.channel();
     final SocketChannel accept = c.accept();
     accept.configureBlocking(false);
-    HttpMethod.enqueue(accept, OP_READ, this);
+    Server.enqueue(accept, OP_READ, this);
   }
 
   @Override

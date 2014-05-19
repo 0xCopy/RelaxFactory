@@ -9,7 +9,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 import one.xio.AsioVisitor;
-import one.xio.HttpMethod;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -20,6 +19,7 @@ import org.junit.Test;
 
 import rxf.server.BlobAntiPatternObject;
 import rxf.server.CouchService;
+import rxf.server.Server;
 import rxf.shared.CouchTx;
 import rxf.server.RelaxFactoryServerImpl;
 import rxf.server.gen.CouchDriver;
@@ -37,7 +37,7 @@ public class CouchServiceProviderTest {
   @BeforeClass
   public static void setUp() throws Exception {
     BlobAntiPatternObject.setDEBUG_SENDJSON(true);
-    HttpMethod.killswitch = false;
+    Server.killswitch = false;
     exec = Executors.newScheduledThreadPool(2);
     exec.submit(new Runnable() {
       public void run() {
@@ -60,8 +60,8 @@ public class CouchServiceProviderTest {
   @AfterClass
   public static void tearDown() throws Exception {
     try {
-      HttpMethod.killswitch = true;
-      HttpMethod.getSelector().close();
+      Server.killswitch = true;
+      Server.getSelector().close();
       exec.shutdown();
     } catch (Exception ignore) {
     }

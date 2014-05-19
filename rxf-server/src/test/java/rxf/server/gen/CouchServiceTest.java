@@ -23,9 +23,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import static one.xio.HttpMethod.getSelector;
-import static one.xio.HttpMethod.init;
-import static one.xio.HttpMethod.setKillswitch;
+import static rxf.server.Server.getSelector;
+import static rxf.server.Server.init;
+import static rxf.server.Server.setKillswitch;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;

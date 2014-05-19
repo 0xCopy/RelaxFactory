@@ -23,7 +23,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.text.ParseException;
 
-import static one.xio.HttpMethod.UTF8;
+import static rxf.server.Server.UTF8;
 import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 
 /**

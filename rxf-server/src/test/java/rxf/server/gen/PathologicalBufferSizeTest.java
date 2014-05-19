@@ -5,6 +5,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import rxf.server.BlobAntiPatternObject;
+import rxf.server.Server;
 import rxf.shared.CouchTx;
 import rxf.server.driver.CouchMetaDriver;
 import rxf.server.gen.CouchDriver.DbCreate;
@@ -16,7 +17,6 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import static one.xio.HttpMethod.*;
 import static org.junit.Assert.*;
 import static rxf.server.BlobAntiPatternObject.setDEBUG_SENDJSON;
 
@@ -50,12 +50,12 @@ public class PathologicalBufferSizeTest {
   @BeforeClass
   static public void setUp() throws Exception {
     setDEBUG_SENDJSON(true);
-    setKillswitch(false);
+    Server.setKillswitch(false);
     exec = Executors.newScheduledThreadPool(2);
     exec.submit(new Runnable() {
       public void run() {
         try {
-          init(null/*, 1000*/);
+          Server.init(null/*, 1000*/);
         } catch (Exception e) {
           fail();
         }
@@ -77,8 +77,8 @@ public class PathologicalBufferSizeTest {
   static public void tearDown() throws Exception {
 
     try {
-      setKillswitch(true);
-      getSelector().close();
+      Server.setKillswitch(true);
+      Server.getSelector().close();
       exec.shutdown();
     } catch (Exception ignore) {
     }

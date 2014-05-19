@@ -1,5 +1,6 @@
 package one.xio;
 
+import rxf.server.Server;
 import rxf.web.inf.ProtocolMethodDispatch;
 
 import java.nio.ByteBuffer;
@@ -39,7 +40,7 @@ public interface AsioVisitor {
       System.err.println("fail: " + key.toString());
       int receiveBufferSize = 4 << 10;
       String trim =
-          HttpMethod.UTF8.decode(ByteBuffer.allocateDirect(receiveBufferSize)).toString().trim();
+          Server.UTF8.decode(ByteBuffer.allocateDirect(receiveBufferSize)).toString().trim();
 
       throw new UnsupportedOperationException("found " + trim + " in "
           + getClass().getCanonicalName());
@@ -70,7 +71,7 @@ public interface AsioVisitor {
       ServerSocketChannel c = (ServerSocketChannel) key.channel();
       SocketChannel accept = c.accept();
       accept.configureBlocking(false);
-      HttpMethod.enqueue(accept, OP_READ | OP_WRITE, key.attachment());
+      Server.enqueue(accept, OP_READ | OP_WRITE, key.attachment());
 
     }
   }
