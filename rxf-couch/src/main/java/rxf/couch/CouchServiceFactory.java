@@ -2,6 +2,7 @@ package rxf.couch;
 
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.internal.Primitives;
+import rxf.core.CouchNamespace;
 import rxf.couch.CouchResultSet.tuple;
 import rxf.couch.CouchService.CouchRequestParam;
 import rxf.couch.CouchService.AttachmentsImpl;
@@ -12,6 +13,7 @@ import rxf.couch.gen.CouchDriver.DocPersist.DocPersistActionBuilder;
 import rxf.couch.gen.CouchDriver.DocPersist.DocPersistTerminalBuilder;
 import rxf.couch.gen.CouchDriver.JsonSend.JsonSendTerminalBuilder;
 import rxf.couch.gen.CouchDriver.ViewFetch.ViewFetchTerminalBuilder;
+import rxf.rpc.BlobAntiPatternObject;
 import rxf.shared.CouchTx;
 
 import java.lang.annotation.Annotation;
@@ -23,7 +25,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import static rxf.web.inf.ProtocolMethodDispatch.deepToString;
-import static rxf.couch.BlobAntiPatternObject.getDefaultOrgName;
+import static rxf.rpc.BlobAntiPatternObject.getDefaultOrgName;
 
 /**
  * Creates CouchService instances by translating {@literal @}View annotations into CouchDB design documents

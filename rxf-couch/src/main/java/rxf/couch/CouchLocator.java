@@ -1,8 +1,11 @@
 package rxf.couch;
 
 import com.google.web.bindery.requestfactory.shared.Locator;
+import rxf.core.CouchNamespace;
 import rxf.couch.gen.CouchDriver.DocFetch;
 import rxf.couch.gen.CouchDriver.DocPersist;
+import rxf.rpc.BlobAntiPatternObject;
+import rxf.rpc.RelaxFactoryServerImpl;
 import rxf.shared.CouchTx;
 
 import java.util.List;

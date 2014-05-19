@@ -2,13 +2,14 @@ package rxf.couch;
 
 import org.junit.Assert;
 import org.junit.Test;
+import rxf.core.Rfc822HeaderState;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
-import static rxf.couch.Server.UTF8;
+import static rxf.core.Server.UTF8;
 
 public class Rfc822HeaderStateTest {
   @Test

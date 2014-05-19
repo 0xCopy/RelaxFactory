@@ -6,7 +6,7 @@ import com.google.inject.Provides;
 import com.google.web.bindery.requestfactory.server.ServiceLayer;
 import com.google.web.bindery.requestfactory.server.ServiceLayerDecorator;
 import com.google.web.bindery.requestfactory.server.SimpleRequestProcessor;
-import rxf.couch.GwtRequestFactoryVisitor;
+import rxf.rpc.GwtRequestFactoryVisitor;
 
 /**
  * Simple Guice module to make it easier to take over RXF's handling of RequestFactory.

@@ -3,9 +3,9 @@ package rxf.web.inf;
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpMethod;
 import rxf.shared.PreRead;
-import rxf.couch.Rfc822HeaderState;
-import rxf.couch.Rfc822HeaderState.HttpRequest;
-import rxf.couch.Server;
+import rxf.core.Rfc822HeaderState;
+import rxf.core.Rfc822HeaderState.HttpRequest;
+import rxf.core.Server;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -24,12 +24,12 @@ import static java.lang.StrictMath.min;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static one.xio.HttpMethod.GET;
 import static one.xio.HttpMethod.POST;
-import static rxf.couch.CouchNamespace.NAMESPACE;
+import static rxf.core.CouchNamespace.NAMESPACE;
 
 /**
  * this class holds a protocol namespace to dispatch requests
  * <p/>
- * {@link  rxf.couch.CouchNamespace#NAMESPACE } is a  map of http methods each containing an ordered map of regexes tested in order of
+ * {@link  rxf.core.CouchNamespace#NAMESPACE } is a  map of http methods each containing an ordered map of regexes tested in order of
  * map insertion.
  * <p/>
  * User: jim

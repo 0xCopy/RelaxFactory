@@ -1,4 +1,4 @@
-package rxf.couch;
+package rxf.core;
 
 import one.xio.AsioVisitor;
 

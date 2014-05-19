@@ -99,15 +99,12 @@ public enum DbTerminal {
     public String builder(CouchMetaDriver couchDriver, etype[] parms, boolean implementation) {
       return (implementation ? " public " : "")
           + " CouchTx tx()"
-          + (implementation
-              ? "{try {\n"
-                  + "        return (CouchTx)GSON.fromJson(one.xio.HttpMethod.UTF8.decode("
-                  + " rxf.couch.driver.CouchMetaDriver."
-                  + couchDriver
-                  + ".visit()).toString(),CouchTx.class);\n"
-                  + "      } catch (Exception e) {\n"
-                  + "        if(rxf.couch.BlobAntiPatternObject.DEBUG_SENDJSON)e.printStackTrace();   \n"
-                  + "      } return null;} " : ";");
+          + (implementation ? "{try {\n"
+              + "        return (CouchTx)GSON.fromJson(one.xio.HttpMethod.UTF8.decode("
+              + " rxf.couch.driver.CouchMetaDriver." + couchDriver
+              + ".visit()).toString(),CouchTx.class);\n" + "      } catch (Exception e) {\n"
+              + "        if(rxf.rpc.BlobAntiPatternObject.DEBUG_SENDJSON)e.printStackTrace();   \n"
+              + "      } return null;} " : ";");
     }
   },
   /**

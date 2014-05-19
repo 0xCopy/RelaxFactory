@@ -1,30 +1,22 @@
-package rxf.couch;
+package rxf.rpc;
 
-import com.colinalworth.rpq.server.BatchInvoker;
-import com.colinalworth.rpq.server.BatchServiceLocator;
-import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
-import com.google.gwt.user.client.rpc.RpcTokenException;
-import com.google.gwt.user.server.rpc.*;
+import com.google.web.bindery.requestfactory.server.ServiceLayer;
+import com.google.web.bindery.requestfactory.server.SimpleRequestProcessor;
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpHeaders;
 import one.xio.HttpStatus;
 import one.xio.MimeType;
-import rxf.couch.Rfc822HeaderState.HttpRequest;
+import rxf.core.Rfc822HeaderState;
+import rxf.core.Rfc822HeaderState.HttpRequest;
 import rxf.shared.PreRead;
 import rxf.web.inf.ProtocolMethodDispatch;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
-import java.text.ParseException;
 
-import static rxf.couch.Server.UTF8;
+import static rxf.core.Server.UTF8;
 
 /**
  * User: jim
@@ -32,26 +24,13 @@ import static rxf.couch.Server.UTF8;
  * Time: 7:42 PM
  */
 @PreRead
-public class RequestQueueVisitor extends Impl implements SerializationPolicyProvider {
-
+public class GwtRequestFactoryVisitor extends Impl {
+  public static SimpleRequestProcessor SIMPLE_REQUEST_PROCESSOR =
+      new SimpleRequestProcessor(ServiceLayer.create());
   private HttpRequest req;
   private ByteBuffer cursor = null;
   private SocketChannel channel;
   private String payload;
-
-  private final BatchInvoker invoker;
-
-  public RequestQueueVisitor() {
-    this(new BatchServiceLocator());
-  }
-
-  public RequestQueueVisitor(BatchServiceLocator locator) {
-    this(new BatchInvoker(locator));
-  }
-
-  public RequestQueueVisitor(BatchInvoker invoker) {
-    this.invoker = invoker;
-  }
 
   @Override
   public void onRead(SelectionKey key) throws Exception {
@@ -85,7 +64,7 @@ public class RequestQueueVisitor extends Impl implements SerializationPolicyProv
     }
     cursor = cursor.slice();
     int remaining = Integer.parseInt(req.headerString(HttpHeaders.Content$2dLength));
-    final RequestQueueVisitor prev = this;
+    final GwtRequestFactoryVisitor prev = this;
     if (cursor.remaining() != remaining) {
       key.attach(new Impl() {
         @Override
@@ -108,24 +87,14 @@ public class RequestQueueVisitor extends Impl implements SerializationPolicyProv
   public void onWrite(final SelectionKey key) throws Exception {
     if (payload == null) {
       key.interestOps(0);
-      BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
+      BlobAntiPatternObject.getEXECUTOR_SERVICE().submit(new Runnable() {
         @Override
         public void run() {
           try {
-            String reqPayload = UTF8.decode((ByteBuffer) cursor.rewind()).toString();
 
-            RPCRequest rpcRequest =
-                BatchInvoker.decodeRequest(reqPayload, null, RequestQueueVisitor.this);
-
-            try {
-              payload =
-                  RPC.invokeAndEncodeResponse(invoker, rpcRequest.getMethod(), rpcRequest
-                      .getParameters(), rpcRequest.getSerializationPolicy(), rpcRequest.getFlags());
-            } catch (IncompatibleRemoteServiceException ex) {
-              payload = RPC.encodeResponseForFailure(null, ex);
-            } catch (RpcTokenException ex) {
-              payload = RPC.encodeResponseForFailure(null, ex);
-            }
+            payload =
+                SIMPLE_REQUEST_PROCESSOR.process(UTF8.decode((ByteBuffer) cursor.rewind())
+                    .toString());
             ByteBuffer pbuf = (ByteBuffer) UTF8.encode(payload).rewind();
             final int limit = pbuf.rewind().limit();
             Rfc822HeaderState.HttpResponse res = req.$res();
@@ -158,41 +127,5 @@ public class RequestQueueVisitor extends Impl implements SerializationPolicyProv
       key.interestOps(SelectionKey.OP_READ).attach(null);
     }
 
-  }
-
-  public final SerializationPolicy getSerializationPolicy(String moduleBaseURL, String strongName) {
-    //TODO cache policies in weakrefmap? cleaner than reading from fs?
-
-    // Translate the module path to a path on the filesystem, and grab a stream
-    InputStream is = null;
-    String fileName;
-    try {
-      String path = new URL(moduleBaseURL).getPath();
-      fileName = SerializationPolicyLoader.getSerializationPolicyFileName(path + strongName);
-      is = new File("./" + fileName).toURI().toURL().openStream();
-    } catch (MalformedURLException e1) {
-      System.out.println("ERROR: malformed moduleBaseURL: " + moduleBaseURL);
-      return null;
-    } catch (IOException e) {
-      e.printStackTrace();
-      return null;
-    }
-
-    SerializationPolicy serializationPolicy = null;
-    try {
-      serializationPolicy = SerializationPolicyLoader.loadFromStream(is, null);
-    } catch (ParseException e) {
-      System.out.println("ERROR: Failed to parse the policy file '" + fileName + "'");
-    } catch (IOException e) {
-      System.out.println("ERROR: Could not read the policy file '" + fileName + "'");
-    } finally {
-      try {
-        is.close();
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-    }
-
-    return serializationPolicy;
   }
 }

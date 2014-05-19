@@ -3,6 +3,8 @@ package rxf.couch;
 import one.xio.HttpHeaders;
 import org.junit.Assert;
 import org.junit.Test;
+import rxf.core.CookieRfc6265Util;
+import rxf.core.Rfc822HeaderState;
 import rxf.shared.Pair;
 
 import java.io.Serializable;
@@ -11,7 +13,7 @@ import java.util.*;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
-import static rxf.couch.Server.UTF8;
+import static rxf.core.Server.UTF8;
 import static org.junit.Assert.assertArrayEquals;
 
 public class CookieRfc6265UtilTest {

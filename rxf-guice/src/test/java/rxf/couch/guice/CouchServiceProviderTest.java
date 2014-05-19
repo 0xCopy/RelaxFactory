@@ -17,11 +17,11 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import rxf.couch.BlobAntiPatternObject;
+import rxf.rpc.BlobAntiPatternObject;
 import rxf.couch.CouchService;
-import rxf.couch.Server;
+import rxf.core.Server;
 import rxf.shared.CouchTx;
-import rxf.couch.RelaxFactoryServerImpl;
+import rxf.rpc.RelaxFactoryServerImpl;
 import rxf.couch.gen.CouchDriver;
 import rxf.web.inf.ProtocolMethodDispatch;
 

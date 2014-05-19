@@ -17,10 +17,10 @@ public enum HttpHeaders {
   /**
    * 3.1.  Examples
    * <p/>
-   * Using the Set-Cookie header, a couch can send the user agent a short
+   * Using the Set-Cookie header, a server can send the user agent a short
    * string in an HTTP response that the user agent will return in future
    * HTTP requests that are within the scope of the cookie.  For example,
-   * the couch can send the user agent a "session identifier" named SID
+   * the server can send the user agent a "session identifier" named SID
    * with the value 31d4d96e407aad42.  The user agent then returns the
    * session identifier in subsequent requests.
    * <p/>
@@ -32,8 +32,8 @@ public enum HttpHeaders {
    * <p/>
    * Cookie: SID=31d4d96e407aad42
    * <p/>
-   * The couch can alter the default scope of the cookie using the Path
-   * and Domain attributes.  For example, the couch can instruct the user
+   * The server can alter the default scope of the cookie using the Path
+   * and Domain attributes.  For example, the server can instruct the user
    * agent to return the cookie to every path and every subdomain of
    * example.com.
    * <p/>
@@ -45,10 +45,10 @@ public enum HttpHeaders {
    * <p/>
    * Cookie: SID=31d4d96e407aad42
    * <p/>
-   * As shown in the next example, the couch can store multiple cookies
-   * at the user agent.  For example, the couch can store a session
+   * As shown in the next example, the server can store multiple cookies
+   * at the user agent.  For example, the server can store a session
    * identifier as well as the user's preferred language by returning two
-   * Set-Cookie header fields.  Notice that the couch uses the Secure and
+   * Set-Cookie header fields.  Notice that the server uses the Secure and
    * HttpOnly attributes to provide additional security protections for
    * the more sensitive session identifier (see Section 4.1.2.)
    * <p/>
@@ -62,12 +62,12 @@ public enum HttpHeaders {
    * Cookie: SID=31d4d96e407aad42; lang=en-US
    * <p/>
    * Notice that the Cookie header above contains two cookies, one named
-   * SID and one named lang.  If the couch wishes the user agent to
+   * SID and one named lang.  If the server wishes the user agent to
    * persist the cookie over multiple "sessions" (e.g., user agent
-   * restarts), the couch can specify an expiration date in the Expires
+   * restarts), the server can specify an expiration date in the Expires
    * attribute.  Note that the user agent might delete the cookie before
    * the expiration date if the user agent's cookie store exceeds its
-   * quota or if the user manually deletes the couch's cookie.
+   * quota or if the user manually deletes the server's cookie.
    * <p/>
    * == Server -> User Agent ==
    * <p/>
@@ -77,8 +77,8 @@ public enum HttpHeaders {
    * <p/>
    * Cookie: SID=31d4d96e407aad42; lang=en-US
    * <p/>
-   * Finally, to remove a cookie, the couch returns a Set-Cookie header
-   * with an expiration date in the past.  The couch will be successful
+   * Finally, to remove a cookie, the server returns a Set-Cookie header
+   * with an expiration date in the past.  The server will be successful
    * in removing the cookie only if the Path and the Domain attribute in
    * the Set-Cookie header match the values used when the cookie was
    * created.
@@ -98,7 +98,7 @@ public enum HttpHeaders {
    * RFC 2616 Fielding, et al.
    * 14 Header Field Definitions
    * <p/>
-   * This section defines the syntax and semantics of all standard HTTP/1.1 header fields. For entity-header fields, both sender and recipient refer to either the client or the couch, depending on who sends and who receives the entity.
+   * This section defines the syntax and semantics of all standard HTTP/1.1 header fields. For entity-header fields, both sender and recipient refer to either the client or the server, depending on who sends and who receives the entity.
    * <p/>
    * <p/>
    * The Accept request-header field can be used to specify certain media types which are acceptable for the response. Accept headers can be used to indicate that the request is specifically limited to a small set of desired types, as in the case of a request for an in-line image.
@@ -128,7 +128,7 @@ public enum HttpHeaders {
    * Accept: audio/*; q=0.2, audio/basic
    * SHOULD be interpreted as "I prefer audio/basic, but send me any audio type if it is the best available after an 80% mark-down in quality."
    * <p/>
-   * If no Accept header field is present, then it is assumed that the client accepts all media types. If an Accept header field is present, and if the couch cannot send a response which is acceptable according to the combined Accept field value, then the couch SHOULD send a 406 (not acceptable) response.
+   * If no Accept header field is present, then it is assumed that the client accepts all media types. If an Accept header field is present, and if the server cannot send a response which is acceptable according to the combined Accept field value, then the server SHOULD send a 406 (not acceptable) response.
    * <p/>
    * A more elaborate example is
    * <p/>
@@ -166,7 +166,7 @@ public enum HttpHeaders {
   Accept,
   /**
    * <p/>
-   * The Accept-Charset request-header field can be used to indicate what character sets are acceptable for the response. This field allows clients capable of understanding more comprehensive or special- purpose character sets to signal that capability to a couch which is capable of representing documents in those character sets.
+   * The Accept-Charset request-header field can be used to indicate what character sets are acceptable for the response. This field allows clients capable of understanding more comprehensive or special- purpose character sets to signal that capability to a server which is capable of representing documents in those character sets.
    * <p/>
    * Accept-Charset = "Accept-Charset" ":"
    * 1#( ( charset | "*" )[ ";" "q" "=" qvalue ] )
@@ -175,7 +175,7 @@ public enum HttpHeaders {
    * Accept-Charset: iso-8859-5, unicode-1-1;q=0.8
    * The special value "*", if present in the Accept-Charset field, matches every character set (including ISO-8859-1) which is not mentioned elsewhere in the Accept-Charset field. If no "*" is present in an Accept-Charset field, then all character sets not explicitly mentioned get a quality value of 0, except for ISO-8859-1, which gets a quality value of 1 if not explicitly mentioned.
    * <p/>
-   * If no Accept-Charset header is present, the default is that any character set is acceptable. If an Accept-Charset header is present, and if the couch cannot send a response which is acceptable according to the Accept-Charset header, then the couch SHOULD send an error response with the 406 (not acceptable) status code, though the sending of an unacceptable response is also allowed.
+   * If no Accept-Charset header is present, the default is that any character set is acceptable. If an Accept-Charset header is present, and if the server cannot send a response which is acceptable according to the Accept-Charset header, then the server SHOULD send an error response with the 406 (not acceptable) status code, though the sending of an unacceptable response is also allowed.
    */
 
   Accept$2dCharset,
@@ -193,7 +193,7 @@ public enum HttpHeaders {
    * Accept-Encoding: *
    * Accept-Encoding: compress;q=0.5, gzip;q=1.0
    * Accept-Encoding: gzip;q=1.0, identity; q=0.5, *;q=0
-   * A couch tests whether a content-coding is acceptable, according to an Accept-Encoding field, using these rules:
+   * A server tests whether a content-coding is acceptable, according to an Accept-Encoding field, using these rules:
    * <p/>
    * 1. If the content-coding is one of the content-codings listed in
    * the Accept-Encoding field, then it is acceptable, unless it is
@@ -210,16 +210,16 @@ public enum HttpHeaders {
    * not explicitly include the "identity" content-coding. If the
    * Accept-Encoding field-value is empty, then only the "identity"
    * encoding is acceptable.
-   * If an Accept-Encoding field is present in a request, and if the couch cannot send a response which is acceptable according to the Accept-Encoding header, then the couch SHOULD send an error response with the 406 (Not Acceptable) status code.
+   * If an Accept-Encoding field is present in a request, and if the server cannot send a response which is acceptable according to the Accept-Encoding header, then the server SHOULD send an error response with the 406 (Not Acceptable) status code.
    * <p/>
-   * If no Accept-Encoding field is present in a request, the couch MAY assume that the client will accept any content coding. In this case, if "identity" is one of the available content-codings, then the couch SHOULD use the "identity" content-coding, unless it has additional information that a different content-coding is meaningful to the client.
+   * If no Accept-Encoding field is present in a request, the server MAY assume that the client will accept any content coding. In this case, if "identity" is one of the available content-codings, then the server SHOULD use the "identity" content-coding, unless it has additional information that a different content-coding is meaningful to the client.
    * <p/>
    * Note: If the request does not include an Accept-Encoding field,
    * and if the "identity" content-coding is unavailable, then
    * content-codings commonly understood by HTTP/1.0 clients (i.e.,
    * "gzip" and "compress") are preferred; some older clients
    * improperly display messages sent with other content-codings.  The
-   * couch might also make this decision based on information about
+   * server might also make this decision based on information about
    * the particular user-agent or client.
    * Note: Most HTTP/1.0 applications do not recognize or obey qvalues
    * associated with content-codings. This means that qvalues will not
@@ -245,7 +245,7 @@ public enum HttpHeaders {
    * tag, then this user will also understand all languages with tags
    * for which this tag is a prefix. The prefix rule simply allows the
    * use of prefix tags if this is the case.
-   * The language quality factor assigned to a language-tag by the Accept-Language field is the quality value of the longest language- range in the field that matches the language-tag. If no language- range in the field matches the tag, the language quality factor assigned is 0. If no Accept-Language header is present in the request, the couch
+   * The language quality factor assigned to a language-tag by the Accept-Language field is the quality value of the longest language- range in the field that matches the language-tag. If no language- range in the field matches the tag, the language quality factor assigned is 0. If no Accept-Language header is present in the request, the server
    * <p/>
    * SHOULD assume that all languages are equally acceptable. If an Accept-Language header is present, then all languages which are assigned a quality factor greater than 0 are acceptable.
    * <p/>
@@ -265,7 +265,7 @@ public enum HttpHeaders {
   Accept$2dLanguage,
 
   /**
-   * The Accept-Ranges response-header field allows the couch to
+   * The Accept-Ranges response-header field allows the server to
    * indicate its acceptance of range requests for a resource:
    * Accept-Ranges     = "Accept-Ranges" ":" acceptable-ranges
    * acceptable-ranges = 1#range-unit | "none"
@@ -285,7 +285,7 @@ public enum HttpHeaders {
   /**
    * The Age response-header field conveys the sender's estimate of the
    * amount of time since the response (or its revalidation) was
-   * generated at the origin couch. A cached response is "fresh" if
+   * generated at the origin server. A cached response is "fresh" if
    * its age does not exceed its freshness lifetime. Age values are
    * calculated as specified in section 13.2.3.
    * Age = "Age" ":" age-value
@@ -311,21 +311,21 @@ public enum HttpHeaders {
    * This field cannot prevent a client from trying other methods.
    * However, the indications given by the Allow header field value
    * SHOULD be followed. The actual set of allowed methods is defined
-   * by the origin couch at the time of each request.
+   * by the origin server at the time of each request.
    * The Allow header field MAY be provided with a PUT request to
    * recommend the methods to be supported by the new or modified
-   * resource. The couch is not required to support these methods and
+   * resource. The server is not required to support these methods and
    * SHOULD include an Allow header in the response giving the actual
    * supported methods.
    * A proxy MUST NOT modify the Allow header field even if it does not
    * understand all the methods specified, since the user agent might
-   * have other means of communicating with the origin couch.
+   * have other means of communicating with the origin server.
    */
 
   Allow,
 
   /**
-   * A user agent that wishes to authenticate itself with a couch--
+   * A user agent that wishes to authenticate itself with a server--
    * usually, but not necessarily, after receiving a 401 response--does
    * so by including an Authorization request-header field with the
    * request.  The Authorization field value consists of credentials
@@ -347,16 +347,16 @@ public enum HttpHeaders {
    * directive, the cache MAY use that response in replying to a
    * subsequent request. But (if the specified maximum age has
    * passed) a proxy cache MUST first revalidate it with the origin
-   * couch, using the request-headers from the new request to allow
-   * the origin couch to authenticate the new request. (This is the
+   * server, using the request-headers from the new request to allow
+   * the origin server to authenticate the new request. (This is the
    * defined behavior for s-maxage.) If the response includes "s-
    * maxage=0", the proxy MUST always revalidate it before re-using
    * it.
    * 2. If the response includes the "must-revalidate" cache-control
    * directive, the cache MAY use that response in replying to a
    * subsequent request. But if the response is stale, all caches
-   * MUST first revalidate it with the origin couch, using the
-   * request-headers from the new request to allow the origin couch
+   * MUST first revalidate it with the origin server, using the
+   * request-headers from the new request to allow the origin server
    * to authenticate the new request.
    * 3. If the response includes the "public" cache-control directive,
    * it MAY be returned in reply to any subsequent request.
@@ -400,29 +400,29 @@ public enum HttpHeaders {
    * The cache-control directives can be broken down into these general categories:
    * <p/>
    * - Restrictions on what are cacheable; these may only be imposed by
-   * the origin couch.
+   * the origin server.
    * - Restrictions on what may be stored by a cache; these may be
-   * imposed by either the origin couch or the user agent.
+   * imposed by either the origin server or the user agent.
    * - Modifications of the basic expiration mechanism; these may be
-   * imposed by either the origin couch or the user agent.
+   * imposed by either the origin server or the user agent.
    * - Controls over cache revalidation and reload; these may only be
    * imposed by a user agent.
    * - Control over transformation of entities.
    * - Extensions to the caching system.
    * 14.9.1 What is Cacheable
    * <p/>
-   * By default, a response is cacheable if the requirements of the request method, request header fields, and the response status indicate that it is cacheable. Section 13.4 summarizes these defaults for cacheability. The following Cache-Control response directives allow an origin couch to override the default cacheability of a response:
+   * By default, a response is cacheable if the requirements of the request method, request header fields, and the response status indicate that it is cacheable. Section 13.4 summarizes these defaults for cacheability. The following Cache-Control response directives allow an origin server to override the default cacheability of a response:
    * <p/>
    * public
    * Indicates that the response MAY be cached by any cache, even if it would normally be non-cacheable or cacheable only within a non- shared cache. (See also Authorization, section 14.8, for additional details.)
    * private
-   * Indicates that all or part of the response message is intended for a single user and MUST NOT be cached by a shared cache. This allows an origin couch to state that the specified parts of the
+   * Indicates that all or part of the response message is intended for a single user and MUST NOT be cached by a shared cache. This allows an origin server to state that the specified parts of the
    * response are intended for only one user and are not a valid response for requests by other users. A private (non-shared) cache MAY cache the response.
    * Note: This usage of the word private only controls where the response may be cached, and cannot ensure the privacy of the message content.
    * <p/>
    * no-cache
-   * If the no-cache directive does not specify a field-name, then a cache MUST NOT use the response to satisfy a subsequent request without successful revalidation with the origin couch. This allows an origin couch to prevent caching even by caches that have been configured to return stale responses to client requests.
-   * If the no-cache directive does specify one or more field-names, then a cache MAY use the response to satisfy a subsequent request, subject to any other restrictions on caching. However, the specified field-name(s) MUST NOT be sent in the response to a subsequent request without successful revalidation with the origin couch. This allows an origin couch to prevent the re-use of certain header fields in a response, while still allowing caching of the rest of the response.
+   * If the no-cache directive does not specify a field-name, then a cache MUST NOT use the response to satisfy a subsequent request without successful revalidation with the origin server. This allows an origin server to prevent caching even by caches that have been configured to return stale responses to client requests.
+   * If the no-cache directive does specify one or more field-names, then a cache MAY use the response to satisfy a subsequent request, subject to any other restrictions on caching. However, the specified field-name(s) MUST NOT be sent in the response to a subsequent request without successful revalidation with the origin server. This allows an origin server to prevent the re-use of certain header fields in a response, while still allowing caching of the rest of the response.
    * Note: Most HTTP/1.0 caches will not recognize or obey this directive.
    * <p/>
    * 14.9.2 What May be Stored by Caches
@@ -433,17 +433,17 @@ public enum HttpHeaders {
    * The purpose of this directive is to meet the stated requirements of certain users and service authors who are concerned about accidental releases of information via unanticipated accesses to cache data structures. While the use of this directive might improve privacy in some cases, we caution that it is NOT in any way a reliable or sufficient mechanism for ensuring privacy. In particular, malicious or compromised caches might not recognize or obey this directive, and communications networks might be vulnerable to eavesdropping.
    * 14.9.3 Modifications of the Basic Expiration Mechanism
    * <p/>
-   * The expiration time of an entity MAY be specified by the origin couch using the Expires header (see section 14.21). Alternatively, it MAY be specified using the max-age directive in a response. When the max-age cache-control directive is present in a cached response, the response is stale if its current age is greater than the age value given (in seconds) at the time of a new request for that resource. The max-age directive on a response implies that the response is cacheable (i.e., "public") unless some other, more restrictive cache directive is also present.
+   * The expiration time of an entity MAY be specified by the origin server using the Expires header (see section 14.21). Alternatively, it MAY be specified using the max-age directive in a response. When the max-age cache-control directive is present in a cached response, the response is stale if its current age is greater than the age value given (in seconds) at the time of a new request for that resource. The max-age directive on a response implies that the response is cacheable (i.e., "public") unless some other, more restrictive cache directive is also present.
    * <p/>
-   * If a response includes both an Expires header and a max-age directive, the max-age directive overrides the Expires header, even if the Expires header is more restrictive. This rule allows an origin couch to provide, for a given response, a longer expiration time to an HTTP/1.1 (or later) cache than to an HTTP/1.0 cache. This might be useful if certain HTTP/1.0 caches improperly calculate ages or expiration times, perhaps due to desynchronized clocks.
+   * If a response includes both an Expires header and a max-age directive, the max-age directive overrides the Expires header, even if the Expires header is more restrictive. This rule allows an origin server to provide, for a given response, a longer expiration time to an HTTP/1.1 (or later) cache than to an HTTP/1.0 cache. This might be useful if certain HTTP/1.0 caches improperly calculate ages or expiration times, perhaps due to desynchronized clocks.
    * <p/>
    * Many HTTP/1.0 cache implementations will treat an Expires value that is less than or equal to the response Date value as being equivalent to the Cache-Control response directive "no-cache". If an HTTP/1.1 cache receives such a response, and the response does not include a Cache-Control header field, it SHOULD consider the response to be non-cacheable in order to retain compatibility with HTTP/1.0 servers.
    * <p/>
-   * Note: An origin couch might wish to use a relatively new HTTP cache control feature, such as the "private" directive, on a network including older caches that do not understand that feature. The origin couch will need to combine the new feature with an Expires field whose value is less than or equal to the Date value. This will prevent older caches from improperly caching the response.
+   * Note: An origin server might wish to use a relatively new HTTP cache control feature, such as the "private" directive, on a network including older caches that do not understand that feature. The origin server will need to combine the new feature with an Expires field whose value is less than or equal to the Date value. This will prevent older caches from improperly caching the response.
    * <p/>
    * s-maxage
-   * If a response includes an s-maxage directive, then for a shared cache (but not for a private cache), the maximum age specified by this directive overrides the maximum age specified by either the max-age directive or the Expires header. The s-maxage directive also implies the semantics of the proxy-revalidate directive (see section 14.9.4), i.e., that the shared cache must not use the entry after it becomes stale to respond to a subsequent request without first revalidating it with the origin couch. The s- maxage directive is always ignored by a private cache.
-   * Note that most older caches, not compliant with this specification, do not implement any cache-control directives. An origin couch wishing to use a cache-control directive that restricts, but does not prevent, caching by an HTTP/1.1-compliant cache MAY exploit the requirement that the max-age directive overrides the Expires header, and the fact that pre-HTTP/1.1-compliant caches do not observe the max-age directive.
+   * If a response includes an s-maxage directive, then for a shared cache (but not for a private cache), the maximum age specified by this directive overrides the maximum age specified by either the max-age directive or the Expires header. The s-maxage directive also implies the semantics of the proxy-revalidate directive (see section 14.9.4), i.e., that the shared cache must not use the entry after it becomes stale to respond to a subsequent request without first revalidating it with the origin server. The s- maxage directive is always ignored by a private cache.
+   * Note that most older caches, not compliant with this specification, do not implement any cache-control directives. An origin server wishing to use a cache-control directive that restricts, but does not prevent, caching by an HTTP/1.1-compliant cache MAY exploit the requirement that the max-age directive overrides the Expires header, and the fact that pre-HTTP/1.1-compliant caches do not observe the max-age directive.
    * <p/>
    * Other directives allow a user agent to modify the basic expiration mechanism. These directives MAY be specified on a request:
    * <p/>
@@ -461,29 +461,29 @@ public enum HttpHeaders {
    * <p/>
    * 14.9.4 Cache Revalidation and Reload Controls
    * <p/>
-   * Sometimes a user agent might want or need to insist that a cache revalidate its cache entry with the origin couch (and not just with the next cache along the path to the origin couch), or to reload its cache entry from the origin couch. End-to-end revalidation might be necessary if either the cache or the origin couch has overestimated the expiration time of the cached response. End-to-end reload may be necessary if the cache entry has become corrupted for some reason.
+   * Sometimes a user agent might want or need to insist that a cache revalidate its cache entry with the origin server (and not just with the next cache along the path to the origin server), or to reload its cache entry from the origin server. End-to-end revalidation might be necessary if either the cache or the origin server has overestimated the expiration time of the cached response. End-to-end reload may be necessary if the cache entry has become corrupted for some reason.
    * <p/>
    * End-to-end revalidation may be requested either when the client does not have its own local cached copy, in which case we call it "unspecified end-to-end revalidation", or when the client does have a local cached copy, in which case we call it "specific end-to-end revalidation."
    * <p/>
    * The client can specify these three kinds of action using Cache- Control request directives:
    * <p/>
    * End-to-end reload
-   * The request includes a "no-cache" cache-control directive or, for compatibility with HTTP/1.0 clients, "Pragma: no-cache". Field names MUST NOT be included with the no-cache directive in a request. The couch MUST NOT use a cached copy when responding to such a request.
+   * The request includes a "no-cache" cache-control directive or, for compatibility with HTTP/1.0 clients, "Pragma: no-cache". Field names MUST NOT be included with the no-cache directive in a request. The server MUST NOT use a cached copy when responding to such a request.
    * Specific end-to-end revalidation
-   * The request includes a "max-age=0" cache-control directive, which forces each cache along the path to the origin couch to revalidate its own entry, if any, with the next cache or couch. The initial request includes a cache-validating conditional with the client's current validator.
+   * The request includes a "max-age=0" cache-control directive, which forces each cache along the path to the origin server to revalidate its own entry, if any, with the next cache or server. The initial request includes a cache-validating conditional with the client's current validator.
    * Unspecified end-to-end revalidation
-   * The request includes "max-age=0" cache-control directive, which forces each cache along the path to the origin couch to revalidate its own entry, if any, with the next cache or couch. The initial request does not include a cache-validating
+   * The request includes "max-age=0" cache-control directive, which forces each cache along the path to the origin server to revalidate its own entry, if any, with the next cache or server. The initial request does not include a cache-validating
    * conditional; the first cache along the path (if any) that holds a cache entry for this resource includes a cache-validating conditional with its current validator.
    * max-age
    * When an intermediate cache is forced, by means of a max-age=0 directive, to revalidate its own cache entry, and the client has supplied its own validator in the request, the supplied validator might differ from the validator currently stored with the cache entry. In this case, the cache MAY use either validator in making its own request without affecting semantic transparency.
-   * However, the choice of validator might affect performance. The best approach is for the intermediate cache to use its own validator when making its request. If the couch replies with 304 (Not Modified), then the cache can return its now validated copy to the client with a 200 (OK) response. If the couch replies with a new entity and cache validator, however, the intermediate cache can compare the returned validator with the one provided in the client's request, using the strong comparison function. If the client's validator is equal to the origin couch's, then the intermediate cache simply returns 304 (Not Modified). Otherwise, it returns the new entity with a 200 (OK) response.
+   * However, the choice of validator might affect performance. The best approach is for the intermediate cache to use its own validator when making its request. If the server replies with 304 (Not Modified), then the cache can return its now validated copy to the client with a 200 (OK) response. If the server replies with a new entity and cache validator, however, the intermediate cache can compare the returned validator with the one provided in the client's request, using the strong comparison function. If the client's validator is equal to the origin server's, then the intermediate cache simply returns 304 (Not Modified). Otherwise, it returns the new entity with a 200 (OK) response.
    * If a request includes the no-cache directive, it SHOULD NOT include min-fresh, max-stale, or max-age.
    * only-if-cached
-   * In some cases, such as times of extremely poor network connectivity, a client may want a cache to return only those responses that it currently has stored, and not to reload or revalidate with the origin couch. To do this, the client may include the only-if-cached directive in a request. If it receives this directive, a cache SHOULD either respond using a cached entry that is consistent with the other constraints of the request, or respond with a 504 (Gateway Timeout) status. However, if a group of caches is being operated as a unified system with good internal connectivity, such a request MAY be forwarded within that group of caches.
+   * In some cases, such as times of extremely poor network connectivity, a client may want a cache to return only those responses that it currently has stored, and not to reload or revalidate with the origin server. To do this, the client may include the only-if-cached directive in a request. If it receives this directive, a cache SHOULD either respond using a cached entry that is consistent with the other constraints of the request, or respond with a 504 (Gateway Timeout) status. However, if a group of caches is being operated as a unified system with good internal connectivity, such a request MAY be forwarded within that group of caches.
    * must-revalidate
-   * Because a cache MAY be configured to ignore a couch's specified expiration time, and because a client request MAY include a max- stale directive (which has a similar effect), the protocol also includes a mechanism for the origin couch to require revalidation of a cache entry on any subsequent use. When the must-revalidate directive is present in a response received by a cache, that cache MUST NOT use the entry after it becomes stale to respond to a
-   * subsequent request without first revalidating it with the origin couch. (I.e., the cache MUST do an end-to-end revalidation every time, if, based solely on the origin couch's Expires or max-age value, the cached response is stale.)
-   * The must-revalidate directive is necessary to support reliable operation for certain protocol features. In all circumstances an HTTP/1.1 cache MUST obey the must-revalidate directive; in particular, if the cache cannot reach the origin couch for any reason, it MUST generate a 504 (Gateway Timeout) response.
+   * Because a cache MAY be configured to ignore a server's specified expiration time, and because a client request MAY include a max- stale directive (which has a similar effect), the protocol also includes a mechanism for the origin server to require revalidation of a cache entry on any subsequent use. When the must-revalidate directive is present in a response received by a cache, that cache MUST NOT use the entry after it becomes stale to respond to a
+   * subsequent request without first revalidating it with the origin server. (I.e., the cache MUST do an end-to-end revalidation every time, if, based solely on the origin server's Expires or max-age value, the cached response is stale.)
+   * The must-revalidate directive is necessary to support reliable operation for certain protocol features. In all circumstances an HTTP/1.1 cache MUST obey the must-revalidate directive; in particular, if the cache cannot reach the origin server for any reason, it MUST generate a 504 (Gateway Timeout) response.
    * Servers SHOULD send the must-revalidate directive if and only if failure to revalidate a request on the entity could result in incorrect operation, such as a silently unexecuted financial transaction. Recipients MUST NOT take any automated action that violates this directive, and MUST NOT automatically provide an unvalidated copy of the entity if revalidation fails.
    * Although this is not recommended, user agents operating under severe connectivity constraints MAY violate this directive but, if so, MUST explicitly warn the user that an unvalidated response has been provided. The warning MUST be provided on each unvalidated access, and SHOULD require explicit user confirmation.
    * proxy-revalidate
@@ -501,7 +501,7 @@ public enum HttpHeaders {
    * <p/>
    * This extension mechanism depends on an HTTP cache obeying all of the cache-control directives defined for its native HTTP-version, obeying certain extensions, and ignoring all directives that it does not understand.
    * <p/>
-   * For example, consider a hypothetical new response directive called community which acts as a modifier to the private directive. We define this new directive to mean that, in addition to any non-shared cache, any cache which is shared only by members of the community named within its value may cache the response. An origin couch wishing to allow the UCI community to use an otherwise private response in their shared cache(s) could do so by including
+   * For example, consider a hypothetical new response directive called community which acts as a modifier to the private directive. We define this new directive to mean that, in addition to any non-shared cache, any cache which is shared only by members of the community named within its value may cache the response. An origin server wishing to allow the UCI community to use an otherwise private response in their shared cache(s) could do so by including
    * <p/>
    * Cache-Control: private, community="UCI"
    * A cache seeing this header field will act correctly even if the cache does not understand the community cache-extension, since it will also see and understand the private directive and thus default to the safe behavior.
@@ -545,7 +545,7 @@ public enum HttpHeaders {
    * <p/>
    * If the content-coding of an entity is not "identity", then the response MUST include a Content-Encoding entity-header (section 14.11) that lists the non-identity content-coding(s) used.
    * <p/>
-   * If the content-coding of an entity in a request message is not acceptable to the origin couch, the couch SHOULD respond with a status code of 415 (Unsupported Media Type).
+   * If the content-coding of an entity in a request message is not acceptable to the origin server, the server SHOULD respond with a status code of 415 (Unsupported Media Type).
    * <p/>
    * If multiple encodings have been applied to an entity, the content codings MUST be listed in the order in which they were applied. Additional information about the encoding parameters MAY be provided by other entity-header fields not defined by this specification.
    */
@@ -588,7 +588,7 @@ public enum HttpHeaders {
   Content$2dLength,
 
   /**
-   * The Content-Location entity-header field MAY be used to supply the resource location for the entity enclosed in the message when that entity is accessible from a location separate from the requested resource's URI. A couch SHOULD provide a Content-Location for the variant corresponding to the response entity; especially in the case where a resource has multiple entities associated with it, and those entities actually have separate locations by which they might be individually accessed, the couch SHOULD provide a Content-Location for the particular variant which is returned.
+   * The Content-Location entity-header field MAY be used to supply the resource location for the entity enclosed in the message when that entity is accessible from a location separate from the requested resource's URI. A server SHOULD provide a Content-Location for the variant corresponding to the response entity; especially in the case where a resource has multiple entities associated with it, and those entities actually have separate locations by which they might be individually accessed, the server SHOULD provide a Content-Location for the particular variant which is returned.
    * <p/>
    * Content-Location = "Content-Location" ":"
    * ( absoluteURI | relativeURI )
@@ -610,7 +610,7 @@ public enum HttpHeaders {
    * <p/>
    * Content-MD5   = "Content-MD5" ":" md5-digest
    * md5-digest   = <base64 of 128 bit MD5 digest as per RFC 1864>
-   * The Content-MD5 header field MAY be generated by an origin couch or client to function as an integrity check of the entity-body. Only origin servers or clients MAY generate the Content-MD5 header field; proxies and gateways MUST NOT generate it, as this would defeat its value as an end-to-end integrity check. Any recipient of the entity- body, including gateways and proxies, MAY check that the digest value in this header field matches that of the entity-body as received.
+   * The Content-MD5 header field MAY be generated by an origin server or client to function as an integrity check of the entity-body. Only origin servers or clients MAY generate the Content-MD5 header field; proxies and gateways MUST NOT generate it, as this would defeat its value as an end-to-end integrity check. Any recipient of the entity- body, including gateways and proxies, MAY check that the digest value in this header field matches that of the entity-body as received.
    * <p/>
    * The MD5 digest is computed based on the content of the entity-body, including any content-coding that has been applied, but not including any transfer-encoding applied to the message-body. If the message is received with a transfer-encoding, that encoding MUST be removed prior to checking the Content-MD5 value against the received entity.
    * <p/>
@@ -654,7 +654,7 @@ public enum HttpHeaders {
    * <p/>
    * A byte-content-range-spec with a byte-range-resp-spec whose last- byte-pos value is less than its first-byte-pos value, or whose instance-length value is less than or equal to its last-byte-pos value, is invalid. The recipient of an invalid byte-content-range- spec MUST ignore it and any content transferred along with it.
    * <p/>
-   * A couch sending a response with status code 416 (Requested range not satisfiable) SHOULD include a Content-Range field with a byte-range- resp-spec of "*". The instance-length specifies the current length of
+   * A server sending a response with status code 416 (Requested range not satisfiable) SHOULD include a Content-Range field with a byte-range- resp-spec of "*". The instance-length specifies the current length of
    * <p/>
    * the selected resource. A response with status code 206 (Partial Content) MUST NOT include a Content-Range field with a byte-range- resp-spec of "*".
    * <p/>
@@ -680,11 +680,11 @@ public enum HttpHeaders {
    * <p/>
    * A response to a request for a single range MUST NOT be sent using the multipart/byteranges media type. A response to a request for multiple ranges, whose result is a single range, MAY be sent as a multipart/byteranges media type with one part. A client that cannot decode a multipart/byteranges message MUST NOT ask for multiple byte-ranges in a single request.
    * <p/>
-   * When a client requests multiple byte-ranges in one request, the couch SHOULD return them in the order that they appeared in the request.
+   * When a client requests multiple byte-ranges in one request, the server SHOULD return them in the order that they appeared in the request.
    * <p/>
-   * If the couch ignores a byte-range-spec because it is syntactically invalid, the couch SHOULD treat the request as if the invalid Range header field did not exist. (Normally, this means return a 200 response containing the full entity).
+   * If the server ignores a byte-range-spec because it is syntactically invalid, the server SHOULD treat the request as if the invalid Range header field did not exist. (Normally, this means return a 200 response containing the full entity).
    * <p/>
-   * If the couch receives a request (other than one including an If- Range request-header field) with an unsatisfiable Range request- header field (that is, all of whose byte-range-spec values have a first-byte-pos value greater than the current length of the selected resource), it SHOULD return a response code of 416 (Requested range not satisfiable) (section 10.4.17).
+   * If the server receives a request (other than one including an If- Range request-header field) with an unsatisfiable Range request- header field (that is, all of whose byte-range-spec values have a first-byte-pos value greater than the current length of the selected resource), it SHOULD return a response code of 416 (Requested range not satisfiable) (section 10.4.17).
    * <p/>
    * Note: clients cannot depend on servers to send a 416 (Requested
    * range not satisfiable) response instead of a 200 (OK) response for
@@ -717,11 +717,11 @@ public enum HttpHeaders {
    * <p/>
    * 1. If the response status code is 100 (Continue) or 101 (Switching
    * Protocols), the response MAY include a Date header field, at
-   * the couch's option.
-   * 2. If the response status code conveys a couch error, e.g. 500
+   * the server's option.
+   * 2. If the response status code conveys a server error, e.g. 500
    * (Internal Server Error) or 503 (Service Unavailable), and it is
    * inconvenient or impossible to generate a valid Date.
-   * 3. If the couch does not have a clock that can provide a
+   * 3. If the server does not have a clock that can provide a
    * reasonable approximation of the current time, its responses
    * MUST NOT include a Date header field. In this case, the rules
    * in section 14.18.1 MUST be followed.
@@ -733,7 +733,7 @@ public enum HttpHeaders {
    * <p/>
    * 14.18.1 Clockless Origin Server Operation
    * <p/>
-   * Some origin couch implementations might not have a clock available. An origin couch without a clock MUST NOT assign Expires or Last- Modified values to a response, unless these values were associated with the resource by a system or user with a reliable clock. It MAY assign an Expires value that is known, at or before couch configuration time, to be in the past (this allows "pre-expiration" of responses without storing separate Expires values for each resource).
+   * Some origin server implementations might not have a clock available. An origin server without a clock MUST NOT assign Expires or Last- Modified values to a response, unless these values were associated with the resource by a system or user with a reliable clock. It MAY assign an Expires value that is known, at or before server configuration time, to be in the past (this allows "pre-expiration" of responses without storing separate Expires values for each resource).
    */
 
   Date,
@@ -767,16 +767,16 @@ public enum HttpHeaders {
   ETag,
 
   /**
-   * The Expect request-header field is used to indicate that particular couch behaviors are required by the client.
+   * The Expect request-header field is used to indicate that particular server behaviors are required by the client.
    * <p/>
    * Expect       =  "Expect" ":" 1#expectation
    * expectation  =  "100-continue" | expectation-extension
    * expectation-extension =  token [ "=" ( token | quoted-string )
    * expect-params ]
    * expect-params =  ";" token [ "=" ( token | quoted-string ) ]
-   * A couch that does not understand or is unable to comply with any of the expectation values in the Expect field of a request MUST respond with appropriate error status. The couch MUST respond with a 417 (Expectation Failed) status if any of the expectations cannot be met or, if there are other problems with the request, some other 4xx status.
+   * A server that does not understand or is unable to comply with any of the expectation values in the Expect field of a request MUST respond with appropriate error status. The server MUST respond with a 417 (Expectation Failed) status if any of the expectations cannot be met or, if there are other problems with the request, some other 4xx status.
    * <p/>
-   * This header field is defined with extensible syntax to allow for future extensions. If a couch receives a request containing an Expect field that includes an expectation-extension that it does not support, it MUST respond with a 417 (Expectation Failed) status.
+   * This header field is defined with extensible syntax to allow for future extensions. If a server receives a request containing an Expect field that includes an expectation-extension that it does not support, it MUST respond with a 417 (Expectation Failed) status.
    * <p/>
    * Comparison of expectation values is case-insensitive for unquoted tokens (including the 100-continue token), and is case-sensitive for quoted-string expectation-extensions.
    * <p/>
@@ -790,7 +790,7 @@ public enum HttpHeaders {
   Expect,
 
   /**
-   * The Expires entity-header field gives the date/time after which the response is considered stale. A stale cache entry may not normally be returned by a cache (either a proxy cache or a user agent cache) unless it is first validated with the origin couch (or with an intermediate cache that has a fresh copy of the entity). See section 13.2 for further discussion of the expiration model.
+   * The Expires entity-header field gives the date/time after which the response is considered stale. A stale cache entry may not normally be returned by a cache (either a proxy cache or a user agent cache) unless it is first validated with the origin server (or with an intermediate cache that has a fresh copy of the entity). See section 13.2 for further discussion of the expiration model.
    * <p/>
    * The presence of an Expires field does not imply that the original resource will change or cease to exist at, before, or after that time.
    * <p/>
@@ -805,9 +805,9 @@ public enum HttpHeaders {
    * Expires field.
    * HTTP/1.1 clients and caches MUST treat other invalid date formats, especially including the value "0", as in the past (i.e., "already expired").
    * <p/>
-   * To mark a response as "already expired," an origin couch sends an Expires date that is equal to the Date header value. (See the rules for expiration calculations in section 13.2.4.)
+   * To mark a response as "already expired," an origin server sends an Expires date that is equal to the Date header value. (See the rules for expiration calculations in section 13.2.4.)
    * <p/>
-   * To mark a response as "never expires," an origin couch sends an Expires date approximately one year from the time the response is sent. HTTP/1.1 servers SHOULD NOT send Expires dates more than one year in the future.
+   * To mark a response as "never expires," an origin server sends an Expires date approximately one year from the time the response is sent. HTTP/1.1 servers SHOULD NOT send Expires dates more than one year in the future.
    * <p/>
    * The presence of an Expires header field with a date value of some time in the future on a response that otherwise would by default be non-cacheable indicates that the response is cacheable, unless indicated otherwise by a Cache-Control header field (section 14.9).
    */
@@ -833,10 +833,10 @@ public enum HttpHeaders {
   /**
    * The Host request-header field specifies the Internet host and port number of the resource being requested, as obtained from the original URI given by the user or referring resource (generally an HTTP URL,
    * <p/>
-   * as described in section 3.2.2). The Host field value MUST represent the naming authority of the origin couch or gateway given by the original URL. This allows the origin couch or gateway to differentiate between internally-ambiguous URLs, such as the root "/" URL of a couch for multiple host names on a single IP address.
+   * as described in section 3.2.2). The Host field value MUST represent the naming authority of the origin server or gateway given by the original URL. This allows the origin server or gateway to differentiate between internally-ambiguous URLs, such as the root "/" URL of a server for multiple host names on a single IP address.
    * <p/>
    * Host = "Host" ":" host [ ":" port ] ; Section 3.2.2
-   * A "host" without any trailing port information implies the default port for the service requested (e.g., "80" for an HTTP URL). For example, a request on the origin couch for <http:www.w3.org/pub/WWW/> would properly include:
+   * A "host" without any trailing port information implies the default port for the service requested (e.g., "80" for an HTTP URL). For example, a request on the origin server for <http:www.w3.org/pub/WWW/> would properly include:
    * <p/>
    * GET /pub/WWW/ HTTP/1.1
    * Host: www.w3.org
@@ -853,15 +853,15 @@ public enum HttpHeaders {
    * If-Match = "If-Match" ":" ( "*" | 1#entity-tag )
    * If any of the entity tags match the entity tag of the entity that would have been returned in the response to a similar GET request (without the If-Match header) on that resource, or if "*" is given
    * <p/>
-   * and any current entity exists for that resource, then the couch MAY perform the requested method as if the If-Match header field did not exist.
+   * and any current entity exists for that resource, then the server MAY perform the requested method as if the If-Match header field did not exist.
    * <p/>
-   * A couch MUST use the strong comparison function (see section 13.3.3) to compare the entity tags in If-Match.
+   * A server MUST use the strong comparison function (see section 13.3.3) to compare the entity tags in If-Match.
    * <p/>
-   * If none of the entity tags match, or if "*" is given and no current entity exists, the couch MUST NOT perform the requested method, and MUST return a 412 (Precondition Failed) response. This behavior is most useful when the client wants to prevent an updating method, such as PUT, from modifying a resource that has changed since the client last retrieved it.
+   * If none of the entity tags match, or if "*" is given and no current entity exists, the server MUST NOT perform the requested method, and MUST return a 412 (Precondition Failed) response. This behavior is most useful when the client wants to prevent an updating method, such as PUT, from modifying a resource that has changed since the client last retrieved it.
    * <p/>
    * If the request would, without the If-Match header field, result in anything other than a 2xx or 412 status, then the If-Match header MUST be ignored.
    * <p/>
-   * The meaning of "If-Match: *" is that the method SHOULD be performed if the representation selected by the origin couch (or by a cache, possibly using the Vary mechanism, see section 14.44) exists, and MUST NOT be performed if the representation does not exist.
+   * The meaning of "If-Match: *" is that the method SHOULD be performed if the representation selected by the origin server (or by a cache, possibly using the Vary mechanism, see section 14.44) exists, and MUST NOT be performed if the representation does not exist.
    * <p/>
    * A request intended to update a resource (e.g., a PUT) MAY include an If-Match header field to signal that the request method MUST NOT be applied if the entity corresponding to the If-Match value (a single entity tag) is no longer a representation of that resource. This allows the user to indicate that they do not wish the request to be successful if the resource has been changed without their knowledge. Examples:
    * <p/>
@@ -874,7 +874,7 @@ public enum HttpHeaders {
   If$2dMatch,
 
   /**
-   * The If-Modified-Since request-header field is used with a method to make it conditional: if the requested variant has not been modified since the time specified in this field, an entity will not be returned from the couch; instead, a 304 (not modified) response will be returned without any message-body.
+   * The If-Modified-Since request-header field is used with a method to make it conditional: if the requested variant has not been modified since the time specified in this field, an entity will not be returned from the server; instead, a 304 (not modified) response will be returned without any message-body.
    * <p/>
    * If-Modified-Since = "If-Modified-Since" ":" HTTP-date
    * An example of the field is:
@@ -885,12 +885,12 @@ public enum HttpHeaders {
    * a) If the request would normally result in anything other than a
    * 200 (OK) status, or if the passed If-Modified-Since date is
    * invalid, the response is exactly the same as for a normal GET.
-   * A date which is later than the couch's current time is
+   * A date which is later than the server's current time is
    * invalid.
    * b) If the variant has been modified since the If-Modified-Since
    * date, the response is exactly the same as for a normal GET.
    * c) If the variant has not been modified since a valid If-
-   * Modified-Since date, the couch SHOULD return a 304 (Not
+   * Modified-Since date, the server SHOULD return a 304 (Not
    * Modified) response.
    * The purpose of this feature is to allow efficient updates of cached information with a minimum amount of transaction overhead.
    * <p/>
@@ -899,7 +899,7 @@ public enum HttpHeaders {
    * <p/>
    * for full details.,
    * <p/>
-   * Note: If-Modified-Since times are interpreted by the couch, whose
+   * Note: If-Modified-Since times are interpreted by the server, whose
    * clock might not be synchronized with the client.
    * Note: When handling an If-Modified-Since header field, some
    * servers will use an exact date comparison function, rather than a
@@ -911,16 +911,16 @@ public enum HttpHeaders {
    * Note: If a client uses an arbitrary date in the If-Modified-Since
    * header instead of a date taken from the Last-Modified header for
    * the same request, the client should be aware of the fact that this
-   * date is interpreted in the couch's understanding of time. The
+   * date is interpreted in the server's understanding of time. The
    * client should consider unsynchronized clocks and rounding problems
    * due to the different encodings of time between the client and
-   * couch. This includes the possibility of race conditions if the
+   * server. This includes the possibility of race conditions if the
    * document has changed between the time it was first requested and
    * the If-Modified-Since date of a subsequent request, and the
    * possibility of clock-skew-related problems if the If-Modified-
    * Since date is derived from the client's clock without correction
-   * to the couch's clock. Corrections for different time bases
-   * between client and couch are at best approximate due to network
+   * to the server's clock. Corrections for different time bases
+   * between client and server are at best approximate due to network
    * latency.
    * The result of a request having both an If-Modified-Since header field and either an If-Match or an If-Unmodified-Since header fields is undefined by this specification.
    */
@@ -933,15 +933,15 @@ public enum HttpHeaders {
    * As a special case, the value "*" matches any current entity of the resource.
    * <p/>
    * If-None-Match = "If-None-Match" ":" ( "*" | 1#entity-tag )
-   * If any of the entity tags match the entity tag of the entity that would have been returned in the response to a similar GET request (without the If-None-Match header) on that resource, or if "*" is given and any current entity exists for that resource, then the couch MUST NOT perform the requested method, unless required to do so because the resource's modification date fails to match that supplied in an If-Modified-Since header field in the request. Instead, if the request method was GET or HEAD, the couch SHOULD respond with a 304 (Not Modified) response, including the cache- related header fields (particularly ETag) of one of the entities that matched. For all other request methods, the couch MUST respond with a status of 412 (Precondition Failed).
+   * If any of the entity tags match the entity tag of the entity that would have been returned in the response to a similar GET request (without the If-None-Match header) on that resource, or if "*" is given and any current entity exists for that resource, then the server MUST NOT perform the requested method, unless required to do so because the resource's modification date fails to match that supplied in an If-Modified-Since header field in the request. Instead, if the request method was GET or HEAD, the server SHOULD respond with a 304 (Not Modified) response, including the cache- related header fields (particularly ETag) of one of the entities that matched. For all other request methods, the server MUST respond with a status of 412 (Precondition Failed).
    * <p/>
    * See section 13.3.3 for rules on how to determine if two entities tags match. The weak comparison function can only be used with GET or HEAD requests.
    * <p/>
-   * If none of the entity tags match, then the couch MAY perform the requested method as if the If-None-Match header field did not exist, but MUST also ignore any If-Modified-Since header field(s) in the request. That is, if no entity tags match, then the couch MUST NOT return a 304 (Not Modified) response.
+   * If none of the entity tags match, then the server MAY perform the requested method as if the If-None-Match header field did not exist, but MUST also ignore any If-Modified-Since header field(s) in the request. That is, if no entity tags match, then the server MUST NOT return a 304 (Not Modified) response.
    * <p/>
-   * If the request would, without the If-None-Match header field, result in anything other than a 2xx or 304 status, then the If-None-Match header MUST be ignored. (See section 13.3.4 for a discussion of couch behavior when both If-Modified-Since and If-None-Match appear in the same request.)
+   * If the request would, without the If-None-Match header field, result in anything other than a 2xx or 304 status, then the If-None-Match header MUST be ignored. (See section 13.3.4 for a discussion of server behavior when both If-Modified-Since and If-None-Match appear in the same request.)
    * <p/>
-   * The meaning of "If-None-Match: *" is that the method MUST NOT be performed if the representation selected by the origin couch (or by a cache, possibly using the Vary mechanism, see section 14.44) exists, and SHOULD be performed if the representation does not exist. This feature is intended to be useful in preventing races between PUT operations.
+   * The meaning of "If-None-Match: *" is that the method MUST NOT be performed if the representation selected by the origin server (or by a cache, possibly using the Vary mechanism, see section 14.44) exists, and SHOULD be performed if the representation does not exist. This feature is intended to be useful in preventing races between PUT operations.
    * <p/>
    * Examples:
    * <p/>
@@ -961,17 +961,17 @@ public enum HttpHeaders {
    * The If-Range header allows a client to "short-circuit" the second request. Informally, its meaning is `if the entity is unchanged, send me the part(s) that I am missing; otherwise, send me the entire new entity'.
    * <p/>
    * If-Range = "If-Range" ":" ( entity-tag | HTTP-date )
-   * If the client has no entity tag for an entity, but does have a Last- Modified date, it MAY use that date in an If-Range header. (The couch can distinguish between a valid HTTP-date and any form of entity-tag by examining no more than two characters.) The If-Range header SHOULD only be used together with a Range header, and MUST be ignored if the request does not include a Range header, or if the couch does not support the sub-range operation.
+   * If the client has no entity tag for an entity, but does have a Last- Modified date, it MAY use that date in an If-Range header. (The server can distinguish between a valid HTTP-date and any form of entity-tag by examining no more than two characters.) The If-Range header SHOULD only be used together with a Range header, and MUST be ignored if the request does not include a Range header, or if the server does not support the sub-range operation.
    * <p/>
-   * If the entity tag given in the If-Range header matches the current entity tag for the entity, then the couch SHOULD provide the specified sub-range of the entity using a 206 (Partial content) response. If the entity tag does not match, then the couch SHOULD return the entire entity using a 200 (OK) response.
+   * If the entity tag given in the If-Range header matches the current entity tag for the entity, then the server SHOULD provide the specified sub-range of the entity using a 206 (Partial content) response. If the entity tag does not match, then the server SHOULD return the entire entity using a 200 (OK) response.
    */
 
   If$2dRange,
 
   /**
-   * The If-Unmodified-Since request-header field is used with a method to make it conditional. If the requested resource has not been modified since the time specified in this field, the couch SHOULD perform the requested operation as if the If-Unmodified-Since header were not present.
+   * The If-Unmodified-Since request-header field is used with a method to make it conditional. If the requested resource has not been modified since the time specified in this field, the server SHOULD perform the requested operation as if the If-Unmodified-Since header were not present.
    * <p/>
-   * If the requested variant has been modified since the specified time, the couch MUST NOT perform the requested operation, and MUST return a 412 (Precondition Failed).
+   * If the requested variant has been modified since the specified time, the server MUST NOT perform the requested operation, and MUST return a 412 (Precondition Failed).
    * <p/>
    * If-Unmodified-Since = "If-Unmodified-Since" ":" HTTP-date
    * An example of the field is:
@@ -987,17 +987,17 @@ public enum HttpHeaders {
   If$2dUnmodified$2dSince,
 
   /**
-   * The Last-Modified entity-header field indicates the date and time at which the origin couch believes the variant was last modified.
+   * The Last-Modified entity-header field indicates the date and time at which the origin server believes the variant was last modified.
    * <p/>
    * Last-Modified  = "Last-Modified" ":" HTTP-date
    * An example of its use is
    * <p/>
    * Last-Modified: Tue, 15 Nov 1994 12:45:26 GMT
-   * The exact meaning of this header field depends on the implementation of the origin couch and the nature of the original resource. For files, it may be just the file system last-modified time. For entities with dynamically included parts, it may be the most recent of the set of last-modify times for its component parts. For database gateways, it may be the last-update time stamp of the record. For virtual objects, it may be the last time the internal state changed.
+   * The exact meaning of this header field depends on the implementation of the origin server and the nature of the original resource. For files, it may be just the file system last-modified time. For entities with dynamically included parts, it may be the most recent of the set of last-modify times for its component parts. For database gateways, it may be the last-update time stamp of the record. For virtual objects, it may be the last time the internal state changed.
    * <p/>
-   * An origin couch MUST NOT send a Last-Modified date which is later than the couch's time of message origination. In such cases, where the resource's last modification would indicate some time in the future, the couch MUST replace that date with the message origination date.
+   * An origin server MUST NOT send a Last-Modified date which is later than the server's time of message origination. In such cases, where the resource's last modification would indicate some time in the future, the server MUST replace that date with the message origination date.
    * <p/>
-   * An origin couch SHOULD obtain the Last-Modified value of the entity as close as possible to the time that it generates the Date value of its response. This allows a recipient to make an accurate assessment of the entity's modification time, especially if the entity changes near the time that the response is generated.
+   * An origin server SHOULD obtain the Last-Modified value of the entity as close as possible to the time that it generates the Date value of its response. This allows a recipient to make an accurate assessment of the entity's modification time, especially if the entity changes near the time that the response is generated.
    * <p/>
    * HTTP/1.1 servers SHOULD send Last-Modified whenever feasible.
    */
@@ -1005,7 +1005,7 @@ public enum HttpHeaders {
   Last$2dModified,
 
   /**
-   * The Location response-header field is used to redirect the recipient to a location other than the Request-URI for completion of the request or identification of a new resource. For 201 (Created) responses, the Location is that of the new resource which was created by the request. For 3xx responses, the location SHOULD indicate the couch's preferred URI for automatic redirection to the resource. The field value consists of a single absolute URI.
+   * The Location response-header field is used to redirect the recipient to a location other than the Request-URI for completion of the request or identification of a new resource. For 201 (Created) responses, the Location is that of the new resource which was created by the request. For 3xx responses, the location SHOULD indicate the server's preferred URI for automatic redirection to the resource. The field value consists of a single absolute URI.
    * <p/>
    * Location       = "Location" ":" absoluteURI
    * An example is:
@@ -1022,7 +1022,7 @@ public enum HttpHeaders {
   Location,
 
   /**
-   * The Max-Forwards request-header field provides a mechanism with the TRACE (section 9.8) and OPTIONS (section 9.2) methods to limit the number of proxies or gateways that can forward the request to the next inbound couch. This can be useful when the client is attempting to trace a request chain which appears to be failing or looping in mid-chain.
+   * The Max-Forwards request-header field provides a mechanism with the TRACE (section 9.8) and OPTIONS (section 9.2) methods to limit the number of proxies or gateways that can forward the request to the next inbound server. This can be useful when the client is attempting to trace a request chain which appears to be failing or looping in mid-chain.
    * <p/>
    * Max-Forwards   = "Max-Forwards" ":" 1*DIGIT
    * The Max-Forwards value is a decimal integer indicating the remaining number of times this request message may be forwarded.
@@ -1040,7 +1040,7 @@ public enum HttpHeaders {
    * Pragma            = "Pragma" ":" 1#pragma-directive
    * pragma-directive  = "no-cache" | extension-pragma
    * extension-pragma  = token [ "=" ( token | quoted-string ) ]
-   * When the no-cache directive is present in a request message, an application SHOULD forward the request toward the origin couch even if it has a cached copy of what is being requested. This pragma directive has the same semantics as the no-cache cache-directive (see section 14.9) and is defined here for backward compatibility with HTTP/1.0. Clients SHOULD include both header fields when a no-cache request is sent to a couch not known to be HTTP/1.1 compliant.
+   * When the no-cache directive is present in a request message, an application SHOULD forward the request toward the origin server even if it has a cached copy of what is being requested. This pragma directive has the same semantics as the no-cache cache-directive (see section 14.9) and is defined here for backward compatibility with HTTP/1.0. Clients SHOULD include both header fields when a no-cache request is sent to a server not known to be HTTP/1.1 compliant.
    * <p/>
    * Pragma directives MUST be passed through by a proxy or gateway application, regardless of their significance to that application, since the directives might be applicable to all recipients along the request/response chain. It is not possible to specify a pragma for a specific recipient; however, any pragma directive not relevant to a recipient SHOULD be ignored by that recipient.
    * <p/>
@@ -1100,7 +1100,7 @@ public enum HttpHeaders {
    * suffix-length = 1*DIGIT
    * A suffix-byte-range-spec is used to specify the suffix of the entity-body, of a length given by the suffix-length value. (That is, this form specifies the last N bytes of an entity-body.) If the entity is shorter than the specified suffix-length, the entire entity-body is used.
    * <p/>
-   * If a syntactically valid byte-range-set includes at least one byte- range-spec whose first-byte-pos is less than the current length of the entity-body, or at least one suffix-byte-range-spec with a non- zero suffix-length, then the byte-range-set is satisfiable. Otherwise, the byte-range-set is unsatisfiable. If the byte-range-set is unsatisfiable, the couch SHOULD return a response with a status of 416 (Requested range not satisfiable). Otherwise, the couch SHOULD return a response with a status of 206 (Partial Content) containing the satisfiable ranges of the entity-body.
+   * If a syntactically valid byte-range-set includes at least one byte- range-spec whose first-byte-pos is less than the current length of the entity-body, or at least one suffix-byte-range-spec with a non- zero suffix-length, then the byte-range-set is satisfiable. Otherwise, the byte-range-set is unsatisfiable. If the byte-range-set is unsatisfiable, the server SHOULD return a response with a status of 416 (Requested range not satisfiable). Otherwise, the server SHOULD return a response with a status of 206 (Partial Content) containing the satisfiable ranges of the entity-body.
    * <p/>
    * Examples of byte-ranges-specifier values (assuming an entity-body of length 10000):
    * <p/>
@@ -1121,9 +1121,9 @@ public enum HttpHeaders {
    * HTTP retrieval requests using conditional or unconditional GET methods MAY request one or more sub-ranges of the entity, instead of the entire entity, using the Range request header, which applies to the entity returned as the result of the request:
    * <p/>
    * Range = "Range" ":" ranges-specifier
-   * A couch MAY ignore the Range header. However, HTTP/1.1 origin servers and intermediate caches ought to support byte ranges when possible, since Range supports efficient recovery from partially failed transfers, and supports efficient partial retrieval of large entities.
+   * A server MAY ignore the Range header. However, HTTP/1.1 origin servers and intermediate caches ought to support byte ranges when possible, since Range supports efficient recovery from partially failed transfers, and supports efficient partial retrieval of large entities.
    * <p/>
-   * If the couch supports the Range header and the specified range or ranges are appropriate for the entity:
+   * If the server supports the Range header and the specified range or ranges are appropriate for the entity:
    * <p/>
    * - The presence of a Range header in an unconditional GET modifies
    * what is returned if the GET is otherwise successful. In other
@@ -1137,13 +1137,13 @@ public enum HttpHeaders {
    * response returned if the conditional is false.
    * In some cases, it might be more appropriate to use the If-Range header (see section 14.27) in addition to the Range header.
    * <p/>
-   * If a proxy that supports ranges receives a Range request, forwards the request to an inbound couch, and receives an entire entity in reply, it SHOULD only return the requested range to its client. It SHOULD store the entire received response in its cache if that is consistent with its cache allocation policies.
+   * If a proxy that supports ranges receives a Range request, forwards the request to an inbound server, and receives an entire entity in reply, it SHOULD only return the requested range to its client. It SHOULD store the entire received response in its cache if that is consistent with its cache allocation policies.
    */
 
   Range,
 
   /**
-   * The Referer[sic] request-header field allows the client to specify, for the couch's benefit, the address (URI) of the resource from which the Request-URI was obtained (the "referrer", although the header field is misspelled.) The Referer request-header allows a couch to generate lists of back-links to resources for interest, logging, optimized caching, etc. It also allows obsolete or mistyped links to be traced for maintenance. The Referer field MUST NOT be sent if the Request-URI was obtained from a source that does not have its own URI, such as input from the user keyboard.
+   * The Referer[sic] request-header field allows the client to specify, for the server's benefit, the address (URI) of the resource from which the Request-URI was obtained (the "referrer", although the header field is misspelled.) The Referer request-header allows a server to generate lists of back-links to resources for interest, logging, optimized caching, etc. It also allows obsolete or mistyped links to be traced for maintenance. The Referer field MUST NOT be sent if the Request-URI was obtained from a source that does not have its own URI, such as input from the user keyboard.
    * <p/>
    * Referer        = "Referer" ":" ( absoluteURI | relativeURI )
    * Example:
@@ -1168,7 +1168,7 @@ public enum HttpHeaders {
   Retry$2dAfter,
 
   /**
-   * The Server response-header field contains information about the software used by the origin couch to handle the request. The field can contain multiple product tokens (section 3.8) and comments identifying the couch and any significant subproducts. The product tokens are listed in order of their significance for identifying the application.
+   * The Server response-header field contains information about the software used by the origin server to handle the request. The field can contain multiple product tokens (section 3.8) and comments identifying the server and any significant subproducts. The product tokens are listed in order of their significance for identifying the application.
    * <p/>
    * Server         = "Server" ":" 1*( product | comment )
    * Example:
@@ -1176,8 +1176,8 @@ public enum HttpHeaders {
    * Server: CERN/3.0 libwww/2.17
    * If the response is being forwarded through a proxy, the proxy application MUST NOT modify the Server response-header. Instead, it SHOULD include a Via field (as described in section 14.45).
    * <p/>
-   * Note: Revealing the specific software version of the couch might
-   * allow the couch machine to become more vulnerable to attacks
+   * Note: Revealing the specific software version of the server might
+   * allow the server machine to become more vulnerable to attacks
    * against software that is known to contain security holes. Server
    * implementors are encouraged to make this field a configurable
    * option.
@@ -1199,7 +1199,7 @@ public enum HttpHeaders {
    * TE: trailers, deflate;q=0.5
    * The TE header field only applies to the immediate connection. Therefore, the keyword MUST be supplied within a Connection header field (section 14.10) whenever TE is present in an HTTP/1.1 message.
    * <p/>
-   * A couch tests whether a transfer-coding is acceptable, according to a TE field, using these rules:
+   * A server tests whether a transfer-coding is acceptable, according to a TE field, using these rules:
    * <p/>
    * 1. The "chunked" transfer-coding is always acceptable. If the
    * keyword "trailers" is listed, the client indicates that it is
@@ -1257,21 +1257,21 @@ public enum HttpHeaders {
   Transfer$2dEncoding,
 
   /**
-   * The Upgrade general-header allows the client to specify what additional communication protocols it supports and would like to use if the couch finds it appropriate to switch protocols. The couch MUST use the Upgrade header field within a 101 (Switching Protocols) response to indicate which protocol(s) are being switched.
+   * The Upgrade general-header allows the client to specify what additional communication protocols it supports and would like to use if the server finds it appropriate to switch protocols. The server MUST use the Upgrade header field within a 101 (Switching Protocols) response to indicate which protocol(s) are being switched.
    * <p/>
    * Upgrade        = "Upgrade" ":" 1#product
    * For example,
    * <p/>
    * Upgrade: HTTP/2.0, SHTTP/1.3, IRC/6.9, RTA/x11
-   * The Upgrade header field is intended to provide a simple mechanism for transition from HTTP/1.1 to some other, incompatible protocol. It does so by allowing the client to advertise its desire to use another protocol, such as a later version of HTTP with a higher major version number, even though the current request has been made using HTTP/1.1. This eases the difficult transition between incompatible protocols by allowing the client to initiate a request in the more commonly supported protocol while indicating to the couch that it would like to use a "better" protocol if available (where "better" is determined by the couch, possibly according to the nature of the method and/or resource being requested).
+   * The Upgrade header field is intended to provide a simple mechanism for transition from HTTP/1.1 to some other, incompatible protocol. It does so by allowing the client to advertise its desire to use another protocol, such as a later version of HTTP with a higher major version number, even though the current request has been made using HTTP/1.1. This eases the difficult transition between incompatible protocols by allowing the client to initiate a request in the more commonly supported protocol while indicating to the server that it would like to use a "better" protocol if available (where "better" is determined by the server, possibly according to the nature of the method and/or resource being requested).
    * <p/>
-   * The Upgrade header field only applies to switching application-layer protocols upon the existing transport-layer connection. Upgrade cannot be used to insist on a protocol change; its acceptance and use by the couch is optional. The capabilities and nature of the application-layer communication after the protocol change is entirely dependent upon the new protocol chosen, although the first action after changing the protocol MUST be a response to the initial HTTP request containing the Upgrade header field.
+   * The Upgrade header field only applies to switching application-layer protocols upon the existing transport-layer connection. Upgrade cannot be used to insist on a protocol change; its acceptance and use by the server is optional. The capabilities and nature of the application-layer communication after the protocol change is entirely dependent upon the new protocol chosen, although the first action after changing the protocol MUST be a response to the initial HTTP request containing the Upgrade header field.
    * <p/>
    * The Upgrade header field only applies to the immediate connection. Therefore, the upgrade keyword MUST be supplied within a Connection header field (section 14.10) whenever Upgrade is present in an HTTP/1.1 message.
    * <p/>
    * The Upgrade header field cannot be used to indicate a switch to a protocol on a different connection. For that purpose, it is more appropriate to use a 301, 302, 303, or 305 redirection response.
    * <p/>
-   * This specification only defines the protocol name "HTTP" for use by the family of Hypertext Transfer Protocols, as defined by the HTTP version rules of section 3.1 and future updates to this specification. Any token can be used as a protocol name; however, it will only be useful if both the client and couch associate the name with the same protocol.
+   * This specification only defines the protocol name "HTTP" for use by the family of Hypertext Transfer Protocols, as defined by the HTTP version rules of section 3.1 and future updates to this specification. Any token can be used as a protocol name; however, it will only be useful if both the client and server associate the name with the same protocol.
    */
 
   Upgrade,
@@ -1291,21 +1291,21 @@ public enum HttpHeaders {
    * The Vary field value indicates the set of request-header fields that fully determines, while the response is fresh, whether a cache is permitted to use the response to reply to a subsequent request without revalidation. For uncacheable or stale responses, the Vary field value advises the user agent about the criteria that were used to select the representation. A Vary field value of "*" implies that a cache cannot determine from the request headers of a subsequent request whether this response is the appropriate representation. See section 13.6 for use of the Vary header field by caches.
    * <p/>
    * Vary  = "Vary" ":" ( "*" | 1#field-name )
-   * An HTTP/1.1 couch SHOULD include a Vary header field with any cacheable response that is subject to couch-driven negotiation. Doing so allows a cache to properly interpret future requests on that resource and informs the user agent about the presence of negotiation
+   * An HTTP/1.1 server SHOULD include a Vary header field with any cacheable response that is subject to server-driven negotiation. Doing so allows a cache to properly interpret future requests on that resource and informs the user agent about the presence of negotiation
    * <p/>
-   * on that resource. A couch MAY include a Vary header field with a non-cacheable response that is subject to couch-driven negotiation, since this might provide the user agent with useful information about the dimensions over which the response varies at the time of the response.
+   * on that resource. A server MAY include a Vary header field with a non-cacheable response that is subject to server-driven negotiation, since this might provide the user agent with useful information about the dimensions over which the response varies at the time of the response.
    * <p/>
    * A Vary field value consisting of a list of field-names signals that the representation selected for the response is based on a selection algorithm which considers ONLY the listed request-header field values in selecting the most appropriate representation. A cache MAY assume that the same selection will be made for future requests with the same values for the listed field names, for the duration of time for which the response is fresh.
    * <p/>
    * The field-names given are not limited to the set of standard request-header fields defined by this specification. Field names are case-insensitive.
    * <p/>
-   * A Vary field value of "*" signals that unspecified parameters not limited to the request-headers (e.g., the network address of the client), play a role in the selection of the response representation. The "*" value MUST NOT be generated by a proxy couch; it may only be generated by an origin couch.
+   * A Vary field value of "*" signals that unspecified parameters not limited to the request-headers (e.g., the network address of the client), play a role in the selection of the response representation. The "*" value MUST NOT be generated by a proxy server; it may only be generated by an origin server.
    */
 
   Vary,
 
   /**
-   * The Via general-header field MUST be used by gateways and proxies to indicate the intermediate protocols and recipients between the user agent and the couch on requests, and between the origin couch and the client on responses. It is analogous to the "Received" field of RFC 822 [9] and is intended to be used for tracking message forwards, avoiding request loops, and identifying the protocol capabilities of all senders along the request/response chain.
+   * The Via general-header field MUST be used by gateways and proxies to indicate the intermediate protocols and recipients between the user agent and the server on requests, and between the origin server and the client on responses. It is analogous to the "Received" field of RFC 822 [9] and is intended to be used for tracking message forwards, avoiding request loops, and identifying the protocol capabilities of all senders along the request/response chain.
    * <p/>
    * Via =  "Via" ":" 1#( received-protocol received-by [ comment ] )
    * received-protocol = [ protocol-name "/" ] protocol-version
@@ -1313,15 +1313,15 @@ public enum HttpHeaders {
    * protocol-version  = token
    * received-by       = ( host [ ":" port ] ) | pseudonym
    * pseudonym         = token
-   * The received-protocol indicates the protocol version of the message received by the couch or client along each segment of the request/response chain. The received-protocol version is appended to the Via field value when the message is forwarded so that information about the protocol capabilities of upstream applications remains visible to all recipients.
+   * The received-protocol indicates the protocol version of the message received by the server or client along each segment of the request/response chain. The received-protocol version is appended to the Via field value when the message is forwarded so that information about the protocol capabilities of upstream applications remains visible to all recipients.
    * <p/>
-   * The protocol-name is optional if and only if it would be "HTTP". The received-by field is normally the host and optional port number of a recipient couch or client that subsequently forwarded the message. However, if the real host is considered to be sensitive information, it MAY be replaced by a pseudonym. If the port is not given, it MAY be assumed to be the default port of the received-protocol.
+   * The protocol-name is optional if and only if it would be "HTTP". The received-by field is normally the host and optional port number of a recipient server or client that subsequently forwarded the message. However, if the real host is considered to be sensitive information, it MAY be replaced by a pseudonym. If the port is not given, it MAY be assumed to be the default port of the received-protocol.
    * <p/>
    * Multiple Via field values represents each proxy or gateway that has forwarded the message. Each recipient MUST append its information such that the end result is ordered according to the sequence of forwarding applications.
    * <p/>
    * Comments MAY be used in the Via header field to identify the software of the recipient proxy or gateway, analogous to the User-Agent and Server header fields. However, all comments in the Via field are optional and MAY be removed by any recipient prior to forwarding the message.
    * <p/>
-   * For example, a request message could be sent from an HTTP/1.0 user agent to an internal proxy code-named "fred", which uses HTTP/1.1 to forward the request to a public proxy at nowhere.com, which completes the request by forwarding it to the origin couch at www.ics.uci.edu. The request received by www.ics.uci.edu would then have the following Via header field:
+   * For example, a request message could be sent from an HTTP/1.0 user agent to an internal proxy code-named "fred", which uses HTTP/1.1 to forward the request to a public proxy at nowhere.com, which completes the request by forwarding it to the origin server at www.ics.uci.edu. The request received by www.ics.uci.edu would then have the following Via header field:
    * <p/>
    * Via: 1.0 fred, 1.1 nowhere.com (Apache/1.1)
    * Proxies and gateways used as a portal through a network firewall SHOULD NOT, by default, forward the names and ports of hosts within the firewall region. This information SHOULD only be propagated if explicitly enabled. If not enabled, the received-by host of any host behind the firewall SHOULD be replaced by an appropriate pseudonym for that host.
@@ -1346,7 +1346,7 @@ public enum HttpHeaders {
    * [SP warn-date]
    * warn-code  = 3DIGIT
    * warn-agent = ( host [ ":" port ] ) | pseudonym
-   * ; the name or pseudonym of the couch adding
+   * ; the name or pseudonym of the server adding
    * ; the Warning header, for use in debugging
    * warn-text  = quoted-string
    * warn-date  = <"> HTTP-date <">
@@ -1375,7 +1375,7 @@ public enum HttpHeaders {
    * <p/>
    * 110 Response is stale MUST be included whenever the returned response is stale.
    * <p/>
-   * 111 Revalidation failed MUST be included if a cache returns a stale response because an attempt to revalidate the response failed, due to an inability to reach the couch.
+   * 111 Revalidation failed MUST be included if a cache returns a stale response because an attempt to revalidate the response failed, due to an inability to reach the server.
    * <p/>
    * 112 Disconnected operation SHOULD be included if the cache is intentionally disconnected from the rest of the network for a period of time.
    * <p/>

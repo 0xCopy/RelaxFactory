@@ -1,4 +1,4 @@
-package rxf.couch;
+package rxf.core;
 
 import com.google.gson.Gson;
 import javolution.text.TextBuilder;
@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.lang.Math.abs;
 import static java.util.Arrays.asList;
-import static rxf.couch.Server.UTF8;
 
 /**
  * this is a utility class to parse a HttpRequest header or
@@ -192,7 +191,7 @@ public class Rfc822HeaderState {
         cookieInterest = new ByteBuffer[keys.length];
         for (int i = 0; i < keys.length; i++) {
           String s = keys[i];
-          cookieInterest[i] = ByteBuffer.wrap(s.intern().getBytes(UTF8));
+          cookieInterest[i] = ByteBuffer.wrap(s.intern().getBytes(Server.UTF8));
         }
       }
 
@@ -243,7 +242,7 @@ public class Rfc822HeaderState {
         k = new ByteBuffer[keys.length];
         for (int i = 0; i < keys.length; i++) {
           String key = keys[i];
-          k[i] = (ByteBuffer) ByteBuffer.wrap(key.intern().getBytes(UTF8));
+          k[i] = (ByteBuffer) ByteBuffer.wrap(key.intern().getBytes(Server.UTF8));
         }
       }
       Map<String, String> ret = new TreeMap<String, String>();
@@ -256,9 +255,8 @@ public class Rfc822HeaderState {
         while (ki.hasNext()) {
           ByteBuffer interestKey = ki.next();
           if (interestKey.equals(ckey)) {
-            ret
-                .put(UTF8.decode(interestKey).toString().intern(), UTF8.decode(a1.getB())
-                    .toString());
+            ret.put(Server.UTF8.decode(interestKey).toString().intern(), Server.UTF8.decode(
+                a1.getB()).toString());
             ki.remove();
             break;
           }
@@ -275,14 +273,14 @@ public class Rfc822HeaderState {
      */
 
     public String getCookie(String key) {
-      ByteBuffer k = (ByteBuffer) ByteBuffer.wrap(key.intern().getBytes(UTF8)).mark();
+      ByteBuffer k = (ByteBuffer) ByteBuffer.wrap(key.intern().getBytes(Server.UTF8)).mark();
       Pair<Pair<ByteBuffer, ByteBuffer>, ? extends Pair> pair = parsedCookies();
       while (null != pair) {
 
         Pair<ByteBuffer, ByteBuffer> a1 = pair.getA();
         ByteBuffer a = (ByteBuffer) a1.getA();
         if (a.equals(k)) {
-          return String.valueOf(UTF8.decode(avoidStarvation((ByteBuffer) a1.getB())));
+          return String.valueOf(Server.UTF8.decode(avoidStarvation((ByteBuffer) a1.getB())));
         }
         pair = pair.getB();
       }
@@ -523,15 +521,15 @@ public class Rfc822HeaderState {
    * @param header a header name
    * @return a list of values
    */
-  List<String> getHeadersNamed(String header) {
+  public List<String> getHeadersNamed(String header) {
     CharBuffer charBuffer = CharBuffer.wrap(header);
-    ByteBuffer henc = UTF8.encode(charBuffer);
+    ByteBuffer henc = Server.UTF8.encode(charBuffer);
 
     Pair<ByteBuffer, ? extends Pair> ret = headerExtract(henc);
 
     List<String> objects = new ArrayList<String>();
     while (null != ret) {
-      objects.add(UTF8.decode(ret.getA()).toString());
+      objects.add(Server.UTF8.decode(ret.getA()).toString());
       ret = ret.getB();
     }
 
@@ -546,13 +544,13 @@ public class Rfc822HeaderState {
    * @param theHeader a header enum
    * @return a list of values
    */
-  List<String> getHeadersNamed(HttpHeaders theHeader) {
+  public List<String> getHeadersNamed(HttpHeaders theHeader) {
 
     Pair<ByteBuffer, ? extends Pair> ret = headerExtract(theHeader.getToken());
 
     List<String> objects = new ArrayList<String>();
     while (null != ret) {
-      objects.add(UTF8.decode(ret.getA()).toString());
+      objects.add(Server.UTF8.decode(ret.getA()).toString());
       ret = ret.getB();
     }
 
@@ -636,7 +634,7 @@ public class Rfc822HeaderState {
     ByteBuffer slice = cursor.duplicate().slice();
     while (slice.hasRemaining() && SPC != slice.get()) {
     }
-    methodProtocol.set(UTF8.decode((ByteBuffer) slice.flip()).toString().trim());
+    methodProtocol.set(Server.UTF8.decode((ByteBuffer) slice.flip()).toString().trim());
 
     while (cursor.hasRemaining() && SPC != cursor.get()) {
       //method/proto
@@ -644,14 +642,14 @@ public class Rfc822HeaderState {
     slice = cursor.slice();
     while (slice.hasRemaining() && SPC != slice.get()) {
     }
-    pathRescode.set(UTF8.decode((ByteBuffer) slice.flip()).toString().trim());
+    pathRescode.set(Server.UTF8.decode((ByteBuffer) slice.flip()).toString().trim());
 
     while (cursor.hasRemaining() && SPC != cursor.get()) {
     }
     slice = cursor.slice();
     while (slice.hasRemaining() && LF != slice.get()) {
     }
-    protocolStatus.set(UTF8.decode((ByteBuffer) slice.flip()).toString().trim());
+    protocolStatus.set(Server.UTF8.decode((ByteBuffer) slice.flip()).toString().trim());
 
     headerBuf = null;
     boolean wantsCookies = null != cookies;
@@ -666,7 +664,8 @@ public class Rfc822HeaderState {
         if (null != o1) {
           headerStrings.get().put(
               o,
-              UTF8.decode((ByteBuffer) headerBuf.duplicate().clear().position(o1[0]).limit(o1[1]))
+              Server.UTF8.decode(
+                  (ByteBuffer) headerBuf.duplicate().clear().position(o1[0]).limit(o1[1]))
                   .toString().trim());
         }
       }
@@ -882,7 +881,7 @@ public class Rfc822HeaderState {
    */
   public ByteBuffer asResponseHeaderByteBuffer() {
     String protocol = asResponseHeaderString();
-    return ByteBuffer.wrap(protocol.getBytes(UTF8));
+    return ByteBuffer.wrap(protocol.getBytes(Server.UTF8));
   }
 
   /**
@@ -913,7 +912,7 @@ public class Rfc822HeaderState {
    */
   public ByteBuffer asRequestHeaderByteBuffer() {
     String protocol = asRequestHeaderString();
-    return ByteBuffer.wrap(protocol.getBytes(UTF8));
+    return ByteBuffer.wrap(protocol.getBytes(Server.UTF8));
   }
 
   /**

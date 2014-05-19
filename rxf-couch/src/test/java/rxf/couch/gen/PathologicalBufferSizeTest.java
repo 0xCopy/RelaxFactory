@@ -4,8 +4,8 @@ import com.google.gson.JsonSyntaxException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import rxf.couch.BlobAntiPatternObject;
-import rxf.couch.Server;
+import rxf.rpc.BlobAntiPatternObject;
+import rxf.core.Server;
 import rxf.shared.CouchTx;
 import rxf.couch.driver.CouchMetaDriver;
 import rxf.couch.gen.CouchDriver.DbCreate;
@@ -18,7 +18,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 import static org.junit.Assert.*;
-import static rxf.couch.BlobAntiPatternObject.setDEBUG_SENDJSON;
+import static rxf.rpc.BlobAntiPatternObject.setDEBUG_SENDJSON;
 
 /**
  * Tests out the db, cleaning up after itself. These must be run in order to work correctly and clean up.

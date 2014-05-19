@@ -1,4 +1,4 @@
-package rxf.couch;
+package rxf.core;
 
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;

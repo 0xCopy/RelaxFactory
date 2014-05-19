@@ -1,6 +1,7 @@
 package rxf.couch;
 
 import com.google.web.bindery.requestfactory.shared.ServiceLocator;
+import rxf.core.CouchNamespace;
 
 import java.util.concurrent.ExecutionException;
 

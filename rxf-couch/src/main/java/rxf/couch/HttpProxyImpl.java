@@ -1,6 +1,9 @@
 package rxf.couch;
 
 import one.xio.AsioVisitor.Impl;
+import rxf.core.Rfc822HeaderState;
+import rxf.rpc.BlobAntiPatternObject;
+import rxf.rpc.RelaxFactoryServerImpl;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -12,8 +15,8 @@ import java.util.regex.Pattern;
 
 import static java.nio.channels.SelectionKey.*;
 import static one.xio.HttpHeaders.Content$2dLength;
-import static rxf.couch.Server.UTF8;
-import static rxf.couch.Rfc822HeaderState.staticHeaderStrings;
+import static rxf.core.Server.UTF8;
+import static rxf.core.Rfc822HeaderState.staticHeaderStrings;
 
 /**
  * User: jim

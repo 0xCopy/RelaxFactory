@@ -2,7 +2,7 @@ package rxf.couch.daemon;
 
 import one.xio.AsioVisitor;
 import rxf.shared.PreRead;
-import rxf.couch.Config;
+import rxf.core.Config;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -11,7 +11,7 @@ import java.nio.channels.SocketChannel;
 
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
-import static rxf.couch.Server.UTF8;
+import static rxf.core.Server.UTF8;
 
 /**
  * this visitor shovels data from the outward selector to the inward selector, and vice versa.  once the headers are

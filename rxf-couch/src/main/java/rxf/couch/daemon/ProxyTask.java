@@ -1,7 +1,7 @@
 package rxf.couch.daemon;
 
-import rxf.couch.BlobAntiPatternObject;
-import rxf.couch.Server;
+import rxf.rpc.BlobAntiPatternObject;
+import rxf.core.Server;
 
 import java.net.InetSocketAddress;
 import java.net.StandardSocketOptions;

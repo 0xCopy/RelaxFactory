@@ -1,4 +1,4 @@
-package rxf.couch;
+package rxf.core;
 
 /**
  * Created by jim on 4/6/14.

@@ -2,8 +2,8 @@ package rxf.couch.daemon;
 
 import one.xio.AsioVisitor;
 import one.xio.HttpHeaders;
-import rxf.couch.Rfc822HeaderState;
-import rxf.couch.Server;
+import rxf.core.Rfc822HeaderState;
+import rxf.core.Server;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -18,8 +18,8 @@ import java.util.Arrays;
 import java.util.Map;
 
 import static java.nio.channels.SelectionKey.*;
-import static rxf.couch.Server.UTF8;
-import static rxf.couch.Config.get;
+import static rxf.core.Server.UTF8;
+import static rxf.core.Config.get;
 
 /**
  * <ul>

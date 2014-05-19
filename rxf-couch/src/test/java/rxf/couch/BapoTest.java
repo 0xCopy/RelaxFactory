@@ -4,10 +4,10 @@ import org.junit.Test;
 
 import java.nio.channels.SocketChannel;
 
-import static rxf.couch.Server.setKillswitch;
+import static rxf.core.Server.setKillswitch;
 import static org.junit.Assert.assertNotNull;
-import static rxf.couch.BlobAntiPatternObject.createCouchConnection;
-import static rxf.couch.BlobAntiPatternObject.recycleChannel;
+import static rxf.rpc.BlobAntiPatternObject.createCouchConnection;
+import static rxf.rpc.BlobAntiPatternObject.recycleChannel;
 
 public class BapoTest {
   @Test

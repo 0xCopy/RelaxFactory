@@ -1,13 +1,14 @@
 package rxf.couch;
 
 import org.junit.Test;
+import rxf.core.DateHeaderParser;
 
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import static junit.framework.Assert.assertEquals;
-import static rxf.couch.BlobAntiPatternObject.setDEBUG_SENDJSON;
+import static rxf.rpc.BlobAntiPatternObject.setDEBUG_SENDJSON;
 
 public class DateHeaderParserTest {
   Map<String, String> map = new HashMap() {

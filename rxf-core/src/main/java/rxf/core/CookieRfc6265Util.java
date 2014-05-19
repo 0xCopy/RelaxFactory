@@ -1,4 +1,4 @@
-package rxf.couch;
+package rxf.core;
 
 import rxf.shared.Pair;
 
@@ -10,8 +10,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumMap;
 import java.util.Iterator;
-
-import static rxf.couch.Server.UTF8;
 
 /**
  * This enum defines the HTTP Cookie and Set-Cookie header fields.
@@ -158,7 +156,7 @@ public enum CookieRfc6265Util {
 
         while (input.hasRemaining() && '=' != input.get());
 
-        CharBuffer parseme = UTF8.decode(input.slice());
+        CharBuffer parseme = Server.UTF8.decode(input.slice());
         Date date = null;
         try {
           date = DateHeaderParser.parseDate(parseme.toString().trim());
@@ -209,7 +207,7 @@ public enum CookieRfc6265Util {
 
         while (input.hasRemaining() && '=' != input.get());
 
-        CharBuffer parseme = UTF8.decode(input.slice());
+        CharBuffer parseme = Server.UTF8.decode(input.slice());
         Long l = null;
         try {
           l = Long.parseLong(parseme.toString().trim());
@@ -375,7 +373,7 @@ public enum CookieRfc6265Util {
     }
   };
   final String key = URLDecoder.decode(name().replace('$', '%')).toLowerCase();
-  ByteBuffer token = UTF8.encode(key);
+  ByteBuffer token = Server.UTF8.encode(key);
 
   public static EnumMap<CookieRfc6265Util, Serializable> parseSetCookie(ByteBuffer input) {
     ArrayList<ByteBuffer> a = new ArrayList<>();

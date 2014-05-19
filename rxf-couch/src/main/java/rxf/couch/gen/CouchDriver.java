@@ -2,9 +2,12 @@ package rxf.couch.gen;
 
 // generated
 
+import rxf.core.Rfc822HeaderState;
+import rxf.core.Server;
 import rxf.couch.*;
 import rxf.couch.an.DbKeys;
 import rxf.couch.driver.CouchMetaDriver;
+import rxf.rpc.BlobAntiPatternObject;
 import rxf.shared.CouchTx;
 
 import java.lang.reflect.Type;
@@ -12,7 +15,7 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
-import static rxf.couch.Rfc822HeaderState.avoidStarvation;
+import static rxf.core.Rfc822HeaderState.avoidStarvation;
 
 /**
  * generated drivers
@@ -76,7 +79,7 @@ public interface CouchDriver {
               return CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
                   CouchTx.class);
             } catch (Exception e) {
-              if (rxf.couch.BlobAntiPatternObject.DEBUG_SENDJSON)
+              if (BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();
             }
             return null;
@@ -168,7 +171,7 @@ public interface CouchDriver {
               return CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
                   CouchTx.class);
             } catch (Exception e) {
-              if (rxf.couch.BlobAntiPatternObject.DEBUG_SENDJSON)
+              if (BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();
             }
             return null;
@@ -450,7 +453,7 @@ public interface CouchDriver {
               return CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
                   CouchTx.class);
             } catch (Exception e) {
-              if (rxf.couch.BlobAntiPatternObject.DEBUG_SENDJSON)
+              if (BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();
             }
             return null;
@@ -558,7 +561,7 @@ public interface CouchDriver {
               return CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
                   CouchTx.class);
             } catch (Exception e) {
-              if (rxf.couch.BlobAntiPatternObject.DEBUG_SENDJSON)
+              if (BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();
             }
             return null;
@@ -889,7 +892,7 @@ public interface CouchDriver {
               return CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
                   CouchTx.class);
             } catch (Exception e) {
-              if (rxf.couch.BlobAntiPatternObject.DEBUG_SENDJSON)
+              if (BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();
             }
             return null;
@@ -1060,7 +1063,7 @@ public interface CouchDriver {
               return CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
                   CouchTx.class);
             } catch (Exception e) {
-              if (rxf.couch.BlobAntiPatternObject.DEBUG_SENDJSON)
+              if (BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();
             }
             return null;

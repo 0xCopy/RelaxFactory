@@ -1,5 +1,7 @@
 package rxf.couch;
 
+import rxf.core.Rfc822HeaderState;
+
 import java.nio.channels.SelectionKey;
 import java.util.concurrent.atomic.AtomicReference;
 

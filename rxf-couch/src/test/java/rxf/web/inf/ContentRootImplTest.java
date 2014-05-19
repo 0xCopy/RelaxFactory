@@ -7,8 +7,8 @@ import one.xio.AsioVisitor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import rxf.couch.DateHeaderParser;
-import rxf.couch.Server;
+import rxf.core.DateHeaderParser;
+import rxf.core.Server;
 
 import java.net.InetSocketAddress;
 import java.nio.channels.ServerSocketChannel;

@@ -1,4 +1,7 @@
-package rxf.couch;
+package rxf.rpc;
+
+import rxf.core.Config;
+import rxf.core.Server;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -12,7 +15,7 @@ import java.util.LinkedList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static rxf.couch.CouchNamespace.COUCH_DEFAULT_ORGNAME;
+import static rxf.core.CouchNamespace.COUCH_DEFAULT_ORGNAME;
 
 /**
  * <a href='http://www.antipatterns.com/briefing/sld024.htm'> Blob Anti Pattern </a>

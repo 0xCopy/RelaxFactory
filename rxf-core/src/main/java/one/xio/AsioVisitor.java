@@ -1,6 +1,6 @@
 package one.xio;
 
-import rxf.couch.Server;
+import rxf.core.Server;
 import rxf.web.inf.ProtocolMethodDispatch;
 
 import java.nio.ByteBuffer;

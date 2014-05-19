@@ -1,4 +1,4 @@
-package rxf.couch;
+package rxf.core;
 
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpMethod;
@@ -44,18 +44,18 @@ public interface CouchNamespace {
   public enum ns {
     orgname {
       @Override
-      void setMe(CouchNamespace cl, String ns) {
+      public void setMe(CouchNamespace cl, String ns) {
         cl.setOrgname(ns);
 
       }
     },
     entityName {
       @Override
-      void setMe(CouchNamespace cl, String ns) {
+      public void setMe(CouchNamespace cl, String ns) {
         cl.setEntityName(ns);
       }
     };
 
-    abstract void setMe(CouchNamespace cl, String ns);
+    public abstract void setMe(CouchNamespace cl, String ns);
   }
 }

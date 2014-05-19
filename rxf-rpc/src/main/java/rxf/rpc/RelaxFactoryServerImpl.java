@@ -1,6 +1,7 @@
-package rxf.couch;
+package rxf.rpc;
 
 import one.xio.AsioVisitor;
+import rxf.core.Server;
 
 import java.io.IOException;
 import java.net.InetAddress;

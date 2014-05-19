@@ -2,6 +2,7 @@ package rxf.couch;
 
 import rxf.couch.an.DbKeys;
 import rxf.couch.an.DbKeys.etype;
+import rxf.rpc.BlobAntiPatternObject;
 
 import javax.validation.ValidationException;
 

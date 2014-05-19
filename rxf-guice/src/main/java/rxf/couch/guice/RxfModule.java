@@ -9,8 +9,8 @@ import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import one.xio.AsioVisitor;
 import one.xio.HttpMethod;
-import rxf.couch.RelaxFactoryServer;
-import rxf.couch.RelaxFactoryServerImpl;
+import rxf.rpc.RelaxFactoryServer;
+import rxf.rpc.RelaxFactoryServerImpl;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -18,7 +18,7 @@ import java.util.List;
 
 /**
  * Guice bindings to configure RelaxFactory with injection for each visitor impl. Binds
- * a singleton instance of {@link rxf.couch.RelaxFactoryServer} which can then be manipulated
+ * a singleton instance of {@link rxf.rpc.RelaxFactoryServer} which can then be manipulated
  * elsewhere.
  */
 public class RxfModule extends AbstractModule {

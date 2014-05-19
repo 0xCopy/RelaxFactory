@@ -23,15 +23,15 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import static rxf.couch.Server.getSelector;
-import static rxf.couch.Server.init;
-import static rxf.couch.Server.setKillswitch;
+import static rxf.core.Server.getSelector;
+import static rxf.core.Server.init;
+import static rxf.core.Server.setKillswitch;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static rxf.couch.BlobAntiPatternObject.setDEBUG_SENDJSON;
+import static rxf.rpc.BlobAntiPatternObject.setDEBUG_SENDJSON;
 import static rxf.couch.driver.CouchMetaDriver.gson;
 
 /**

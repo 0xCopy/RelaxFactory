@@ -4,9 +4,9 @@ import com.google.inject.*;
 import one.xio.AsioVisitor;
 import one.xio.HttpMethod;
 import rxf.shared.PreRead;
-import rxf.couch.RelaxFactoryServerImpl;
-import rxf.couch.Rfc822HeaderState;
-import rxf.couch.Rfc822HeaderState.HttpRequest;
+import rxf.rpc.RelaxFactoryServerImpl;
+import rxf.core.Rfc822HeaderState;
+import rxf.core.Rfc822HeaderState.HttpRequest;
 import rxf.web.inf.ProtocolMethodDispatch;
 
 import java.io.IOException;
@@ -22,9 +22,9 @@ import java.util.Set;
 
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
-import static rxf.couch.BlobAntiPatternObject.isDEBUG_SENDJSON;
-import static rxf.couch.CouchNamespace.NAMESPACE;
-import static rxf.couch.Server.UTF8;
+import static rxf.rpc.BlobAntiPatternObject.isDEBUG_SENDJSON;
+import static rxf.core.CouchNamespace.NAMESPACE;
+import static rxf.core.Server.UTF8;
 
 public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
   private final Map<HttpMethod, Map<String, Key<? extends AsioVisitor>>> bindings =

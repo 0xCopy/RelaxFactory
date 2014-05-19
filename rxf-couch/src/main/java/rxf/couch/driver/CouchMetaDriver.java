@@ -5,9 +5,11 @@ import one.xio.HttpHeaders;
 import one.xio.HttpMethod;
 import one.xio.HttpStatus;
 import one.xio.MimeType;
+import rxf.core.Config;
+import rxf.core.Rfc822HeaderState;
 import rxf.couch.*;
-import rxf.couch.Rfc822HeaderState.HttpRequest;
-import rxf.couch.Rfc822HeaderState.HttpResponse;
+import rxf.core.Rfc822HeaderState.HttpRequest;
+import rxf.core.Rfc822HeaderState.HttpResponse;
 import rxf.couch.an.DbKeys;
 import rxf.couch.an.DbKeys.etype;
 import rxf.couch.an.DbTask;
@@ -38,7 +40,7 @@ import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpHeaders.*;
 import static one.xio.HttpMethod.*;
-import static rxf.couch.BlobAntiPatternObject.*;
+import static rxf.rpc.BlobAntiPatternObject.*;
 import static rxf.couch.DbTerminal.*;
 import static rxf.couch.an.DbKeys.etype.*;
 
@@ -82,7 +84,7 @@ public enum CouchMetaDriver {
       //          .headerString(Content$2dLength, "0")
       //          .asRequestHeaderByteBuffer();
       final SocketChannel channel = createCouchConnection();
-      rxf.couch.Server.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
+      rxf.core.Server.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
           // *******************************
           // pathological buffersize traits
           // *******************************
@@ -123,7 +125,7 @@ public enum CouchMetaDriver {
                       header = null;
 
                       if (DEBUG_SENDJSON) {
-                          System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, rxf.couch.Server.UTF8
+                          System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, rxf.core.Server.UTF8
                                   .decode((ByteBuffer) cursor.duplicate().rewind())));
                       }
 
@@ -188,7 +190,7 @@ public enum CouchMetaDriver {
 
       final SocketChannel channel = createCouchConnection();
 
-      rxf.couch.Server.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
+      rxf.core.Server.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
           final HttpRequest request = actionBuilder.state().$req();
           ByteBuffer header =
                   (ByteBuffer) request.method(DELETE).pathResCode("/" + dbKeysBuilder.get(db)).as(
@@ -222,7 +224,7 @@ public enum CouchMetaDriver {
                       header = null;
 
                       if (DEBUG_SENDJSON) {
-                          System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, rxf.couch.Server.UTF8
+                          System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, rxf.core.Server.UTF8
                                   .decode((ByteBuffer) cursor.duplicate().rewind())));
                       }
 
@@ -286,7 +288,7 @@ public enum CouchMetaDriver {
 
       final SocketChannel channel = createCouchConnection();
       final Phaser phaser = new Phaser(2);
-      rxf.couch.Server.enqueue(channel, OP_CONNECT | OP_WRITE, new Impl() {
+      rxf.core.Server.enqueue(channel, OP_CONNECT | OP_WRITE, new Impl() {
           // *******************************
           // *******************************
           // pathological buffersize traits
@@ -337,7 +339,7 @@ public enum CouchMetaDriver {
                       header = null;
 
                       if (DEBUG_SENDJSON) {
-                          System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, this, rxf.couch.Server.UTF8
+                          System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, this, rxf.core.Server.UTF8
                                   .decode((ByteBuffer) cursor.duplicate().rewind())));
                       }
 
@@ -401,7 +403,7 @@ public enum CouchMetaDriver {
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
       final SocketChannel channel = createCouchConnection();
       final Phaser phaser = new Phaser(2);
-      rxf.couch.Server.enqueue(channel, OP_CONNECT | OP_WRITE, new Impl() {
+      rxf.core.Server.enqueue(channel, OP_CONNECT | OP_WRITE, new Impl() {
           // *******************************
           // *******************************
           // pathological buffersize traits
@@ -442,11 +444,11 @@ public enum CouchMetaDriver {
                       if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response.headerBuf())) {
                           try {
                               if (DEBUG_SENDJSON) {
-                                  System.err.println(ProtocolMethodDispatch.deepToString("??? ", rxf.couch.Server.UTF8.decode((ByteBuffer) flip
+                                  System.err.println(ProtocolMethodDispatch.deepToString("??? ", rxf.core.Server.UTF8.decode((ByteBuffer) flip
                                           .duplicate().rewind())));
                               }
                               if (response.statusEnum() == HttpStatus.$200) {
-                                  payload.set(rxf.couch.Server.UTF8.encode(response.dequotedHeader(ETag.getHeader())));
+                                  payload.set(rxf.core.Server.UTF8.encode(response.dequotedHeader(ETag.getHeader())));
                               } else {//error message, pass null back to indicate no rev
                                   payload.set(null);
                               }
@@ -508,7 +510,7 @@ public enum CouchMetaDriver {
       final AtomicReference<ByteBuffer> payload = new AtomicReference<ByteBuffer>();
       final Phaser phaser = new Phaser(2);
       final SocketChannel channel = createCouchConnection();
-      rxf.couch.Server.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
+      rxf.core.Server.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
 
           // *******************************
           // *******************************
@@ -558,7 +560,7 @@ public enum CouchMetaDriver {
                       header = null;
 
                       if (DEBUG_SENDJSON) {
-                          System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, rxf.couch.Server.UTF8
+                          System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, rxf.core.Server.UTF8
                                   .decode((ByteBuffer) cursor.duplicate().rewind())));
                       }
 
@@ -626,7 +628,7 @@ public enum CouchMetaDriver {
       final String db = scrub('/' + (String) dbKeysBuilder.get(etype.db));
       Class type = (Class) dbKeysBuilder.get(etype.type);
       final SocketChannel channel = createCouchConnection();
-      rxf.couch.Server.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
+      rxf.core.Server.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
 
           /**
            * holds un-rewound raw buffers.  must potentially be backtracked to fulfill CE_TERMINAL.length token check under pathological fragmentation
@@ -711,13 +713,13 @@ public enum CouchMetaDriver {
                   ByteBuffer currentBuff = response.headerBuf();
                   if (!Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, currentBuff)) {
                       //not enough content to finish loading headers, wait for more
-                      rxf.couch.Server.getSelector().wakeup();
+                      rxf.core.Server.getSelector().wakeup();
                       return;
                   }
                   cursor = (ByteBuffer) flip.slice();
                   actionBuilder.state(response);
                   if (DEBUG_SENDJSON) {
-                      System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, rxf.couch.Server.UTF8
+                      System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, rxf.core.Server.UTF8
                               .decode((ByteBuffer) cursor.duplicate().rewind())));
                   }
 
@@ -806,14 +808,14 @@ public enum CouchMetaDriver {
         ByteBuffer put = outbound.put(byteBuffer);
       }
       if (DEBUG_SENDJSON) {
-        System.err.println(rxf.couch.Server.UTF8.decode((ByteBuffer) outbound.duplicate().flip()));
+        System.err.println(rxf.core.Server.UTF8.decode((ByteBuffer) outbound.duplicate().flip()));
       }
       ByteBuffer src = ((ByteBuffer) outbound.rewind()).duplicate();
       int endl = 0;
       while (sum > 0 && src.hasRemaining()) {
         if (DEBUG_SENDJSON)
           System.err.println("outbound:----\n"
-                  + rxf.couch.Server.UTF8.decode(outbound.duplicate()).toString() + "\n----");
+                  + rxf.core.Server.UTF8.decode(outbound.duplicate()).toString() + "\n----");
 
         byte b = 0;
         boolean first = true;
@@ -823,7 +825,7 @@ public enum CouchMetaDriver {
           }
 
         int i =
-                Integer.parseInt(rxf.couch.Server.UTF8.decode((ByteBuffer) src.duplicate().flip()).toString()
+                Integer.parseInt(rxf.core.Server.UTF8.decode((ByteBuffer) src.duplicate().flip()).toString()
                         .trim(), 0x10);
         src = ((ByteBuffer) src.compact().position(i)).slice();
         endl += i;
@@ -835,7 +837,7 @@ public enum CouchMetaDriver {
       ByteBuffer retval = (ByteBuffer) outbound.clear().limit(endl);
 
       if (DEBUG_SENDJSON) {
-        System.err.println(rxf.couch.Server.UTF8.decode(retval.duplicate()));
+        System.err.println(rxf.core.Server.UTF8.decode(retval.duplicate()));
       }
       return retval;
     }
@@ -874,7 +876,7 @@ public enum CouchMetaDriver {
       validjson = validjson == null ? "{}" : validjson;
 
       Rfc822HeaderState state = actionBuilder.state();
-      final byte[] outbound = validjson.getBytes(rxf.couch.Server.UTF8);
+      final byte[] outbound = validjson.getBytes(rxf.core.Server.UTF8);
 
       HttpMethod method =
           1 == slashCounter
@@ -889,11 +891,11 @@ public enum CouchMetaDriver {
               .headerString(Content$2dLength, String.valueOf(outbound.length)).headerString(Accept,
                   MimeType.json.contentType).as(ByteBuffer.class);
       if (DEBUG_SENDJSON) {
-        System.err.println(ProtocolMethodDispatch.deepToString(opaque, validjson, rxf.couch.Server.UTF8.decode(header.duplicate()), state));
+        System.err.println(ProtocolMethodDispatch.deepToString(opaque, validjson, rxf.core.Server.UTF8.decode(header.duplicate()), state));
       }
       final SocketChannel channel = createCouchConnection();
       final String finalOpaque = opaque;
-      rxf.couch.Server.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
+      rxf.core.Server.enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
 
           // *******************************
           // *******************************
@@ -949,7 +951,7 @@ public enum CouchMetaDriver {
                       header = null;
 
                       if (DEBUG_SENDJSON) {
-                          System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, rxf.couch.Server.UTF8
+                          System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, rxf.core.Server.UTF8
                                   .decode((ByteBuffer) cursor.duplicate().rewind())));
                       }
 
@@ -1031,13 +1033,13 @@ public enum CouchMetaDriver {
       String rev = (String) dbKeysBuilder.get(etype.rev);
       String attachname = dbKeysBuilder.get(etype.attachname);
       final String sb =
-          scrub('/' + db + '/' + docId + '/' + URLEncoder.encode(attachname, rxf.couch.Server.UTF8.displayName())
+          scrub('/' + db + '/' + docId + '/' + URLEncoder.encode(attachname, rxf.core.Server.UTF8.displayName())
               + "?rev=" + rev);
 
       final String ctype = x;
       final SocketChannel channel = createCouchConnection();
       final AtomicReference<ByteBuffer> res = new AtomicReference<ByteBuffer>();
-      rxf.couch.Server.enqueue(channel, OP_WRITE, new Impl() {
+      rxf.core.Server.enqueue(channel, OP_WRITE, new Impl() {
           @Override
           public void onWrite(SelectionKey key) throws Exception {
 
@@ -1138,7 +1140,7 @@ public enum CouchMetaDriver {
     }
 
   };
-  public static final byte[] CE_TERMINAL = "\n0\r\n\r\n".getBytes(rxf.couch.Server.UTF8);
+  public static final byte[] CE_TERMINAL = "\n0\r\n\r\n".getBytes(rxf.core.Server.UTF8);
   //"premature optimization" s/mature/view/
   public static final String[] STATIC_VF_HEADERS =
       Rfc822HeaderState.staticHeaderStrings(ETag, Content$2dLength, Transfer$2dEncoding);
