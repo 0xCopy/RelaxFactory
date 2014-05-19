@@ -5,8 +5,8 @@ import com.google.common.hash.Hashing;
 import javolution.util.FastMap;
 import one.xio.AsioVisitor;
 import one.xio.MimeType;
-import rxf.server.Server;
-import rxf.server.gen.CouchDriver;
+import rxf.couch.Server;
+import rxf.couch.gen.CouchDriver;
 import rxf.web.inf.ProtocolMethodDispatch;
 import rxf.shared.CouchTx;
 
@@ -22,8 +22,8 @@ import java.util.concurrent.TimeUnit;
 import static com.google.common.io.BaseEncoding.base64;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.nio.file.StandardWatchEventKinds.*;
-import static rxf.server.driver.CouchMetaDriver.gson;
-import static rxf.server.Config.get;
+import static rxf.couch.driver.CouchMetaDriver.gson;
+import static rxf.couch.Config.get;
 
 /**
  * Example to watch a directory (or createTree) for changes to files.
@@ -389,7 +389,7 @@ public class FileWatcher {
   }
 
   static {//boilerplate
-    System.setProperty("rxf.server.realtime.unit", TimeUnit.MINUTES.name());
+    System.setProperty("rxf.couch.realtime.unit", TimeUnit.MINUTES.name());
     SCHEDULED_EXECUTOR_SERVICE.submit(new Runnable() {
       public void run() {
         //class initializers fire here

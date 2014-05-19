@@ -3,9 +3,9 @@ package rxf.web.inf;
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpStatus;
 import one.xio.MimeType;
-import rxf.server.*;
-import rxf.server.Rfc822HeaderState.HttpRequest;
-import rxf.server.Rfc822HeaderState.HttpResponse;
+import rxf.couch.*;
+import rxf.couch.Rfc822HeaderState.HttpRequest;
+import rxf.couch.Rfc822HeaderState.HttpResponse;
 import rxf.shared.CompressionTypes;
 import rxf.shared.PreRead;
 

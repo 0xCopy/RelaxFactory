@@ -3,9 +3,9 @@ package rxf.web.inf;
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpMethod;
 import rxf.shared.PreRead;
-import rxf.server.Rfc822HeaderState;
-import rxf.server.Rfc822HeaderState.HttpRequest;
-import rxf.server.Server;
+import rxf.couch.Rfc822HeaderState;
+import rxf.couch.Rfc822HeaderState.HttpRequest;
+import rxf.couch.Server;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -24,12 +24,12 @@ import static java.lang.StrictMath.min;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static one.xio.HttpMethod.GET;
 import static one.xio.HttpMethod.POST;
-import static rxf.server.CouchNamespace.NAMESPACE;
+import static rxf.couch.CouchNamespace.NAMESPACE;
 
 /**
  * this class holds a protocol namespace to dispatch requests
  * <p/>
- * {@link  rxf.server.CouchNamespace#NAMESPACE } is a  map of http methods each containing an ordered map of regexes tested in order of
+ * {@link  rxf.couch.CouchNamespace#NAMESPACE } is a  map of http methods each containing an ordered map of regexes tested in order of
  * map insertion.
  * <p/>
  * User: jim
@@ -73,7 +73,7 @@ public class ProtocolMethodDispatch extends Impl {
 // retired    GETmap.put(passthroughExpr, HttpProxyImpl.class/*(passthroughExpr)*/);
 
     /**
-     * general purpose httpd static content server that recognizes .gz and other compression suffixes when convenient
+     * general purpose httpd static content couch that recognizes .gz and other compression suffixes when convenient
      *
      * any random config mechanism with a default will suffice here to define the content root.
      *

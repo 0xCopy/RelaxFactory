@@ -1,7 +1,7 @@
 package rxf.web.inf;
 
 import one.xio.HttpHeaders;
-import rxf.server.DateHeaderParser;
+import rxf.couch.DateHeaderParser;
 
 import java.nio.channels.SelectionKey;
 import java.util.Date;

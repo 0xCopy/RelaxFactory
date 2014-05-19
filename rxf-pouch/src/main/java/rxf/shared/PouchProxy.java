@@ -355,12 +355,12 @@ public class PouchProxy extends JavaScriptObject {
     Set<String> getDoc_ids();
 
     /**
-     * Initialize the replication on the server. The response is the CouchDB POST _replicate response and is different from the PouchDB replication response. Also, Splittable get_onChange is not supported on server replications.
+     * Initialize the replication on the couch. The response is the CouchDB POST _replicate response and is different from the PouchDB replication response. Also, Splittable get_onChange is not supported on couch replications.
      */
     Boolean getServer();
 
     /**
-     * Create target database if it does not exist. Only for server replications.
+     * Create target database if it does not exist. Only for couch replications.
      */
     Boolean getCreateTarget();
 

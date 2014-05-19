@@ -130,7 +130,7 @@
         <module>rxf-pouch</module>
         <module>rxf-core</module>
         <module>rxf-rpc</module>
-        <module>rxf-server</module>
+        <module>rxf-couch</module>
         <module>rxf-guice</module>
         <module>rxf-rsync</module>
   </modules>
