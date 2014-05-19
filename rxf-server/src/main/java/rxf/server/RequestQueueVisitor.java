@@ -31,7 +31,8 @@ import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
  * Date: 6/3/12
  * Time: 7:42 PM
  */
-public class RequestQueueVisitor extends Impl implements PreRead, SerializationPolicyProvider {
+@PreRead
+public class RequestQueueVisitor extends Impl implements SerializationPolicyProvider {
 
   private HttpRequest req;
   private ByteBuffer cursor = null;

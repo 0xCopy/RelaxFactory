@@ -34,14 +34,6 @@ public interface AsioVisitor {
         $origins.put(this, ProtocolMethodDispatch.wheresWaldo(4));
     }
 
-    public Impl preRead(Object... env) {
-      return this;
-    }
-
-    public Impl preWrite(Object... env) {
-      return this;
-    }
-
     @Override
     public void onRead(SelectionKey key) throws Exception {
       System.err.println("fail: " + key.toString());

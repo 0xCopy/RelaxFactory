@@ -17,7 +17,8 @@ import static one.xio.HttpMethod.UTF8;
  * this visitor shovels data from the outward selector to the inward selector, and vice versa.  once the headers are
  * sent inward the only state monitored is when one side of the connections close.
  */
-public class HttpPipeVisitor extends AsioVisitor.Impl implements PreRead {
+@PreRead
+public class HttpPipeVisitor extends AsioVisitor.Impl {
   public static final boolean PROXY_DEBUG =
       "true".equals(RxfBootstrap.getVar("PROXY_DEBUG", String.valueOf(false)));
   final private ByteBuffer[] b;

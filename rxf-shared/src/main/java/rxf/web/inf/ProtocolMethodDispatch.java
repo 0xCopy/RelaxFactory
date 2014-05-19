@@ -158,7 +158,7 @@ public class ProtocolMethodDispatch extends Impl {
         impl = value.newInstance();
         Object a[] = {impl, httpRequest, cursor};
         key.attach(a);
-        if (PreRead.class.isAssignableFrom(value)) impl.onRead(key);
+        if (value.isAnnotationPresent(PreRead.class)) impl.onRead(key);
         key.selector().wakeup();
         return;
       }

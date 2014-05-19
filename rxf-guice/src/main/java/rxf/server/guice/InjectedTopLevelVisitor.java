@@ -99,7 +99,7 @@ public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
 
         Object a[] = {visitor, httpRequest, cursor};
         key.attach(a);
-        if (visitor instanceof PreRead) {
+        if (visitor.getClass().isAnnotationPresent(PreRead.class)) {
           visitor.onRead(key);
         }
 
