@@ -600,7 +600,7 @@ public class Rfc822HeaderState {
                     && Character.isWhitespace(((ByteBuffer) outBuf.mark()).get())) {
                 }
                 outBuf.reset();//ltrim()
-                ret = new Pair<ByteBuffer, Pair<ByteBuffer, ? extends Pair>>(outBuf, ret);
+                ret = new Pair<ByteBuffer, Pair>(outBuf, ret);
                 break;
               }
             }

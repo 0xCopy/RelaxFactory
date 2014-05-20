@@ -300,7 +300,7 @@ public class FileWatcher {
         }
       }
       if (changed) {
-        CouchTx tx = CouchDriver.DocPersist.$().db(FILEWATCHER_DB).validjson(gson().toJson(x)).to().fire().tx();
+          CouchDriver.DocPersist.$().db(FILEWATCHER_DB).validjson(gson().toJson(x)).to().fire().tx();
       }
     }
   }

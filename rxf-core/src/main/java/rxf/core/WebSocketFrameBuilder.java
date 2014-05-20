@@ -6,7 +6,7 @@ public class WebSocketFrameBuilder {
   private byte[] maskingKey = null;
   private long payloadLength = 0;
   private boolean isMasked = false;
-  private WebSocketHeader.OpCode opcode = WebSocketHeader.OpCode.text;
+  private WebSocketFrame.OpCode opcode = WebSocketFrame.OpCode.text;
   private boolean isFin = true;
 
   public WebSocketFrameBuilder setMaskingKey(byte[] maskingKey) {
@@ -38,7 +38,7 @@ public class WebSocketFrameBuilder {
     return this;
   }
 
-  public WebSocketFrameBuilder setOpcode(WebSocketHeader.OpCode opcode) {
+  public WebSocketFrameBuilder setOpcode(WebSocketFrame.OpCode opcode) {
     this.opcode = opcode;
     return this;
   }
@@ -48,7 +48,7 @@ public class WebSocketFrameBuilder {
     return this;
   }
 
-  public WebSocketHeader createWebSocketFrame() {
-    return new WebSocketHeader(maskingKey, payloadLength, isMasked, opcode, isFin);
+  public WebSocketFrame createWebSocketFrame() {
+    return new WebSocketFrame(maskingKey, payloadLength, isMasked, opcode, isFin);
   }
 }

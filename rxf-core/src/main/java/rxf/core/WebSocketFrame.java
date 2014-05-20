@@ -136,14 +136,14 @@ import java.nio.ByteBuffer;
  * </pre>
  */
 
-public class WebSocketHeader {
+public class WebSocketFrame {
   public byte[] maskingKey;
   public long payloadLength;
   public boolean isMasked;
   public OpCode opcode;
   public boolean isFin;
 
-  public WebSocketHeader(byte[] maskingKey, long payloadLength, boolean isMasked, OpCode opcode,
+  public WebSocketFrame(byte[] maskingKey, long payloadLength, boolean isMasked, OpCode opcode,
       boolean isFin) {
     this.maskingKey = maskingKey;
     this.payloadLength = payloadLength;
