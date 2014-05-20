@@ -16,7 +16,7 @@
         </dependency>
         <dependency>
             <groupId>rxf</groupId>
-            <artifactId>rxf-server</artifactId>
+            <artifactId>rxf-couch</artifactId>
             <version>${project.version}</version>
         </dependency>
         <!-- Test-only dependency to make sure rf wiring via guice works -->

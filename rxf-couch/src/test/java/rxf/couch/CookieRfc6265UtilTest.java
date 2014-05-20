@@ -104,7 +104,7 @@ public class CookieRfc6265UtilTest {
     ByteBuffer buf = (ByteBuffer) UTF8.encode(H1).rewind();
     buf.toString();
 
-    Rfc822HeaderState apply = ActionBuilder.get().state().apply(buf);
+    Rfc822HeaderState apply = ActionBuilder.get().state().read(buf);
     List<String> headersNamed = apply.$req().getHeadersNamed(HttpHeaders.Cookie);
     assertEquals(TMID_8627085284984078588, headersNamed.iterator().next());
 
@@ -115,7 +115,7 @@ public class CookieRfc6265UtilTest {
     ByteBuffer buf = (ByteBuffer) UTF8.encode(H2).rewind();
     buf.toString();
 
-    Rfc822HeaderState apply = ActionBuilder.get().state().apply(buf);
+    Rfc822HeaderState apply = ActionBuilder.get().state().read(buf);
     List<String> headersNamed = apply.$req().getHeadersNamed(HttpHeaders.Cookie);
     Iterator<String> iterator = headersNamed.iterator();
     assertEquals(TMID_8627085284984078588, iterator.next());
@@ -127,7 +127,7 @@ public class CookieRfc6265UtilTest {
     ByteBuffer buf = (ByteBuffer) UTF8.encode(H3).rewind();
     buf.toString();
 
-    Rfc822HeaderState apply = ActionBuilder.get().state().apply(buf);
+    Rfc822HeaderState apply = ActionBuilder.get().state().read(buf);
     List<String> headersNamed = apply.$req().getHeadersNamed("P3P");
     Iterator<String> iterator = headersNamed.iterator();
     assertEquals(FB_P3P_POLICY, iterator.next());
@@ -137,7 +137,7 @@ public class CookieRfc6265UtilTest {
   public void testFilteredCookies() {
     ByteBuffer buf = (ByteBuffer) UTF8.encode(H4).rewind();
 
-    Rfc822HeaderState apply = ActionBuilder.get().state().apply(buf);
+    Rfc822HeaderState apply = ActionBuilder.get().state().read(buf);
     Pair<ByteBuffer, ? extends Pair> byteBufferPair =
         apply.headerExtract(HttpHeaders.Cookie.getToken());
     assertNotNull(byteBufferPair);
@@ -160,7 +160,7 @@ public class CookieRfc6265UtilTest {
   public void testGiantCookies() {
     ByteBuffer buf = (ByteBuffer) UTF8.encode(H4).rewind();
 
-    Rfc822HeaderState apply = ActionBuilder.get().state().apply(buf);
+    Rfc822HeaderState apply = ActionBuilder.get().state().read(buf);
     Pair<ByteBuffer, ? extends Pair> byteBufferPair =
         apply.headerExtract(HttpHeaders.Cookie.getToken());
     assertNotNull(byteBufferPair);
@@ -182,7 +182,7 @@ public class CookieRfc6265UtilTest {
   public void testParseSetCookies() {
     ByteBuffer buf = (ByteBuffer) UTF8.encode(H5).rewind();
 
-    Rfc822HeaderState.HttpResponse apply = ActionBuilder.get().state().apply(buf).$res();
+    Rfc822HeaderState.HttpResponse apply = ActionBuilder.get().state().read(buf).$res();
 
     Pair<ByteBuffer, ? extends Pair> byteBufferPair =
         apply.headerExtract(HttpHeaders.Set$2dCookie.getToken());

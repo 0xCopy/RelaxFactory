@@ -70,7 +70,7 @@ public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
     HttpRequest httpRequest = null;
     try {
       //find the method to dispatch
-      Rfc822HeaderState state = new Rfc822HeaderState().apply((ByteBuffer) cursor.flip());
+      Rfc822HeaderState state = new Rfc822HeaderState().read((ByteBuffer) cursor.flip());
       httpRequest = state.$req();
       if (isDEBUG_SENDJSON()) {
         System.err.println(ProtocolMethodDispatch.deepToString(UTF8.decode((ByteBuffer) httpRequest

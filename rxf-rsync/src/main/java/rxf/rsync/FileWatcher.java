@@ -6,6 +6,7 @@ import javolution.util.FastMap;
 import one.xio.AsioVisitor;
 import one.xio.MimeType;
 import rxf.core.Server;
+import rxf.couch.driver.CouchMetaDriver;
 import rxf.couch.gen.CouchDriver;
 import rxf.web.inf.ProtocolMethodDispatch;
 import rxf.shared.CouchTx;
@@ -22,8 +23,8 @@ import java.util.concurrent.TimeUnit;
 import static com.google.common.io.BaseEncoding.base64;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.nio.file.StandardWatchEventKinds.*;
-import static rxf.couch.driver.CouchMetaDriver.gson;
 import static rxf.core.Config.get;
+import static rxf.couch.driver.CouchMetaDriver.gson;
 
 /**
  * Example to watch a directory (or createTree) for changes to files.
@@ -307,7 +308,7 @@ public class FileWatcher {
   public void provision() {
     System.out.println("FileWatcher.provision()");
     String json = CouchDriver.DocFetch.$().db(FILEWATCHER_DB).docId(FILEWATCHER_DOCID).to().fire().json();
-    TreeMap x = gson().fromJson(json, TreeMap.class);
+    TreeMap x = gson() .fromJson(json, TreeMap.class);
     if (null == x) {
       x = new TreeMap<>();
       x.put("_id", FILEWATCHER_DOCID);

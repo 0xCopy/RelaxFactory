@@ -57,7 +57,7 @@ public class GwtRequestFactoryVisitor extends Impl {
     if (read == -1)
       key.cancel();
     Buffer flip = cursor.duplicate().flip();
-    req = (HttpRequest) req.headerInterest(HttpHeaders.Content$2dLength).apply((ByteBuffer) flip);
+    req = (HttpRequest) req.headerInterest(HttpHeaders.Content$2dLength).read((ByteBuffer) flip);
     if (!Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, req
         .headerBuf())) {
       return;

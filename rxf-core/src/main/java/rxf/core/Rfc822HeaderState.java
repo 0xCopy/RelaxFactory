@@ -35,7 +35,7 @@ import static java.util.Arrays.asList;
  * {@link ByteBuffer} as needed (still cheap)
  * <p/>
  * preload addHeaderInterest and cookies, send $res
- * and HttpRequest initial onRead for .apply()
+ * and HttpRequest initial onRead for .read()
  * <p/>
  * <p/>
  * <p/>
@@ -626,7 +626,7 @@ public class Rfc822HeaderState {
    * @param cursor
    * @return this
    */
-  public Rfc822HeaderState apply(ByteBuffer cursor) {
+  public Rfc822HeaderState read(ByteBuffer cursor) {
     if (!cursor.hasRemaining()) {
       cursor.flip();
     }
@@ -654,7 +654,8 @@ public class Rfc822HeaderState {
     headerBuf = null;
     boolean wantsCookies = null != cookies;
     boolean wantsHeaders = wantsCookies || 0 < headerInterest.get().length;
-    headerBuf = (ByteBuffer) moveCaretToDoubleEol(cursor).duplicate().flip();
+    moveCaretToDoubleEol(cursor);
+    headerBuf = (ByteBuffer) (cursor).duplicate().flip();
     headerStrings().clear();
     if (wantsHeaders) {
       Map<String, int[]> headerMap = HttpHeaders.getHeaders((ByteBuffer) headerBuf.rewind());
@@ -672,6 +673,67 @@ public class Rfc822HeaderState {
 
     }
     return this;
+  }
+
+  /**
+   * direction-agnostic RFC822 header state is mapped from a ByteBuffer with tolerance for HTTP method and results in the first line.
+   * <p/>
+   * {@link #headerInterest } contains a list of addHeaderInterest that will be converted to a {@link Map} and available via {@link Rfc822HeaderState#headerStrings()}
+   * <p/>
+   * currently this is  done inside of {@link ProtocolMethodDispatch } surrounding {@link com.google.web.bindery.requestfactory.server.SimpleRequestProcessor#process(String)}
+   *
+   * @param cursor
+   * @return false if buffer is not terminated by EOL+EOL
+   */
+  public boolean apply(ByteBuffer cursor) {
+    if (!cursor.hasRemaining()) {
+      cursor.flip();
+    }
+    int anchor = cursor.position();
+    ByteBuffer slice = cursor.duplicate().slice();
+    while (slice.hasRemaining() && SPC != slice.get()) {
+    }
+    methodProtocol.set(Server.UTF8.decode((ByteBuffer) slice.flip()).toString().trim());
+
+    while (cursor.hasRemaining() && SPC != cursor.get()) {
+      //method/proto
+    }
+    slice = cursor.slice();
+    while (slice.hasRemaining() && SPC != slice.get()) {
+    }
+    pathRescode.set(Server.UTF8.decode((ByteBuffer) slice.flip()).toString().trim());
+
+    while (cursor.hasRemaining() && SPC != cursor.get()) {
+    }
+    slice = cursor.slice();
+    while (slice.hasRemaining() && LF != slice.get()) {
+    }
+    protocolStatus.set(Server.UTF8.decode((ByteBuffer) slice.flip()).toString().trim());
+
+    headerBuf = null;
+    boolean wantsCookies = null != cookies;
+    boolean wantsHeaders = wantsCookies || 0 < headerInterest.get().length;
+
+    if (moveCaretToDoubleEol(cursor)) {
+      headerBuf = (ByteBuffer) (cursor).duplicate().flip();
+      headerStrings().clear();
+      if (wantsHeaders) {
+        Map<String, int[]> headerMap = HttpHeaders.getHeaders((ByteBuffer) headerBuf.rewind());
+        headerStrings.set(new LinkedHashMap<String, String>());
+        for (String o : headerInterest.get()) {
+          int[] o1 = headerMap.get(o);
+          if (null != o1) {
+            headerStrings.get().put(
+                o,
+                Server.UTF8.decode(
+                    (ByteBuffer) headerBuf.duplicate().clear().position(o1[0]).limit(o1[1]))
+                    .toString().trim());
+          }
+        }
+        return true;
+      }
+    }
+    return false;
   }
 
   public Rfc822HeaderState headerInterest(HttpHeaders... replaceInterest) {
@@ -957,7 +1019,7 @@ public class Rfc822HeaderState {
     return sourceKey.get(); //To change body of created methods use File | Settings | File Templates.
   }
 
-  public static ByteBuffer moveCaretToDoubleEol(ByteBuffer buffer) {
+  public static boolean moveCaretToDoubleEol(ByteBuffer buffer) {
     int distance;
     int eol = buffer.position();
 
@@ -967,8 +1029,8 @@ public class Rfc822HeaderState {
       eol = buffer.position();
       distance = abs(eol - prev);
       if (2 == distance && CR == buffer.get(eol - 2))
-        break;
+        return true;
     } while (buffer.hasRemaining() && 1 < distance);
-    return buffer;
+    return false;
   }
 }

@@ -128,7 +128,7 @@ public class ProtocolMethodDispatch extends Impl {
     HttpRequest httpRequest = null;
     try {
       //find the method to dispatch
-      Rfc822HeaderState state = new Rfc822HeaderState().apply((ByteBuffer) cursor.flip());
+      Rfc822HeaderState state = new Rfc822HeaderState().read((ByteBuffer) cursor.flip());
       httpRequest = state.$req();
       if ( DEBUG_SENDJSON) {
         System.err.println( deepToString(Server.UTF8.decode((ByteBuffer) httpRequest

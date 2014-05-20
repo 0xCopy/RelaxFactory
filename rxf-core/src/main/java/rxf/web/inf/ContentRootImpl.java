@@ -91,7 +91,7 @@ public class ContentRootImpl extends Impl {
 
     req =
         (HttpRequest) new Rfc822HeaderState().addHeaderInterest(Accept$2dEncoding,
-            If$2dModified$2dSince, If$2dUnmodified$2dSince).$req().apply((ByteBuffer) flip);
+            If$2dModified$2dSince, If$2dUnmodified$2dSince).$req().read((ByteBuffer) flip);
     if (!Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, req
         .headerBuf())) {
       return;

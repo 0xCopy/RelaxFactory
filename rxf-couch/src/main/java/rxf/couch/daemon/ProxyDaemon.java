@@ -98,7 +98,7 @@ public class ProxyDaemon extends AsioVisitor.Impl {
               return;
             default:
               Rfc822HeaderState.HttpResponse httpResponse =
-                  new Rfc822HeaderState().headerInterest(HttpHeaders.Content$2dLength).apply(
+                  new Rfc822HeaderState().headerInterest(HttpHeaders.Content$2dLength).read(
                       (ByteBuffer) getInBuffer().duplicate().flip()).$res();
               //              if (BlobAntiPatternObject.suffixMatchChunks(TERMINATOR, httpResponse.headerBuf()
               //                                .duplicate())) ;
@@ -133,7 +133,7 @@ public class ProxyDaemon extends AsioVisitor.Impl {
         l = System.nanoTime();
       Rfc822HeaderState.HttpRequest req =
           (Rfc822HeaderState.HttpRequest) new Rfc822HeaderState().$req().headerInterest(
-              HttpHeaders.Host).apply((ByteBuffer) cursor.duplicate().flip());
+              HttpHeaders.Host).read((ByteBuffer) cursor.duplicate().flip());
       ByteBuffer headersBuf = req.headerBuf();
       if (Rfc822HeaderState.suffixMatchChunks(TERMINATOR, headersBuf)) {
 

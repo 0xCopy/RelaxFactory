@@ -50,7 +50,7 @@ public class Rfc822HeaderStateTest {
 
     Rfc822HeaderState state = new Rfc822HeaderState();
     state.addHeaderInterest("Server");
-    state.apply(simpleResponse);
+    state.read(simpleResponse);
 
     final String actual = state.methodProtocol();
     assertEquals("HTTP/1.0", actual);
@@ -70,7 +70,7 @@ public class Rfc822HeaderStateTest {
                 .getBytes(UTF8));
 
     Rfc822HeaderState state = new Rfc822HeaderState("Content-Type");
-    state.apply(simpleRequest);
+    state.read(simpleRequest);
 
     assertEquals("GET", state.methodProtocol());
     assertEquals("/file/from/path.suffix", state.pathResCode());
@@ -94,7 +94,7 @@ public class Rfc822HeaderStateTest {
 
     Rfc822HeaderState.HttpRequest httpRequest =
         ActionBuilder.get().state().$req().cookieInterest("SAPISID", "SSID");
-    httpRequest.apply(buf);
+    httpRequest.read(buf);
 
     Map<String, String> cookies = httpRequest.getCookies("SAPISID", "SSID");
     assertEquals(String.valueOf(cookies),

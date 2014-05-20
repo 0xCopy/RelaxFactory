@@ -142,8 +142,8 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.0</version>
                     <configuration>
-                        <source>1.8</source>
-                        <target>1.8</target>
+                        <source>1.7</source>
+                        <target>1.7</target>
 <!--
                         <source>${java.specification.version}</source>
                         <target>${java.specification.version}</target>
@@ -155,7 +155,7 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-site-plugin</artifactId>
                     <version>3.2</version>
-                </plugin>
+                </plugin><!-- unmaintained?
                 <plugin>
                     <groupId>com.googlecode</groupId>
                     <artifactId>maven-idea-plugin</artifactId>
@@ -174,7 +174,7 @@
                         <autoscrollFromSource>true</autoscrollFromSource>
                         <hideEmptyPackages>false</hideEmptyPackages>
                     </configuration>
-                </plugin>
+                </plugin>-->
             </plugins>
         </pluginManagement>
         <plugins>

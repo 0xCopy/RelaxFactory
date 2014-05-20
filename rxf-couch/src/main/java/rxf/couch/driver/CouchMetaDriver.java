@@ -118,7 +118,7 @@ public enum CouchMetaDriver {
 
                   int read = channel.read(header);
                   ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
-                  response.apply((ByteBuffer) flip);
+                  response.read((ByteBuffer) flip);
 
                   if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response.headerBuf())) {
                       cursor = (ByteBuffer) flip.slice();
@@ -217,7 +217,7 @@ public enum CouchMetaDriver {
 
                   int read = channel.read(header);
                   ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
-                  response.apply((ByteBuffer) flip);
+                  response.read((ByteBuffer) flip);
 
                   if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response.headerBuf())) {
                       cursor = (ByteBuffer) flip.slice();
@@ -332,7 +332,7 @@ public enum CouchMetaDriver {
                   }
                   ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
                   HttpResponse response = request.headerInterest(STATIC_JSON_SEND_HEADERS).$res();
-                  response.apply((ByteBuffer) flip);
+                  response.read((ByteBuffer) flip);
 
                   if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response.headerBuf())) {
                       cursor = (ByteBuffer) flip.slice();
@@ -439,7 +439,7 @@ public enum CouchMetaDriver {
                   int read = channel.read(header);
                   if (-1 != read) {
                       ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
-                      response.apply((ByteBuffer) flip);
+                      response.read((ByteBuffer) flip);
 
                       if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response.headerBuf())) {
                           try {
@@ -553,7 +553,7 @@ public enum CouchMetaDriver {
                           break;
                   }
                   ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
-                  response.apply((ByteBuffer) flip);
+                  response.read((ByteBuffer) flip);
 
                   if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response.headerBuf())) {
                       cursor = (ByteBuffer) flip.slice();
@@ -708,7 +708,7 @@ public enum CouchMetaDriver {
                   ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
                   HttpResponse response =
                           (HttpResponse) new Rfc822HeaderState().$res().headerInterest(STATIC_VF_HEADERS);
-                  response.apply((ByteBuffer) flip);
+                  response.read((ByteBuffer) flip);
 
                   ByteBuffer currentBuff = response.headerBuf();
                   if (!Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, currentBuff)) {
@@ -944,7 +944,7 @@ public enum CouchMetaDriver {
                       channel.close();
                   }
                   ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
-                  response.apply((ByteBuffer) flip);
+                  response.read((ByteBuffer) flip);
 
                   if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response.headerBuf())) {
                       cursor = (ByteBuffer) flip.slice();
@@ -1058,7 +1058,7 @@ public enum CouchMetaDriver {
               int read = channel.read(byteBuffer[0]);
               HttpResponse httpResponse = request.$res();
 
-              Rfc822HeaderState apply = httpResponse.apply((ByteBuffer) byteBuffer[0].flip());
+              Rfc822HeaderState apply = httpResponse.read((ByteBuffer) byteBuffer[0].flip());
               HttpStatus httpStatus = httpResponse.statusEnum();
               switch (httpStatus) {
                   case $100:
@@ -1101,7 +1101,7 @@ public enum CouchMetaDriver {
                                   return;
                               }
                               ByteBuffer flip = (ByteBuffer) cursor.duplicate().flip();
-                              response.apply(flip);
+                              response.read(flip);
                               finish =
                                       Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response
                                               .headerBuf());
