@@ -7,6 +7,7 @@ import one.xio.HttpMethod;
 import one.xio.HttpStatus;
 
 import javax.xml.bind.DatatypeConverter;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -35,8 +36,9 @@ public class Rfc6455WsInitiator {
    * @param wsProto
    * @return a HttpResponse suitable for .as(String.class) or .as(ByteBuffer.class)
    */
-  Rfc822HeaderState parseInitiatorRequest(Rfc822HeaderState.HttpRequest httpRequest, URL ws_uri,
-      String host, String wsProto) throws URISyntaxException {
+  public Rfc822HeaderState.HttpResponse parseInitiatorRequest(
+      Rfc822HeaderState.HttpRequest httpRequest, URI ws_uri, String host, String wsProto)
+      throws URISyntaxException {
 
     HttpMethod httpMethod = HttpMethod.valueOf(httpRequest.method());
     switch (httpMethod) {
@@ -148,9 +150,9 @@ public class Rfc6455WsInitiator {
         headerStrings.put(Sec$2dWebSocket$2dProtocol.getHeader(), wsProto);
         headerStrings.put(Upgrade.getHeader(), "websocket");
         headerStrings.put(Connection.getHeader(), "Upgrade");
-        Rfc822HeaderState response1 =
+        Rfc822HeaderState.HttpResponse response1 =
             httpResponse.resCode(HttpStatus.$101).status(HttpStatus.$101).headerStrings(
-                headerStrings)
+                headerStrings).$res()
         /*.as(ByteBuffer.class)*/;
         System.err.println("sending back: " + httpResponse.as(String.class));
         return response1;
