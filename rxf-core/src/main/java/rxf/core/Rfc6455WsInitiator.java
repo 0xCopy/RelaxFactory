@@ -3,6 +3,7 @@ package rxf.core;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 import com.google.common.io.BaseEncoding;
+import one.xio.HttpHeaders;
 import one.xio.HttpMethod;
 import one.xio.HttpStatus;
 
@@ -23,7 +24,7 @@ public class Rfc6455WsInitiator {
    * <li>cursor is an unfinished ByteBuffer</li>
    * <li> exists with all the state needed from surrounding enclosures.
    * </ul>
-   * <p>
+   * <p/>
    * <pre>
    *
    * 2.   The method of the request MUST be GET,
@@ -41,51 +42,57 @@ public class Rfc6455WsInitiator {
       throws URISyntaxException {
 
     HttpMethod httpMethod = HttpMethod.valueOf(httpRequest.method());
+    String err = "wrong method.";
     switch (httpMethod) {
       case GET:
         String protocol = httpRequest.protocol();
         /*  and the HTTP version MUST
          * be at least 1.1.
          **/
-        if (!Rfc822HeaderState.HTTP_1_1.equals(protocol))
+        if (!Rfc822HeaderState.HTTP_1_1.equals(protocol)) {
+          err = "wrong protocol";
           break;
-        if (6 > httpRequest.headerStrings().size())
+        }
+        if (6 > httpRequest.headerStrings().size()) {
+          err = "quantity of request headers is not enough to pass.  ending early.";
           break;
+        }
 
         //6 MUST be present.
-        /* 3.   The "Request-URI" part of the request MUST match the /resource
-         * name/ defined in Section 3 (a relative URI) or be an absolute
-         * http/https URI that, when parsed, has a /resource name/, /host/,
-         * and /port/ that match the corresponding ws/wss URI.
-         *//* 4.   The request MUST contain a |Host| header field whose value
-           * contains /host/ plus optionally ":" followed by /port/ (when not
-           * using the default port).
+        /*  .   The request MUST contain a |Host| header field whose value
+         * contains /host/ plus optionally ":" followed by /port/ (when not
+         * using the default port).
 
-           */
-        String rhost = httpRequest.headerString(Host);
+         */
+        String rhost = httpRequest.headerString(HttpHeaders.Host);
         String path = httpRequest.path();
         if (null == rhost || rhost.isEmpty()
-            || !(rhost.startsWith(host) && path.startsWith(ws_uri.getPath())))
+            || !(rhost.startsWith(host) && path.startsWith(ws_uri.getPath()))) {
+          err =
+              "The \"Request-URI\" part of the request MUST match the /resource "
+                  + "name/ defined in Section 3 (a relative URI) or be an absolute "
+                  + "http/https URI that, when parsed, has a /resource name/, /host/, "
+                  + "and /port/ that match the corresponding ws/wss URI.";
           break;
+        }
 
-        /* 5.   The request MUST contain an |Upgrade| header field whose value
-         * MUST include the "websocket" keyword.
+        /* 5.   The request MUST contain an |Upgrade| header field whose value MUST include the "websocket" keyword.
          */
-        if (!httpRequest.headerString(Upgrade).contains("websocket"))
+        if (!httpRequest.headerString(Upgrade).contains("websocket")) {
+          err =
+              "The request MUST contain an |Upgrade| header field whose value MUST include the \"websocket\" keyword.";
           break;
-        /* 6.   The request MUST contain a |Connection| header field whose value
-         * MUST include the "Upgrade" token.
+        }
+        /* 6.
          *
          */
-        if (!httpRequest.headerString(Connection).contains("Upgrade"))
+        if (!httpRequest.headerString(Connection).contains("Upgrade")) {
+          err =
+              "The request MUST contain a |Connection| header field whose value MUST include the \"Upgrade\" token.";
           break;
+        }
 
-        /* 7.   The request MUST include a header field with the name
-         * |Sec-WebSocket-Key|.  The value of this header field MUST be a
-         * nonce consisting of a randomly selected 16-byte value that has
-         * been base64-encoded (see Section 4 of [RFC4648]).  The nonce
-         * MUST be selected randomly for each connection.
-         *
+        /* 7.   The request MUST include a header field with the name |Sec-WebSocket-Key|.  The value of this header field MUST be a nonce consisting of a randomly selected 16-byte value that has been base64-encoded (see Section 4 of [RFC4648]).  The nonce MUST be selected randomly for each connection.
          * NOTE: As an example, if the randomly selected value was the
          * sequence of bytes 0x01 0x02 0x03 0x04 0x05 0x06 0x07 0x08 0x09
          * 0x0a 0x0b 0x0c 0x0d 0x0e 0x0f 0x10, the value of the header
@@ -93,8 +100,11 @@ public class Rfc6455WsInitiator {
          */
         String wsKeyBase64 = httpRequest.headerString(Sec$2dWebSocket$2dKey);
         byte[] wsKey = DatatypeConverter.parseBase64Binary(wsKeyBase64);
-        if (wsKey.length != 16)
+        if (wsKey.length != 16) {
+          err =
+              "The request MUST include a header field with the name |Sec-WebSocket-Key|.  The value of this header field MUST be a nonce consisting of a randomly selected 16-byte value that has been base64-encoded (see Section 4 of [RFC4648]).  The nonce MUST be selected randomly for each connection.";
           break;
+        }
         /*            *
          * 8.   The request MUST include a header field with the name |Origin|
          * [RFC6454] if the request is coming from a browser client.  If
@@ -122,8 +132,10 @@ public class Rfc6455WsInitiator {
          * values for Sec-WebSocket-Version.  These values were reserved in
          * the IANA registry but were not and will not be used.
          */
-        if (13 != Integer.valueOf(httpRequest.headerString(Sec$2dWebSocket$2dVersion)))
+        if (13 != Integer.valueOf(httpRequest.headerString(HttpHeaders.Sec$2dWebSocket$2dVersion))) {
+          err = "this server only supports version 13 of ws initiator";
           break;
+        }
         Rfc822HeaderState.HttpResponse httpResponse = new Rfc822HeaderState().$res();
         Map<String, String> headerStrings = new TreeMap<String, String>();
         /* 4.  If the response lacks a |Sec-WebSocket-Accept| header field or
@@ -176,6 +188,16 @@ public class Rfc6455WsInitiator {
         break;
     }
 
-    return null;
+    return httpRequest.$res().status(HttpStatus.$401).status(err);
+  }
+
+  /**
+   * initiator requries at least 6 headers.  this will provide those.
+   *
+   * @return a request object with relevant interest
+   */
+  public static Rfc822HeaderState.HttpRequest req() {
+    return new Rfc822HeaderState().headerInterest(Connection, Host, Origin, Sec$2dWebSocket$2dKey,
+        Sec$2dWebSocket$2dProtocol, Sec$2dWebSocket$2dVersion, Upgrade).$req();
   }
 }

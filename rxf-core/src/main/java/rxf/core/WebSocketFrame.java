@@ -143,6 +143,10 @@ public class WebSocketFrame {
   public OpCode opcode;
   public boolean isFin;
 
+  public WebSocketFrame() {
+
+  }
+
   public WebSocketFrame(byte[] maskingKey, long payloadLength, boolean isMasked, OpCode opcode,
       boolean isFin) {
     this.maskingKey = maskingKey;

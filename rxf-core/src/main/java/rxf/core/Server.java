@@ -3,6 +3,7 @@ package rxf.core;
 import one.xio.AsioVisitor;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.nio.charset.Charset;
 import java.util.Iterator;
@@ -171,3 +172,4 @@ public class Server {
     Server.killswitch = killswitch;
   }
 }
+
