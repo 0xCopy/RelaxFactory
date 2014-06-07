@@ -1,16 +1,18 @@
 package one.xio;
 
-import rxf.core.Server;
 import rxf.web.inf.ProtocolMethodDispatch;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.WeakHashMap;
 
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * User: jim
@@ -39,8 +41,7 @@ public interface AsioVisitor {
     public void onRead(SelectionKey key) throws Exception {
       System.err.println("fail: " + key.toString());
       int receiveBufferSize = 4 << 10;
-      String trim =
-          Server.UTF8.decode(ByteBuffer.allocateDirect(receiveBufferSize)).toString().trim();
+      String trim = UTF_8.decode(ByteBuffer.allocateDirect(receiveBufferSize)).toString().trim();
 
       throw new UnsupportedOperationException("found " + trim + " in "
           + getClass().getCanonicalName());
@@ -65,13 +66,19 @@ public interface AsioVisitor {
       throw new UnsupportedOperationException("found in " + getClass().getCanonicalName());
     }
 
+      /**
+       * HIGHLY unlikely to solve a problem with OP_READ | OP_WRITE,
+       * each network socket protocol typically requires one or the other but not both.
+       * @param key the serversocket key
+       * @throws Exception
+       */
     @Override
     public void onAccept(SelectionKey key) throws Exception {
 
       ServerSocketChannel c = (ServerSocketChannel) key.channel();
       SocketChannel accept = c.accept();
       accept.configureBlocking(false);
-      Server.enqueue(accept, OP_READ | OP_WRITE, key.attachment());
+      accept.register((Selector) key.selector(), OP_READ | OP_WRITE, key.attachment());
 
     }
   }
