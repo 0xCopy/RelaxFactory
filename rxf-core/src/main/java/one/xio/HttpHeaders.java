@@ -9,43 +9,43 @@ import java.util.TreeMap;
 /**
  * iana http headers produced from shell command below.
  */
-// curl http://www.iana.org/assignments/message-headers/perm-headers.csv http://www.iana.org/assignments/message-headers/prov-headers.csv | tr -d '\r'| grep ,http,|while read; do echo '/**' $(echo $REPLY|cut -f5 -d, ) '*/' $(echo $REPLY|cut -f1 -d,|sed 's,-,$2d,g') ,;echo $a;done
+// curl http://www.iana.org/assignments/message-headers/perm-headers.csv http://www.iana.org/assignments/message-headers/prov-headers.csv | tr -d '\r'| grep ,http,|while read; do echo '/**' $(echo $REPLY|cut -f5- -d, ) '*/' $(echo $REPLY|cut -f1 -d,|sed 's,-,$2d,g') ,;echo $a;done
 
 public enum HttpHeaders {
   /** [RFC4229] */
   A$2dIM,
 
-  /** "[RFC-ietf-httpbis-p2-semantics-26 */
+  /** "[RFC-ietf-httpbis-p2-semantics-26, Section 5.3.2]" */
   Accept,
 
   /** [RFC4229] */
   Accept$2dAdditions,
 
-  /** "[RFC-ietf-httpbis-p2-semantics-26 */
+  /** "[RFC-ietf-httpbis-p2-semantics-26, Section 5.3.3]" */
   Accept$2dCharset,
 
   /** [RFC7089] */
   Accept$2dDatetime,
 
-  /** "[RFC-ietf-httpbis-p2-semantics-26 */
+  /** "[RFC-ietf-httpbis-p2-semantics-26, Section 5.3.4]" */
   Accept$2dEncoding,
 
   /** [RFC4229] */
   Accept$2dFeatures,
 
-  /** "[RFC-ietf-httpbis-p2-semantics-26 */
+  /** "[RFC-ietf-httpbis-p2-semantics-26, Section 5.3.5]" */
   Accept$2dLanguage,
 
   /** [RFC5789] */
   Accept$2dPatch,
 
-  /** "[RFC-ietf-httpbis-p5-range-26 */
+  /** "[RFC-ietf-httpbis-p5-range-26, Section 2.3]" */
   Accept$2dRanges,
 
-  /** "[RFC-ietf-httpbis-p6-cache-26 */
+  /** "[RFC-ietf-httpbis-p6-cache-26, Section 5.1]" */
   Age,
 
-  /** "[RFC-ietf-httpbis-p2-semantics-26 */
+  /** "[RFC-ietf-httpbis-p2-semantics-26, Section 7.4.1]" */
   Allow,
 
   /** [RFC4229] */
@@ -57,7 +57,7 @@ public enum HttpHeaders {
   /** [RFC4229] */
   Authentication$2dInfo,
 
-  /** "[RFC-ietf-httpbis-p7-auth-26 */
+  /** "[RFC-ietf-httpbis-p7-auth-26, Section 4.2]" */
   Authorization,
 
   /** [RFC4229] */
@@ -75,13 +75,13 @@ public enum HttpHeaders {
   /** [RFC4229] */
   C$2dPEP$2dInfo,
 
-  /** "[RFC-ietf-httpbis-p6-cache-26 */
+  /** "[RFC-ietf-httpbis-p6-cache-26, Section 5.2]" */
   Cache$2dControl,
 
-  /** "[RFC-ietf-httpbis-p1-messaging-26 */
+  /** "[RFC-ietf-httpbis-p1-messaging-26, Section 8.1]" */
   Close,
 
-  /** "[RFC-ietf-httpbis-p1-messaging-26 */
+  /** "[RFC-ietf-httpbis-p1-messaging-26, Section 6.1]" */
   Connection,
 
   /** [RFC2068][RFC2616] */
@@ -90,25 +90,25 @@ public enum HttpHeaders {
   /** [RFC6266] */
   Content$2dDisposition,
 
-  /** "[RFC-ietf-httpbis-p2-semantics-26 */
+  /** "[RFC-ietf-httpbis-p2-semantics-26, Section 3.1.2.2]" */
   Content$2dEncoding,
 
   /** [RFC4229] */
   Content$2dID,
 
-  /** "[RFC-ietf-httpbis-p2-semantics-26 */
+  /** "[RFC-ietf-httpbis-p2-semantics-26, Section 3.1.3.2]" */
   Content$2dLanguage,
 
-  /** "[RFC-ietf-httpbis-p1-messaging-26 */
+  /** "[RFC-ietf-httpbis-p1-messaging-26, Section 3.3.2]" */
   Content$2dLength,
 
-  /** "[RFC-ietf-httpbis-p2-semantics-26 */
+  /** "[RFC-ietf-httpbis-p2-semantics-26, Section 3.1.4.2]" */
   Content$2dLocation,
 
   /** [RFC4229] */
   Content$2dMD5,
 
-  /** "[RFC-ietf-httpbis-p5-range-26 */
+  /** "[RFC-ietf-httpbis-p5-range-26, Section 4.2]" */
   Content$2dRange,
 
   /** [RFC4229] */
@@ -117,7 +117,7 @@ public enum HttpHeaders {
   /** [RFC4229] */
   Content$2dStyle$2dType,
 
-  /** "[RFC-ietf-httpbis-p2-semantics-26 */
+  /** "[RFC-ietf-httpbis-p2-semantics-26, Section 3.1.1.5]" */
   Content$2dType,
 
   /** [RFC4229] */
@@ -135,7 +135,7 @@ public enum HttpHeaders {
   /** [RFC4918] */
   DAV,
 
-  /** "[RFC-ietf-httpbis-p2-semantics-26 */
+  /** "[RFC-ietf-httpbis-p2-semantics-26, Section 7.1.1.2]" */
   Date,
 
   /** [RFC4229] */
@@ -159,13 +159,13 @@ public enum HttpHeaders {
   /** [RFC4229] */
   Digest,
 
-  /** "[RFC-ietf-httpbis-p4-conditional-26 */
+  /** "[RFC-ietf-httpbis-p4-conditional-26, Section 2.3]" */
   ETag,
 
-  /** "[RFC-ietf-httpbis-p2-semantics-26 */
+  /** "[RFC-ietf-httpbis-p2-semantics-26, Section 5.1.1]" */
   Expect,
 
-  /** "[RFC-ietf-httpbis-p6-cache-26 */
+  /** "[RFC-ietf-httpbis-p6-cache-26, Section 5.3]" */
   Expires,
 
   /** [RFC4229] */
@@ -174,13 +174,13 @@ public enum HttpHeaders {
   /** [draft-ietf-appsawg-http-forwarded-10] */
   Forwarded,
 
-  /** "[RFC-ietf-httpbis-p2-semantics-26 */
+  /** "[RFC-ietf-httpbis-p2-semantics-26, Section 5.5.1]" */
   From,
 
   /** [RFC4229] */
   GetProfile,
 
-  /** "[RFC-ietf-httpbis-p1-messaging-26 */
+  /** "[RFC-ietf-httpbis-p1-messaging-26, Section 5.4]" */
   Host,
 
   /** [RFC4229] */
@@ -189,22 +189,22 @@ public enum HttpHeaders {
   /** [RFC4918] */
   If,
 
-  /** "[RFC-ietf-httpbis-p4-conditional-26 */
+  /** "[RFC-ietf-httpbis-p4-conditional-26, Section 3.1]" */
   If$2dMatch,
 
-  /** "[RFC-ietf-httpbis-p4-conditional-26 */
+  /** "[RFC-ietf-httpbis-p4-conditional-26, Section 3.3]" */
   If$2dModified$2dSince,
 
-  /** "[RFC-ietf-httpbis-p4-conditional-26 */
+  /** "[RFC-ietf-httpbis-p4-conditional-26, Section 3.2]" */
   If$2dNone$2dMatch,
 
-  /** "[RFC-ietf-httpbis-p5-range-26 */
+  /** "[RFC-ietf-httpbis-p5-range-26, Section 3.2]" */
   If$2dRange,
 
   /** [RFC6638] */
   If$2dSchedule$2dTag$2dMatch,
 
-  /** "[RFC-ietf-httpbis-p4-conditional-26 */
+  /** "[RFC-ietf-httpbis-p4-conditional-26, Section 3.4]" */
   If$2dUnmodified$2dSince,
 
   /** [RFC4229] */
@@ -213,13 +213,13 @@ public enum HttpHeaders {
   /** [RFC4229] */
   Label,
 
-  /** "[RFC-ietf-httpbis-p4-conditional-26 */
+  /** "[RFC-ietf-httpbis-p4-conditional-26, Section 2.2]" */
   Last$2dModified,
 
   /** [RFC5988] */
   Link,
 
-  /** "[RFC-ietf-httpbis-p2-semantics-26 */
+  /** "[RFC-ietf-httpbis-p2-semantics-26, Section 7.1.2]" */
   Location,
 
   /** [RFC4918] */
@@ -228,7 +228,7 @@ public enum HttpHeaders {
   /** [RFC4229] */
   Man,
 
-  /** "[RFC-ietf-httpbis-p2-semantics-26 */
+  /** "[RFC-ietf-httpbis-p2-semantics-26, Section 5.1.2]" */
   Max$2dForwards,
 
   /** [RFC7089] */
@@ -237,7 +237,7 @@ public enum HttpHeaders {
   /** [RFC4229] */
   Meter,
 
-  /** "[RFC-ietf-httpbis-p2-semantics-26 */
+  /** "[RFC-ietf-httpbis-p2-semantics-26, Appendix A.1]" */
   MIME$2dVersion,
 
   /** [RFC4229] */
@@ -270,7 +270,7 @@ public enum HttpHeaders {
   /** [RFC4229] */
   Position,
 
-  /** "[RFC-ietf-httpbis-p6-cache-26 */
+  /** "[RFC-ietf-httpbis-p6-cache-26, Section 5.4]" */
   Pragma,
 
   /** [draft-snell-http-prefer-18] */
@@ -294,13 +294,13 @@ public enum HttpHeaders {
   /** [RFC4229] */
   Protocol$2dRequest,
 
-  /** "[RFC-ietf-httpbis-p7-auth-26 */
+  /** "[RFC-ietf-httpbis-p7-auth-26, Section 4.3]" */
   Proxy$2dAuthenticate,
 
   /** [RFC4229] */
   Proxy$2dAuthentication$2dInfo,
 
-  /** "[RFC-ietf-httpbis-p7-auth-26 */
+  /** "[RFC-ietf-httpbis-p7-auth-26, Section 4.4]" */
   Proxy$2dAuthorization,
 
   /** [RFC4229] */
@@ -312,16 +312,16 @@ public enum HttpHeaders {
   /** [RFC4229] */
   Public,
 
-  /** "[RFC-ietf-httpbis-p5-range-26 */
+  /** "[RFC-ietf-httpbis-p5-range-26, Section 3.1]" */
   Range,
 
   /** [RFC4437] */
   Redirect$2dRef,
 
-  /** "[RFC-ietf-httpbis-p2-semantics-26 */
+  /** "[RFC-ietf-httpbis-p2-semantics-26, Section 5.5.2]" */
   Referer,
 
-  /** "[RFC-ietf-httpbis-p2-semantics-26 */
+  /** "[RFC-ietf-httpbis-p2-semantics-26, Section 7.1.3]" */
   Retry$2dAfter,
 
   /** [RFC4229] */
@@ -351,7 +351,7 @@ public enum HttpHeaders {
   /** [RFC4229] */
   Security$2dScheme,
 
-  /** "[RFC-ietf-httpbis-p2-semantics-26 */
+  /** "[RFC-ietf-httpbis-p2-semantics-26, Section 7.4.2]" */
   Server,
 
   /** [RFC6265] */
@@ -384,43 +384,43 @@ public enum HttpHeaders {
   /** [RFC4229] */
   TCN,
 
-  /** "[RFC-ietf-httpbis-p1-messaging-26 */
+  /** "[RFC-ietf-httpbis-p1-messaging-26, Section 4.3]" */
   TE,
 
   /** [RFC4918] */
   Timeout,
 
-  /** "[RFC-ietf-httpbis-p1-messaging-26 */
+  /** "[RFC-ietf-httpbis-p1-messaging-26, Section 4.4]" */
   Trailer,
 
-  /** "[RFC-ietf-httpbis-p1-messaging-26 */
+  /** "[RFC-ietf-httpbis-p1-messaging-26, Section 3.3.1]" */
   Transfer$2dEncoding,
 
   /** [RFC4229] */
   URI,
 
-  /** "[RFC-ietf-httpbis-p1-messaging-26 */
+  /** "[RFC-ietf-httpbis-p1-messaging-26, Section 6.7]" */
   Upgrade,
 
-  /** "[RFC-ietf-httpbis-p2-semantics-26 */
+  /** "[RFC-ietf-httpbis-p2-semantics-26, Section 5.5.3]" */
   User$2dAgent,
 
   /** [RFC4229] */
   Variant$2dVary,
 
-  /** "[RFC-ietf-httpbis-p2-semantics-26 */
+  /** "[RFC-ietf-httpbis-p2-semantics-26, Section 7.1.4]" */
   Vary,
 
-  /** "[RFC-ietf-httpbis-p1-messaging-26 */
+  /** "[RFC-ietf-httpbis-p1-messaging-26, Section 5.7.1]" */
   Via,
 
-  /** "[RFC-ietf-httpbis-p7-auth-26 */
+  /** "[RFC-ietf-httpbis-p7-auth-26, Section 4.1]" */
   WWW$2dAuthenticate,
 
   /** [RFC4229] */
   Want$2dDigest,
 
-  /** "[RFC-ietf-httpbis-p6-cache-26 */
+  /** "[RFC-ietf-httpbis-p6-cache-26, Section 5.5]" */
   Warning,
 
   /** [RFC7034] */
