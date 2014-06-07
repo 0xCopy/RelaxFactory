@@ -12,6 +12,7 @@ import java.nio.channels.SocketChannel;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.LinkedList;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -52,7 +53,7 @@ public class BlobAntiPatternObject {
 
     }
 
-    private static Deque<SocketChannel> couchConnections = new LinkedList<>();
+    private static Deque<SocketChannel> couchConnections = new ConcurrentLinkedDeque<>();
 
     public static SocketChannel createCouchConnection() {
         SocketChannel ret = null;

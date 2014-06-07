@@ -172,4 +172,3 @@ public class Server {
     Server.killswitch = killswitch;
   }
 }
-
