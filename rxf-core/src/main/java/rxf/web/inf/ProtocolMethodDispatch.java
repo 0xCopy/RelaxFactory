@@ -78,7 +78,7 @@ public class ProtocolMethodDispatch extends Impl {
      * any random config mechanism with a default will suffice here to define the content root.
      *
      * widest regex last intentionally
-     * system proprty: {value #RXF_SERVER_CONTENT_ROOT}
+     * system proprty: {value #RXF_CONTENT_ROOT}
      */
     GETmap.put(ContentRootCacheImpl.CACHE_PATTERN, ContentRootCacheImpl.class);
     GETmap.put(ContentRootNoCacheImpl.NOCACHE_PATTERN, ContentRootNoCacheImpl.class);
@@ -90,20 +90,7 @@ public class ProtocolMethodDispatch extends Impl {
     }
 
     public static String wheresWaldo(int... depth) {
-      int d = depth.length > 0 ? depth[0] : 2;
-      Throwable throwable = new Throwable();
-      Throwable throwable1 = throwable.fillInStackTrace();
-      StackTraceElement[] stackTrace = throwable1.getStackTrace();
-      String ret = "";
-      for (int i = 2, end = min(stackTrace.length - 1, d); i <= end; i++) {
-        StackTraceElement stackTraceElement = stackTrace[i];
-        ret +=
-            "\tat " + stackTraceElement.getClassName() + "." + stackTraceElement.getMethodName()
-                + "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber()
-                + ")\n";
-
-      }
-      return ret;
+     return Impl.wheresWaldo(depth);
     }
 
     public void onAccept(SelectionKey key) throws IOException {
