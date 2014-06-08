@@ -4,8 +4,8 @@ import com.google.web.bindery.requestfactory.shared.Locator;
 import rxf.core.CouchNamespace;
 import rxf.couch.gen.CouchDriver.DocFetch;
 import rxf.couch.gen.CouchDriver.DocPersist;
-import rxf.rpc.BlobAntiPatternObject;
 import rxf.rpc.RelaxFactoryServerImpl;
+import rxf.rpc.RpcHelper;
 import rxf.shared.CouchTx;
 
 import java.util.List;
@@ -74,7 +74,7 @@ public abstract class CouchLocator<T> extends Locator<T, String> implements Couc
   abstract public Object getVersion(T domainObject);
 
   public String getOrgName() {
-    return null == orgname ? BlobAntiPatternObject.getDefaultOrgName() : orgname;
+    return null == orgname ? RpcHelper.getDefaultOrgName() : orgname;
   }
 
   public void setOrgname(String orgname) {

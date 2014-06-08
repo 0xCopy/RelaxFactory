@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static junit.framework.Assert.assertEquals;
-import static rxf.rpc.BlobAntiPatternObject.setDEBUG_SENDJSON;
+import static rxf.rpc.RpcHelper.setDEBUG_SENDJSON;
 
 public class DateHeaderParserTest {
   Map<String, String> map = new HashMap() {

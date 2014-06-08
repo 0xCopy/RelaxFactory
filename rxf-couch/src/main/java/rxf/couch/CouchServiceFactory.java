@@ -13,7 +13,7 @@ import rxf.couch.gen.CouchDriver.DocPersist.DocPersistActionBuilder;
 import rxf.couch.gen.CouchDriver.DocPersist.DocPersistTerminalBuilder;
 import rxf.couch.gen.CouchDriver.JsonSend.JsonSendTerminalBuilder;
 import rxf.couch.gen.CouchDriver.ViewFetch.ViewFetchTerminalBuilder;
-import rxf.rpc.BlobAntiPatternObject;
+import rxf.rpc.RpcHelper;
 import rxf.shared.CouchTx;
 
 import java.lang.annotation.Annotation;
@@ -25,7 +25,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import static rxf.web.inf.ProtocolMethodDispatch.deepToString;
-import static rxf.rpc.BlobAntiPatternObject.getDefaultOrgName;
+import static rxf.rpc.RpcHelper.getDefaultOrgName;
 
 /**
  * Creates CouchService instances by translating {@literal @}View annotations into CouchDB design documents
@@ -70,7 +70,7 @@ public class CouchServiceFactory {
 
     public void init(final Class<? extends CouchService<E>> serviceInterface,
         final String... initNs) throws ExecutionException, InterruptedException {
-      init = BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<Void>() {
+      init = RpcHelper.EXECUTOR_SERVICE.submit(new Callable<Void>() {
         public Void call() throws Exception {
           for (int i = 0; i < initNs.length; i++) {
             String n = initNs[i];
@@ -163,7 +163,7 @@ public class CouchServiceFactory {
               final String stringParam = CouchMetaDriver.gson().toJson(design);
               final JsonSendTerminalBuilder fire = new JsonSend().opaque(getPathPrefix())
               /*.docId(design.key)*/.validjson(stringParam).to().fire();
-              if (BlobAntiPatternObject.DEBUG_SENDJSON) {
+              if (RpcHelper.DEBUG_SENDJSON) {
                 CouchTx tx = fire.tx();
                 assert tx.ok() : tx.error();
                 System.err.println(deepToString(tx));
@@ -206,7 +206,7 @@ public class CouchServiceFactory {
         //or just a list of data items, and how they return the data, as the full document,
         // or some simplified format.
 
-        return BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<Object>() {
+        return RpcHelper.EXECUTOR_SERVICE.submit(new Callable<Object>() {
           public Object call() throws Exception {
             String name = method.getName();
             String[] jsonArgs = null;

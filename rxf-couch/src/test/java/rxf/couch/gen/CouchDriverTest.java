@@ -5,9 +5,9 @@ import one.xio.AsioVisitor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import rxf.rpc.BlobAntiPatternObject;
 import rxf.couch.CouchResultSet;
 import rxf.core.Server;
+import rxf.rpc.RpcHelper;
 import rxf.shared.CouchTx;
 import rxf.couch.driver.CouchMetaDriver;
 import rxf.couch.gen.CouchDriver.*;
@@ -33,7 +33,7 @@ public class CouchDriverTest {
 
   @BeforeClass
   static public void setUp() throws Exception {
-    BlobAntiPatternObject.DEBUG_SENDJSON = true;
+    RpcHelper.DEBUG_SENDJSON = true;
     Server.killswitch = false;
     exec = Executors.newScheduledThreadPool(2);
     exec.submit(new Runnable() {

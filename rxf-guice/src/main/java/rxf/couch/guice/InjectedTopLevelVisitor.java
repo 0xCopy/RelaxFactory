@@ -23,7 +23,7 @@ import java.util.Set;
 
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
-import static rxf.rpc.BlobAntiPatternObject.isDEBUG_SENDJSON;
+import static rxf.rpc.RpcHelper.isDEBUG_SENDJSON;
 import static rxf.core.CouchNamespace.NAMESPACE;
 
 public class InjectedTopLevelVisitor extends AsioVisitor.Impl {

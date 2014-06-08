@@ -2,7 +2,7 @@ package rxf.couch;
 
 import one.xio.AsioVisitor.Impl;
 import rxf.core.Rfc822HeaderState;
-import rxf.rpc.BlobAntiPatternObject;
+import rxf.rpc.CouchConnectionFactory;
 import rxf.rpc.RelaxFactoryServerImpl;
 
 import java.io.IOException;
@@ -58,7 +58,7 @@ public class HttpProxyImpl extends Impl {
           "GET " + link + " HTTP/1.1\r\n" + "Accept: image/*, text/*\r\n" + "Connection: close\r\n"
               + "\r\n";
 
-      final SocketChannel couchConnection = BlobAntiPatternObject.createCouchConnection();
+      final SocketChannel couchConnection = CouchConnectionFactory.createCouchConnection();
       RelaxFactoryServerImpl.enqueue(couchConnection, OP_CONNECT | OP_WRITE, new Impl() {
         @Override
         public void onRead(final SelectionKey couchKey) throws Exception {
@@ -116,7 +116,7 @@ public class HttpProxyImpl extends Impl {
                 browserKey.interestOps(OP_WRITE).selector().wakeup();
 
               } else {
-                BlobAntiPatternObject.recycleChannel(couchConnection);
+                CouchConnectionFactory.recycleChannel(couchConnection);
               }
             }
           });

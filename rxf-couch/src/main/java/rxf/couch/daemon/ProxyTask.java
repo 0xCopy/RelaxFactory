@@ -1,7 +1,7 @@
 package rxf.couch.daemon;
 
-import rxf.rpc.BlobAntiPatternObject;
 import rxf.core.Server;
+import rxf.rpc.RpcHelper;
 
 import java.net.InetSocketAddress;
 import java.net.StandardSocketOptions;
@@ -35,7 +35,7 @@ public class ProxyTask implements Runnable {
 
   public static void main(final String[] args) {
     //boilerplate HttpMethod.init() here
-    BlobAntiPatternObject.getEXECUTOR_SERVICE().submit(new ProxyTask() {
+    RpcHelper.getEXECUTOR_SERVICE().submit(new ProxyTask() {
       {
         proxyPorts = args;
       }

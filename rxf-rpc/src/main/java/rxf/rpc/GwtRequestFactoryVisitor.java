@@ -86,7 +86,7 @@ public class GwtRequestFactoryVisitor extends Impl {
   public void onWrite(final SelectionKey key) throws Exception {
     if (payload == null) {
       key.interestOps(0);
-      BlobAntiPatternObject.getEXECUTOR_SERVICE().submit(new Runnable() {
+      RpcHelper.getEXECUTOR_SERVICE().submit(new Runnable() {
         @Override
         public void run() {
           try {

@@ -31,7 +31,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static rxf.rpc.BlobAntiPatternObject.setDEBUG_SENDJSON;
+import static rxf.rpc.RpcHelper.setDEBUG_SENDJSON;
 import static rxf.couch.driver.CouchMetaDriver.gson;
 
 /**

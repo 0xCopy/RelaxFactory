@@ -105,7 +105,7 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
   public void onWrite(final SelectionKey key) throws Exception {
     if (payload == null) {
       key.interestOps(0);
-      BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
+      RpcHelper.EXECUTOR_SERVICE.submit(new Runnable() {
         @Override
         public void run() {
           try {

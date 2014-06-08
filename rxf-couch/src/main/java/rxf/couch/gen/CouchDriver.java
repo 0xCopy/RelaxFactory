@@ -6,7 +6,7 @@ import one.xio.MimeType;
 import rxf.core.Rfc822HeaderState;
 import rxf.couch.*;
 import rxf.couch.driver.CouchMetaDriver;
-import rxf.rpc.BlobAntiPatternObject;
+import rxf.rpc.RpcHelper;
 import rxf.shared.CouchTx;
 
 import java.lang.String;
@@ -14,7 +14,6 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
@@ -51,17 +50,16 @@ public interface CouchDriver {
 
       public DbCreateTerminalBuilder fire() {
         return new DbCreateTerminalBuilder() {
-          Future<ByteBuffer> future =
-              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
-                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
-                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
+          Future<ByteBuffer> future = RpcHelper.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
+            final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
+            final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public ByteBuffer call() throws Exception {
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
-                  ActionBuilder.currentAction.set(actionBuilder);
-                  return CouchMetaDriver.DbCreate.visit(dbKeysBuilder, actionBuilder);
-                }
-              });
+            public ByteBuffer call() throws Exception {
+              DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+              ActionBuilder.currentAction.set(actionBuilder);
+              return CouchMetaDriver.DbCreate.visit(dbKeysBuilder, actionBuilder);
+            }
+          });
 
           public CouchTx tx() {
             CouchTx r = null;
@@ -70,7 +68,7 @@ public interface CouchDriver {
                   CouchMetaDriver.gson().fromJson(UTF_8.decode(future.get()).toString(),
                       CouchTx.class);
             } catch (Exception e) {
-              if (BlobAntiPatternObject.DEBUG_SENDJSON)
+              if (RpcHelper.DEBUG_SENDJSON)
                 e.printStackTrace();
             }
             return r;
@@ -80,7 +78,7 @@ public interface CouchDriver {
           public void oneWay() {
             final DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
             final ActionBuilder actionBuilder = ActionBuilder.get();
-            BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
+            RpcHelper.EXECUTOR_SERVICE.submit(new Runnable() {
               public void run() {
                 try {
 
@@ -130,17 +128,16 @@ public interface CouchDriver {
 
       public DbDeleteTerminalBuilder fire() {
         return new DbDeleteTerminalBuilder() {
-          Future<ByteBuffer> future =
-              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
-                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
-                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
+          Future<ByteBuffer> future = RpcHelper.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
+            final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
+            final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public ByteBuffer call() throws Exception {
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
-                  ActionBuilder.currentAction.set(actionBuilder);
-                  return CouchMetaDriver.DbDelete.visit(dbKeysBuilder, actionBuilder);
-                }
-              });
+            public ByteBuffer call() throws Exception {
+              DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+              ActionBuilder.currentAction.set(actionBuilder);
+              return CouchMetaDriver.DbDelete.visit(dbKeysBuilder, actionBuilder);
+            }
+          });
 
           public CouchTx tx() {
             CouchTx r = null;
@@ -149,7 +146,7 @@ public interface CouchDriver {
                   CouchMetaDriver.gson().fromJson(UTF_8.decode(future.get()).toString(),
                       CouchTx.class);
             } catch (Exception e) {
-              if (!BlobAntiPatternObject.DEBUG_SENDJSON)
+              if (!RpcHelper.DEBUG_SENDJSON)
                 return r;
               e.printStackTrace();
             }
@@ -160,7 +157,7 @@ public interface CouchDriver {
           public void oneWay() {
             final DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
             final ActionBuilder actionBuilder = ActionBuilder.get();
-            BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
+            RpcHelper.EXECUTOR_SERVICE.submit(new Runnable() {
               public void run() {
                 try {
 
@@ -216,17 +213,16 @@ public interface CouchDriver {
 
       public DocFetchTerminalBuilder fire() {
         return new DocFetchTerminalBuilder() {
-          Future<ByteBuffer> future =
-              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
-                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
-                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
+          Future<ByteBuffer> future = RpcHelper.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
+            final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
+            final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public ByteBuffer call() throws Exception {
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
-                  ActionBuilder.currentAction.set(actionBuilder);
-                  return CouchMetaDriver.DocFetch.visit(dbKeysBuilder, actionBuilder);
-                }
-              });
+            public ByteBuffer call() throws Exception {
+              DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+              ActionBuilder.currentAction.set(actionBuilder);
+              return CouchMetaDriver.DocFetch.visit(dbKeysBuilder, actionBuilder);
+            }
+          });
 
           public ByteBuffer pojo() {
             ByteBuffer r = null;
@@ -294,17 +290,16 @@ public interface CouchDriver {
 
       public RevisionFetchTerminalBuilder fire() {
         return new RevisionFetchTerminalBuilder() {
-          Future<ByteBuffer> future =
-              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
-                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
-                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
+          Future<ByteBuffer> future = RpcHelper.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
+            final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
+            final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public ByteBuffer call() throws Exception {
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
-                  ActionBuilder.currentAction.set(actionBuilder);
-                  return CouchMetaDriver.RevisionFetch.visit(dbKeysBuilder, actionBuilder);
-                }
-              });
+            public ByteBuffer call() throws Exception {
+              DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+              ActionBuilder.currentAction.set(actionBuilder);
+              return CouchMetaDriver.RevisionFetch.visit(dbKeysBuilder, actionBuilder);
+            }
+          });
 
           public String json() {
             String r = null;
@@ -374,17 +369,16 @@ public interface CouchDriver {
 
       public DocPersistTerminalBuilder fire() {
         return new DocPersistTerminalBuilder() {
-          Future<ByteBuffer> future =
-              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
-                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
-                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
+          Future<ByteBuffer> future = RpcHelper.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
+            final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
+            final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public ByteBuffer call() throws Exception {
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
-                  ActionBuilder.currentAction.set(actionBuilder);
-                  return CouchMetaDriver.DocPersist.visit(dbKeysBuilder, actionBuilder);
-                }
-              });
+            public ByteBuffer call() throws Exception {
+              DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+              ActionBuilder.currentAction.set(actionBuilder);
+              return CouchMetaDriver.DocPersist.visit(dbKeysBuilder, actionBuilder);
+            }
+          });
 
           public CouchTx tx() {
             CouchTx r = null;
@@ -393,7 +387,7 @@ public interface CouchDriver {
                   CouchMetaDriver.gson().fromJson(UTF_8.decode(future.get()).toString(),
                       CouchTx.class);
             } catch (Exception e) {
-              if (BlobAntiPatternObject.DEBUG_SENDJSON)
+              if (RpcHelper.DEBUG_SENDJSON)
                 e.printStackTrace();
             }
             return r;
@@ -403,7 +397,7 @@ public interface CouchDriver {
           public void oneWay() {
             final DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
             final ActionBuilder actionBuilder = ActionBuilder.get();
-            BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
+            RpcHelper.EXECUTOR_SERVICE.submit(new Runnable() {
               public void run() {
                 try {
 
@@ -470,17 +464,16 @@ public interface CouchDriver {
 
       public DocDeleteTerminalBuilder fire() {
         return new DocDeleteTerminalBuilder() {
-          Future<ByteBuffer> future =
-              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
-                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
-                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
+          Future<ByteBuffer> future = RpcHelper.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
+            final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
+            final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public ByteBuffer call() throws Exception {
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
-                  ActionBuilder.currentAction.set(actionBuilder);
-                  return CouchMetaDriver.DocDelete.visit(dbKeysBuilder, actionBuilder);
-                }
-              });
+            public ByteBuffer call() throws Exception {
+              DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+              ActionBuilder.currentAction.set(actionBuilder);
+              return CouchMetaDriver.DocDelete.visit(dbKeysBuilder, actionBuilder);
+            }
+          });
 
           public CouchTx tx() {
             CouchTx r = null;
@@ -489,7 +482,7 @@ public interface CouchDriver {
                   CouchMetaDriver.gson().fromJson(UTF_8.decode(future.get()).toString(),
                       CouchTx.class);
             } catch (Exception e) {
-              if (BlobAntiPatternObject.DEBUG_SENDJSON)
+              if (RpcHelper.DEBUG_SENDJSON)
                 e.printStackTrace();
             }
             return r;
@@ -499,7 +492,7 @@ public interface CouchDriver {
           public void oneWay() {
             final DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
             final ActionBuilder actionBuilder = ActionBuilder.get();
-            BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
+            RpcHelper.EXECUTOR_SERVICE.submit(new Runnable() {
               public void run() {
                 try {
 
@@ -559,17 +552,16 @@ public interface CouchDriver {
 
       public DesignDocFetchTerminalBuilder fire() {
         return new DesignDocFetchTerminalBuilder() {
-          Future<ByteBuffer> future =
-              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
-                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
-                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
+          Future<ByteBuffer> future = RpcHelper.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
+            final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
+            final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public ByteBuffer call() throws Exception {
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
-                  ActionBuilder.currentAction.set(actionBuilder);
-                  return CouchMetaDriver.DesignDocFetch.visit(dbKeysBuilder, actionBuilder);
-                }
-              });
+            public ByteBuffer call() throws Exception {
+              DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+              ActionBuilder.currentAction.set(actionBuilder);
+              return CouchMetaDriver.DesignDocFetch.visit(dbKeysBuilder, actionBuilder);
+            }
+          });
 
           public ByteBuffer pojo() {
             ByteBuffer r = null;
@@ -651,17 +643,16 @@ public interface CouchDriver {
       public ViewFetchTerminalBuilder fire() {
 
         return new ViewFetchTerminalBuilder() {
-          Future<ByteBuffer> future =
-              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
-                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
-                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
+          Future<ByteBuffer> future = RpcHelper.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
+            final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
+            final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public ByteBuffer call() throws Exception {
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
-                  ActionBuilder.currentAction.set(actionBuilder);
-                  return CouchMetaDriver.ViewFetch.visit(dbKeysBuilder, actionBuilder);
-                }
-              });
+            public ByteBuffer call() throws Exception {
+              DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+              ActionBuilder.currentAction.set(actionBuilder);
+              return CouchMetaDriver.ViewFetch.visit(dbKeysBuilder, actionBuilder);
+            }
+          });
 
           public CouchResultSet rows() {
             CouchResultSet r = null;
@@ -760,17 +751,16 @@ public interface CouchDriver {
 
       public JsonSendTerminalBuilder fire() {
         return new JsonSendTerminalBuilder() {
-          Future<ByteBuffer> future =
-              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
-                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
-                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
+          Future<ByteBuffer> future = RpcHelper.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
+            final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
+            final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public ByteBuffer call() throws Exception {
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
-                  ActionBuilder.currentAction.set(actionBuilder);
-                  return CouchMetaDriver.JsonSend.visit(dbKeysBuilder, actionBuilder);
-                }
-              });
+            public ByteBuffer call() throws Exception {
+              DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+              ActionBuilder.currentAction.set(actionBuilder);
+              return CouchMetaDriver.JsonSend.visit(dbKeysBuilder, actionBuilder);
+            }
+          });
 
           public CouchTx tx() {
             CouchTx r = null;
@@ -779,7 +769,7 @@ public interface CouchDriver {
                   CouchMetaDriver.gson().fromJson(UTF_8.decode(future.get()).toString(),
                       CouchTx.class);
             } catch (Exception e) {
-              if (BlobAntiPatternObject.DEBUG_SENDJSON)
+              if (RpcHelper.DEBUG_SENDJSON)
                 e.printStackTrace();
             }
             return r;
@@ -789,7 +779,7 @@ public interface CouchDriver {
           public void oneWay() {
             final DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
             final ActionBuilder actionBuilder = ActionBuilder.get();
-            BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
+            RpcHelper.EXECUTOR_SERVICE.submit(new Runnable() {
               public void run() {
                 try {
 
@@ -917,17 +907,16 @@ public interface CouchDriver {
 
       public BlobSendTerminalBuilder fire() {
         return new BlobSendTerminalBuilder() {
-          Future<ByteBuffer> future =
-              BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
-                final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
-                final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
+          Future<ByteBuffer> future = RpcHelper.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>() {
+            final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
+            final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public ByteBuffer call() throws Exception {
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
-                  ActionBuilder.currentAction.set(actionBuilder);
-                  return CouchMetaDriver.BlobSend.visit(dbKeysBuilder, actionBuilder);
-                }
-              });
+            public ByteBuffer call() throws Exception {
+              DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+              ActionBuilder.currentAction.set(actionBuilder);
+              return CouchMetaDriver.BlobSend.visit(dbKeysBuilder, actionBuilder);
+            }
+          });
 
           public CouchTx tx() {
             CouchTx r = null;
@@ -936,7 +925,7 @@ public interface CouchDriver {
                   CouchMetaDriver.gson().fromJson(UTF_8.decode(future.get()).toString(),
                       CouchTx.class);
             } catch (Exception e) {
-              if (!BlobAntiPatternObject.DEBUG_SENDJSON)
+              if (!RpcHelper.DEBUG_SENDJSON)
                 return r;
               e.printStackTrace();
             }
@@ -951,7 +940,7 @@ public interface CouchDriver {
           public void oneWay() {
             final DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
             final ActionBuilder actionBuilder = ActionBuilder.get();
-            BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
+            RpcHelper.EXECUTOR_SERVICE.submit(new Runnable() {
               public void run() {
                 try {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);

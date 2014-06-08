@@ -1,7 +1,7 @@
 package rxf.couch;
 
 import rxf.couch.driver.CouchMetaDriver.etype;
-import rxf.rpc.BlobAntiPatternObject;
+import rxf.rpc.RpcHelper;
 
 import javax.validation.ValidationException;
 
@@ -22,7 +22,7 @@ public abstract class DbKeysBuilder {
 
   public DbKeysBuilder() {
     currentKeys.set(this);
-    if (BlobAntiPatternObject.DEBUG_SENDJSON) {
+    if (RpcHelper.DEBUG_SENDJSON) {
       debug();
     }
   }

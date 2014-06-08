@@ -15,6 +15,7 @@ import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import rxf.rpc.RpcHelper;
 import rxf.web.inf.ProtocolMethodDispatch;
 
 import java.io.IOException;
@@ -37,7 +38,7 @@ import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpHeaders.*;
 import static one.xio.HttpMethod.*;
-import static rxf.rpc.BlobAntiPatternObject.*;
+import static rxf.rpc.CouchConnectionFactory.*;
 import static rxf.couch.driver.CouchMetaDriver.etype.*;
 
 /**
@@ -120,7 +121,7 @@ public enum CouchMetaDriver {
                       cursor = (ByteBuffer) flip.slice();
                       header = null;
 
-                      if (DEBUG_SENDJSON) {
+                      if (RpcHelper.DEBUG_SENDJSON) {
                           System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, StandardCharsets.UTF_8
                                   .decode((ByteBuffer) cursor.duplicate().rewind())));
                       }
@@ -167,7 +168,7 @@ public enum CouchMetaDriver {
       try {
         phaser.awaitAdvanceInterruptibly(phaser.arrive(), REALTIME_CUTOFF, REALTIME_UNIT);
       } catch (Exception e) {
-        if (DEBUG_SENDJSON) {
+        if (RpcHelper.DEBUG_SENDJSON) {
           System.err.println("!!! " + ProtocolMethodDispatch.deepToString(this, e) + "\n\tfrom");
           dbKeysBuilder.trace().printStackTrace();
         }
@@ -219,7 +220,7 @@ public enum CouchMetaDriver {
                       cursor = (ByteBuffer) flip.slice();
                       header = null;
 
-                      if (DEBUG_SENDJSON) {
+                      if (RpcHelper.DEBUG_SENDJSON) {
                           System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, StandardCharsets.UTF_8
                                   .decode((ByteBuffer) cursor.duplicate().rewind())));
                       }
@@ -265,7 +266,7 @@ public enum CouchMetaDriver {
       try {
         phaser.awaitAdvanceInterruptibly(phaser.arrive(), REALTIME_CUTOFF, REALTIME_UNIT);
       } catch (Exception e) {
-        if (DEBUG_SENDJSON) {
+        if (RpcHelper.DEBUG_SENDJSON) {
           System.err.println("!!! " + ProtocolMethodDispatch.deepToString(this, e) + "\n\tfrom");
           dbKeysBuilder.trace().printStackTrace();
         }
@@ -334,7 +335,7 @@ public enum CouchMetaDriver {
                       cursor = (ByteBuffer) flip.slice();
                       header = null;
 
-                      if (DEBUG_SENDJSON) {
+                      if (RpcHelper.DEBUG_SENDJSON) {
                           System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, this, StandardCharsets.UTF_8
                                   .decode((ByteBuffer) cursor.duplicate().rewind())));
                       }
@@ -381,7 +382,7 @@ public enum CouchMetaDriver {
       try {
         phaser.awaitAdvanceInterruptibly(phaser.arrive(), REALTIME_CUTOFF, REALTIME_UNIT);
       } catch (TimeoutException | InterruptedException e) {
-        if (DEBUG_SENDJSON) {
+        if (RpcHelper.DEBUG_SENDJSON) {
           System.err.println("!!! " + ProtocolMethodDispatch.deepToString(this, e) + "\n\tfrom");
           dbKeysBuilder.trace().printStackTrace();
         }
@@ -439,7 +440,7 @@ public enum CouchMetaDriver {
 
                       if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response.headerBuf())) {
                           try {
-                              if (DEBUG_SENDJSON) {
+                              if (RpcHelper.DEBUG_SENDJSON) {
                                   System.err.println(ProtocolMethodDispatch.deepToString("??? ", StandardCharsets.UTF_8.decode((ByteBuffer) flip
                                           .duplicate().rewind())));
                               }
@@ -449,7 +450,7 @@ public enum CouchMetaDriver {
                                   payload.set(null);
                               }
                           } catch (Exception e) {
-                              if (DEBUG_SENDJSON) {
+                              if (RpcHelper.DEBUG_SENDJSON) {
                                   e.printStackTrace();
                                   Throwable trace = dbKeysBuilder.trace();
                                   if (trace != null) {
@@ -473,7 +474,7 @@ public enum CouchMetaDriver {
       try {
         phaser.awaitAdvanceInterruptibly(phaser.arrive(), REALTIME_CUTOFF, REALTIME_UNIT);
       } catch (Exception e) {
-        if (DEBUG_SENDJSON) {
+        if (RpcHelper.DEBUG_SENDJSON) {
           System.err.println("!!! " + ProtocolMethodDispatch.deepToString(this, e) + "\n\tfrom");
           dbKeysBuilder.trace().printStackTrace();
         }
@@ -555,7 +556,7 @@ public enum CouchMetaDriver {
                       cursor = (ByteBuffer) flip.slice();
                       header = null;
 
-                      if (DEBUG_SENDJSON) {
+                      if (RpcHelper.DEBUG_SENDJSON) {
                           System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, StandardCharsets.UTF_8
                                   .decode((ByteBuffer) cursor.duplicate().rewind())));
                       }
@@ -590,7 +591,7 @@ public enum CouchMetaDriver {
       try {
         phaser.awaitAdvanceInterruptibly(phaser.arrive(), REALTIME_CUTOFF, REALTIME_UNIT);
       } catch (Exception e) {
-        if (DEBUG_SENDJSON) {
+        if (RpcHelper.DEBUG_SENDJSON) {
           System.err.println("!!! " + ProtocolMethodDispatch.deepToString(this, e) + "\n\tfrom");
           dbKeysBuilder.trace().printStackTrace();
         }
@@ -714,7 +715,7 @@ public enum CouchMetaDriver {
                   }
                   cursor = (ByteBuffer) flip.slice();
                   actionBuilder.state(response);
-                  if (DEBUG_SENDJSON) {
+                  if (RpcHelper.DEBUG_SENDJSON) {
                       System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, StandardCharsets.UTF_8
                               .decode((ByteBuffer) cursor.duplicate().rewind())));
                   }
@@ -782,7 +783,7 @@ public enum CouchMetaDriver {
       try {
         phaser.awaitAdvanceInterruptibly(phaser.arrive(), REALTIME_CUTOFF, REALTIME_UNIT);
       } catch (Exception e) {
-        if (DEBUG_SENDJSON) {
+        if (RpcHelper.DEBUG_SENDJSON) {
           System.err.println("!!! " + ProtocolMethodDispatch.deepToString(this, e) + "\n\tfrom");
           dbKeysBuilder.trace().printStackTrace();
         }
@@ -803,13 +804,13 @@ public enum CouchMetaDriver {
       for (ByteBuffer byteBuffer : list) {
         ByteBuffer put = outbound.put(byteBuffer);
       }
-      if (DEBUG_SENDJSON) {
+      if (RpcHelper.DEBUG_SENDJSON) {
         System.err.println(StandardCharsets.UTF_8.decode((ByteBuffer) outbound.duplicate().flip()));
       }
       ByteBuffer src = ((ByteBuffer) outbound.rewind()).duplicate();
       int endl = 0;
       while (sum > 0 && src.hasRemaining()) {
-        if (DEBUG_SENDJSON)
+        if (RpcHelper.DEBUG_SENDJSON)
           System.err.println("outbound:----\n"
                   + StandardCharsets.UTF_8.decode(outbound.duplicate()).toString() + "\n----");
 
@@ -832,7 +833,7 @@ public enum CouchMetaDriver {
 
       ByteBuffer retval = (ByteBuffer) outbound.clear().limit(endl);
 
-      if (DEBUG_SENDJSON) {
+      if (RpcHelper.DEBUG_SENDJSON) {
         System.err.println(StandardCharsets.UTF_8.decode(retval.duplicate()));
       }
       return retval;
@@ -886,7 +887,7 @@ public enum CouchMetaDriver {
           (ByteBuffer) request.method(method).path(opaque).headerInterest(STATIC_JSON_SEND_HEADERS)
               .headerString(Content$2dLength, String.valueOf(outbound.length)).headerString(Accept,
                   MimeType.json.contentType).as(ByteBuffer.class);
-      if (DEBUG_SENDJSON) {
+      if (RpcHelper.DEBUG_SENDJSON) {
         System.err.println(ProtocolMethodDispatch.deepToString(opaque, validjson, StandardCharsets.UTF_8.decode(header.duplicate()), state));
       }
       final SocketChannel channel = createCouchConnection();
@@ -946,7 +947,7 @@ public enum CouchMetaDriver {
                       cursor = (ByteBuffer) flip.slice();
                       header = null;
 
-                      if (DEBUG_SENDJSON) {
+                      if (RpcHelper.DEBUG_SENDJSON) {
                           System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, StandardCharsets.UTF_8
                                   .decode((ByteBuffer) cursor.duplicate().rewind())));
                       }
@@ -992,7 +993,7 @@ public enum CouchMetaDriver {
       try {
         phaser.awaitAdvanceInterruptibly(phaser.arrive(), REALTIME_CUTOFF, REALTIME_UNIT);
       } catch (TimeoutException | InterruptedException e) {
-        if (DEBUG_SENDJSON) {
+        if (RpcHelper.DEBUG_SENDJSON) {
           System.err.println("!!! " + ProtocolMethodDispatch.deepToString(this, e) + "\n\tfrom");
           dbKeysBuilder.trace().printStackTrace();
         }
@@ -1126,7 +1127,7 @@ public enum CouchMetaDriver {
       try {
         phaser.awaitAdvanceInterruptibly(phaser.arrive(), REALTIME_CUTOFF, REALTIME_UNIT);
       } catch (Exception e) {
-        if (DEBUG_SENDJSON) {
+        if (RpcHelper.DEBUG_SENDJSON) {
           System.err.println("!!! " + ProtocolMethodDispatch.deepToString(this, e) + "\n\tfrom");
           dbKeysBuilder.trace().printStackTrace();
         }
@@ -1145,7 +1146,7 @@ public enum CouchMetaDriver {
   public static final String[] STATIC_CONTENT_LENGTH_ARR =
       Rfc822HeaderState.staticHeaderStrings(Content$2dLength);
     public static final TimeUnit REALTIME_UNIT =
-      TimeUnit.valueOf(Config.get("RXF_REALTIME_UNIT", isDEBUG_SENDJSON() ? TimeUnit.HOURS
+      TimeUnit.valueOf(Config.get("RXF_REALTIME_UNIT", RpcHelper.isDEBUG_SENDJSON() ? TimeUnit.HOURS
               .name() : TimeUnit.SECONDS.name()));
   public static final AtomicInteger ATOMIC_INTEGER = new AtomicInteger(0);
   public static final int REALTIME_CUTOFF =

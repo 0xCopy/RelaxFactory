@@ -17,9 +17,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import rxf.rpc.BlobAntiPatternObject;
 import rxf.couch.CouchService;
 import rxf.core.Server;
+import rxf.rpc.RpcHelper;
 import rxf.shared.CouchTx;
 import rxf.rpc.RelaxFactoryServerImpl;
 import rxf.couch.gen.CouchDriver;
@@ -36,7 +36,7 @@ public class CouchServiceProviderTest {
 
   @BeforeClass
   public static void setUp() throws Exception {
-    BlobAntiPatternObject.setDEBUG_SENDJSON(true);
+    RpcHelper.setDEBUG_SENDJSON(true);
     Server.killswitch = false;
     exec = Executors.newScheduledThreadPool(2);
     exec.submit(new Runnable() {
