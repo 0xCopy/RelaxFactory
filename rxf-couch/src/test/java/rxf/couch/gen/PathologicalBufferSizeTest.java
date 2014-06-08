@@ -35,11 +35,11 @@ public class PathologicalBufferSizeTest {
     //REALLY NUKE THE OLD TESTS
 
     try {
-      String json = DocFetch.$().db("").docId("_all_dbs").to().fire().json();
+      String json = new DocFetch().db("").docId("_all_dbs").to().fire().json();
       String[] strings = CouchMetaDriver.gson().fromJson(json, String[].class);
       for (String s : strings) {
         if (s.startsWith(SOMEDBPREFIX))
-          DbDelete.$().db(s).to().fire().tx();
+          new DbDelete().db(s).to().fire().tx();
       }
     } catch (JsonSyntaxException e) {
       e.printStackTrace();
@@ -65,7 +65,7 @@ public class PathologicalBufferSizeTest {
     BlobAntiPatternObject.setReceiveBufferSize(4);
     BlobAntiPatternObject.setSendBufferSize(67);
     {
-      CouchTx tx = DbCreate.$().db(SOMEDB).to().fire().tx();
+      CouchTx tx = new DbCreate().db(SOMEDB).to().fire().tx();
       assertNotNull(tx);
       assertTrue(tx.ok());
       assertNull(tx.getError());
@@ -86,35 +86,35 @@ public class PathologicalBufferSizeTest {
 
   @Test(timeout = 1000)
   public void testLowLevelUpdateDoc() {
-    CouchTx tx = DocPersist.$().db(SOMEDB).validjson("{}").to().fire().tx();
+    CouchTx tx = new DocPersist().db(SOMEDB).validjson("{}").to().fire().tx();
 
-    String data = DocFetch.$().db(SOMEDB).docId(tx.id()).to().fire().json();
+    String data = new DocFetch().db(SOMEDB).docId(tx.id()).to().fire().json();
     Map<String, Object> obj =
         CouchMetaDriver.gson().<Map<String, Object>> fromJson(data, Map.class);
     obj.put("abc", "123");
     data = CouchMetaDriver.gson().toJson(obj);
-    CouchTx updateTx = DocPersist.$().db(SOMEDB).validjson(data).to().fire().tx();
+    CouchTx updateTx = new DocPersist().db(SOMEDB).validjson(data).to().fire().tx();
     assertNotNull(updateTx);
   }
 
   @Test(timeout = 1000)
   public void testLowLevelFetch() {
-    CouchTx tx = DocPersist.$().db(SOMEDB).validjson("{\"created\":true}").to().fire().tx();
+    CouchTx tx = new DocPersist().db(SOMEDB).validjson("{\"created\":true}").to().fire().tx();
 
-    String data = DocFetch.$().db(SOMEDB).docId(tx.id()).to().fire().json();
+    String data = new DocFetch().db(SOMEDB).docId(tx.id()).to().fire().json();
     assertTrue(data.contains("created"));
   }
 
   @Test
   public void testMissingDocLowLevelFailure() {
-    CouchTx tx = DocPersist.$().db("dne_dne").validjson("{}").to().fire().tx();
+    CouchTx tx = new DocPersist().db("dne_dne").validjson("{}").to().fire().tx();
     //new contract for non-20x results is find the nearest window and get to ground.
     assertNull(tx);
   }
 
   @Test(timeout = 1000)
   public void testDocPersist() {
-    CouchTx tx = DocPersist.$().db(SOMEDB).validjson("{\"_id\":\"t\"}").to().fire().tx();
+    CouchTx tx = new DocPersist().db(SOMEDB).validjson("{\"_id\":\"t\"}").to().fire().tx();
     assertNotNull(tx);
     assertTrue(tx.ok());
     assertNotNull(tx.getId());

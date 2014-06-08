@@ -2,6 +2,7 @@ package rxf.couch.gen;
 
 // generated
 
+import one.xio.MimeType;
 import rxf.core.Rfc822HeaderState;
 import rxf.core.Server;
 import rxf.couch.*;
@@ -9,8 +10,11 @@ import rxf.couch.driver.CouchMetaDriver;
 import rxf.rpc.BlobAntiPatternObject;
 import rxf.shared.CouchTx;
 
+import java.lang.String;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
@@ -23,25 +27,15 @@ public interface CouchDriver {
 
   //generated items
 
-  public class DbCreate extends DbKeysBuilder {
-    private static final int parmsCount = 1;
-
-    private DbCreate() {
-    }
-
-    public static DbCreate
-
-    $() {
-      return new DbCreate();
-    }
+  class DbCreate extends DbKeysBuilder {
 
     public DbCreateActionBuilder to() {
-      if (parms.size() >= parmsCount)
+      if (1 <= parms.size())
         return new DbCreateActionBuilder();
       throw new IllegalArgumentException("required parameters are: [db]");
     }
 
-    public DbCreate db(java.lang.String stringParam) {
+    public DbCreate db(String stringParam) {
       parms.put(CouchMetaDriver.etype.db, stringParam);
       return this;
     }
@@ -54,9 +48,6 @@ public interface CouchDriver {
     }
 
     public class DbCreateActionBuilder extends ActionBuilder {
-      public DbCreateActionBuilder() {
-        super();
-      }
 
       public DbCreateTerminalBuilder fire() {
         return new DbCreateTerminalBuilder() {
@@ -65,23 +56,24 @@ public interface CouchDriver {
                 final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
                 final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public java.nio.ByteBuffer call() throws Exception {
+                public ByteBuffer call() throws Exception {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  return rxf.couch.driver.CouchMetaDriver.DbCreate.visit(dbKeysBuilder,
-                      actionBuilder);
+                  return CouchMetaDriver.DbCreate.visit(dbKeysBuilder, actionBuilder);
                 }
               });
 
           public CouchTx tx() {
+            CouchTx r = null;
             try {
-              return CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
-                  CouchTx.class);
+              r =
+                  CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
+                      CouchTx.class);
             } catch (Exception e) {
               if (BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();
             }
-            return null;
+            return r;
           }
 
           @Deprecated
@@ -108,32 +100,23 @@ public interface CouchDriver {
         return (DbCreateActionBuilder) super.state(state);
       }
 
-      public DbCreateActionBuilder key(java.nio.channels.SelectionKey key) {
+      public DbCreateActionBuilder key(SelectionKey key) {
         return (DbCreateActionBuilder) super.key(key);
       }
     }
 
   }
 
-  public class DbDelete extends DbKeysBuilder {
+  class DbDelete extends DbKeysBuilder {
     private static final int parmsCount = 1;
 
-    private DbDelete() {
-    }
-
-    public static DbDelete
-
-    $() {
-      return new DbDelete();
-    }
-
     public DbDeleteActionBuilder to() {
-      if (parms.size() >= parmsCount)
+      if (parmsCount <= parms.size())
         return new DbDeleteActionBuilder();
       throw new IllegalArgumentException("required parameters are: [db]");
     }
 
-    public DbDelete db(java.lang.String stringParam) {
+    public DbDelete db(String stringParam) {
       parms.put(CouchMetaDriver.etype.db, stringParam);
       return this;
     }
@@ -146,9 +129,6 @@ public interface CouchDriver {
     }
 
     public class DbDeleteActionBuilder extends ActionBuilder {
-      public DbDeleteActionBuilder() {
-        super();
-      }
 
       public DbDeleteTerminalBuilder fire() {
         return new DbDeleteTerminalBuilder() {
@@ -157,23 +137,24 @@ public interface CouchDriver {
                 final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
                 final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public java.nio.ByteBuffer call() throws Exception {
+                public ByteBuffer call() throws Exception {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  return rxf.couch.driver.CouchMetaDriver.DbDelete.visit(dbKeysBuilder,
-                      actionBuilder);
+                  return CouchMetaDriver.DbDelete.visit(dbKeysBuilder, actionBuilder);
                 }
               });
 
           public CouchTx tx() {
+            CouchTx r = null;
             try {
-              return CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
-                  CouchTx.class);
+              r =
+                  CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
+                      CouchTx.class);
             } catch (Exception e) {
               if (BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();
             }
-            return null;
+            return r;
           }
 
           @Deprecated
@@ -200,43 +181,33 @@ public interface CouchDriver {
         return (DbDeleteActionBuilder) super.state(state);
       }
 
-      public DbDeleteActionBuilder key(java.nio.channels.SelectionKey key) {
+      public DbDeleteActionBuilder key(SelectionKey key) {
         return (DbDeleteActionBuilder) super.key(key);
       }
     }
 
   }
 
-  public class DocFetch extends DbKeysBuilder {
-    private static final int parmsCount = 2;
-
-    private DocFetch() {
-    }
-
-    public static DocFetch
-
-    $() {
-      return new DocFetch();
-    }
+  class DocFetch extends DbKeysBuilder {
 
     public DocFetchActionBuilder to() {
-      if (parms.size() >= parmsCount)
+      if (2 <= parms.size())
         return new DocFetchActionBuilder();
       throw new IllegalArgumentException("required parameters are: [db, docId]");
     }
 
-    public DocFetch db(java.lang.String stringParam) {
+    public DocFetch db(String stringParam) {
       parms.put(CouchMetaDriver.etype.db, stringParam);
       return this;
     }
 
-    public DocFetch docId(java.lang.String stringParam) {
+    public DocFetch docId(String stringParam) {
       parms.put(CouchMetaDriver.etype.docId, stringParam);
       return this;
     }
 
     public interface DocFetchTerminalBuilder extends TerminalBuilder {
-      java.nio.ByteBuffer pojo();
+      ByteBuffer pojo();
 
       Future<ByteBuffer> future();
 
@@ -244,9 +215,6 @@ public interface CouchDriver {
     }
 
     public class DocFetchActionBuilder extends ActionBuilder {
-      public DocFetchActionBuilder() {
-        super();
-      }
 
       public DocFetchTerminalBuilder fire() {
         return new DocFetchTerminalBuilder() {
@@ -255,21 +223,21 @@ public interface CouchDriver {
                 final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
                 final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public java.nio.ByteBuffer call() throws Exception {
+                public ByteBuffer call() throws Exception {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  return rxf.couch.driver.CouchMetaDriver.DocFetch.visit(dbKeysBuilder,
-                      actionBuilder);
+                  return CouchMetaDriver.DocFetch.visit(dbKeysBuilder, actionBuilder);
                 }
               });
 
-          public java.nio.ByteBuffer pojo() {
+          public ByteBuffer pojo() {
+            ByteBuffer r = null;
             try {
-              return future.get();
+              r = future.get();
             } catch (Exception e) {
               e.printStackTrace();
             }
-            return null;
+            return r;
           }
 
           public Future<ByteBuffer> future() {
@@ -277,13 +245,14 @@ public interface CouchDriver {
           }
 
           public String json() {
+            String r = null;
             try {
               ByteBuffer visit = future.get();
-              return null == visit ? null : Server.UTF8.decode(avoidStarvation(visit)).toString();
+              r = null == visit ? null : Server.UTF8.decode(avoidStarvation(visit)).toString();
             } catch (Exception e) {
               e.printStackTrace();
             }
-            return null;
+            return r;
           }
         };
       }
@@ -292,37 +261,28 @@ public interface CouchDriver {
         return (DocFetchActionBuilder) super.state(state);
       }
 
-      public DocFetchActionBuilder key(java.nio.channels.SelectionKey key) {
+      public DocFetchActionBuilder key(SelectionKey key) {
         return (DocFetchActionBuilder) super.key(key);
       }
     }
 
   }
 
-  public class RevisionFetch extends DbKeysBuilder {
+  class RevisionFetch extends DbKeysBuilder {
     private static final int parmsCount = 2;
 
-    private RevisionFetch() {
-    }
-
-    public static RevisionFetch
-
-    $() {
-      return new RevisionFetch();
-    }
-
     public RevisionFetchActionBuilder to() {
-      if (parms.size() >= parmsCount)
+      if (parmsCount <= parms.size())
         return new RevisionFetchActionBuilder();
       throw new IllegalArgumentException("required parameters are: [db, docId]");
     }
 
-    public RevisionFetch db(java.lang.String stringParam) {
+    public RevisionFetch db(String stringParam) {
       parms.put(CouchMetaDriver.etype.db, stringParam);
       return this;
     }
 
-    public RevisionFetch docId(java.lang.String stringParam) {
+    public RevisionFetch docId(String stringParam) {
       parms.put(CouchMetaDriver.etype.docId, stringParam);
       return this;
     }
@@ -334,9 +294,6 @@ public interface CouchDriver {
     }
 
     public class RevisionFetchActionBuilder extends ActionBuilder {
-      public RevisionFetchActionBuilder() {
-        super();
-      }
 
       public RevisionFetchTerminalBuilder fire() {
         return new RevisionFetchTerminalBuilder() {
@@ -345,22 +302,22 @@ public interface CouchDriver {
                 final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
                 final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public java.nio.ByteBuffer call() throws Exception {
+                public ByteBuffer call() throws Exception {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  return rxf.couch.driver.CouchMetaDriver.RevisionFetch.visit(dbKeysBuilder,
-                      actionBuilder);
+                  return CouchMetaDriver.RevisionFetch.visit(dbKeysBuilder, actionBuilder);
                 }
               });
 
           public String json() {
+            String r = null;
             try {
               ByteBuffer visit = future.get();
-              return null == visit ? null : Server.UTF8.decode(avoidStarvation(visit)).toString();
+              r = null == visit ? null : Server.UTF8.decode(avoidStarvation(visit)).toString();
             } catch (Exception e) {
               e.printStackTrace();
             }
-            return null;
+            return r;
           }
 
           public Future<ByteBuffer> future() {
@@ -373,47 +330,37 @@ public interface CouchDriver {
         return (RevisionFetchActionBuilder) super.state(state);
       }
 
-      public RevisionFetchActionBuilder key(java.nio.channels.SelectionKey key) {
+      public RevisionFetchActionBuilder key(SelectionKey key) {
         return (RevisionFetchActionBuilder) super.key(key);
       }
     }
 
   }
 
-  public class DocPersist extends DbKeysBuilder {
-    private static final int parmsCount = 2;
-
-    private DocPersist() {
-    }
-
-    public static DocPersist
-
-    $() {
-      return new DocPersist();
-    }
+  class DocPersist extends DbKeysBuilder {
 
     public DocPersistActionBuilder to() {
-      if (parms.size() >= parmsCount)
+      if (2 <= parms.size())
         return new DocPersistActionBuilder();
       throw new IllegalArgumentException("required parameters are: [db, validjson]");
     }
 
-    public DocPersist db(java.lang.String stringParam) {
+    public DocPersist db(String stringParam) {
       parms.put(CouchMetaDriver.etype.db, stringParam);
       return this;
     }
 
-    public DocPersist validjson(java.lang.String stringParam) {
+    public DocPersist validjson(String stringParam) {
       parms.put(CouchMetaDriver.etype.validjson, stringParam);
       return this;
     }
 
-    public DocPersist docId(java.lang.String stringParam) {
+    public DocPersist docId(String stringParam) {
       parms.put(CouchMetaDriver.etype.docId, stringParam);
       return this;
     }
 
-    public DocPersist rev(java.lang.String stringParam) {
+    public DocPersist rev(String stringParam) {
       parms.put(CouchMetaDriver.etype.rev, stringParam);
       return this;
     }
@@ -428,9 +375,6 @@ public interface CouchDriver {
     }
 
     public class DocPersistActionBuilder extends ActionBuilder {
-      public DocPersistActionBuilder() {
-        super();
-      }
 
       public DocPersistTerminalBuilder fire() {
         return new DocPersistTerminalBuilder() {
@@ -439,23 +383,24 @@ public interface CouchDriver {
                 final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
                 final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public java.nio.ByteBuffer call() throws Exception {
+                public ByteBuffer call() throws Exception {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  return rxf.couch.driver.CouchMetaDriver.DocPersist.visit(dbKeysBuilder,
-                      actionBuilder);
+                  return CouchMetaDriver.DocPersist.visit(dbKeysBuilder, actionBuilder);
                 }
               });
 
           public CouchTx tx() {
+            CouchTx r = null;
             try {
-              return CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
-                  CouchTx.class);
+              r =
+                  CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
+                      CouchTx.class);
             } catch (Exception e) {
               if (BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();
             }
-            return null;
+            return r;
           }
 
           @Deprecated
@@ -486,42 +431,33 @@ public interface CouchDriver {
         return (DocPersistActionBuilder) super.state(state);
       }
 
-      public DocPersistActionBuilder key(java.nio.channels.SelectionKey key) {
+      public DocPersistActionBuilder key(SelectionKey key) {
         return (DocPersistActionBuilder) super.key(key);
       }
     }
 
   }
 
-  public class DocDelete extends DbKeysBuilder {
+  class DocDelete extends DbKeysBuilder {
     private static final int parmsCount = 3;
 
-    private DocDelete() {
-    }
-
-    public static DocDelete
-
-    $() {
-      return new DocDelete();
-    }
-
     public DocDeleteActionBuilder to() {
-      if (parms.size() >= parmsCount)
+      if (parmsCount <= parms.size())
         return new DocDeleteActionBuilder();
       throw new IllegalArgumentException("required parameters are: [db, docId, rev]");
     }
 
-    public DocDelete db(java.lang.String stringParam) {
+    public DocDelete db(String stringParam) {
       parms.put(CouchMetaDriver.etype.db, stringParam);
       return this;
     }
 
-    public DocDelete docId(java.lang.String stringParam) {
+    public DocDelete docId(String stringParam) {
       parms.put(CouchMetaDriver.etype.docId, stringParam);
       return this;
     }
 
-    public DocDelete rev(java.lang.String stringParam) {
+    public DocDelete rev(String stringParam) {
       parms.put(CouchMetaDriver.etype.rev, stringParam);
       return this;
     }
@@ -536,9 +472,6 @@ public interface CouchDriver {
     }
 
     public class DocDeleteActionBuilder extends ActionBuilder {
-      public DocDeleteActionBuilder() {
-        super();
-      }
 
       public DocDeleteTerminalBuilder fire() {
         return new DocDeleteTerminalBuilder() {
@@ -547,23 +480,24 @@ public interface CouchDriver {
                 final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
                 final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public java.nio.ByteBuffer call() throws Exception {
+                public ByteBuffer call() throws Exception {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  return rxf.couch.driver.CouchMetaDriver.DocDelete.visit(dbKeysBuilder,
-                      actionBuilder);
+                  return CouchMetaDriver.DocDelete.visit(dbKeysBuilder, actionBuilder);
                 }
               });
 
           public CouchTx tx() {
+            CouchTx r = null;
             try {
-              return CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
-                  CouchTx.class);
+              r =
+                  CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
+                      CouchTx.class);
             } catch (Exception e) {
               if (BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();
             }
-            return null;
+            return r;
           }
 
           @Deprecated
@@ -594,43 +528,33 @@ public interface CouchDriver {
         return (DocDeleteActionBuilder) super.state(state);
       }
 
-      public DocDeleteActionBuilder key(java.nio.channels.SelectionKey key) {
+      public DocDeleteActionBuilder key(SelectionKey key) {
         return (DocDeleteActionBuilder) super.key(key);
       }
     }
 
   }
 
-  public class DesignDocFetch extends DbKeysBuilder {
-    private static final int parmsCount = 2;
-
-    private DesignDocFetch() {
-    }
-
-    public static DesignDocFetch
-
-    $() {
-      return new DesignDocFetch();
-    }
+  class DesignDocFetch extends DbKeysBuilder {
 
     public DesignDocFetchActionBuilder to() {
-      if (parms.size() >= parmsCount)
+      if (2 <= parms.size())
         return new DesignDocFetchActionBuilder();
       throw new IllegalArgumentException("required parameters are: [db, designDocId]");
     }
 
-    public DesignDocFetch db(java.lang.String stringParam) {
+    public DesignDocFetch db(String stringParam) {
       parms.put(CouchMetaDriver.etype.db, stringParam);
       return this;
     }
 
-    public DesignDocFetch designDocId(java.lang.String stringParam) {
+    public DesignDocFetch designDocId(String stringParam) {
       parms.put(CouchMetaDriver.etype.designDocId, stringParam);
       return this;
     }
 
     public interface DesignDocFetchTerminalBuilder extends TerminalBuilder {
-      java.nio.ByteBuffer pojo();
+      ByteBuffer pojo();
 
       Future<ByteBuffer> future();
 
@@ -638,9 +562,6 @@ public interface CouchDriver {
     }
 
     public class DesignDocFetchActionBuilder extends ActionBuilder {
-      public DesignDocFetchActionBuilder() {
-        super();
-      }
 
       public DesignDocFetchTerminalBuilder fire() {
         return new DesignDocFetchTerminalBuilder() {
@@ -649,21 +570,21 @@ public interface CouchDriver {
                 final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
                 final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public java.nio.ByteBuffer call() throws Exception {
+                public ByteBuffer call() throws Exception {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  return rxf.couch.driver.CouchMetaDriver.DesignDocFetch.visit(dbKeysBuilder,
-                      actionBuilder);
+                  return CouchMetaDriver.DesignDocFetch.visit(dbKeysBuilder, actionBuilder);
                 }
               });
 
-          public java.nio.ByteBuffer pojo() {
+          public ByteBuffer pojo() {
+            ByteBuffer r = null;
             try {
-              return future.get();
+              r = future.get();
             } catch (Exception e) {
               e.printStackTrace();
             }
-            return null;
+            return r;
           }
 
           public Future<ByteBuffer> future() {
@@ -671,13 +592,14 @@ public interface CouchDriver {
           }
 
           public String json() {
+            String r = null;
             try {
               ByteBuffer visit = future.get();
-              return null == visit ? null : Server.UTF8.decode(avoidStarvation(visit)).toString();
+              r = null == visit ? null : Server.UTF8.decode(avoidStarvation(visit)).toString();
             } catch (Exception e) {
               e.printStackTrace();
             }
-            return null;
+            return r;
           }
         };
       }
@@ -686,54 +608,44 @@ public interface CouchDriver {
         return (DesignDocFetchActionBuilder) super.state(state);
       }
 
-      public DesignDocFetchActionBuilder key(java.nio.channels.SelectionKey key) {
+      public DesignDocFetchActionBuilder key(SelectionKey key) {
         return (DesignDocFetchActionBuilder) super.key(key);
       }
     }
 
   }
-  //                                         rnewson	"Note: Multiple keys request to a reduce function only supports group=true and NO group_level (identical to group_level=exact). The resulting error is "Multi-key fetchs for reduce view must include group=true""
+  //   rnewson	"Note: Multiple keys request to a reduce function only supports group=true and NO group_level (identical to group_level=exact). The resulting error is "Multi-key fetchs for reduce view must include group=true""
 
-  public class ViewFetch extends DbKeysBuilder {
-    private static final int parmsCount = 2;
-
-    private ViewFetch() {
-    }
-
-    public static ViewFetch
-
-    $() {
-      return new ViewFetch();
-    }
+  class ViewFetch extends DbKeysBuilder {
 
     public ViewFetchActionBuilder to() {
-      if (parms.size() >= parmsCount)
+      if (2 <= parms.size())
         return new ViewFetchActionBuilder();
       throw new IllegalArgumentException("required parameters are: [db, view]");
     }
 
-    public ViewFetch db(java.lang.String stringParam) {
+    public ViewFetch db(String stringParam) {
       parms.put(CouchMetaDriver.etype.db, stringParam);
       return this;
     }
 
-    public ViewFetch view(java.lang.String stringParam) {
+    public ViewFetch view(String stringParam) {
       parms.put(CouchMetaDriver.etype.view, stringParam);
       return this;
     }
 
-    public ViewFetch type(java.lang.reflect.Type typeParam) {
+    public ViewFetch type(Type typeParam) {
       parms.put(CouchMetaDriver.etype.type, typeParam);
       return this;
     }
 
-    public ViewFetch keyType(java.lang.reflect.Type typeParam) {
+    public ViewFetch keyType(Type typeParam) {
       parms.put(CouchMetaDriver.etype.keyType, typeParam);
       return this;
     }
 
     public interface ViewFetchTerminalBuilder extends TerminalBuilder {
-      rxf.couch.CouchResultSet rows();
+      CouchResultSet rows();
 
       Future<ByteBuffer> future();
 
@@ -742,9 +654,6 @@ public interface CouchDriver {
     }
 
     public class ViewFetchActionBuilder extends ActionBuilder {
-      public ViewFetchActionBuilder() {
-        super();
-      }
 
       public ViewFetchTerminalBuilder fire() {
 
@@ -754,41 +663,40 @@ public interface CouchDriver {
                 final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
                 final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public java.nio.ByteBuffer call() throws Exception {
+                public ByteBuffer call() throws Exception {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
                   return CouchMetaDriver.ViewFetch.visit(dbKeysBuilder, actionBuilder);
                 }
               });
 
-          public rxf.couch.CouchResultSet rows() {
+          public CouchResultSet rows() {
+            CouchResultSet r = null;
             try {
               ByteBuffer buf = future.get();
               // System.err.println("???? "+ HttpMethod.UTF8.decode(buf));
-              return CouchMetaDriver.gson().fromJson(
-                  Server.UTF8.decode(avoidStarvation(buf)).toString(),
-                  new java.lang.reflect.ParameterizedType() {
-                    public Type getRawType() {
-                      return CouchResultSet.class;
-                    }
+              r =
+                  CouchMetaDriver.gson().fromJson(
+                      Server.UTF8.decode(avoidStarvation(buf)).toString(), new ParameterizedType() {
+                        public Type getRawType() {
+                          return CouchResultSet.class;
+                        }
 
-                    public Type getOwnerType() {
-                      return null;
-                    }
+                        public Type getOwnerType() {
+                          return null;
+                        }
 
-                    public Type[] getActualTypeArguments() {
-                      Type key = (Type) ViewFetch.this.get(CouchMetaDriver.etype.keyType);
-                      Type[] t =
-                          {
-                              key == null ? Object.class : key,
+                        public Type[] getActualTypeArguments() {
+                          Type key = (Type) ViewFetch.this.get(CouchMetaDriver.etype.keyType);
+                          return new Type[] {
+                              null == key ? Object.class : key,
                               (Type) ViewFetch.this.get(CouchMetaDriver.etype.type)};
-                      return t;
-                    }
-                  });
+                        }
+                      });
             } catch (Exception e) {
               e.printStackTrace();
             }
-            return null;
+            return r;
           }
 
           public Future<ByteBuffer> future() {
@@ -805,47 +713,37 @@ public interface CouchDriver {
         return (ViewFetchActionBuilder) super.state(state);
       }
 
-      public ViewFetchActionBuilder key(java.nio.channels.SelectionKey key) {
+      public ViewFetchActionBuilder key(SelectionKey key) {
         return (ViewFetchActionBuilder) super.key(key);
       }
     }
 
   }
 
-  public class JsonSend extends DbKeysBuilder {
-    private static final int parmsCount = 2;
-
-    private JsonSend() {
-    }
-
-    public static JsonSend
-
-    $() {
-      return new JsonSend();
-    }
+  class JsonSend extends DbKeysBuilder {
 
     public JsonSendActionBuilder to() {
-      if (parms.size() >= parmsCount)
+      if (2 <= parms.size())
         return new JsonSendActionBuilder();
       throw new IllegalArgumentException("required parameters are: [opaque, validjson]");
     }
 
-    public JsonSend opaque(java.lang.String stringParam) {
+    public JsonSend opaque(String stringParam) {
       parms.put(CouchMetaDriver.etype.opaque, stringParam);
       return this;
     }
 
-    public JsonSend validjson(java.lang.String stringParam) {
+    public JsonSend validjson(String stringParam) {
       parms.put(CouchMetaDriver.etype.validjson, stringParam);
       return this;
     }
 
-    public JsonSend type(java.lang.reflect.Type typeParam) {
+    public JsonSend type(Type typeParam) {
       parms.put(CouchMetaDriver.etype.type, typeParam);
       return this;
     }
 
-    public JsonSend keyType(java.lang.reflect.Type typeParam) {
+    public JsonSend keyType(Type typeParam) {
       parms.put(CouchMetaDriver.etype.keyType, typeParam);
       return this;
     }
@@ -856,7 +754,7 @@ public interface CouchDriver {
       @Deprecated
       void oneWay();
 
-      rxf.couch.CouchResultSet rows();
+      CouchResultSet rows();
 
       String json();
 
@@ -867,9 +765,6 @@ public interface CouchDriver {
     }
 
     public class JsonSendActionBuilder extends ActionBuilder {
-      public JsonSendActionBuilder() {
-        super();
-      }
 
       public JsonSendTerminalBuilder fire() {
         return new JsonSendTerminalBuilder() {
@@ -878,23 +773,24 @@ public interface CouchDriver {
                 final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
                 final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public java.nio.ByteBuffer call() throws Exception {
+                public ByteBuffer call() throws Exception {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  return rxf.couch.driver.CouchMetaDriver.JsonSend.visit(dbKeysBuilder,
-                      actionBuilder);
+                  return CouchMetaDriver.JsonSend.visit(dbKeysBuilder, actionBuilder);
                 }
               });
 
           public CouchTx tx() {
+            CouchTx r = null;
             try {
-              return CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
-                  CouchTx.class);
+              r =
+                  CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
+                      CouchTx.class);
             } catch (Exception e) {
               if (BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();
             }
-            return null;
+            return r;
           }
 
           @Deprecated
@@ -915,42 +811,43 @@ public interface CouchDriver {
             });
           }
 
-          public rxf.couch.CouchResultSet rows() {
+          public CouchResultSet rows() {
+            CouchResultSet r = null;
             try {
-              return CouchMetaDriver.gson().fromJson(
-                  Server.UTF8.decode(avoidStarvation(future.get())).toString(),
-                  new java.lang.reflect.ParameterizedType() {
-                    public Type getRawType() {
-                      return CouchResultSet.class;
-                    }
+              r =
+                  CouchMetaDriver.gson().fromJson(
+                      Server.UTF8.decode(avoidStarvation(future.get())).toString(),
+                      new ParameterizedType() {
+                        public Type getRawType() {
+                          return CouchResultSet.class;
+                        }
 
-                    public Type getOwnerType() {
-                      return null;
-                    }
+                        public Type getOwnerType() {
+                          return null;
+                        }
 
-                    public Type[] getActualTypeArguments() {
-                      Type key = (Type) JsonSend.this.get(CouchMetaDriver.etype.keyType);
-                      Type[] t =
-                          {
-                              key == null ? Object.class : key,
+                        public Type[] getActualTypeArguments() {
+                          Type key = (Type) JsonSend.this.get(CouchMetaDriver.etype.keyType);
+                          return new Type[] {
+                              null == key ? Object.class : key,
                               (Type) JsonSend.this.get(CouchMetaDriver.etype.type)};
-                      return t;
-                    }
-                  });
+                        }
+                      });
             } catch (Exception e) {
               e.printStackTrace();
             }
-            return null;
+            return r;
           }
 
           public String json() {
+            String r = null;
             try {
               ByteBuffer visit = future.get();
-              return null == visit ? null : Server.UTF8.decode(avoidStarvation(visit)).toString();
+              r = null == visit ? null : Server.UTF8.decode(avoidStarvation(visit)).toString();
             } catch (Exception e) {
               e.printStackTrace();
             }
-            return null;
+            return r;
           }
 
           public Future<ByteBuffer> future() {
@@ -967,63 +864,53 @@ public interface CouchDriver {
         return (JsonSendActionBuilder) super.state(state);
       }
 
-      public JsonSendActionBuilder key(java.nio.channels.SelectionKey key) {
+      public JsonSendActionBuilder key(SelectionKey key) {
         return (JsonSendActionBuilder) super.key(key);
       }
     }
 
   }
 
-  public class BlobSend extends DbKeysBuilder {
-    private static final int parmsCount = 5;
-
-    private BlobSend() {
-    }
-
-    public static BlobSend
-
-    $() {
-      return new BlobSend();
-    }
+  class BlobSend extends DbKeysBuilder {
 
     public BlobSendActionBuilder to() {
-      if (parms.size() >= parmsCount)
+      if (5 <= parms.size())
         return new BlobSendActionBuilder();
       throw new IllegalArgumentException(
           "required parameters are: [blob, db, docId, rev, attachname]");
     }
 
-    public BlobSend blob(java.nio.ByteBuffer bytebufferParam) {
+    public BlobSend blob(ByteBuffer bytebufferParam) {
       parms.put(CouchMetaDriver.etype.blob, bytebufferParam);
       return this;
     }
 
-    public BlobSend db(java.lang.String stringParam) {
+    public BlobSend db(String stringParam) {
       parms.put(CouchMetaDriver.etype.db, stringParam);
       return this;
     }
 
-    public BlobSend docId(java.lang.String stringParam) {
+    public BlobSend docId(String stringParam) {
       parms.put(CouchMetaDriver.etype.docId, stringParam);
       return this;
     }
 
-    public BlobSend rev(java.lang.String stringParam) {
+    public BlobSend rev(String stringParam) {
       parms.put(CouchMetaDriver.etype.rev, stringParam);
       return this;
     }
 
-    public BlobSend attachname(java.lang.String stringParam) {
+    public BlobSend attachname(String stringParam) {
       parms.put(CouchMetaDriver.etype.attachname, stringParam);
       return this;
     }
 
-    public BlobSend mimetypeEnum(one.xio.MimeType mimetypeParam) {
+    public BlobSend mimetypeEnum(MimeType mimetypeParam) {
       parms.put(CouchMetaDriver.etype.mimetypeEnum, mimetypeParam);
       return this;
     }
 
-    public BlobSend mimetype(java.lang.String stringParam) {
+    public BlobSend mimetype(String stringParam) {
       parms.put(CouchMetaDriver.etype.mimetype, stringParam);
       return this;
     }
@@ -1038,9 +925,6 @@ public interface CouchDriver {
     }
 
     public class BlobSendActionBuilder extends ActionBuilder {
-      public BlobSendActionBuilder() {
-        super();
-      }
 
       public BlobSendTerminalBuilder fire() {
         return new BlobSendTerminalBuilder() {
@@ -1049,23 +933,24 @@ public interface CouchDriver {
                 final DbKeysBuilder dbKeysBuilder = (DbKeysBuilder) DbKeysBuilder.get();
                 final ActionBuilder actionBuilder = (ActionBuilder) ActionBuilder.get();
 
-                public java.nio.ByteBuffer call() throws Exception {
+                public ByteBuffer call() throws Exception {
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
-                  return rxf.couch.driver.CouchMetaDriver.BlobSend.visit(dbKeysBuilder,
-                      actionBuilder);
+                  return CouchMetaDriver.BlobSend.visit(dbKeysBuilder, actionBuilder);
                 }
               });
 
           public CouchTx tx() {
+            CouchTx r = null;
             try {
-              return CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
-                  CouchTx.class);
+              r =
+                  CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
+                      CouchTx.class);
             } catch (Exception e) {
               if (BlobAntiPatternObject.DEBUG_SENDJSON)
                 e.printStackTrace();
             }
-            return null;
+            return r;
           }
 
           public Future<ByteBuffer> future() {
@@ -1096,10 +981,9 @@ public interface CouchDriver {
         return (BlobSendActionBuilder) super.state(state);
       }
 
-      public BlobSendActionBuilder key(java.nio.channels.SelectionKey key) {
+      public BlobSendActionBuilder key(SelectionKey key) {
         return (BlobSendActionBuilder) super.key(key);
       }
     }
-
   }
 }

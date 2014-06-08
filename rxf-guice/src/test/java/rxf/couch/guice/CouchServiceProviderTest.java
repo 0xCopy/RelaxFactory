@@ -76,13 +76,13 @@ public class CouchServiceProviderTest {
     db =
         i.getInstance(Key.get(String.class, Names.named(CouchModuleBuilder.NAMESPACE)))
             + GuiceTest.class.getSimpleName().toLowerCase();
-    CouchDriver.DbCreate.$().db(db).to().fire().tx();
+    new CouchDriver.DbCreate().db(db).to().fire().tx();
 
   }
 
   @After
   public void after() {
-    CouchDriver.DbDelete.$().db(db).to().fire().tx();
+    new CouchDriver.DbDelete().db(db).to().fire().tx();
   }
 
   public static class TestModule extends AbstractModule {

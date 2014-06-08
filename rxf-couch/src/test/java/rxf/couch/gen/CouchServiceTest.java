@@ -61,7 +61,7 @@ public class CouchServiceTest {
     nukeTestDbs();
 
     {
-      CouchTx tx = CouchDriver.DbCreate.$().db(SOMEDB).to().fire().tx();
+        CouchTx tx = new CouchDriver.DbCreate().db(SOMEDB).to().fire().tx();
       assertNotNull(tx);
       assertTrue(tx.ok());
       assertNull(tx.getError());
@@ -71,11 +71,11 @@ public class CouchServiceTest {
 
   static void nukeTestDbs() {
     try {
-      String json = DocFetch.$().db("").docId("_all_dbs").to().fire().json();
+        String json = new DocFetch().db("").docId("_all_dbs").to().fire().json();
       String[] strings = gson().fromJson(json, String[].class);
       for (String s : strings) {
         if (s.startsWith(SOMEDBPREFIX))
-          DbDelete.$().db(s).to().fire().tx();
+            new DbDelete().db(s).to().fire().tx();
       }
     } catch (JsonSyntaxException e) {
       e.printStackTrace();

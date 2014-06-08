@@ -49,7 +49,7 @@ public class CouchDriverTest {
     nukeTestDbs();
 
     {
-      CouchTx tx = DbCreate.$().db(SOMEDB).to().fire().tx();
+      CouchTx tx = new DbCreate().db(SOMEDB).to().fire().tx();
       assertNotNull(tx);
       assertTrue(tx.ok());
       assertNull(tx.getError());
@@ -61,11 +61,11 @@ public class CouchDriverTest {
     //REALLY NUKE THE OLD TESTS
 
     try {
-      String json = DocFetch.$().db("").docId("_all_dbs").to().fire().json();
+      String json = new DocFetch().db("").docId("_all_dbs").to().fire().json();
       String[] strings = CouchMetaDriver.gson().fromJson(json, String[].class);
       for (String s : strings) {
         if (s.startsWith(SOMEDBPREFIX))
-          DbDelete.$().db(s).to().fire().tx();
+          new DbDelete().db(s).to().fire().tx();
       }
     } catch (JsonSyntaxException e) {
       e.printStackTrace();
@@ -100,36 +100,36 @@ public class CouchDriverTest {
 
   @Test(timeout = 1000)
   public void testLowLevelUpdateDoc() {
-    CouchTx tx = DocPersist.$().db(SOMEDB).validjson("{}").to().fire().tx();
+    CouchTx tx = new DocPersist().db(SOMEDB).validjson("{}").to().fire().tx();
 
-    String data = DocFetch.$().db(SOMEDB).docId(tx.id()).to().fire().json();
+    String data = new DocFetch().db(SOMEDB).docId(tx.id()).to().fire().json();
     Map<String, Object> obj =
         CouchMetaDriver.gson().<Map<String, Object>> fromJson(data, Map.class);
     obj.put("abc", "123");
     data = CouchMetaDriver.gson().toJson(obj);
-    CouchTx updateTx = DocPersist.$().db(SOMEDB).validjson(data).to().fire().tx();
+    CouchTx updateTx = new DocPersist().db(SOMEDB).validjson(data).to().fire().tx();
     assertNotNull(updateTx);
   }
 
   @Test(timeout = 1000)
   public void testLowLevelFetch() {
-    CouchTx tx = DocPersist.$().db(SOMEDB).validjson("{\"created\":true}").to().fire().tx();
+    CouchTx tx = new DocPersist().db(SOMEDB).validjson("{\"created\":true}").to().fire().tx();
 
-    String data = DocFetch.$().db(SOMEDB).docId(tx.id()).to().fire().json();
+    String data = new DocFetch().db(SOMEDB).docId(tx.id()).to().fire().json();
     assertTrue(data.contains("created"));
   }
 
   @Test
   public void testMissingDocLowLevelFailure() {
 
-    CouchTx tx = DocPersist.$().db("dne_dne").validjson("{}").to().fire().tx();
+    CouchTx tx = new DocPersist().db("dne_dne").validjson("{}").to().fire().tx();
     //new contract for non-20x results is find the nearest window and get to ground.
     assertNull(tx);
   }
 
   @Test(timeout = 1000)
   public void testDocPersist() {
-    CouchTx tx = DocPersist.$().db(SOMEDB).validjson("{\"_id\":\"t\"}").to().fire().tx();
+    CouchTx tx = new DocPersist().db(SOMEDB).validjson("{\"_id\":\"t\"}").to().fire().tx();
     assertNotNull(tx);
     assertTrue(tx.ok());
     assertNotNull(tx.getId());
@@ -142,45 +142,46 @@ public class CouchDriverTest {
         "{" + "  \"_id\" : \"" + DESIGN_SAMPLE + "\"," + "  \"views\" : {" + "    \"foo\" : {"
             + "      \"map\" : \"function(doc){ emit(doc.name, doc); }\"" + "    }" + "  }" + "}";
     //TODO inconsistent with DesignDocFetch
-    CouchTx tx = JsonSend.$().opaque(SOMEDB).validjson(doc).to().fire().tx();
+    CouchTx tx = new JsonSend().opaque(SOMEDB).validjson(doc).to().fire().tx();
     assertNotNull(tx);
     assertTrue(tx.ok());
     assertEquals(tx.id(), DESIGN_SAMPLE);
 
-    DocPersist.$().db(SOMEDB).validjson("{\"name\":\"a\",\"brand\":\"c\"}").to().fire().tx();
-    DocPersist.$().db(SOMEDB).validjson("{\"name\":\"b\",\"brand\":\"d\"}").to().fire().tx();
+    new DocPersist().db(SOMEDB).validjson("{\"name\":\"a\",\"brand\":\"c\"}").to().fire().tx();
+    new DocPersist().db(SOMEDB).validjson("{\"name\":\"b\",\"brand\":\"d\"}").to().fire().tx();
     String space =
         "hal kjfljdskjahkjsdfkajhdf halkjsdf kgasdkjfh hwroeuvbdfhjvb nv ihdfousbkvjlsdfkvbdkjfvpghblkjfgbldkgf,xjbxdl kfjbhxv,vdlkgfhbfkljdflkjh dfjgh bsjdhfg hlhgdvkjhgksdfglhs";
-    DocPersist.$().db(SOMEDB).validjson(
+    new DocPersist().db(SOMEDB).validjson(
         "{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to()
         .fire().tx();
-    DocPersist.$().db(SOMEDB).validjson(
+    new DocPersist().db(SOMEDB).validjson(
         "{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to()
         .fire().tx();
-    DocPersist.$().db(SOMEDB).validjson(
+    new DocPersist().db(SOMEDB).validjson(
         "{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to()
         .fire().tx();
-    DocPersist.$().db(SOMEDB).validjson(
+    new DocPersist().db(SOMEDB).validjson(
         "{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to()
         .fire().tx();
-    DocPersist.$().db(SOMEDB).validjson(
+    new DocPersist().db(SOMEDB).validjson(
         "{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to()
         .fire().tx();
-    DocPersist.$().db(SOMEDB).validjson(
+    new DocPersist().db(SOMEDB).validjson(
         "{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to()
         .fire().tx();
-    DocPersist.$().db(SOMEDB).validjson(
+    new DocPersist().db(SOMEDB).validjson(
         "{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to()
         .fire().tx();
     //running view
     final ViewFetchTerminalBuilder fire =
-        ViewFetch.$().db(SOMEDB).type(Map.class).view(DESIGN_SAMPLE + "/_view/foo?key=\"a\"").to()
-            .fire();
+        new ViewFetch().db(SOMEDB).type(Map.class).view(DESIGN_SAMPLE + "/_view/foo?key=\"a\"")
+            .to().fire();
     CouchResultSet<?, Map<String, String>> data = fire.rows();
     assertNotNull(data);
     assertEquals(1, data.rows.size());
     assertEquals("a", data.rows.get(0).value.get("name")); //TODO no consistent way to write designdoc
-    String designDoc = DesignDocFetch.$().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
+    String designDoc =
+        new DesignDocFetch().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
     assertNotNull(designDoc);
     Map<String, Object> obj =
         CouchMetaDriver.gson().<Map<String, Object>> fromJson(designDoc, Map.class);
@@ -189,7 +190,7 @@ public class CouchDriverTest {
     foo.put("map", "function(doc){ emit(doc.brand, doc); }");
 
     designDoc = CouchMetaDriver.gson().toJson(obj);
-    tx = JsonSend.$().opaque(SOMEDB).validjson(designDoc).to().fire().tx();
+    tx = new JsonSend().opaque(SOMEDB).validjson(designDoc).to().fire().tx();
 
     assertNotNull(tx);
     assertTrue(tx.ok());
@@ -201,22 +202,22 @@ public class CouchDriverTest {
       fail(e.toString());
     }
     data =
-        ViewFetch.$().db(SOMEDB).type(Map.class).view(DESIGN_SAMPLE + "/_view/foo?key=\"d\"").to()
-            .fire().rows();
+        new ViewFetch().db(SOMEDB).type(Map.class).view(DESIGN_SAMPLE + "/_view/foo?key=\"d\"")
+            .to().fire().rows();
     assertNotNull(data);
     assertEquals(8, data.rows.size());
     assertEquals("b", data.rows.get(0).value.get("name"));
 
     String rev = null;
     try {
-      rev = RevisionFetch.$().db(SOMEDB).docId(DESIGN_SAMPLE).to().fire().json();
-      tx = DocDelete.$().db(SOMEDB).docId(DESIGN_SAMPLE).rev(rev).to().fire().tx();
+      rev = new RevisionFetch().db(SOMEDB).docId(DESIGN_SAMPLE).to().fire().json();
+      tx = new DocDelete().db(SOMEDB).docId(DESIGN_SAMPLE).rev(rev).to().fire().tx();
       assert tx.ok();
     } catch (Exception e) {
       e.printStackTrace();
       fail(rev);
     }
-    designDoc = DesignDocFetch.$().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
+    designDoc = new DesignDocFetch().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
     assertNull(designDoc);
   }
 

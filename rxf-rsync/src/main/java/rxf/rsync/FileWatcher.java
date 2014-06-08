@@ -6,10 +6,8 @@ import javolution.util.FastMap;
 import one.xio.AsioVisitor;
 import one.xio.MimeType;
 import rxf.core.Server;
-import rxf.couch.driver.CouchMetaDriver;
 import rxf.couch.gen.CouchDriver;
 import rxf.web.inf.ProtocolMethodDispatch;
-import rxf.shared.CouchTx;
 
 import java.io.File;
 import java.io.IOException;
@@ -211,7 +209,7 @@ public class FileWatcher {
   private void processDelta() {
     if (!delta.isEmpty()) {
       System.err.println("processing " + delta.size());
-      String json = CouchDriver.DocFetch.$().db(FILEWATCHER_DB).docId(FILEWATCHER_DOCID).to().fire().json();
+        String json = new CouchDriver.DocFetch().db(FILEWATCHER_DB).docId(FILEWATCHER_DOCID).to().fire().json();
       TreeMap x = gson().fromJson(json, TreeMap.class);
       if (null == x) {
         x = new TreeMap<>();
@@ -300,14 +298,14 @@ public class FileWatcher {
         }
       }
       if (changed) {
-          CouchDriver.DocPersist.$().db(FILEWATCHER_DB).validjson(gson().toJson(x)).to().fire().tx();
+          new CouchDriver.DocPersist().db(FILEWATCHER_DB).validjson(gson().toJson(x)).to().fire().tx();
       }
     }
   }
 
   public void provision() {
     System.out.println("FileWatcher.provision()");
-    String json = CouchDriver.DocFetch.$().db(FILEWATCHER_DB).docId(FILEWATCHER_DOCID).to().fire().json();
+      String json = new CouchDriver.DocFetch().db(FILEWATCHER_DB).docId(FILEWATCHER_DOCID).to().fire().json();
     TreeMap x = gson() .fromJson(json, TreeMap.class);
     if (null == x) {
       x = new TreeMap<>();

@@ -86,7 +86,7 @@ public class CouchServiceFactory {
             CouchDesignDoc existingDesignDoc = null;
 
             String pathPrefix1 = getPathPrefix();
-            design.version = RevisionFetch.$().db(pathPrefix1).docId(designId).to().fire().json();
+            design.version = new RevisionFetch().db(pathPrefix1).docId(designId).to().fire().json();
 
             Map<String, Type> returnTypes = new TreeMap<String, Type>();
             viewMethods = new TreeMap<String, String>();
@@ -157,11 +157,11 @@ public class CouchServiceFactory {
             if (!viewMethods.isEmpty()
                 && (null == design.version || !design.equals(existingDesignDoc =
                     CouchMetaDriver.gson().fromJson(
-                        DocFetch.$().db(pathPrefix1).docId(designId).to().fire().json(),
+                        new DocFetch().db(pathPrefix1).docId(designId).to().fire().json(),
                         CouchDesignDoc.class)))) {
               System.err.println("Existing design doc out of date, updating...");
               final String stringParam = CouchMetaDriver.gson().toJson(design);
-              final JsonSendTerminalBuilder fire = JsonSend.$().opaque(getPathPrefix())
+              final JsonSendTerminalBuilder fire = new JsonSend().opaque(getPathPrefix())
               /*.docId(design.key)*/.validjson(stringParam).to().fire();
               if (BlobAntiPatternObject.DEBUG_SENDJSON) {
                 CouchTx tx = fire.tx();
@@ -181,12 +181,12 @@ public class CouchServiceFactory {
     }
 
     private boolean ensureDbExists(String dbName) {
-      String json = DocFetch.$().db("").docId(dbName).to().fire().json();
+      String json = new DocFetch().db("").docId(dbName).to().fire().json();
       if (json == null) {
         //			CouchTx tx = CouchDriver.GSON.fromJson(json, CouchTx.class);
         //			if (tx.error() == null) {
         // Need to create the DB
-        CouchTx tx = DbCreate.$().db(getPathPrefix()).to().fire().tx();
+        CouchTx tx = new DbCreate().db(getPathPrefix()).to().fire().tx();
         assert tx.ok() : tx.error();
         System.err.println("had to create " + dbName);
         return false;
@@ -248,7 +248,7 @@ public class CouchServiceFactory {
             //Object[] cast to make varargs behave
             String format = String.format(stringStringMap.get(name), (Object[]) jsonArgs);
             final ViewFetchTerminalBuilder fire =
-                ViewFetch.$().db(getPathPrefix()).type(valueType).keyType(keyType).view(format)
+                new ViewFetch().db(getPathPrefix()).type(valueType).keyType(keyType).view(format)
                     .to().fire();
             CouchResultSet<?, ?> rows = fire.rows();
 
@@ -292,7 +292,7 @@ public class CouchServiceFactory {
           //again, no point, see above with DocPersist
           String stringParam = CouchMetaDriver.gson().toJson(args[0]);
           final DocPersistActionBuilder to =
-              DocPersist.$().db(getPathPrefix()).validjson(stringParam).to();
+              new DocPersist().db(getPathPrefix()).validjson(stringParam).to();
           DocPersistTerminalBuilder fire = to.fire();
           CouchTx tx = fire.tx();
           return tx;
@@ -307,7 +307,8 @@ public class CouchServiceFactory {
           return null;
         } else {
           assert "find" == (method.getName().intern());
-          String doc = DocFetch.$().db(getPathPrefix()).docId((String) args[0]).to().fire().json();
+          String doc =
+              new DocFetch().db(getPathPrefix()).docId((String) args[0]).to().fire().json();
           return (E) CouchMetaDriver.gson().fromJson(doc, entityType);
         }
       }

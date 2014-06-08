@@ -50,7 +50,7 @@ public abstract class CouchLocator<T> extends Locator<T, String> implements Couc
 
   @Override
   public T find(Class<? extends T> clazz, String id) {
-    return gson().fromJson(DocFetch.$().db(getEntityName()).docId(id).to().fire().json(),
+    return gson().fromJson(new DocFetch().db(getEntityName()).docId(id).to().fire().json(),
         getDomainType());
   }
 
@@ -88,7 +88,7 @@ public abstract class CouchLocator<T> extends Locator<T, String> implements Couc
     String pathPrefix = getEntityName();
     String id = getId(domainObject);
     final DocPersist.DocPersistTerminalBuilder fire =
-        DocPersist.$().db(pathPrefix).validjson(gson().toJson(domainObject)).to().fire();
+        new DocPersist().db(pathPrefix).validjson(gson().toJson(domainObject)).to().fire();
     ret = fire.tx();
 
     return ret;

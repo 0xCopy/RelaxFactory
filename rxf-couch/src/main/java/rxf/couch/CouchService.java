@@ -67,7 +67,7 @@ public interface CouchService<E> {
     @Override
     public CouchTx addAttachment(String content, String fileName, String contentType) {
       JsonSendActionBuilder actionBuilder =
-          JsonSend.$().opaque(db + "/" + id + "/" + fileName + "?rev=" + rev).validjson(content)
+          new JsonSend().opaque(db + "/" + id + "/" + fileName + "?rev=" + rev).validjson(content)
               .to();
       actionBuilder.state().headerString(HttpHeaders.Content$2dType, contentType);
       CouchTx tx = actionBuilder.fire().tx();
@@ -81,7 +81,7 @@ public interface CouchService<E> {
         @Override
         public void close() throws IOException {
           JsonSendActionBuilder actionBuilder =
-              JsonSend.$().opaque(db + "/" + id + "/" + fileName + "?rev=" + rev).validjson(
+              new JsonSend().opaque(db + "/" + id + "/" + fileName + "?rev=" + rev).validjson(
                   getBuffer().toString()).to();
           actionBuilder.state().headerString(HttpHeaders.Content$2dType, contentType);
           CouchTx tx = actionBuilder.fire().tx();
@@ -96,7 +96,7 @@ public interface CouchService<E> {
     @Override
     public CouchTx updateAttachment(String content, String fileName, String contentType) {
       JsonSendActionBuilder actionBuilder =
-          JsonSend.$().opaque(db + "/" + id + "/" + fileName + "?rev=" + rev).validjson(content)
+          new JsonSend().opaque(db + "/" + id + "/" + fileName + "?rev=" + rev).validjson(content)
               .to();
       actionBuilder.state().headerString(HttpHeaders.Content$2dType, contentType);
       CouchTx tx = actionBuilder.fire().tx();
@@ -110,7 +110,7 @@ public interface CouchService<E> {
         @Override
         public void close() throws IOException {
           JsonSendActionBuilder actionBuilder =
-              JsonSend.$().opaque(db + "/" + id + "/" + fileName + "?rev=" + rev).validjson(
+              new JsonSend().opaque(db + "/" + id + "/" + fileName + "?rev=" + rev).validjson(
                   getBuffer().toString()).to();
           actionBuilder.state().headerString(HttpHeaders.Content$2dType, contentType);
           CouchTx tx = actionBuilder.fire().tx();
@@ -124,12 +124,12 @@ public interface CouchService<E> {
 
     @Override
     public String getAttachment(String fileName) {
-      return DocFetch.$().db(db).docId(id + "/" + fileName).to().fire().json();
+      return new DocFetch().db(db).docId(id + "/" + fileName).to().fire().json();
     }
 
     @Override
     public CouchTx deleteAttachment(String fileName) {
-      CouchTx tx = DocDelete.$().db(db).docId(id + "/" + fileName).to().fire().tx();
+      CouchTx tx = new DocDelete().db(db).docId(id + "/" + fileName).to().fire().tx();
       rev = tx.rev();
       return tx;
     }
