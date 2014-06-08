@@ -9,11 +9,11 @@ import rxf.shared.Pair;
 
 import java.io.Serializable;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
-import static rxf.core.Server.UTF8;
 import static org.junit.Assert.assertArrayEquals;
 
 public class CookieRfc6265UtilTest {
@@ -101,7 +101,7 @@ public class CookieRfc6265UtilTest {
 
   @Test
   public void testSimpleHeader() {
-    ByteBuffer buf = (ByteBuffer) UTF8.encode(H1).rewind();
+    ByteBuffer buf = (ByteBuffer) StandardCharsets.UTF_8.encode(H1).rewind();
     buf.toString();
 
     Rfc822HeaderState apply = ActionBuilder.get().state().read(buf);
@@ -112,7 +112,7 @@ public class CookieRfc6265UtilTest {
 
   @Test
   public void testMultiHeader() {
-    ByteBuffer buf = (ByteBuffer) UTF8.encode(H2).rewind();
+    ByteBuffer buf = (ByteBuffer) StandardCharsets.UTF_8.encode(H2).rewind();
     buf.toString();
 
     Rfc822HeaderState apply = ActionBuilder.get().state().read(buf);
@@ -124,7 +124,7 @@ public class CookieRfc6265UtilTest {
 
   @Test
   public void testHeaderLineContinuations() {
-    ByteBuffer buf = (ByteBuffer) UTF8.encode(H3).rewind();
+    ByteBuffer buf = (ByteBuffer) StandardCharsets.UTF_8.encode(H3).rewind();
     buf.toString();
 
     Rfc822HeaderState apply = ActionBuilder.get().state().read(buf);
@@ -135,7 +135,7 @@ public class CookieRfc6265UtilTest {
 
   @Test
   public void testFilteredCookies() {
-    ByteBuffer buf = (ByteBuffer) UTF8.encode(H4).rewind();
+    ByteBuffer buf = (ByteBuffer) StandardCharsets.UTF_8.encode(H4).rewind();
 
     Rfc822HeaderState apply = ActionBuilder.get().state().read(buf);
     Pair<ByteBuffer, ? extends Pair> byteBufferPair =
@@ -143,13 +143,15 @@ public class CookieRfc6265UtilTest {
     assertNotNull(byteBufferPair);
     ByteBuffer a = byteBufferPair.getA();
     Pair<Pair<ByteBuffer, ByteBuffer>, ? extends Pair> pairPair =
-        CookieRfc6265Util.parseCookie(a, ByteBuffer.wrap("SAPISID".getBytes(UTF8)), ByteBuffer
-            .wrap("SSID".getBytes(UTF8)));
+        CookieRfc6265Util.parseCookie(a, ByteBuffer
+            .wrap("SAPISID".getBytes(StandardCharsets.UTF_8)), ByteBuffer.wrap("SSID"
+            .getBytes(StandardCharsets.UTF_8)));
     assertNotNull(pairPair);
     LinkedHashMap objectObjectLinkedHashMap = new LinkedHashMap();
     while (pairPair != null) {
       Pair<ByteBuffer, ByteBuffer> a1 = pairPair.getA();
-      objectObjectLinkedHashMap.put(UTF8.decode(a1.getA()), UTF8.decode(a1.getB()));
+      objectObjectLinkedHashMap.put(StandardCharsets.UTF_8.decode(a1.getA()),
+          StandardCharsets.UTF_8.decode(a1.getB()));
       pairPair = pairPair.getB();
     }
     assertEquals("{SAPISID=tgSIdsbz9xkHOX1P/Agnhtasdf2FpF, SSID=A3ZS9cJVATN-UjcZP}", String
@@ -158,7 +160,7 @@ public class CookieRfc6265UtilTest {
 
   @Test
   public void testGiantCookies() {
-    ByteBuffer buf = (ByteBuffer) UTF8.encode(H4).rewind();
+    ByteBuffer buf = (ByteBuffer) StandardCharsets.UTF_8.encode(H4).rewind();
 
     Rfc822HeaderState apply = ActionBuilder.get().state().read(buf);
     Pair<ByteBuffer, ? extends Pair> byteBufferPair =
@@ -170,7 +172,8 @@ public class CookieRfc6265UtilTest {
     LinkedHashMap<Object, Object> objectObjectLinkedHashMap = new LinkedHashMap();
     while (pairPair != null) {
       Pair<ByteBuffer, ByteBuffer> a1 = pairPair.getA();
-      objectObjectLinkedHashMap.put(UTF8.decode(a1.getA()), UTF8.decode(a1.getB()));
+      objectObjectLinkedHashMap.put(StandardCharsets.UTF_8.decode(a1.getA()),
+          StandardCharsets.UTF_8.decode(a1.getB()));
       pairPair = pairPair.getB();
     }
     assertEquals(
@@ -180,7 +183,7 @@ public class CookieRfc6265UtilTest {
 
   @Test
   public void testParseSetCookies() {
-    ByteBuffer buf = (ByteBuffer) UTF8.encode(H5).rewind();
+    ByteBuffer buf = (ByteBuffer) StandardCharsets.UTF_8.encode(H5).rewind();
 
     Rfc822HeaderState.HttpResponse apply = ActionBuilder.get().state().read(buf).$res();
 
@@ -191,9 +194,9 @@ public class CookieRfc6265UtilTest {
         CookieRfc6265Util.parseSetCookie(a);
     Assert.assertEquals(new Date("Fri Jan 20 21:53:14 PST 2023"), rfc6265SerializableEnumMap
         .get(CookieRfc6265Util.Expires));
-    assertArrayEquals(".google.com".getBytes(UTF8), (byte[]) rfc6265SerializableEnumMap
-        .get(CookieRfc6265Util.Domain));
-    assertArrayEquals("/".getBytes(UTF8), (byte[]) rfc6265SerializableEnumMap
+    assertArrayEquals(".google.com".getBytes(StandardCharsets.UTF_8),
+        (byte[]) rfc6265SerializableEnumMap.get(CookieRfc6265Util.Domain));
+    assertArrayEquals("/".getBytes(StandardCharsets.UTF_8), (byte[]) rfc6265SerializableEnumMap
         .get(CookieRfc6265Util.Path));
 
   }

@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Queue;
 import java.util.Set;
@@ -18,7 +19,6 @@ import static java.lang.StrictMath.min;
  */
 public class Server {
   public static final Queue<Object[]> q = new ConcurrentLinkedQueue();
-  public static Charset UTF8 = Charset.forName("UTF8");
   public static Thread selectorThread;
   public static boolean killswitch;
   public static Selector selector;

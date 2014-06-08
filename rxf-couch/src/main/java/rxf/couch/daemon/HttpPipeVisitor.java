@@ -8,10 +8,10 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.StandardCharsets;
 
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
-import static rxf.core.Server.UTF8;
 
 /**
  * this visitor shovels data from the outward selector to the inward selector, and vice versa.  once the headers are
@@ -58,7 +58,7 @@ public class HttpPipeVisitor extends AsioVisitor.Impl {
     SocketChannel channel = (SocketChannel) key.channel();
     ByteBuffer flip = (ByteBuffer) getOutBuffer().flip();
     if (PROXY_DEBUG) {
-      CharBuffer decode = UTF8.decode(flip.duplicate());
+      CharBuffer decode = StandardCharsets.UTF_8.decode(flip.duplicate());
       System.err.println("writing to " + name + ": " + decode + "-");
     }
     int write = channel.write(flip);

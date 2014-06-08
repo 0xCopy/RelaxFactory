@@ -14,6 +14,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -24,7 +25,6 @@ import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static rxf.rpc.BlobAntiPatternObject.isDEBUG_SENDJSON;
 import static rxf.core.CouchNamespace.NAMESPACE;
-import static rxf.core.Server.UTF8;
 
 public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
   private final Map<HttpMethod, Map<String, Key<? extends AsioVisitor>>> bindings =
@@ -73,8 +73,8 @@ public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
       Rfc822HeaderState state = new Rfc822HeaderState().read((ByteBuffer) cursor.flip());
       httpRequest = state.$req();
       if (isDEBUG_SENDJSON()) {
-        System.err.println(ProtocolMethodDispatch.deepToString(UTF8.decode((ByteBuffer) httpRequest
-            .headerBuf().duplicate().rewind())));
+        System.err.println(ProtocolMethodDispatch.deepToString(StandardCharsets.UTF_8
+            .decode((ByteBuffer) httpRequest.headerBuf().duplicate().rewind())));
       }
       String method1 = httpRequest.method();
       method = HttpMethod.valueOf(method1);
@@ -114,7 +114,7 @@ public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
       @Override
       public void onWrite(SelectionKey key) throws Exception {
         String response = "HTTP/1.1 404 Not Found\n" + "Content-Length: 0\n\n";
-        int write = channel.write(UTF8.encode(response));
+        int write = channel.write(StandardCharsets.UTF_8.encode(response));
         key.selector().wakeup();
         key.interestOps(OP_READ).attach(null);
       }

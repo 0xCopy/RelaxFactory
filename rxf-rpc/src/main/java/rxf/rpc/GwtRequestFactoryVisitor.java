@@ -15,8 +15,7 @@ import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
-
-import static rxf.core.Server.UTF8;
+import java.nio.charset.StandardCharsets;
 
 /**
  * User: jim
@@ -93,9 +92,9 @@ public class GwtRequestFactoryVisitor extends Impl {
           try {
 
             payload =
-                SIMPLE_REQUEST_PROCESSOR.process(UTF8.decode((ByteBuffer) cursor.rewind())
-                    .toString());
-            ByteBuffer pbuf = (ByteBuffer) UTF8.encode(payload).rewind();
+                SIMPLE_REQUEST_PROCESSOR.process(StandardCharsets.UTF_8.decode(
+                    (ByteBuffer) cursor.rewind()).toString());
+            ByteBuffer pbuf = (ByteBuffer) StandardCharsets.UTF_8.encode(payload).rewind();
             final int limit = pbuf.rewind().limit();
             Rfc822HeaderState.HttpResponse res = req.$res();
             res.status(HttpStatus.$200);

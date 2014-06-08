@@ -14,11 +14,11 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
 
 import static java.nio.channels.SelectionKey.*;
-import static rxf.core.Server.UTF8;
 import static rxf.core.Config.get;
 
 /**
@@ -139,7 +139,9 @@ public class ProxyDaemon extends AsioVisitor.Impl {
 
         int climit = cursor.position();
         if (PROXY_DEBUG) {
-          String decode = UTF8.decode((ByteBuffer) headersBuf.duplicate().rewind()).toString();
+          String decode =
+              StandardCharsets.UTF_8.decode((ByteBuffer) headersBuf.duplicate().rewind())
+                  .toString();
           String[] split = decode.split("[\r\n]+");
           System.err.println(Arrays.deepToString(split));
         }
@@ -152,8 +154,8 @@ public class ProxyDaemon extends AsioVisitor.Impl {
         int[] hosts = headers.get("Host");
 
         ByteBuffer slice2 =
-            UTF8.encode("Host: " + proxyTask.prefix + "\r\nX-Origin-Host: " + address.toString()
-                + "\r\n");
+            StandardCharsets.UTF_8.encode("Host: " + proxyTask.prefix + "\r\nX-Origin-Host: "
+                + address.toString() + "\r\n");
 
         Buffer position = cursor.limit(climit).position(headersBuf.limit());
 
@@ -166,7 +168,7 @@ public class ProxyDaemon extends AsioVisitor.Impl {
 
         if (PROXY_DEBUG) {
           ByteBuffer flip = (ByteBuffer) inwardBuffer.duplicate().flip();
-          System.err.println(UTF8.decode(flip).toString() + "-");
+          System.err.println(StandardCharsets.UTF_8.decode(flip).toString() + "-");
           if (timeHeaders)
             System.err.println("header decode (ns):" + (System.nanoTime() - l));
         }

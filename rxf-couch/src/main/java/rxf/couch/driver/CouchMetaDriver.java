@@ -15,16 +15,15 @@ import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import org.intellij.lang.annotations.Language;
 import rxf.web.inf.ProtocolMethodDispatch;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Phaser;
@@ -122,7 +121,7 @@ public enum CouchMetaDriver {
                       header = null;
 
                       if (DEBUG_SENDJSON) {
-                          System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, rxf.core.Server.UTF8
+                          System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, StandardCharsets.UTF_8
                                   .decode((ByteBuffer) cursor.duplicate().rewind())));
                       }
 
@@ -221,7 +220,7 @@ public enum CouchMetaDriver {
                       header = null;
 
                       if (DEBUG_SENDJSON) {
-                          System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, rxf.core.Server.UTF8
+                          System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, StandardCharsets.UTF_8
                                   .decode((ByteBuffer) cursor.duplicate().rewind())));
                       }
 
@@ -336,7 +335,7 @@ public enum CouchMetaDriver {
                       header = null;
 
                       if (DEBUG_SENDJSON) {
-                          System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, this, rxf.core.Server.UTF8
+                          System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, this, StandardCharsets.UTF_8
                                   .decode((ByteBuffer) cursor.duplicate().rewind())));
                       }
 
@@ -441,11 +440,11 @@ public enum CouchMetaDriver {
                       if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, response.headerBuf())) {
                           try {
                               if (DEBUG_SENDJSON) {
-                                  System.err.println(ProtocolMethodDispatch.deepToString("??? ", rxf.core.Server.UTF8.decode((ByteBuffer) flip
+                                  System.err.println(ProtocolMethodDispatch.deepToString("??? ", StandardCharsets.UTF_8.decode((ByteBuffer) flip
                                           .duplicate().rewind())));
                               }
                               if (response.statusEnum() == HttpStatus.$200) {
-                                  payload.set(rxf.core.Server.UTF8.encode(response.dequotedHeader(ETag.getHeader())));
+                                  payload.set(StandardCharsets.UTF_8.encode(response.dequotedHeader(ETag.getHeader())));
                               } else {//error message, pass null back to indicate no rev
                                   payload.set(null);
                               }
@@ -557,7 +556,7 @@ public enum CouchMetaDriver {
                       header = null;
 
                       if (DEBUG_SENDJSON) {
-                          System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, rxf.core.Server.UTF8
+                          System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, StandardCharsets.UTF_8
                                   .decode((ByteBuffer) cursor.duplicate().rewind())));
                       }
 
@@ -716,7 +715,7 @@ public enum CouchMetaDriver {
                   cursor = (ByteBuffer) flip.slice();
                   actionBuilder.state(response);
                   if (DEBUG_SENDJSON) {
-                      System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, rxf.core.Server.UTF8
+                      System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, StandardCharsets.UTF_8
                               .decode((ByteBuffer) cursor.duplicate().rewind())));
                   }
 
@@ -805,14 +804,14 @@ public enum CouchMetaDriver {
         ByteBuffer put = outbound.put(byteBuffer);
       }
       if (DEBUG_SENDJSON) {
-        System.err.println(rxf.core.Server.UTF8.decode((ByteBuffer) outbound.duplicate().flip()));
+        System.err.println(StandardCharsets.UTF_8.decode((ByteBuffer) outbound.duplicate().flip()));
       }
       ByteBuffer src = ((ByteBuffer) outbound.rewind()).duplicate();
       int endl = 0;
       while (sum > 0 && src.hasRemaining()) {
         if (DEBUG_SENDJSON)
           System.err.println("outbound:----\n"
-                  + rxf.core.Server.UTF8.decode(outbound.duplicate()).toString() + "\n----");
+                  + StandardCharsets.UTF_8.decode(outbound.duplicate()).toString() + "\n----");
 
         byte b = 0;
         boolean first = true;
@@ -822,7 +821,7 @@ public enum CouchMetaDriver {
           }
 
         int i =
-                Integer.parseInt(rxf.core.Server.UTF8.decode((ByteBuffer) src.duplicate().flip()).toString()
+                Integer.parseInt(StandardCharsets.UTF_8.decode((ByteBuffer) src.duplicate().flip()).toString()
                         .trim(), 0x10);
         src = ((ByteBuffer) src.compact().position(i)).slice();
         endl += i;
@@ -834,7 +833,7 @@ public enum CouchMetaDriver {
       ByteBuffer retval = (ByteBuffer) outbound.clear().limit(endl);
 
       if (DEBUG_SENDJSON) {
-        System.err.println(rxf.core.Server.UTF8.decode(retval.duplicate()));
+        System.err.println(StandardCharsets.UTF_8.decode(retval.duplicate()));
       }
       return retval;
     }
@@ -873,7 +872,7 @@ public enum CouchMetaDriver {
       validjson = validjson == null ? "{}" : validjson;
 
       Rfc822HeaderState state = actionBuilder.state();
-      final byte[] outbound = validjson.getBytes(rxf.core.Server.UTF8);
+      final byte[] outbound = validjson.getBytes(StandardCharsets.UTF_8);
 
       HttpMethod method =
           1 == slashCounter
@@ -888,7 +887,7 @@ public enum CouchMetaDriver {
               .headerString(Content$2dLength, String.valueOf(outbound.length)).headerString(Accept,
                   MimeType.json.contentType).as(ByteBuffer.class);
       if (DEBUG_SENDJSON) {
-        System.err.println(ProtocolMethodDispatch.deepToString(opaque, validjson, rxf.core.Server.UTF8.decode(header.duplicate()), state));
+        System.err.println(ProtocolMethodDispatch.deepToString(opaque, validjson, StandardCharsets.UTF_8.decode(header.duplicate()), state));
       }
       final SocketChannel channel = createCouchConnection();
       final String finalOpaque = opaque;
@@ -948,7 +947,7 @@ public enum CouchMetaDriver {
                       header = null;
 
                       if (DEBUG_SENDJSON) {
-                          System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, rxf.core.Server.UTF8
+                          System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(), response, StandardCharsets.UTF_8
                                   .decode((ByteBuffer) cursor.duplicate().rewind())));
                       }
 
@@ -1030,7 +1029,7 @@ public enum CouchMetaDriver {
       String rev = (String) dbKeysBuilder.get(etype.rev);
       String attachname = dbKeysBuilder.get(etype.attachname);
       final String sb =
-          scrub('/' + db + '/' + docId + '/' + URLEncoder.encode(attachname, rxf.core.Server.UTF8.displayName())
+          scrub('/' + db + '/' + docId + '/' + URLEncoder.encode(attachname, StandardCharsets.UTF_8.displayName())
               + "?rev=" + rev);
 
       final String ctype = x;
@@ -1137,7 +1136,7 @@ public enum CouchMetaDriver {
     }
 
   };
-  public static final byte[] CE_TERMINAL = "\n0\r\n\r\n".getBytes(rxf.core.Server.UTF8);
+  public static final byte[] CE_TERMINAL = "\n0\r\n\r\n".getBytes(StandardCharsets.UTF_8);
   //"premature optimization" s/mature/view/
   public static final String[] STATIC_VF_HEADERS =
       Rfc822HeaderState.staticHeaderStrings(ETag, Content$2dLength, Transfer$2dEncoding);

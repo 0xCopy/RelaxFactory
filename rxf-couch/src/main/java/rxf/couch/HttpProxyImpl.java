@@ -9,13 +9,13 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.nio.channels.SelectionKey.*;
 import static one.xio.HttpHeaders.Content$2dLength;
-import static rxf.core.Server.UTF8;
 import static rxf.core.Rfc822HeaderState.staticHeaderStrings;
 
 /**
@@ -124,7 +124,7 @@ public class HttpProxyImpl extends Impl {
 
         @Override
         public void onWrite(SelectionKey couchKey) throws Exception {
-          couchConnection.write(UTF8.encode(req));
+          couchConnection.write(StandardCharsets.UTF_8.encode(req));
           couchKey.selector().wakeup();
           couchKey.interestOps(OP_READ);
         }

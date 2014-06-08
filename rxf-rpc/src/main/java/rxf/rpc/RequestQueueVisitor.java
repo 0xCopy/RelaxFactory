@@ -23,9 +23,8 @@ import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
-
-import static rxf.core.Server.UTF8;
 
 /**
  * User: jim
@@ -113,7 +112,8 @@ public class RequestQueueVisitor extends Impl implements SerializationPolicyProv
         @Override
         public void run() {
           try {
-            String reqPayload = UTF8.decode((ByteBuffer) cursor.rewind()).toString();
+            String reqPayload =
+                StandardCharsets.UTF_8.decode((ByteBuffer) cursor.rewind()).toString();
 
             RPCRequest rpcRequest =
                 BatchInvoker.decodeRequest(reqPayload, null, RequestQueueVisitor.this);
@@ -127,7 +127,7 @@ public class RequestQueueVisitor extends Impl implements SerializationPolicyProv
             } catch (RpcTokenException ex) {
               payload = RPC.encodeResponseForFailure(null, ex);
             }
-            ByteBuffer pbuf = (ByteBuffer) UTF8.encode(payload).rewind();
+            ByteBuffer pbuf = (ByteBuffer) StandardCharsets.UTF_8.encode(payload).rewind();
             final int limit = pbuf.rewind().limit();
             Rfc822HeaderState.HttpResponse res = req.$res();
             res.status(HttpStatus.$200);

@@ -5,11 +5,11 @@ import org.junit.Test;
 import rxf.core.Rfc822HeaderState;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
-import static rxf.core.Server.UTF8;
 
 public class Rfc822HeaderStateTest {
   @Test
@@ -38,7 +38,7 @@ public class Rfc822HeaderStateTest {
     req.methodProtocol("VERB").pathResCode("/noun").protocolStatus("HTTP/1.0").headerString(
         "Header", "value").headerString("Header2", "value2");
     ByteBuffer buf = req.asRequestHeaderByteBuffer();
-    String result = UTF8.decode(buf.duplicate()).toString();
+    String result = StandardCharsets.UTF_8.decode(buf.duplicate()).toString();
 
     assertEquals("VERB /noun HTTP/1.0\r\nHeader: value\r\nHeader2: value2\r\n\r\n", result);
   }
@@ -46,7 +46,8 @@ public class Rfc822HeaderStateTest {
   @Test
   public void testApplySimpleResponse() {
     ByteBuffer simpleResponse =
-        ByteBuffer.wrap("HTTP/1.0 200 OK\r\nServer: NotReallyAServer\r\n\r\n".getBytes(UTF8));
+        ByteBuffer.wrap("HTTP/1.0 200 OK\r\nServer: NotReallyAServer\r\n\r\n"
+            .getBytes(StandardCharsets.UTF_8));
 
     Rfc822HeaderState state = new Rfc822HeaderState();
     state.addHeaderInterest("Server");
@@ -67,7 +68,7 @@ public class Rfc822HeaderStateTest {
     ByteBuffer simpleRequest =
         ByteBuffer
             .wrap("GET /file/from/path.suffix HTTP/1.0\r\nContent-Type: application/json\r\n\r\n"
-                .getBytes(UTF8));
+                .getBytes(StandardCharsets.UTF_8));
 
     Rfc822HeaderState state = new Rfc822HeaderState("Content-Type");
     state.read(simpleRequest);
@@ -84,13 +85,13 @@ public class Rfc822HeaderStateTest {
     resp.methodProtocol("HTTP/1.0").pathResCode("501").protocolStatus("Unsupported Method")
         .headerString("Connection", "close");
     ByteBuffer buf = resp.asResponseHeaderByteBuffer();
-    String result = UTF8.decode(buf).toString();
+    String result = StandardCharsets.UTF_8.decode(buf).toString();
     assertEquals("HTTP/1.0 501 Unsupported Method\r\nConnection: close\r\n\r\n", result);
   }
 
   @Test
   public void testFilteredCookies() {
-    ByteBuffer buf = (ByteBuffer) UTF8.encode(CookieRfc6265UtilTest.H4).rewind();
+    ByteBuffer buf = (ByteBuffer) StandardCharsets.UTF_8.encode(CookieRfc6265UtilTest.H4).rewind();
 
     Rfc822HeaderState.HttpRequest httpRequest =
         ActionBuilder.get().state().$req().cookieInterest("SAPISID", "SSID");

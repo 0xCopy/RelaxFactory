@@ -12,6 +12,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -39,7 +40,7 @@ import static rxf.core.CouchNamespace.NAMESPACE;
 public class ProtocolMethodDispatch extends Impl {
 
   public static final ByteBuffer NONCE = ByteBuffer.allocateDirect(0);
-    public static final byte[] HEADER_TERMINATOR = "\r\n\r\n".getBytes(Server.UTF8);
+    public static final byte[] HEADER_TERMINATOR = "\r\n\r\n".getBytes(StandardCharsets.UTF_8);
     private static final boolean DEBUG_SENDJSON = false;
 
     /**
@@ -118,7 +119,7 @@ public class ProtocolMethodDispatch extends Impl {
       Rfc822HeaderState state = new Rfc822HeaderState().read((ByteBuffer) cursor.flip());
       httpRequest = state.$req();
       if ( DEBUG_SENDJSON) {
-        System.err.println( deepToString(Server.UTF8.decode((ByteBuffer) httpRequest
+        System.err.println( deepToString(StandardCharsets.UTF_8.decode((ByteBuffer) httpRequest
                 .headerBuf().duplicate().rewind())));
       }
       String method1 = httpRequest.method();

@@ -15,6 +15,7 @@ import java.nio.CharBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -191,7 +192,7 @@ public class Rfc822HeaderState {
         cookieInterest = new ByteBuffer[keys.length];
         for (int i = 0; i < keys.length; i++) {
           String s = keys[i];
-          cookieInterest[i] = ByteBuffer.wrap(s.intern().getBytes(Server.UTF8));
+          cookieInterest[i] = ByteBuffer.wrap(s.intern().getBytes(StandardCharsets.UTF_8));
         }
       }
 
@@ -243,7 +244,7 @@ public class Rfc822HeaderState {
         k = new ByteBuffer[keys.length];
         for (int i = 0; i < keys.length; i++) {
           String key = keys[i];
-          k[i] = (ByteBuffer) ByteBuffer.wrap(key.intern().getBytes(Server.UTF8));
+          k[i] = (ByteBuffer) ByteBuffer.wrap(key.intern().getBytes(StandardCharsets.UTF_8));
         }
       }
       Map<String, String> ret = new TreeMap<String, String>();
@@ -256,8 +257,8 @@ public class Rfc822HeaderState {
         while (ki.hasNext()) {
           ByteBuffer interestKey = ki.next();
           if (interestKey.equals(ckey)) {
-            ret.put(Server.UTF8.decode(interestKey).toString().intern(), Server.UTF8.decode(
-                a1.getB()).toString());
+            ret.put(StandardCharsets.UTF_8.decode(interestKey).toString().intern(),
+                StandardCharsets.UTF_8.decode(a1.getB()).toString());
             ki.remove();
             break;
           }
@@ -275,14 +276,16 @@ public class Rfc822HeaderState {
      */
 
     public String getCookie(String key) {
-      ByteBuffer k = (ByteBuffer) ByteBuffer.wrap(key.intern().getBytes(Server.UTF8)).mark();
+      ByteBuffer k =
+          (ByteBuffer) ByteBuffer.wrap(key.intern().getBytes(StandardCharsets.UTF_8)).mark();
       Pair<Pair<ByteBuffer, ByteBuffer>, ? extends Pair> pair = parsedCookies();
       while (null != pair) {
 
         Pair<ByteBuffer, ByteBuffer> a1 = pair.getA();
         ByteBuffer a = (ByteBuffer) a1.getA();
         if (a.equals(k)) {
-          return String.valueOf(Server.UTF8.decode(avoidStarvation((ByteBuffer) a1.getB())));
+          return String.valueOf(StandardCharsets.UTF_8.decode(avoidStarvation((ByteBuffer) a1
+              .getB())));
         }
         pair = pair.getB();
       }
@@ -525,13 +528,13 @@ public class Rfc822HeaderState {
    */
   public List<String> getHeadersNamed(String header) {
     CharBuffer charBuffer = CharBuffer.wrap(header);
-    ByteBuffer henc = Server.UTF8.encode(charBuffer);
+    ByteBuffer henc = StandardCharsets.UTF_8.encode(charBuffer);
 
     Pair<ByteBuffer, ? extends Pair> ret = headerExtract(henc);
 
     List<String> objects = new ArrayList<String>();
     while (null != ret) {
-      objects.add(Server.UTF8.decode(ret.getA()).toString());
+      objects.add(StandardCharsets.UTF_8.decode(ret.getA()).toString());
       ret = ret.getB();
     }
 
@@ -552,7 +555,7 @@ public class Rfc822HeaderState {
 
     List<String> objects = new ArrayList<String>();
     while (null != ret) {
-      objects.add(Server.UTF8.decode(ret.getA()).toString());
+      objects.add(StandardCharsets.UTF_8.decode(ret.getA()).toString());
       ret = ret.getB();
     }
 
@@ -636,7 +639,7 @@ public class Rfc822HeaderState {
     ByteBuffer slice = cursor.duplicate().slice();
     while (slice.hasRemaining() && SPC != slice.get()) {
     }
-    methodProtocol.set(Server.UTF8.decode((ByteBuffer) slice.flip()).toString().trim());
+    methodProtocol.set(StandardCharsets.UTF_8.decode((ByteBuffer) slice.flip()).toString().trim());
 
     while (cursor.hasRemaining() && SPC != cursor.get()) {
       //method/proto
@@ -644,14 +647,14 @@ public class Rfc822HeaderState {
     slice = cursor.slice();
     while (slice.hasRemaining() && SPC != slice.get()) {
     }
-    pathRescode.set(Server.UTF8.decode((ByteBuffer) slice.flip()).toString().trim());
+    pathRescode.set(StandardCharsets.UTF_8.decode((ByteBuffer) slice.flip()).toString().trim());
 
     while (cursor.hasRemaining() && SPC != cursor.get()) {
     }
     slice = cursor.slice();
     while (slice.hasRemaining() && LF != slice.get()) {
     }
-    protocolStatus.set(Server.UTF8.decode((ByteBuffer) slice.flip()).toString().trim());
+    protocolStatus.set(StandardCharsets.UTF_8.decode((ByteBuffer) slice.flip()).toString().trim());
 
     headerBuf = null;
     boolean wantsCookies = null != cookies;
@@ -667,7 +670,7 @@ public class Rfc822HeaderState {
         if (null != o1) {
           headerStrings.get().put(
               o,
-              Server.UTF8.decode(
+              StandardCharsets.UTF_8.decode(
                   (ByteBuffer) headerBuf.duplicate().clear().position(o1[0]).limit(o1[1]))
                   .toString().trim());
         }
@@ -695,7 +698,7 @@ public class Rfc822HeaderState {
     ByteBuffer slice = cursor.duplicate().slice();
     while (slice.hasRemaining() && SPC != slice.get()) {
     }
-    methodProtocol.set(Server.UTF8.decode((ByteBuffer) slice.flip()).toString().trim());
+    methodProtocol.set(StandardCharsets.UTF_8.decode((ByteBuffer) slice.flip()).toString().trim());
 
     while (cursor.hasRemaining() && SPC != cursor.get()) {
       //method/proto
@@ -703,14 +706,14 @@ public class Rfc822HeaderState {
     slice = cursor.slice();
     while (slice.hasRemaining() && SPC != slice.get()) {
     }
-    pathRescode.set(Server.UTF8.decode((ByteBuffer) slice.flip()).toString().trim());
+    pathRescode.set(StandardCharsets.UTF_8.decode((ByteBuffer) slice.flip()).toString().trim());
 
     while (cursor.hasRemaining() && SPC != cursor.get()) {
     }
     slice = cursor.slice();
     while (slice.hasRemaining() && LF != slice.get()) {
     }
-    protocolStatus.set(Server.UTF8.decode((ByteBuffer) slice.flip()).toString().trim());
+    protocolStatus.set(StandardCharsets.UTF_8.decode((ByteBuffer) slice.flip()).toString().trim());
 
     headerBuf = null;
     boolean wantsCookies = null != cookies;
@@ -727,7 +730,7 @@ public class Rfc822HeaderState {
           if (null != o1) {
             headerStrings.get().put(
                 o,
-                Server.UTF8.decode(
+                StandardCharsets.UTF_8.decode(
                     (ByteBuffer) headerBuf.duplicate().clear().position(o1[0]).limit(o1[1]))
                     .toString().trim());
           }
@@ -946,7 +949,7 @@ public class Rfc822HeaderState {
    */
   public ByteBuffer asResponseHeaderByteBuffer() {
     String protocol = asResponseHeaderString();
-    return ByteBuffer.wrap(protocol.getBytes(Server.UTF8));
+    return ByteBuffer.wrap(protocol.getBytes(StandardCharsets.UTF_8));
   }
 
   /**
@@ -977,7 +980,7 @@ public class Rfc822HeaderState {
    */
   public ByteBuffer asRequestHeaderByteBuffer() {
     String protocol = asRequestHeaderString();
-    return ByteBuffer.wrap(protocol.getBytes(Server.UTF8));
+    return ByteBuffer.wrap(protocol.getBytes(StandardCharsets.UTF_8));
   }
 
   /**

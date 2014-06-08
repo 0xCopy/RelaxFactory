@@ -4,7 +4,6 @@ package rxf.couch.gen;
 
 import one.xio.MimeType;
 import rxf.core.Rfc822HeaderState;
-import rxf.core.Server;
 import rxf.couch.*;
 import rxf.couch.driver.CouchMetaDriver;
 import rxf.rpc.BlobAntiPatternObject;
@@ -15,9 +14,11 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static rxf.core.Rfc822HeaderState.avoidStarvation;
 
 /**
@@ -66,7 +67,7 @@ public interface CouchDriver {
             CouchTx r = null;
             try {
               r =
-                  CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
+                  CouchMetaDriver.gson().fromJson(UTF_8.decode(future.get()).toString(),
                       CouchTx.class);
             } catch (Exception e) {
               if (BlobAntiPatternObject.DEBUG_SENDJSON)
@@ -145,7 +146,7 @@ public interface CouchDriver {
             CouchTx r = null;
             try {
               r =
-                  CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
+                  CouchMetaDriver.gson().fromJson(UTF_8.decode(future.get()).toString(),
                       CouchTx.class);
             } catch (Exception e) {
               if (!BlobAntiPatternObject.DEBUG_SENDJSON)
@@ -245,7 +246,7 @@ public interface CouchDriver {
             String r = null;
             try {
               ByteBuffer visit = future.get();
-              r = null == visit ? null : Server.UTF8.decode(avoidStarvation(visit)).toString();
+              r = null == visit ? null : UTF_8.decode(avoidStarvation(visit)).toString();
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -309,7 +310,7 @@ public interface CouchDriver {
             String r = null;
             try {
               ByteBuffer visit = future.get();
-              r = null == visit ? null : Server.UTF8.decode(avoidStarvation(visit)).toString();
+              r = null == visit ? null : UTF_8.decode(avoidStarvation(visit)).toString();
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -389,7 +390,7 @@ public interface CouchDriver {
             CouchTx r = null;
             try {
               r =
-                  CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
+                  CouchMetaDriver.gson().fromJson(UTF_8.decode(future.get()).toString(),
                       CouchTx.class);
             } catch (Exception e) {
               if (BlobAntiPatternObject.DEBUG_SENDJSON)
@@ -485,7 +486,7 @@ public interface CouchDriver {
             CouchTx r = null;
             try {
               r =
-                  CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
+                  CouchMetaDriver.gson().fromJson(UTF_8.decode(future.get()).toString(),
                       CouchTx.class);
             } catch (Exception e) {
               if (BlobAntiPatternObject.DEBUG_SENDJSON)
@@ -588,7 +589,7 @@ public interface CouchDriver {
             String r = null;
             try {
               ByteBuffer visit = future.get();
-              r = null == visit ? null : Server.UTF8.decode(avoidStarvation(visit)).toString();
+              r = null == visit ? null : UTF_8.decode(avoidStarvation(visit)).toString();
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -668,8 +669,8 @@ public interface CouchDriver {
               ByteBuffer buf = future.get();
               // System.err.println("???? "+ HttpMethod.UTF8.decode(buf));
               r =
-                  CouchMetaDriver.gson().fromJson(
-                      Server.UTF8.decode(avoidStarvation(buf)).toString(), new ParameterizedType() {
+                  CouchMetaDriver.gson().fromJson(UTF_8.decode(avoidStarvation(buf)).toString(),
+                      new ParameterizedType() {
                         public Type getRawType() {
                           return CouchResultSet.class;
                         }
@@ -775,7 +776,7 @@ public interface CouchDriver {
             CouchTx r = null;
             try {
               r =
-                  CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
+                  CouchMetaDriver.gson().fromJson(UTF_8.decode(future.get()).toString(),
                       CouchTx.class);
             } catch (Exception e) {
               if (BlobAntiPatternObject.DEBUG_SENDJSON)
@@ -807,7 +808,7 @@ public interface CouchDriver {
             try {
               r =
                   CouchMetaDriver.gson().fromJson(
-                      Server.UTF8.decode(avoidStarvation(future.get())).toString(),
+                      UTF_8.decode(avoidStarvation(future.get())).toString(),
                       new ParameterizedType() {
                         public Type getRawType() {
                           return CouchResultSet.class;
@@ -834,7 +835,7 @@ public interface CouchDriver {
             String r = null;
             try {
               ByteBuffer visit = future.get();
-              r = null == visit ? null : Server.UTF8.decode(avoidStarvation(visit)).toString();
+              r = null == visit ? null : UTF_8.decode(avoidStarvation(visit)).toString();
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -859,7 +860,6 @@ public interface CouchDriver {
         return (JsonSendActionBuilder) super.key(key);
       }
     }
-
   }
 
   class BlobSend extends DbKeysBuilder {
@@ -933,7 +933,7 @@ public interface CouchDriver {
             CouchTx r = null;
             try {
               r =
-                  CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
+                  CouchMetaDriver.gson().fromJson(UTF_8.decode(future.get()).toString(),
                       CouchTx.class);
             } catch (Exception e) {
               if (!BlobAntiPatternObject.DEBUG_SENDJSON)
