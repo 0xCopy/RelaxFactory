@@ -38,7 +38,7 @@ import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpHeaders.*;
 import static one.xio.HttpMethod.*;
-import static rxf.rpc.CouchConnectionFactory.*;
+import static rxf.couch.CouchConnectionFactory.*;
 import static rxf.couch.driver.CouchMetaDriver.etype.*;
 
 /**

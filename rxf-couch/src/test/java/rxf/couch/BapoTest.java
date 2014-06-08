@@ -6,8 +6,8 @@ import java.nio.channels.SocketChannel;
 
 import static rxf.core.Server.setKillswitch;
 import static org.junit.Assert.assertNotNull;
-import static rxf.rpc.CouchConnectionFactory.createCouchConnection;
-import static rxf.rpc.CouchConnectionFactory.recycleChannel;
+import static rxf.couch.CouchConnectionFactory.createCouchConnection;
+import static rxf.couch.CouchConnectionFactory.recycleChannel;
 
 public class BapoTest {
   @Test

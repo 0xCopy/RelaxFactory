@@ -2,7 +2,6 @@ package rxf.couch;
 
 import one.xio.AsioVisitor.Impl;
 import rxf.core.Rfc822HeaderState;
-import rxf.rpc.CouchConnectionFactory;
 import rxf.rpc.RelaxFactoryServerImpl;
 
 import java.io.IOException;

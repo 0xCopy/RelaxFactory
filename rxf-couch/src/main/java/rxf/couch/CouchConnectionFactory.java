@@ -1,4 +1,4 @@
-package rxf.rpc;
+package rxf.couch;
 
 import rxf.core.Config;
 import rxf.core.Server;
