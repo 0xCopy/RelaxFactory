@@ -10,9 +10,6 @@ import rxf.core.Rfc822HeaderState;
 import rxf.couch.*;
 import rxf.core.Rfc822HeaderState.HttpRequest;
 import rxf.core.Rfc822HeaderState.HttpResponse;
-import rxf.couch.an.DbKeys;
-import rxf.couch.an.DbKeys.etype;
-import rxf.couch.an.DbTask;
 
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
@@ -23,6 +20,7 @@ import rxf.web.inf.ProtocolMethodDispatch;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -41,8 +39,7 @@ import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.HttpHeaders.*;
 import static one.xio.HttpMethod.*;
 import static rxf.rpc.BlobAntiPatternObject.*;
-import static rxf.couch.DbTerminal.*;
-import static rxf.couch.an.DbKeys.etype.*;
+import static rxf.couch.driver.CouchMetaDriver.etype.*;
 
 /**
  * confers traits on an oo platform...
@@ -72,8 +69,8 @@ import static rxf.couch.an.DbKeys.etype.*;
 @SuppressWarnings( {"RedundantCast"})
 public enum CouchMetaDriver {
 
-  @DbTask( {tx, oneWay})
-  @DbKeys( {db})
+  //@DbTask( {tx, oneWay})
+  //@DbKeys( {db})
   DbCreate {
     public ByteBuffer visit(final DbKeysBuilder dbKeysBuilder, final ActionBuilder actionBuilder)
         throws Exception {
@@ -180,8 +177,8 @@ public enum CouchMetaDriver {
     }
 
   },
-  @DbTask( {tx, oneWay})
-  @DbKeys( {db})
+  //@DbTask( {tx, oneWay})
+  //@DbKeys( {db})
   DbDelete {
     public ByteBuffer visit(final DbKeysBuilder dbKeysBuilder, final ActionBuilder actionBuilder)
         throws Exception {
@@ -279,8 +276,8 @@ public enum CouchMetaDriver {
 
   },
 
-  @DbTask( {pojo, future, json})
-  @DbKeys( {db, docId})
+  //@DbTask( {pojo, future, json})
+  //@DbKeys( {db, docId})
   DocFetch {
     public ByteBuffer visit(final DbKeysBuilder dbKeysBuilder, final ActionBuilder actionBuilder)
         throws Exception {
@@ -395,8 +392,8 @@ public enum CouchMetaDriver {
 
   },
 
-  @DbTask( {json, future})
-  @DbKeys( {db, docId})
+  //@DbTask( {json, future})
+  //@DbKeys( {db, docId})
   RevisionFetch {
     public ByteBuffer visit(final DbKeysBuilder dbKeysBuilder, final ActionBuilder actionBuilder)
         throws Exception {
@@ -485,8 +482,8 @@ public enum CouchMetaDriver {
       return payload.get();
     }
   },
-  @DbTask( {tx, oneWay, future})
-  @DbKeys(value = {db, validjson}, optional = {docId, rev})
+  //@DbTask( {tx, oneWay, future})
+  //@DbKeys(value = {db, validjson}, optional = {docId, rev})
   DocPersist {
     public ByteBuffer visit(DbKeysBuilder dbKeysBuilder, ActionBuilder actionBuilder)
         throws Exception {
@@ -502,8 +499,8 @@ public enum CouchMetaDriver {
       return JsonSend.visit(dbKeysBuilder, actionBuilder);
     }
   },
-  @DbTask( {tx, oneWay, future})
-  @DbKeys(value = {db, docId, rev})
+  //@DbTask( {tx, oneWay, future})
+  //@DbKeys(value = {db, docId, rev})
   DocDelete {
     public ByteBuffer visit(final DbKeysBuilder dbKeysBuilder, final ActionBuilder actionBuilder)
         throws Exception {
@@ -602,8 +599,8 @@ public enum CouchMetaDriver {
       return payload.get();
     }
   },
-  @DbTask( {pojo, future, json})
-  @DbKeys( {db, designDocId})
+  //@DbTask( {pojo, future, json})
+  //@DbKeys( {db, designDocId})
   DesignDocFetch {
     public ByteBuffer visit(DbKeysBuilder dbKeysBuilder, ActionBuilder actionBuilder)
         throws Exception {
@@ -617,8 +614,8 @@ public enum CouchMetaDriver {
    * <p/>
    * <u> statistically imperfect </u>means that data containing said token {@link  #CE_TERMINAL} delivered on  a packet boundary or byte-at-a-time will false trigger the suffix.
    */
-  @DbTask( {rows, future, continuousFeed})
-  @DbKeys(value = {db, view}, optional = {type, keyType})
+  //@DbTask( {rows, future, continuousFeed})
+  //@DbKeys(value = {db, view}, optional = {type, keyType})
   ViewFetch {
     public ByteBuffer visit(final DbKeysBuilder dbKeysBuilder, final ActionBuilder actionBuilder)
         throws Exception {
@@ -844,8 +841,8 @@ public enum CouchMetaDriver {
   },
   //training day for the Terminal rewrites
 
-  @DbTask( {tx, oneWay, rows, json, future, continuousFeed})
-  @DbKeys(value = {opaque, validjson}, optional = {keyType, type})
+  //@DbTask( {tx, oneWay, rows, json, future, continuousFeed})
+  //@DbKeys(value = {opaque, validjson}, optional = {keyType, type})
   JsonSend {
     public ByteBuffer visit(final DbKeysBuilder dbKeysBuilder, final ActionBuilder actionBuilder)
         throws Exception {
@@ -1006,8 +1003,8 @@ public enum CouchMetaDriver {
   },
 
   // TODO:
-  @DbTask( {tx, future, oneWay})
-  @DbKeys(optional = {mimetypeEnum, mimetype}, value = {blob, db, docId, rev, attachname,})
+  //@DbTask( {tx, future, oneWay})
+  //@DbKeys(optional = {mimetypeEnum, mimetype}, value = {blob, db, docId, rev, attachname,})
   BlobSend {
     public ByteBuffer visit(DbKeysBuilder dbKeysBuilder, ActionBuilder actionBuilder)
         throws Exception {
@@ -1208,46 +1205,6 @@ public enum CouchMetaDriver {
     return null == scrubMe ? null : scrubMe.trim().replace("//", "/").replace("..", ".");
   }
 
-  public static void main(String... args) throws NoSuchFieldException {
-    Field[] fields = CouchMetaDriver.class.getFields();
-    @Language("JAVA")
-    String s =
-        "package rxf.couch.gen;\n" + "//generated\n" + "\n"
-            + "import com.google.gson.FieldNamingPolicy;\n" + "import com.google.gson.Gson;\n"
-            + "import com.google.gson.GsonBuilder;\n" + "\n"
-            + "\n" + "\n" + "\n"
-            + "\n" + "\n"
-            + "\n" + "import java.util.concurrent.TimeUnit; \n"
-            + "\n" + "" + ""
-            + "/** * \n * \n * \n * generated drivers\n \n * \n \n " + " */\n"
-            + "public interface CouchDriver {\n" + "      Gson GSON = new GsonBuilder()\n"
-            + "            .setDateFormat(\"yyyy-MM-dd'T'HH:mm:ss.SSSZ\")\n"
-            + "            .setFieldNamingPolicy(FieldNamingPolicy.IDENTITY)\n"
-            + "            .setPrettyPrinting()\n" + "            .create();\n"
-            + "    TimeUnit defaultCollectorTimeUnit=TimeUnit.SECONDS;\n"
-            + "    //generated items\n" + "\n" + " ";
-    for (Field field : fields)
-      if (field.getType().isAssignableFrom(CouchMetaDriver.class)) {
-        CouchMetaDriver couchDriver = CouchMetaDriver.valueOf(field.getName());
-        DbKeys dbKeys = field.getAnnotation(DbKeys.class);
-        etype[] value = dbKeys.value();
-
-        s += ByteBuffer.class.getCanonicalName();
-        s += ' ' + couchDriver.name() + '(';
-        Iterator<etype> iterator = Arrays.asList(value).iterator();
-        while (iterator.hasNext()) {
-          etype etype = iterator.next();
-          s += " " + etype.clazz.getCanonicalName() + " " + etype.name();
-          if (iterator.hasNext())
-            s += ',';
-        }
-        s += " );\n";
-        s1 += "\n" + couchDriver.generateDriver();
-      }
-    s += s1 + "}";
-    System.out.println(s);
-  }
-
   /**
    * the CouchDriver needs a builder that a client may access soas to register gson TypeAdapters.
    *
@@ -1283,94 +1240,46 @@ public enum CouchMetaDriver {
     throw new AbstractMethodError();
   }
 
-  public String generateDriver() throws NoSuchFieldException {
-    Field field = CouchMetaDriver.class.getField(name());
+    public static enum etype {
 
-    String s = null;
-    if (field.getType().isAssignableFrom(CouchMetaDriver.class)) {
-      CouchMetaDriver couchDriver = CouchMetaDriver.valueOf(field.getName());
-
-      etype[] parms = field.getAnnotation(DbKeys.class).value();
-      etype[] optionalParams = field.getAnnotation(DbKeys.class).optional();
-
-      String rtypeTypeParams = "";
-      String rtypeBounds = "";
-      s =
-          "public class _ename_"
-              + rtypeTypeParams
-              + " extends DbKeysBuilder  {\n  private _ename_() {\n  }\n\n  public static "
-              + rtypeBounds
-              + " _ename_"
-              + rtypeTypeParams
-              + "\n\n  $() {\n    return new _ename_"
-              + rtypeTypeParams
-              + "();\n  }\n\n  public interface _ename_TerminalBuilder"
-              + rtypeTypeParams
-              + " extends TerminalBuilder {"
-              + IFACE_FIRE_TARGETS
-              + "\n  }\n\n  public class _ename_ActionBuilder extends ActionBuilder  {\n    public _ename_ActionBuilder() {\n      super();\n    }\n\n    \n    public _ename_TerminalBuilder"
-              + rtypeTypeParams
-              + " fire() {\n      return new _ename_TerminalBuilder"
-              + rtypeTypeParams
-              + "() {        \n      "
-              + "Future<ByteBuffer> future = BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<ByteBuffer>(){\nfinal DbKeysBuilder dbKeysBuilder=(DbKeysBuilder)DbKeysBuilder.get();\n"
-              + "final ActionBuilder actionBuilder=(ActionBuilder)ActionBuilder.get();\n"
-              + "public "
-              + ByteBuffer.class.getCanonicalName()
-              + " call() throws Exception{"
-              + "    DbKeysBuilder.currentKeys.set(dbKeysBuilder);"
-              + "\nActionBuilder.currentAction.set(actionBuilder);\n"
-              + "return("
-              + ByteBuffer.class.getCanonicalName()
-              + ")rxf.couch.driver.CouchMetaDriver."
-              + couchDriver
-              + ".visit(dbKeysBuilder,actionBuilder);\n}\n});"
-              + FIRE_METHODS
-              + "\n      };\n    }\n\n    \n    "
-              + "public _ename_ActionBuilder state(Rfc822HeaderState state) {\n      "
-              + "return (_ename_ActionBuilder) super.state(state);\n    "
-              + "}\n\n    \n    public _ename_ActionBuilder key(java.nio.channels.SelectionKey key) "
-              + "{\n      return (_ename_ActionBuilder) super.key(key);\n    }\n  }\n\n  \n  public _ename_ActionBuilder to() "
-              + "{\n    if (parms.size() >= parmsCount) return new _ename_ActionBuilder();\n    "
-              + "throw new IllegalArgumentException(\"required parameters are: "
-              + arrToString(parms) + "\");\n  } \n   \n   " + GENERATED_METHODS + "\n" + "}";
-      int vl = parms.length;
-      String s1 = "\nprivate static final int parmsCount=" + PCOUNT + ";\n";
-      for (etype etype : parms) {
-        s1 = writeParameterSetter(rtypeTypeParams, s1, etype, etype.clazz);
-      }
-      for (etype etype : optionalParams) {
-        s1 = writeParameterSetter(rtypeTypeParams, s1, etype, etype.clazz);
-      }
-
-      DbTask annotation = field.getAnnotation(DbTask.class);
-      if (null != annotation) {
-        DbTerminal[] terminals = annotation.value();
-        String t = "", iface = "";
-        for (DbTerminal terminal : terminals) {
-          iface += terminal.builder(couchDriver, parms, false);
-          t += terminal.builder(couchDriver, parms, true);
-
+      opaque, db, docId, rev {
+        /**
+         * couchdb only returns a quoted etag for entities.  this quoted etag breaks in queries sent back to couchdb as rev="breakage"
+         * @param data
+         * @param <T>
+         * @return
+         */
+        @Override
+        public <T> boolean validate(T... data) {
+          final String t = (String) data[0];
+          return t.toString().length() > 0 && !t.startsWith("\"") && !t.endsWith("\"");
         }
-        s = s.replace(FIRE_METHODS, t).replace(IFACE_FIRE_TARGETS, iface);
+      },
+      attachname, designDocId, view, validjson, mimetype, mimetypeEnum {
+        {
+          clazz = MimeType.class;
+        }
+      },
+      blob {
+        {
+          clazz = ByteBuffer.class;
+        }
+      },
+      type {
+        {
+          clazz = Type.class;
+        }
+      },
+      keyType {
+        {
+          clazz = Type.class;
+        }
+      };
+
+      public <T> boolean validate(T... data) {
+        return true;
       }
 
-      s =
-          s.replace(GENERATED_METHODS, s1).replace("_ename_", name()).replace(PCOUNT,
-              String.valueOf(vl));
+      public Class clazz = String.class;
     }
-    return s;
-  }
-
-  private String writeParameterSetter(String rtypeTypeParams, String s1, etype etype, Class<?> clazz) {
-    @Language("JAVA")
-    String y =
-        "public _ename_" + rtypeTypeParams + "  _name_(_clazz_ _sclazz_){parms.put(DbKeys.etype."
-            + etype.name() + ",_sclazz_);return this;}\n";
-    s1 +=
-        y.replace("_name_", etype.name()).replace("_clazz_", clazz.getCanonicalName()).replace(
-            "_sclazz_", clazz.getSimpleName().toLowerCase() + "Param").replace("_ename_", name());
-    return s1;
-  }
-
 }

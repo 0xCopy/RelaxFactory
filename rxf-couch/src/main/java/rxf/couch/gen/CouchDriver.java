@@ -5,7 +5,6 @@ package rxf.couch.gen;
 import rxf.core.Rfc822HeaderState;
 import rxf.core.Server;
 import rxf.couch.*;
-import rxf.couch.an.DbKeys;
 import rxf.couch.driver.CouchMetaDriver;
 import rxf.rpc.BlobAntiPatternObject;
 import rxf.shared.CouchTx;
@@ -43,7 +42,7 @@ public interface CouchDriver {
     }
 
     public DbCreate db(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.db, stringParam);
+      parms.put(CouchMetaDriver.etype.db, stringParam);
       return this;
     }
 
@@ -135,7 +134,7 @@ public interface CouchDriver {
     }
 
     public DbDelete db(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.db, stringParam);
+      parms.put(CouchMetaDriver.etype.db, stringParam);
       return this;
     }
 
@@ -227,12 +226,12 @@ public interface CouchDriver {
     }
 
     public DocFetch db(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.db, stringParam);
+      parms.put(CouchMetaDriver.etype.db, stringParam);
       return this;
     }
 
     public DocFetch docId(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.docId, stringParam);
+      parms.put(CouchMetaDriver.etype.docId, stringParam);
       return this;
     }
 
@@ -319,12 +318,12 @@ public interface CouchDriver {
     }
 
     public RevisionFetch db(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.db, stringParam);
+      parms.put(CouchMetaDriver.etype.db, stringParam);
       return this;
     }
 
     public RevisionFetch docId(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.docId, stringParam);
+      parms.put(CouchMetaDriver.etype.docId, stringParam);
       return this;
     }
 
@@ -400,22 +399,22 @@ public interface CouchDriver {
     }
 
     public DocPersist db(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.db, stringParam);
+      parms.put(CouchMetaDriver.etype.db, stringParam);
       return this;
     }
 
     public DocPersist validjson(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.validjson, stringParam);
+      parms.put(CouchMetaDriver.etype.validjson, stringParam);
       return this;
     }
 
     public DocPersist docId(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.docId, stringParam);
+      parms.put(CouchMetaDriver.etype.docId, stringParam);
       return this;
     }
 
     public DocPersist rev(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.rev, stringParam);
+      parms.put(CouchMetaDriver.etype.rev, stringParam);
       return this;
     }
 
@@ -513,17 +512,17 @@ public interface CouchDriver {
     }
 
     public DocDelete db(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.db, stringParam);
+      parms.put(CouchMetaDriver.etype.db, stringParam);
       return this;
     }
 
     public DocDelete docId(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.docId, stringParam);
+      parms.put(CouchMetaDriver.etype.docId, stringParam);
       return this;
     }
 
     public DocDelete rev(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.rev, stringParam);
+      parms.put(CouchMetaDriver.etype.rev, stringParam);
       return this;
     }
 
@@ -621,12 +620,12 @@ public interface CouchDriver {
     }
 
     public DesignDocFetch db(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.db, stringParam);
+      parms.put(CouchMetaDriver.etype.db, stringParam);
       return this;
     }
 
     public DesignDocFetch designDocId(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.designDocId, stringParam);
+      parms.put(CouchMetaDriver.etype.designDocId, stringParam);
       return this;
     }
 
@@ -714,22 +713,22 @@ public interface CouchDriver {
     }
 
     public ViewFetch db(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.db, stringParam);
+      parms.put(CouchMetaDriver.etype.db, stringParam);
       return this;
     }
 
     public ViewFetch view(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.view, stringParam);
+      parms.put(CouchMetaDriver.etype.view, stringParam);
       return this;
     }
 
     public ViewFetch type(java.lang.reflect.Type typeParam) {
-      parms.put(DbKeys.etype.type, typeParam);
+      parms.put(CouchMetaDriver.etype.type, typeParam);
       return this;
     }
 
     public ViewFetch keyType(java.lang.reflect.Type typeParam) {
-      parms.put(DbKeys.etype.keyType, typeParam);
+      parms.put(CouchMetaDriver.etype.keyType, typeParam);
       return this;
     }
 
@@ -778,11 +777,11 @@ public interface CouchDriver {
                     }
 
                     public Type[] getActualTypeArguments() {
-                      Type key = (Type) ViewFetch.this.get(DbKeys.etype.keyType);
+                      Type key = (Type) ViewFetch.this.get(CouchMetaDriver.etype.keyType);
                       Type[] t =
                           {
                               key == null ? Object.class : key,
-                              (Type) ViewFetch.this.get(DbKeys.etype.type)};
+                              (Type) ViewFetch.this.get(CouchMetaDriver.etype.type)};
                       return t;
                     }
                   });
@@ -832,22 +831,22 @@ public interface CouchDriver {
     }
 
     public JsonSend opaque(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.opaque, stringParam);
+      parms.put(CouchMetaDriver.etype.opaque, stringParam);
       return this;
     }
 
     public JsonSend validjson(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.validjson, stringParam);
+      parms.put(CouchMetaDriver.etype.validjson, stringParam);
       return this;
     }
 
     public JsonSend type(java.lang.reflect.Type typeParam) {
-      parms.put(DbKeys.etype.type, typeParam);
+      parms.put(CouchMetaDriver.etype.type, typeParam);
       return this;
     }
 
     public JsonSend keyType(java.lang.reflect.Type typeParam) {
-      parms.put(DbKeys.etype.keyType, typeParam);
+      parms.put(CouchMetaDriver.etype.keyType, typeParam);
       return this;
     }
 
@@ -930,11 +929,11 @@ public interface CouchDriver {
                     }
 
                     public Type[] getActualTypeArguments() {
-                      Type key = (Type) JsonSend.this.get(DbKeys.etype.keyType);
+                      Type key = (Type) JsonSend.this.get(CouchMetaDriver.etype.keyType);
                       Type[] t =
                           {
                               key == null ? Object.class : key,
-                              (Type) JsonSend.this.get(DbKeys.etype.type)};
+                              (Type) JsonSend.this.get(CouchMetaDriver.etype.type)};
                       return t;
                     }
                   });
@@ -995,37 +994,37 @@ public interface CouchDriver {
     }
 
     public BlobSend blob(java.nio.ByteBuffer bytebufferParam) {
-      parms.put(DbKeys.etype.blob, bytebufferParam);
+      parms.put(CouchMetaDriver.etype.blob, bytebufferParam);
       return this;
     }
 
     public BlobSend db(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.db, stringParam);
+      parms.put(CouchMetaDriver.etype.db, stringParam);
       return this;
     }
 
     public BlobSend docId(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.docId, stringParam);
+      parms.put(CouchMetaDriver.etype.docId, stringParam);
       return this;
     }
 
     public BlobSend rev(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.rev, stringParam);
+      parms.put(CouchMetaDriver.etype.rev, stringParam);
       return this;
     }
 
     public BlobSend attachname(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.attachname, stringParam);
+      parms.put(CouchMetaDriver.etype.attachname, stringParam);
       return this;
     }
 
     public BlobSend mimetypeEnum(one.xio.MimeType mimetypeParam) {
-      parms.put(DbKeys.etype.mimetypeEnum, mimetypeParam);
+      parms.put(CouchMetaDriver.etype.mimetypeEnum, mimetypeParam);
       return this;
     }
 
     public BlobSend mimetype(java.lang.String stringParam) {
-      parms.put(DbKeys.etype.mimetype, stringParam);
+      parms.put(CouchMetaDriver.etype.mimetype, stringParam);
       return this;
     }
 

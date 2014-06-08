@@ -1,7 +1,6 @@
 package rxf.couch;
 
-import rxf.couch.an.DbKeys;
-import rxf.couch.an.DbKeys.etype;
+import rxf.couch.driver.CouchMetaDriver.etype;
 import rxf.rpc.BlobAntiPatternObject;
 
 import javax.validation.ValidationException;
@@ -14,8 +13,8 @@ import javax.validation.ValidationException;
 public abstract class DbKeysBuilder {
   protected static ThreadLocal<DbKeysBuilder> currentKeys =
       new InheritableThreadLocal<DbKeysBuilder>();
-  protected final java.util.EnumMap<DbKeys.etype, Object> parms =
-      new java.util.EnumMap<DbKeys.etype, Object>(DbKeys.etype.class);
+  protected final java.util.EnumMap<etype, Object> parms =
+      new java.util.EnumMap<etype, Object>(etype.class);
 
   private Throwable trace;
 

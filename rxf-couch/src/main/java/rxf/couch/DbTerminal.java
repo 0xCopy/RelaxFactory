@@ -1,7 +1,7 @@
 package rxf.couch;
 
 import org.intellij.lang.annotations.Language;
-import rxf.couch.an.DbKeys.etype;
+import rxf.couch.driver.CouchMetaDriver.etype;
 import rxf.couch.driver.CouchMetaDriver;
 
 import java.nio.ByteBuffer;
@@ -79,7 +79,7 @@ public enum DbTerminal {
   pojo {
     public String builder(CouchMetaDriver couchDriver, etype[] parms, boolean implementation) {
       EnumSet<etype> of = EnumSet.of(parms[0], parms);
-      assert of.contains(etype.type);
+      assert of.contains(CouchMetaDriver.etype.type);
 
       return (implementation ? " public " : "")
           + ByteBuffer.class.getCanonicalName()
