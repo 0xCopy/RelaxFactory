@@ -12,9 +12,9 @@ import javax.validation.ValidationException;
  */
 public abstract class DbKeysBuilder {
   protected static ThreadLocal<DbKeysBuilder> currentKeys =
-      new InheritableThreadLocal<DbKeysBuilder>();
+      new InheritableThreadLocal<>();
   protected final java.util.EnumMap<etype, Object> parms =
-      new java.util.EnumMap<etype, Object>(etype.class);
+      new java.util.EnumMap<>(etype.class);
 
   private Throwable trace;
 
@@ -25,7 +25,6 @@ public abstract class DbKeysBuilder {
     if (BlobAntiPatternObject.DEBUG_SENDJSON) {
       debug();
     }
-
   }
 
   public boolean validate() {

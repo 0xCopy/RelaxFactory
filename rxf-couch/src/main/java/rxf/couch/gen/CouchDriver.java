@@ -30,9 +30,8 @@ public interface CouchDriver {
   class DbCreate extends DbKeysBuilder {
 
     public DbCreateActionBuilder to() {
-      if (1 <= parms.size())
-        return new DbCreateActionBuilder();
-      throw new IllegalArgumentException("required parameters are: [db]");
+      assert 1 <= parms.size() : "required parameters are: [db]";
+      return new DbCreateActionBuilder();
     }
 
     public DbCreate db(String stringParam) {
@@ -108,12 +107,10 @@ public interface CouchDriver {
   }
 
   class DbDelete extends DbKeysBuilder {
-    private static final int parmsCount = 1;
 
     public DbDeleteActionBuilder to() {
-      if (parmsCount <= parms.size())
-        return new DbDeleteActionBuilder();
-      throw new IllegalArgumentException("required parameters are: [db]");
+      assert 1 <= parms.size() : "required parameters are: [db]";
+      return new DbDeleteActionBuilder();
     }
 
     public DbDelete db(String stringParam) {
@@ -151,8 +148,9 @@ public interface CouchDriver {
                   CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
                       CouchTx.class);
             } catch (Exception e) {
-              if (BlobAntiPatternObject.DEBUG_SENDJSON)
-                e.printStackTrace();
+              if (!BlobAntiPatternObject.DEBUG_SENDJSON)
+                return r;
+              e.printStackTrace();
             }
             return r;
           }
@@ -191,9 +189,8 @@ public interface CouchDriver {
   class DocFetch extends DbKeysBuilder {
 
     public DocFetchActionBuilder to() {
-      if (2 <= parms.size())
-        return new DocFetchActionBuilder();
-      throw new IllegalArgumentException("required parameters are: [db, docId]");
+      assert 2 <= parms.size() : "required parameters are: [db, docId]";
+      return new DocFetchActionBuilder();
     }
 
     public DocFetch db(String stringParam) {
@@ -272,9 +269,8 @@ public interface CouchDriver {
     private static final int parmsCount = 2;
 
     public RevisionFetchActionBuilder to() {
-      if (parmsCount <= parms.size())
-        return new RevisionFetchActionBuilder();
-      throw new IllegalArgumentException("required parameters are: [db, docId]");
+      assert parmsCount <= parms.size() : "required parameters are: [db, docId]";
+      return new RevisionFetchActionBuilder();
     }
 
     public RevisionFetch db(String stringParam) {
@@ -340,9 +336,8 @@ public interface CouchDriver {
   class DocPersist extends DbKeysBuilder {
 
     public DocPersistActionBuilder to() {
-      if (2 <= parms.size())
-        return new DocPersistActionBuilder();
-      throw new IllegalArgumentException("required parameters are: [db, validjson]");
+      assert 2 <= parms.size() : "required parameters are: [db, validjson]";
+      return new DocPersistActionBuilder();
     }
 
     public DocPersist db(String stringParam) {
@@ -442,9 +437,8 @@ public interface CouchDriver {
     private static final int parmsCount = 3;
 
     public DocDeleteActionBuilder to() {
-      if (parmsCount <= parms.size())
-        return new DocDeleteActionBuilder();
-      throw new IllegalArgumentException("required parameters are: [db, docId, rev]");
+      assert parmsCount <= parms.size() : "required parameters are: [db, docId, rev]";
+      return new DocDeleteActionBuilder();
     }
 
     public DocDelete db(String stringParam) {
@@ -538,9 +532,8 @@ public interface CouchDriver {
   class DesignDocFetch extends DbKeysBuilder {
 
     public DesignDocFetchActionBuilder to() {
-      if (2 <= parms.size())
-        return new DesignDocFetchActionBuilder();
-      throw new IllegalArgumentException("required parameters are: [db, designDocId]");
+      assert 2 <= parms.size() : "required parameters are: [db, designDocId]";
+      return new DesignDocFetchActionBuilder();
     }
 
     public DesignDocFetch db(String stringParam) {
@@ -619,9 +612,8 @@ public interface CouchDriver {
   class ViewFetch extends DbKeysBuilder {
 
     public ViewFetchActionBuilder to() {
-      if (2 <= parms.size())
-        return new ViewFetchActionBuilder();
-      throw new IllegalArgumentException("required parameters are: [db, view]");
+      assert 2 <= parms.size() : "required parameters are: [db, view]";
+      return new ViewFetchActionBuilder();
     }
 
     public ViewFetch db(String stringParam) {
@@ -723,9 +715,8 @@ public interface CouchDriver {
   class JsonSend extends DbKeysBuilder {
 
     public JsonSendActionBuilder to() {
-      if (2 <= parms.size())
-        return new JsonSendActionBuilder();
-      throw new IllegalArgumentException("required parameters are: [opaque, validjson]");
+      assert 2 <= parms.size() : "required parameters are: [opaque, validjson]";
+      return new JsonSendActionBuilder();
     }
 
     public JsonSend opaque(String stringParam) {
@@ -874,10 +865,8 @@ public interface CouchDriver {
   class BlobSend extends DbKeysBuilder {
 
     public BlobSendActionBuilder to() {
-      if (5 <= parms.size())
-        return new BlobSendActionBuilder();
-      throw new IllegalArgumentException(
-          "required parameters are: [blob, db, docId, rev, attachname]");
+      assert 5 <= parms.size() : "required parameters are: [blob, db, docId, rev, attachname]";
+      return new BlobSendActionBuilder();
     }
 
     public BlobSend blob(ByteBuffer bytebufferParam) {
@@ -947,8 +936,9 @@ public interface CouchDriver {
                   CouchMetaDriver.gson().fromJson(Server.UTF8.decode(future.get()).toString(),
                       CouchTx.class);
             } catch (Exception e) {
-              if (BlobAntiPatternObject.DEBUG_SENDJSON)
-                e.printStackTrace();
+              if (!BlobAntiPatternObject.DEBUG_SENDJSON)
+                return r;
+              e.printStackTrace();
             }
             return r;
           }
@@ -964,7 +954,6 @@ public interface CouchDriver {
             BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Runnable() {
               public void run() {
                 try {
-
                   DbKeysBuilder.currentKeys.set(dbKeysBuilder);
                   ActionBuilder.currentAction.set(actionBuilder);
                   future.get();
