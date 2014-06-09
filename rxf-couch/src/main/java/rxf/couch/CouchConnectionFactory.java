@@ -11,13 +11,6 @@ import java.nio.channels.SocketChannel;
 import java.util.Queue;
 import java.util.concurrent.*;
 
-/**
- * <a href='http://www.antipatterns.com/briefing/sld024.htm'> Blob Anti Pattern </a>
- * used here as a pattern to centralize the antipatterns
- * User: jim
- * Date: 4/17/12
- * Time: 11:55 PM
- */
 public class CouchConnectionFactory {
 
     public static final int CONNECTION_POOL_SIZE = Integer.parseInt(Config.get("RXF_CONNECTION_POOL_SIZE", "20"));
@@ -62,10 +55,10 @@ public class CouchConnectionFactory {
     }
 
     public static void recycleChannel(SocketChannel channel) {
-        try {
+
             if (channel.isConnected())
                 if (!pool.offer(channel))
-                    channel.close();
+                    try {          channel.close();
 
         } catch (IOException e) {
             e.printStackTrace();

@@ -19,6 +19,7 @@ import static java.lang.StrictMath.min;
  */
 public class Server {
   public static final Queue<Object[]> q = new ConcurrentLinkedQueue();
+  public static final boolean DEBUG_SENDJSON = false;
   public static Thread selectorThread;
   public static boolean killswitch;
   public static Selector selector;
