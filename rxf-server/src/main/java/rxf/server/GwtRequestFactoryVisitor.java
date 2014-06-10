@@ -1,7 +1,5 @@
 package rxf.server;
 
-import com.google.web.bindery.requestfactory.server.ServiceLayer;
-import com.google.web.bindery.requestfactory.server.SimpleRequestProcessor;
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpHeaders;
 import one.xio.HttpStatus;
@@ -9,13 +7,18 @@ import one.xio.MimeType;
 import rxf.server.Rfc822HeaderState.HttpRequest;
 import rxf.server.driver.CouchMetaDriver;
 
+import com.google.web.bindery.requestfactory.server.ServiceLayer;
+import com.google.web.bindery.requestfactory.server.SimpleRequestProcessor;
+
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-import static rxf.server.BlobAntiPatternObject.*;
 import static one.xio.HttpMethod.UTF8;
+import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
 
 /**
  * User: jim
@@ -23,6 +26,7 @@ import static one.xio.HttpMethod.UTF8;
  * Time: 7:42 PM
  */
 public class GwtRequestFactoryVisitor extends Impl implements PreRead {
+  public static ExecutorService EXECUTOR_SERVICE = Executors.newCachedThreadPool();
   public static SimpleRequestProcessor SIMPLE_REQUEST_PROCESSOR =
       new SimpleRequestProcessor(ServiceLayer.create());
   private HttpRequest req;
@@ -86,7 +90,7 @@ public class GwtRequestFactoryVisitor extends Impl implements PreRead {
   public void onWrite(final SelectionKey key) throws Exception {
     if (payload == null) {
       key.interestOps(0);
-      getEXECUTOR_SERVICE().submit(new Runnable() {
+      EXECUTOR_SERVICE.submit(new Runnable() {
         @Override
         public void run() {
           try {

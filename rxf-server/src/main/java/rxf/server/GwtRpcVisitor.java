@@ -1,14 +1,19 @@
 package rxf.server;
 
-import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
-import com.google.gwt.user.client.rpc.RpcTokenException;
-import com.google.gwt.user.server.rpc.*;
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpHeaders;
 import one.xio.HttpStatus;
 import one.xio.MimeType;
 import rxf.server.Rfc822HeaderState.HttpRequest;
 import rxf.server.driver.CouchMetaDriver;
+
+import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
+import com.google.gwt.user.client.rpc.RpcTokenException;
+import com.google.gwt.user.server.rpc.RPC;
+import com.google.gwt.user.server.rpc.RPCRequest;
+import com.google.gwt.user.server.rpc.SerializationPolicy;
+import com.google.gwt.user.server.rpc.SerializationPolicyLoader;
+import com.google.gwt.user.server.rpc.SerializationPolicyProvider;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,9 +25,10 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.text.ParseException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static one.xio.HttpMethod.UTF8;
-import static rxf.server.BlobAntiPatternObject.EXECUTOR_SERVICE;
 import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
 
 /**
@@ -31,6 +37,7 @@ import static rxf.server.BlobAntiPatternObject.getReceiveBufferSize;
  * Time: 7:42 PM
  */
 public class GwtRpcVisitor extends Impl implements PreRead, SerializationPolicyProvider {
+  public static ExecutorService EXECUTOR_SERVICE = Executors.newCachedThreadPool();
 
   private HttpRequest req;
   private ByteBuffer cursor = null;

@@ -1,10 +1,8 @@
 package rxf.server;
 
-import com.google.gson.annotations.SerializedName;
-import com.google.gson.internal.Primitives;
 import rxf.server.CouchResultSet.tuple;
-import rxf.server.CouchService.CouchRequestParam;
 import rxf.server.CouchService.AttachmentsImpl;
+import rxf.server.CouchService.CouchRequestParam;
 import rxf.server.CouchService.View;
 import rxf.server.driver.CouchMetaDriver;
 import rxf.server.gen.CouchDriver.*;
@@ -14,13 +12,16 @@ import rxf.server.gen.CouchDriver.JsonSend.JsonSendTerminalBuilder;
 import rxf.server.gen.CouchDriver.ViewFetch.ViewFetchTerminalBuilder;
 import rxf.shared.CouchTx;
 
+import com.google.common.base.Defaults;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.internal.Primitives;
+
+import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.net.URLEncoder;
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 import static rxf.server.BlobAntiPatternObject.deepToString;
 import static rxf.server.BlobAntiPatternObject.getDefaultOrgName;
@@ -45,6 +46,7 @@ public class CouchServiceFactory {
    *            types in private members
    */
   private static class CouchServiceHandler<E> implements InvocationHandler, CouchNamespace {
+    private static ExecutorService work = Executors.newFixedThreadPool(1);
     private final Class<E> entityType;
     private Map<String, String> viewMethods = null;
     private Future<Void> init;
@@ -68,7 +70,7 @@ public class CouchServiceFactory {
 
     public void init(final Class<? extends CouchService<E>> serviceInterface,
         final String... initNs) throws ExecutionException, InterruptedException {
-      init = BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<Void>() {
+      init = work.submit(new Callable<Void>() {
         public Void call() throws Exception {
           for (int i = 0; i < initNs.length; i++) {
             String n = initNs[i];
@@ -195,7 +197,7 @@ public class CouchServiceFactory {
     ///CouchNS boilerplate
 
     public Object invoke(Object proxy, final Method method, final Object[] args)
-        throws ExecutionException, InterruptedException {
+        throws ExecutionException, InterruptedException, UnsupportedEncodingException {
       init.get();
 
       if (viewMethods.containsKey(method.getName())) {
@@ -204,86 +206,88 @@ public class CouchServiceFactory {
         //or just a list of data items, and how they return the data, as the full document,
         // or some simplified format.
 
-        return BlobAntiPatternObject.EXECUTOR_SERVICE.submit(new Callable<Object>() {
-          public Object call() throws Exception {
-            String name = method.getName();
-            String[] jsonArgs = null;
-            if (args != null) {//apparently args is null for a zero-arg method
-              jsonArgs = new String[args.length];
-              for (int i = 0; i < args.length; i++) {
-                jsonArgs[i] = URLEncoder.encode(CouchMetaDriver.gson().toJson(args[i]), "UTF-8");
-              }
-            }
-            Type keyType = Object.class;
-            Type valueType;
-
-            if (method.getGenericReturnType() instanceof Class) {
-              //not generic, either just a simple object (reduce obj such as _stats) or primitive
-              //read rows, unwrap to primitive/boxed/obj, return it
-              if (method.getReturnType().isPrimitive()) {
-                valueType = Primitives.wrap(method.getReturnType());
-              } else {
-                valueType = method.getReturnType();
-              }
-            } else {
-              //assume list or map, parametrized type, else give up and use entityType
-              ParameterizedType returnType = (ParameterizedType) method.getGenericReturnType();
-              if (returnType.getRawType() == Map.class) {
-                Map map = new HashMap();
-                //do map from assumed key type to assumed data type
-                keyType = returnType.getActualTypeArguments()[0];
-                valueType = returnType.getActualTypeArguments()[1];
-              } else if (returnType.getRawType() == List.class) {
-                valueType = returnType.getActualTypeArguments()[0];
-              } else {
-                //no idea, go with something somewhat sane
-                valueType = entityType;
-              }
-            }
-
-            /*       dont forget to uncomment this after new CouchResult gen*/
-            final Map<String, String> stringStringMap = viewMethods;
-            //Object[] cast to make varargs behave
-            String format = String.format(stringStringMap.get(name), (Object[]) jsonArgs);
-            final ViewFetchTerminalBuilder fire =
-                ViewFetch.$().db(getPathPrefix()).type(valueType).keyType(keyType).view(format)
-                    .to().fire();
-            CouchResultSet<?, ?> rows = fire.rows();
-
-            if (method.getGenericReturnType() instanceof Class) {
-              //not generic, either just a simple object (reduce obj such as _stats) or primitive
-              //read rows, unwrap to primitive/boxed/obj, return it
-              return rows.rows.get(0).value;
-            } else {
-              //assume list or map, parameterized type
-              ParameterizedType returnType = (ParameterizedType) method.getGenericReturnType();
-              if (returnType.getRawType() == Map.class) {
-                Map map = new HashMap();
-                //populate map of specified type
-                if (null != rows && null != rows.rows) {
-                  for (tuple<?, ?> row : rows.rows) {
-                    map.put(row.key, (E) row.value);
-                  }
-                }
-
-                //return map
-                return map;
-              } else if (returnType.getRawType() == List.class) {
-                List list = new ArrayList();
-                //assume items in collection
-                //iterate through items in rowset, populating list
-                if (null != rows && null != rows.rows) {
-                  List<E> ar = new ArrayList<E>();
-                  for (tuple<?, ?> row : rows.rows) {
-                    ar.add((E) row.value);
-                  }
-                  return ar;
-                }
-              }
-            }
-            return null;
+        String name = method.getName();
+        String[] jsonArgs = null;
+        if (args != null) {//apparently args is null for a zero-arg method
+          jsonArgs = new String[args.length];
+          for (int i = 0; i < args.length; i++) {
+            jsonArgs[i] = URLEncoder.encode(CouchMetaDriver.gson().toJson(args[i]), "UTF-8");
           }
-        }).get();
+        }
+        Type keyType = Object.class;
+        Type valueType;
+
+        if (method.getGenericReturnType() instanceof Class) {
+          //not generic, either just a simple object (reduce obj such as _stats) or primitive
+          //read rows, unwrap to primitive/boxed/obj, return it
+          if (method.getReturnType().isPrimitive()) {
+            valueType = Primitives.wrap(method.getReturnType());
+          } else {
+            valueType = method.getReturnType();
+          }
+        } else {
+          //assume list or map, parametrized type, else give up and use entityType
+          ParameterizedType returnType = (ParameterizedType) method.getGenericReturnType();
+          if (returnType.getRawType() == Map.class) {
+            Map map = new HashMap();
+            //do map from assumed key type to assumed data type
+            keyType = returnType.getActualTypeArguments()[0];
+            valueType = returnType.getActualTypeArguments()[1];
+          } else if (returnType.getRawType() == List.class) {
+            valueType = returnType.getActualTypeArguments()[0];
+          } else {
+            //no idea, go with something somewhat sane
+            valueType = entityType;
+          }
+        }
+
+        /*       dont forget to uncomment this after new CouchResult gen*/
+        final Map<String, String> stringStringMap = viewMethods;
+        //Object[] cast to make varargs behave
+        String format = String.format(stringStringMap.get(name), (Object[]) jsonArgs);
+        final ViewFetchTerminalBuilder fire =
+            ViewFetch.$().db(getPathPrefix()).type(valueType).keyType(keyType).view(format).to()
+                .fire();
+        CouchResultSet<?, ?> rows = fire.rows();
+        if (rows == null || rows.rows == null) {
+          return null;
+        }
+
+        if (method.getGenericReturnType() instanceof Class) {
+          //not generic, either just a simple object (reduce obj such as _stats) or primitive
+          //read rows, unwrap to primitive/boxed/obj, return it
+          if (rows.rows.isEmpty()) {
+            return Defaults.defaultValue((Class<Object>) method.getReturnType());
+          }
+          return rows.rows.get(0).value;
+        } else {
+          //assume list or map, parameterized type
+          ParameterizedType returnType = (ParameterizedType) method.getGenericReturnType();
+          if (returnType.getRawType() == Map.class) {
+            Map map = new HashMap();
+            //populate map of specified type
+            if (null != rows && null != rows.rows) {
+              for (tuple<?, ?> row : rows.rows) {
+                map.put(row.key, (E) row.value);
+              }
+            }
+
+            //return map
+            return map;
+          } else if (returnType.getRawType() == List.class) {
+            List list = new ArrayList();
+            //assume items in collection
+            //iterate through items in rowset, populating list
+            if (null != rows && null != rows.rows) {
+              List<E> ar = new ArrayList<E>();
+              for (tuple<?, ?> row : rows.rows) {
+                ar.add((E) row.value);
+              }
+              return ar;
+            }
+          }
+        }
+        return null;
       } else {
         //persist or find by key
         if ("persist".equals(method.getName())) {
