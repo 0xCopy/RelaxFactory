@@ -8,10 +8,9 @@ import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
-import java.util.Deque;
-import java.util.LinkedList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingDeque;
 
 import static rxf.server.CouchNamespace.COUCH_DEFAULT_ORGNAME;
 import static rxf.server.RelaxFactoryServerImpl.wheresWaldo;
@@ -48,10 +47,9 @@ public class BlobAntiPatternObject {
       } catch (URISyntaxException e) {
           e.printStackTrace();
       }
-
     }
 
-    private static Deque<SocketChannel> couchConnections = new LinkedList<>();
+    private static LinkedBlockingDeque<SocketChannel> couchConnections = new LinkedBlockingDeque<>(CONNECTION_POOL_SIZE);
 
     public static SocketChannel createCouchConnection() {
       while (!HttpMethod.killswitch) {
@@ -82,9 +80,7 @@ public class BlobAntiPatternObject {
     public static void recycleChannel(SocketChannel channel) {
       try {
         // Note that we check both connected&&open, its possible to be connected but not open, at least in 1.7.0_45
-        if (CONNECTION_POOL_SIZE >= couchConnections.size() && channel.isConnected() && channel.isOpen()) {
-          couchConnections.addLast(channel);
-        } else {
+        if (!channel.isConnected() || !channel.isOpen() || !couchConnections.offerLast(channel)) {
           channel.close();
         }
       } catch (IOException e) {
