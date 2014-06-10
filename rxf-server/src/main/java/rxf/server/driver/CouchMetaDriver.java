@@ -774,7 +774,7 @@ public enum CouchMetaDriver {
                 break;
               default:
                 phaser.forceTermination();
-                recycleChannel(channel);
+                channel.close();
             }
           }
         }
@@ -1088,6 +1088,7 @@ public enum CouchMetaDriver {
                   if (-1 == read) {
                     phaser.forceTermination();
                     key.cancel();
+                    channel.close();
                     return;
                   }
                   if (finish) {
@@ -1115,6 +1116,7 @@ public enum CouchMetaDriver {
                       default:
                         phaser.forceTermination();
                         key.cancel();
+                        channel.close();
                     }
                   }
                 }
