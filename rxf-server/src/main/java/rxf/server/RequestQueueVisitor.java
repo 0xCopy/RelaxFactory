@@ -134,6 +134,8 @@ public class RequestQueueVisitor extends Impl implements PreRead, SerializationP
               payload = RPC.encodeResponseForFailure(null, ex);
             } catch (RpcTokenException ex) {
               payload = RPC.encodeResponseForFailure(null, ex);
+            } catch (SerializationException ex) {
+              payload = RPC.encodeResponseForFailure(null, ex);
             }
             ByteBuffer pbuf = (ByteBuffer) UTF8.encode(payload).rewind();
             final int limit = pbuf.rewind().limit();
@@ -151,7 +153,17 @@ public class RequestQueueVisitor extends Impl implements PreRead, SerializationP
 
             key.interestOps(SelectionKey.OP_WRITE);
           } catch (Exception e) {
-            key.cancel();
+            ByteBuffer resp =
+                new Rfc822HeaderState().$res().status(HttpStatus.$500).headerString(
+                    HttpHeaders.Content$2dType, "text/html").headerString(
+                    HttpHeaders.Content$2dLength, "0").as(ByteBuffer.class);
+            try {
+              ((SocketChannel) key.channel()).write(resp);
+              key.selector().wakeup();
+            } catch (IOException e1) {
+              //nothing we can do
+            }
+            key.interestOps(SelectionKey.OP_READ).attach(null);
             e.printStackTrace(); //todo: verify for a purpose
           } finally {
           }
