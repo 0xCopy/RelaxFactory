@@ -65,9 +65,12 @@ public class GwtRequestFactoryVisitor extends Impl implements PreRead {
         .suffixMatchChunks(CouchMetaDriver.HEADER_TERMINATOR, req.headerBuf())) {
       return;
     }
-    cursor = cursor.slice();
     int remaining = Integer.parseInt(req.headerString(HttpHeaders.Content$2dLength));
-    final GwtRequestFactoryVisitor prev = this;
+    if (remaining > cursor.limit()) {
+      cursor = ByteBuffer.allocateDirect(remaining).put(cursor);
+    } else {
+      cursor = cursor.slice();
+    }    final GwtRequestFactoryVisitor prev = this;
     if (cursor.remaining() != remaining) {
       key.attach(new Impl() {
         @Override

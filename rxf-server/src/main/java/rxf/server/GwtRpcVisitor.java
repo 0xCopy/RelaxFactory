@@ -88,8 +88,12 @@ public class GwtRpcVisitor extends Impl implements PreRead, SerializationPolicyP
         .suffixMatchChunks(CouchMetaDriver.HEADER_TERMINATOR, req.headerBuf())) {
       return;
     }
-    cursor = cursor.slice();
     int remaining = Integer.parseInt(req.headerString(HttpHeaders.Content$2dLength));
+    if (remaining > cursor.limit()) {
+      cursor = ByteBuffer.allocateDirect(remaining).put(cursor);
+    } else {
+      cursor = cursor.slice();
+    }
     final GwtRpcVisitor prev = this;
     if (cursor.remaining() != remaining) {
       key.attach(new Impl() {
