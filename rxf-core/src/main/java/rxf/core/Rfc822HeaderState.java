@@ -1,7 +1,9 @@
 package rxf.core;
 
+import com.google.common.util.concurrent.Atomics;
 import com.google.gson.Gson;
 import javolution.text.TextBuilder;
+import one.xio.AsioVisitor;
 import one.xio.HttpHeaders;
 import one.xio.HttpMethod;
 import one.xio.HttpStatus;
@@ -49,7 +51,7 @@ public class Rfc822HeaderState {
   public static final String HTTP = "HTTP";
   public static final String HTTP_1_1 = HTTP + "/1.1";
   public static final char SPC = ' ';
-  private static final char COLON = ':';
+   static final char COLON = ':';
   public static final String COLONSPC = "" + COLON + SPC;
   public static final char CR = '\r';
   public static final char LF = '\n';
@@ -120,8 +122,8 @@ public class Rfc822HeaderState {
   @SuppressWarnings( {"RedundantCast"})
   public static class HttpRequest extends Rfc822HeaderState {
     public static final ByteBuffer[] EMPTY_BBAR = new ByteBuffer[0];
-    private ByteBuffer[] cookieInterest;
-    private Pair<Pair<ByteBuffer, ByteBuffer>, ? extends Pair> parsedCookies;
+     ByteBuffer[] cookieInterest;
+     Pair<Pair<ByteBuffer, ByteBuffer>, ? extends Pair> parsedCookies;
 
     public HttpRequest(Rfc822HeaderState proto) {
       super(proto);
@@ -194,7 +196,7 @@ public class Rfc822HeaderState {
      */
     public HttpRequest cookieInterest(String... keys) {
       if (0 == keys.length) { //rare event
-        Set<String> strings = new CopyOnWriteArraySet<String>(asList(headerInterest()));
+        Set<String> strings = new CopyOnWriteArraySet<>(asList(headerInterest()));
         strings.remove(HttpHeaders.Cookie.getHeader());
         headerInterest(strings.toArray(new String[strings.size()]));
 
@@ -259,9 +261,9 @@ public class Rfc822HeaderState {
           k[i] = (ByteBuffer) ByteBuffer.wrap(key.intern().getBytes(StandardCharsets.UTF_8));
         }
       }
-      Map<String, String> ret = new TreeMap<String, String>();
+      Map<String, String> ret = new TreeMap<>();
       Pair<Pair<ByteBuffer, ByteBuffer>, ? extends Pair> pair = parsedCookies();
-      List<ByteBuffer> kl = new LinkedList<ByteBuffer>(asList(k));
+      List<ByteBuffer> kl = new LinkedList<>(asList(k));
       while (null != pair && !kl.isEmpty()) {
         Pair<ByteBuffer, ByteBuffer> a1 = pair.getA();
         ByteBuffer ckey = (ByteBuffer) a1.getA();
@@ -458,33 +460,32 @@ public class Rfc822HeaderState {
     headerInterest = proto.headerInterest;
     headerStrings = proto.headerStrings;
     methodProtocol = proto.methodProtocol;
-    pathRescode = proto.pathRescode;
-    //this.PREFIX                =proto.PREFIX                       ;
+    pathRescode = proto.pathRescode; 
     protocolStatus = proto.protocolStatus;
     sourceKey = proto.sourceKey;
     sourceRoute = proto.sourceRoute;
   }
 
-  public AtomicReference<String[]> headerInterest = new AtomicReference<String[]>();
+  public AtomicReference<String[]> headerInterest = new AtomicReference<>();
   Pair cookies;
   /**
    * the source route from the active socket.
    * <p/>
    * this is necessary to look up  GeoIpService queries among other things
    */
-  private AtomicReference<InetAddress> sourceRoute = new AtomicReference<InetAddress>();
+   AtomicReference<InetAddress> sourceRoute = new AtomicReference<>();
 
   /**
    * stored buffer from which things are parsed and later grepped.
    * <p/>
    * NOT atomic.
    */
-  private ByteBuffer headerBuf;
+   ByteBuffer headerBuf;
   /**
    * parsed valued post-{@link #apply(ByteBuffer)}
    */
-  private AtomicReference<Map<String, String>> headerStrings =
-      new AtomicReference<Map<String, String>>();
+   AtomicReference<Map<String, String>> headerStrings =
+      new AtomicReference<>();
   /**
    * dual purpose HTTP protocol header token found on the first line of a HttpRequest/$res in the first position.
    * <p/>
@@ -492,7 +493,7 @@ public class Rfc822HeaderState {
    * <p/>
    * user is responsible for populating this on outbound addHeaderInterest
    */
-  private AtomicReference<String> methodProtocol = new AtomicReference<String>();
+   AtomicReference<String> methodProtocol = new AtomicReference<>();
 
   /**
    * dual purpose HTTP protocol header token found on the first line of a HttpRequest/$res in the second position
@@ -501,18 +502,18 @@ public class Rfc822HeaderState {
    * <p/>
    * user is responsible for populating this on outbound addHeaderInterest
    */
-  private AtomicReference<String> pathRescode = new AtomicReference<String>();
+   AtomicReference<String> pathRescode = new AtomicReference<>();
 
   /**
    * Dual purpose HTTP protocol header token found on the first line of a HttpRequest/$res in the third position.
    * <p/>
    * Contains either the protocol (HttpRequest) or a status line message ($res)
    */
-  private AtomicReference<String> protocolStatus = new AtomicReference<String>();
+   AtomicReference<String> protocolStatus = new AtomicReference<>();
   /**
    * passed in on 0.0.0.0 dispatch to tie the header state to an nio object, to provide a socketchannel handle, and to lookup up the incoming source route
    */
-  private AtomicReference<SelectionKey> sourceKey = new AtomicReference<SelectionKey>();
+   AtomicReference<SelectionKey> sourceKey ;
 
   /**
    * terminates header keys
@@ -541,8 +542,12 @@ public class Rfc822HeaderState {
    * @throws IOException
    */
   public Rfc822HeaderState sourceKey(SelectionKey key) throws IOException {
-    sourceKey.set(key);
-    SocketChannel channel = (SocketChannel) sourceKey.get().channel();
+      if (null != sourceKey) {
+          sourceKey.set(key);
+      } else {
+          sourceKey=Atomics.newReference(key) ;
+      }
+      SocketChannel channel = (SocketChannel) sourceKey.get().channel();
     sourceRoute.set(channel.socket().getInetAddress());
     return this;
   }
@@ -573,7 +578,7 @@ public class Rfc822HeaderState {
 
     Pair<ByteBuffer, ? extends Pair> ret = headerExtract(henc);
 
-    List<String> objects = new ArrayList<String>();
+    List<String> objects = new ArrayList<>();
     while (null != ret) {
       objects.add(StandardCharsets.UTF_8.decode(ret.getA()).toString());
       ret = ret.getB();
@@ -594,7 +599,7 @@ public class Rfc822HeaderState {
 
     Pair<ByteBuffer, ? extends Pair> ret = headerExtract(theHeader.getToken());
 
-    List<String> objects = new ArrayList<String>();
+    List<String> objects = new ArrayList<>();
     while (null != ret) {
       objects.add(StandardCharsets.UTF_8.decode(ret.getA()).toString());
       ret = ret.getB();
@@ -697,7 +702,7 @@ public class Rfc822HeaderState {
     }
     protocolStatus.set(StandardCharsets.UTF_8.decode((ByteBuffer) slice.flip()).toString().trim());
 
-    headerBuf = null;
+
     boolean wantsCookies = null != cookies;
     boolean wantsHeaders = wantsCookies || 0 < headerInterest.get().length;
     moveCaretToDoubleEol(cursor);
@@ -823,7 +828,7 @@ public class Rfc822HeaderState {
 
     //adds a few more instructions than the blind append but does what was desired
     Set<String> theCow =
-        new CopyOnWriteArraySet<String>(Arrays.<String> asList(headerInterest.get()));
+        new CopyOnWriteArraySet<>(Arrays.<String> asList(headerInterest.get()));
     theCow.addAll(asList(newInterest));
     String[] strings = theCow.toArray(new String[theCow.size()]);
     Arrays.sort(strings);
@@ -1038,7 +1043,7 @@ public class Rfc822HeaderState {
    * @see #sourceKey
    */
   public SelectionKey sourceKey() {
-    return sourceKey.get(); //To change body of created methods use File | Settings | File Templates.
+    return null==sourceKey ?(sourceKey=Atomics.newReference()).get():sourceKey.get(); //To change body of created methods use File | Settings | File Templates.
   }
 
   public static boolean moveCaretToDoubleEol(ByteBuffer buffer) {
