@@ -55,36 +55,34 @@ public class Server {
       selector1.wakeup();
   }
 
-  public static void init(AsioVisitor protocoldecoder, String... a) throws IOException {
+  public static void init(AsioVisitor protocoldecoder) throws IOException {
 
     setSelector(Selector.open());
     selectorThread = Thread.currentThread();
 
-    synchronized (a) {
-      long timeoutMax = 1024, timeout = 1;
+    long timeoutMax = 1024, timeout = 1;
 
-      while (!killswitch) {
-        while (!q.isEmpty()) {
-          Object[] s = q.remove();
-          SelectableChannel x = (SelectableChannel) s[0];
-          Selector sel = getSelector();
-          Integer op = (Integer) s[1];
-          Object att = s[2];
-          //          System.err.println("" + op + "/" + String.valueOf(att));
-          try {
-            x.configureBlocking(false);
-            SelectionKey register = x.register(sel, op, att);
-            assert null != register;
-          } catch (Throwable e) {
-            e.printStackTrace();
-          }
+    while (!killswitch) {
+      while (!q.isEmpty()) {
+        Object[] s = q.remove();
+        SelectableChannel x = (SelectableChannel) s[0];
+        Selector sel = getSelector();
+        Integer op = (Integer) s[1];
+        Object att = s[2];
+        //          System.err.println("" + op + "/" + String.valueOf(att));
+        try {
+          x.configureBlocking(false);
+          SelectionKey register = x.register(sel, op, att);
+          assert null != register;
+        } catch (Throwable e) {
+          e.printStackTrace();
         }
-        int select = selector.select(timeout);
-
-        timeout = 0 == select ? min(timeout << 1, timeoutMax) : 1;
-        if (0 != select)
-          innerloop(protocoldecoder);
       }
+      int select = selector.select(timeout);
+
+      timeout = 0 == select ? min(timeout << 1, timeoutMax) : 1;
+      if (0 != select)
+        innerloop(protocoldecoder);
     }
   }
 

@@ -56,7 +56,7 @@ public class RelaxFactoryServerImpl implements RelaxFactoryServer {
   }
 
   public static void init(AsioVisitor protocoldecoder, String... a) throws IOException {
-    Server.init(protocoldecoder, a);
+    Server.init(protocoldecoder);
   }
 
   public void setPort(int port) {
