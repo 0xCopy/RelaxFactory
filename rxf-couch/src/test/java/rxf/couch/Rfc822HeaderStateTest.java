@@ -34,10 +34,10 @@ public class Rfc822HeaderStateTest {
 
   @Test
   public void testAsRequestHeaderByteBuffer() {
-    Rfc822HeaderState req = new Rfc822HeaderState();
+    Rfc822HeaderState req = new Rfc822HeaderState().$req();
     req.methodProtocol("VERB").pathResCode("/noun").protocolStatus("HTTP/1.0").headerString(
         "Header", "value").headerString("Header2", "value2");
-    ByteBuffer buf = req.asRequestHeaderByteBuffer();
+    ByteBuffer buf = req.asByteBuffer();
     String result = StandardCharsets.UTF_8.decode(buf.duplicate()).toString();
 
     assertEquals("VERB /noun HTTP/1.0\r\nHeader: value\r\nHeader2: value2\r\n\r\n", result);
@@ -81,10 +81,10 @@ public class Rfc822HeaderStateTest {
 
   @Test
   public void testAsResponseHeaderByteBuffer() {
-    Rfc822HeaderState resp = new Rfc822HeaderState();
+    Rfc822HeaderState resp = new Rfc822HeaderState().$res();
     resp.methodProtocol("HTTP/1.0").pathResCode("501").protocolStatus("Unsupported Method")
         .headerString("Connection", "close");
-    ByteBuffer buf = resp.asResponseHeaderByteBuffer();
+    ByteBuffer buf = resp.asByteBuffer();
     String result = StandardCharsets.UTF_8.decode(buf).toString();
     assertEquals("HTTP/1.0 501 Unsupported Method\r\nConnection: close\r\n\r\n", result);
   }

@@ -28,18 +28,18 @@ import static java.util.Arrays.asList;
  * this is a utility class to parse a HttpRequest header or
  * $res header according to declared need of
  * header/cookies downstream.
- * <p>
+ * <p/>
  * since java string parsing can be expensive and addHeaderInterest
  * can be numerous this class is designed to parse only
  * what is necessary or typical and enable slower dynamic
  * grep operations to suit against a captured
  * {@link ByteBuffer} as needed (still cheap)
- * <p>
+ * <p/>
  * preload addHeaderInterest and cookies, send $res
  * and HttpRequest initial onRead for .read()
- * <p>
- * <p>
- * <p>
+ * <p/>
+ * <p/>
+ * <p/>
  * User: jim
  * Date: 5/19/12
  * Time: 10:00 PM
@@ -169,9 +169,21 @@ public class Rfc822HeaderState {
         if (null == protocol()) {
           protocol(HTTP_1_1);
         }
-        return (T) asRequestHeaderByteBuffer();
+        return (T) asByteBuffer();
       }
       return (T) super.as(clazz);
+    }
+
+    /**
+     * writes method, headersStrings, and cookieStrings to a {@link ByteBuffer} suitable for RequestHeaders
+     * <p/>
+     * populates addHeaderInterest from {@link #headerStrings}
+     *
+     * @return http addHeaderInterest for use with http 1.1
+     */
+    public ByteBuffer asByteBuffer() {
+      String protocol = asRequestHeaderString();
+      return ByteBuffer.wrap(protocol.getBytes(StandardCharsets.UTF_8));
     }
 
     /**
@@ -361,10 +373,23 @@ public class Rfc822HeaderState {
         if (null == protocol()) {
           protocol(HTTP_1_1);
         }
-        return (T) asResponseHeaderByteBuffer();
+        return (T) asByteBuffer();
       }
       return super.as(clazz); //To change body of overridden methods use File | Settings | File Templates.
 
+    }
+
+    /**
+     * writes method, headersStrings, and cookieStrings to a {@link ByteBuffer} suitable for Response addHeaderInterest
+     * <p/>
+     * populates addHeaderInterest from {@link #headerStrings}
+     * <p/>
+     *
+     * @return http addHeaderInterest for use with http 1.1
+     */
+    public ByteBuffer asByteBuffer() {
+      String protocol = asResponseHeaderString();
+      return ByteBuffer.wrap(protocol.getBytes(StandardCharsets.UTF_8));
     }
   }
 
@@ -403,9 +428,25 @@ public class Rfc822HeaderState {
 
   }
 
+  public HttpResponse asResponse() {
+    return $res();
+
+  }
+
+  public HttpRequest asRequest() {
+    return $req();
+
+  }
+
+  public ByteBuffer asByteBuffer() {
+    throw new UnsupportedOperationException(
+        "must promote to as((HttpRequest|HttpResponse)).class first");
+
+  }
+
   /**
    * copy ctor
-   * <p>
+   * <p/>
    * jrn: moved most things to atomic state soas to provide letter-envelope abstraction without
    * undue array[1] members to do the same thing.
    *
@@ -428,14 +469,14 @@ public class Rfc822HeaderState {
   Pair cookies;
   /**
    * the source route from the active socket.
-   * <p>
+   * <p/>
    * this is necessary to look up  GeoIpService queries among other things
    */
   private AtomicReference<InetAddress> sourceRoute = new AtomicReference<InetAddress>();
 
   /**
    * stored buffer from which things are parsed and later grepped.
-   * <p>
+   * <p/>
    * NOT atomic.
    */
   private ByteBuffer headerBuf;
@@ -446,25 +487,25 @@ public class Rfc822HeaderState {
       new AtomicReference<Map<String, String>>();
   /**
    * dual purpose HTTP protocol header token found on the first line of a HttpRequest/$res in the first position.
-   * <p>
+   * <p/>
    * contains either the method (HttpRequest) or a the "HTTP/1.1" string (the protocol) on responses.
-   * <p>
+   * <p/>
    * user is responsible for populating this on outbound addHeaderInterest
    */
   private AtomicReference<String> methodProtocol = new AtomicReference<String>();
 
   /**
    * dual purpose HTTP protocol header token found on the first line of a HttpRequest/$res in the second position
-   * <p>
+   * <p/>
    * contains either the path (HttpRequest) or a the numeric result code on responses.
-   * <p>
+   * <p/>
    * user is responsible for populating this on outbound addHeaderInterest
    */
   private AtomicReference<String> pathRescode = new AtomicReference<String>();
 
   /**
    * Dual purpose HTTP protocol header token found on the first line of a HttpRequest/$res in the third position.
-   * <p>
+   * <p/>
    * Contains either the protocol (HttpRequest) or a status line message ($res)
    */
   private AtomicReference<String> protocolStatus = new AtomicReference<String>();
@@ -492,7 +533,7 @@ public class Rfc822HeaderState {
 
   /**
    * assigns a state parser to a  {@link SelectionKey} and attempts to grab the source route froom the active socket.
-   * <p>
+   * <p/>
    * this is necessary to look up GeoIpService queries among other things
    *
    * @param key a NIO select key
@@ -508,7 +549,7 @@ public class Rfc822HeaderState {
 
   /**
    * the actual {@link ByteBuffer} associated with the state.
-   * <p>
+   * <p/>
    * this buffer must start at position 0 in most cases requiring {@link   ReadableByteChannel#read(ByteBuffer)}
    *
    * @return what is sent to {@link #apply(ByteBuffer)}
@@ -520,7 +561,7 @@ public class Rfc822HeaderState {
 
   /**
    * this is a grep of the full header state to find one or more headers of a given name.
-   * <p>
+   * <p/>
    * performs rewind
    *
    * @param header a header name
@@ -543,7 +584,7 @@ public class Rfc822HeaderState {
 
   /**
    * this is agrep of the full header state to find one or more headers of a given name.
-   * <p>
+   * <p/>
    * performs rewind
    *
    * @param theHeader a header enum
@@ -623,9 +664,9 @@ public class Rfc822HeaderState {
 
   /**
    * direction-agnostic RFC822 header state is mapped from a ByteBuffer with tolerance for HTTP method and results in the first line.
-   * <p>
+   * <p/>
    * {@link #headerInterest } contains a list of addHeaderInterest that will be converted to a {@link Map} and available via {@link Rfc822HeaderState#headerStrings()}
-   * <p>
+   * <p/>
    * currently this is  done inside of {@link ProtocolMethodDispatch } surrounding {@link com.google.web.bindery.requestfactory.server.SimpleRequestProcessor#process(String)}
    *
    * @param cursor
@@ -682,9 +723,9 @@ public class Rfc822HeaderState {
 
   /**
    * direction-agnostic RFC822 header state is mapped from a ByteBuffer with tolerance for HTTP method and results in the first line.
-   * <p>
+   * <p/>
    * {@link #headerInterest } contains a list of addHeaderInterest that will be converted to a {@link Map} and available via {@link Rfc822HeaderState#headerStrings()}
-   * <p>
+   * <p/>
    * currently this is  done inside of {@link ProtocolMethodDispatch } surrounding {@link com.google.web.bindery.requestfactory.server.SimpleRequestProcessor#process(String)}
    *
    * @param cursor
@@ -767,11 +808,11 @@ public class Rfc822HeaderState {
 
   /**
    * Appends to the Set of header keys this parser is interested in mapping to strings.
-   * <p>
+   * <p/>
    * these addHeaderInterest are mapped at cardinality<=1 when  {@link #apply(ByteBuffer)}  }is called.
-   * <p>
+   * <p/>
    * for cardinality=>1  addHeaderInterest {@link #getHeadersNamed(String)} is a pure grep over the entire ByteBuffer.
-   * <p>
+   * <p/>
    *
    * @param newInterest
    * @return
@@ -822,7 +863,7 @@ public class Rfc822HeaderState {
 
   /**
    * this is what has been sent to {@link #apply(ByteBuffer)}.
-   * <p>
+   * <p/>
    * care must be taken to avoid {@link ByteBuffer#compact()} during the handling of
    * the dst/cursor found in AsioVisitor code if this is sent in without a clean ByteBuffer.
    *
@@ -836,7 +877,7 @@ public class Rfc822HeaderState {
 
   /**
    * holds the values parsed during {@link #apply(ByteBuffer)} and holds the key-values created as addHeaderInterest in
-   * {@link #asRequestHeaderByteBuffer()} and {@link #asResponseHeaderByteBuffer()}
+   * {@link #asByteBuffer()} and {@link #asByteBuffer()}
    *
    * @return
    */
@@ -847,11 +888,11 @@ public class Rfc822HeaderState {
 
   /**
    * header values which are pre-parsed during {@link #apply(ByteBuffer)}.
-   * <p>
+   * <p/>
    * addHeaderInterest in the HttpRequest/HttpResponse not so named in this list will be passed over.
-   * <p>
+   * <p/>
    * the value of a header appearing more than once is unspecified.
-   * <p>
+   * <p/>
    * multiple occuring headers require {@link #getHeadersNamed(String)}
    *
    * @return the parsed values designated by the {@link #headerInterest} list of keys.  addHeaderInterest present in {@link #headerInterest}
@@ -904,7 +945,7 @@ public class Rfc822HeaderState {
 
   /**
    * Dual purpose HTTP protocol header token found on the first line of a HttpRequest/HttpResponse in the third position.
-   * <p>
+   * <p/>
    * Contains either the protocol (HttpRequest) or a status line message (HttpResponse)
    */
   public String protocolStatus() {
@@ -921,9 +962,9 @@ public class Rfc822HeaderState {
 
   /**
    * writes method, headersStrings, and cookieStrings to a {@link String } suitable for Response addHeaderInterest
-   * <p>
+   * <p/>
    * populates addHeaderInterest from {@link #headerStrings}
-   * <p>
+   * <p/>
    *
    * @return http addHeaderInterest for use with http 1.1
    */
@@ -940,21 +981,8 @@ public class Rfc822HeaderState {
   }
 
   /**
-   * writes method, headersStrings, and cookieStrings to a {@link ByteBuffer} suitable for Response addHeaderInterest
-   * <p>
-   * populates addHeaderInterest from {@link #headerStrings}
-   * <p>
-   *
-   * @return http addHeaderInterest for use with http 1.1
-   */
-  public ByteBuffer asResponseHeaderByteBuffer() {
-    String protocol = asResponseHeaderString();
-    return ByteBuffer.wrap(protocol.getBytes(StandardCharsets.UTF_8));
-  }
-
-  /**
    * writes method, headersStrings, and cookieStrings to a {@link String} suitable for RequestHeaders
-   * <p>
+   * <p/>
    * populates addHeaderInterest from {@link #headerStrings}
    *
    * @return http addHeaderInterest for use with http 1.1
@@ -969,18 +997,6 @@ public class Rfc822HeaderState {
 
     builder.append(CRLF);
     return builder.toString();
-  }
-
-  /**
-   * writes method, headersStrings, and cookieStrings to a {@link ByteBuffer} suitable for RequestHeaders
-   * <p>
-   * populates addHeaderInterest from {@link #headerStrings}
-   *
-   * @return http addHeaderInterest for use with http 1.1
-   */
-  public ByteBuffer asRequestHeaderByteBuffer() {
-    String protocol = asRequestHeaderString();
-    return ByteBuffer.wrap(protocol.getBytes(StandardCharsets.UTF_8));
   }
 
   /**

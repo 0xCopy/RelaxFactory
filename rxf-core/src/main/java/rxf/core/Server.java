@@ -18,7 +18,7 @@ import static java.lang.StrictMath.min;
  * Created by jim on 5/19/14.
  */
 public class Server {
-  public static final Queue<Object[]> q = new ConcurrentLinkedQueue();
+  public static final Queue<Object[]> q = new ConcurrentLinkedQueue<>();
   public static final boolean DEBUG_SENDJSON = false;
   public static Thread selectorThread;
   public static boolean killswitch;
@@ -69,7 +69,7 @@ public class Server {
         Selector sel = getSelector();
         Integer op = (Integer) s[1];
         Object att = s[2];
-        //          System.err.println("" + op + "/" + String.valueOf(att));
+
         try {
           x.configureBlocking(false);
           SelectionKey register = x.register(sel, op, att);
