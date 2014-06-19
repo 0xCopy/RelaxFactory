@@ -12,6 +12,7 @@ import rxf.shared.CompressionTypes;
 import rxf.shared.PreRead;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
@@ -157,43 +158,9 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
     }
     boolean send200 = file.canRead() && file.isFile();
 
-    if (send200) {
-      final RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
-      final long total = randomAccessFile.length();
-      final FileChannel fileChannel = randomAccessFile.getChannel();
-
-      String substring = finalFname.substring(finalFname.lastIndexOf('.') + 1);
-      MimeType mimeType = MimeType.valueOf(substring);
-      long length = randomAccessFile.length();
-
-      res.status(HttpStatus.$200).headerString(Content$2dType,
-          ((null == mimeType) ? MimeType.bin : mimeType).contentType).headerString(
-          Content$2dLength, String.valueOf(length)).headerString(Connection, "close").headerString(
-          Date, DateHeaderParser.formatHttpHeaderDate(fdate));
-      if (null != ceString)
-        res.headerString(Content$2dEncoding, ceString);
-      ByteBuffer response = res.as(ByteBuffer.class);
-      getChannel().write(response);
-      final int sendBufferSize = 4 << 10;
-      final long[] progress = {fileChannel.transferTo(0, sendBufferSize, getChannel())};
-      key.interestOps(OP_WRITE | OP_CONNECT);
-      key.selector().wakeup();
-      key.attach(new Impl() {
-
-        public void onWrite(SelectionKey key) throws Exception {
-          long remaining = total - progress[0];
-          progress[0] +=
-              fileChannel.transferTo(progress[0], min(sendBufferSize, remaining), getChannel());
-          remaining = total - progress[0];
-          if (0 == remaining) {
-            fileChannel.close();
-            randomAccessFile.close();
-            key.selector().wakeup();
-            key.interestOps(OP_READ).attach(null);
-          }
-        }
-      });
-    } else {
+    if (send200)
+      sendFile(key, finalFname, file, fdate, res, ceString);
+    else {
       key.selector().wakeup();
       key.interestOps(OP_WRITE).attach(new Impl() {
 
@@ -207,6 +174,45 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
         }
       });
     }
+  }
+
+  public void sendFile(SelectionKey key, String finalFname, File file, java.util.Date fdate,
+      HttpResponse res, String ceString) throws IOException {
+    final RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
+    final long total = randomAccessFile.length();
+    final FileChannel fileChannel = randomAccessFile.getChannel();
+
+    String substring = finalFname.substring(finalFname.lastIndexOf('.') + 1);
+    MimeType mimeType = MimeType.valueOf(substring);
+    long length = randomAccessFile.length();
+
+    res.status(HttpStatus.$200).headerString(Content$2dType,
+        ((null == mimeType) ? MimeType.bin : mimeType).contentType).headerString(Content$2dLength,
+        String.valueOf(length)).headerString(Connection, "close").headerString(Date,
+        DateHeaderParser.formatHttpHeaderDate(fdate));
+    if (null != ceString)
+      res.headerString(Content$2dEncoding, ceString);
+    ByteBuffer response = res.as(ByteBuffer.class);
+    getChannel().write(response);
+    final int sendBufferSize = 4 << 10;
+    final long[] progress = {fileChannel.transferTo(0, sendBufferSize, getChannel())};
+    key.interestOps(OP_WRITE | OP_CONNECT);
+    key.selector().wakeup();
+    key.attach(new Impl() {
+
+      public void onWrite(SelectionKey key) throws Exception {
+        long remaining = total - progress[0];
+        progress[0] +=
+            fileChannel.transferTo(progress[0], min(sendBufferSize, remaining), getChannel());
+        remaining = total - progress[0];
+        if (0 == remaining) {
+          fileChannel.close();
+          randomAccessFile.close();
+          key.selector().wakeup();
+          key.interestOps(OP_READ).attach(null);
+        }
+      }
+    });
   }
 
   @Override
