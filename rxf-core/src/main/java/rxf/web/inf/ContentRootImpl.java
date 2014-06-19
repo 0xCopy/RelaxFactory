@@ -98,7 +98,7 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
 
   public void onWrite(SelectionKey key) throws Exception {
 
-    String finalFname = fileScrub(rootPath + SLASHDOTSLASH + getReq().path().split("\\?")[0]);
+    String finalFname = fileScrub(getRootPath() + SLASHDOTSLASH + getReq().path().split("\\?")[0]);
     File file = new File(finalFname);
     if (file.isDirectory()) {
       file = new File((finalFname + "/index.html"));
@@ -237,5 +237,13 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
   @Override
   public void setReq(HttpRequest req) {
     this.req = req;
+  }
+
+  public String getRootPath() {
+    return rootPath;
+  }
+
+  public void setRootPath(String rootPath) {
+    this.rootPath = rootPath;
   }
 }
