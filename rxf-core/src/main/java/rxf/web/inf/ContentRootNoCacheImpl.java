@@ -13,7 +13,7 @@ public class ContentRootNoCacheImpl extends ContentRootImpl {
 
   @Override
   public void onWrite(SelectionKey key) throws Exception {
-    req.headerStrings().put(HttpHeaders.Expires.getHeader(),
+    getReq().headerStrings().put(HttpHeaders.Expires.getHeader(),
         DateHeaderParser.RFC1123.getFormat().format(new Date()));
     super.onWrite(key);
   }

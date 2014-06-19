@@ -29,7 +29,7 @@ import static one.xio.HttpHeaders.*;
  * Time: 1:42 AM
  */
 @PreRead
-public class ContentRootImpl extends Impl {
+public class ContentRootImpl extends Impl implements ServiceHandoff {
 
   public static final String SLASHDOTSLASH = File.separator + "." + File.separator;
   public static final String DOUBLESEP = File.separator + File.separator;
@@ -37,73 +37,69 @@ public class ContentRootImpl extends Impl {
   private String rootPath = CouchNamespace.COUCH_DEFAULT_FS_ROOT;
   private ByteBuffer cursor;
   private SocketChannel channel;
-  protected HttpRequest req;
+  private HttpRequest req;
 
-  public ContentRootImpl() {
-    init();
-  }
+  /*
+   public ContentRootImpl() {
 
-  File file;
+   }
 
-  public ContentRootImpl(String rootPath) {
-    this.rootPath = rootPath;
-    init();
-  }
 
+   public ContentRootImpl(String rootPath) {
+   this.rootPath = rootPath;
+   File dir = new File(this.rootPath);
+   if (!dir.isDirectory() && dir.canRead())
+   throw new IllegalAccessError("can't verify readable dir at " + this.rootPath);
+   }
+
+   */
   public static String fileScrub(String scrubMe) {
-    final char inverseChar = '/' == File.separatorChar ? '\\' : '/';
+    char inverseChar = '/' == File.separatorChar ? '\\' : '/';
     return null == scrubMe ? null : scrubMe.trim().replace(inverseChar, File.separatorChar)
         .replace(DOUBLESEP, "" + File.separator).replace("..", ".");
   }
 
-  public void init() {
-    File dir = new File(rootPath);
-    if (!dir.isDirectory() && dir.canRead())
-      throw new IllegalAccessError("can't verify readable dir at " + rootPath);
-  }
-
   @Override
   public void onRead(SelectionKey key) throws Exception {
-    channel = (SocketChannel) key.channel();
-    if (cursor == null) {
+    setChannel((SocketChannel) key.channel());
+    if (getCursor() == null) {
       if (key.attachment() instanceof Object[]) {
         Object[] ar = (Object[]) key.attachment();
         for (Object o : ar) {
           if (o instanceof ByteBuffer) {
-            cursor = (ByteBuffer) o;
+            setCursor((ByteBuffer) o);
             continue;
           }
           if (o instanceof Rfc822HeaderState) {
-            req = ((Rfc822HeaderState) o).$req();
+            setReq(((Rfc822HeaderState) o).$req());
             continue;
           }
         }
       }
       key.attach(this);
     }
-    cursor =
-        null == cursor ? ByteBuffer.allocateDirect(4 << 10) : cursor.hasRemaining() ? cursor
-            : ByteBuffer.allocateDirect(cursor.capacity() << 1).put((ByteBuffer) cursor.rewind());
-    int read = channel.read(cursor);
+    setCursor(null == getCursor() ? ByteBuffer.allocateDirect(4 << 10) : getCursor().hasRemaining()
+        ? getCursor() : ByteBuffer.allocateDirect(getCursor().capacity() << 1).put(
+            (ByteBuffer) getCursor().rewind()));
+    int read = getChannel().read(getCursor());
     if (read == -1)
       key.cancel();
-    Buffer flip = cursor.duplicate().flip();
+    Buffer flip = getCursor().duplicate().flip();
 
-    req =
-        (HttpRequest) new Rfc822HeaderState().addHeaderInterest(Accept$2dEncoding,
-            If$2dModified$2dSince, If$2dUnmodified$2dSince).$req().read((ByteBuffer) flip);
-    if (!Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, req
+    setReq((HttpRequest) new Rfc822HeaderState().addHeaderInterest(Accept$2dEncoding,
+        If$2dModified$2dSince, If$2dUnmodified$2dSince).$req().read((ByteBuffer) flip));
+    if (!Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, getReq()
         .headerBuf())) {
       return;
     }
-    cursor = ((ByteBuffer) flip).slice();
+    setCursor(((ByteBuffer) flip).slice());
     key.interestOps(SelectionKey.OP_WRITE);
   }
 
   public void onWrite(SelectionKey key) throws Exception {
 
-    String finalFname = fileScrub(rootPath + SLASHDOTSLASH + req.path().split("\\?")[0]);
-    file = new File(finalFname);
+    String finalFname = fileScrub(rootPath + SLASHDOTSLASH + getReq().path().split("\\?")[0]);
+    File file = new File(finalFname);
     if (file.isDirectory()) {
       file = new File((finalFname + "/index.html"));
     }
@@ -111,10 +107,10 @@ public class ContentRootImpl extends Impl {
 
     java.util.Date fdate = new java.util.Date(file.lastModified());
 
-    String since = req.headerString(If$2dModified$2dSince);
-    String accepts = req.headerString(Accept$2dEncoding);
+    String since = getReq().headerString(If$2dModified$2dSince);
+    String accepts = getReq().headerString(Accept$2dEncoding);
 
-    HttpResponse res = req.$res();
+    HttpResponse res = getReq().$res();
     if (null != since) {
       java.util.Date cachedDate = DateHeaderParser.parseDate(since);
 
@@ -122,12 +118,12 @@ public class ContentRootImpl extends Impl {
 
         res.status(HttpStatus.$304).headerString(Connection, "close").headerString(Last$2dModified,
             DateHeaderParser.formatHttpHeaderDate(fdate));
-        int write = channel.write(res.as(ByteBuffer.class));
+        int write = getChannel().write(res.as(ByteBuffer.class));
         key.interestOps(OP_READ).attach(null);
         return;
       }
     } else {
-      since = req.headerString(If$2dUnmodified$2dSince);
+      since = getReq().headerString(If$2dUnmodified$2dSince);
 
       if (null != since) {
         java.util.Date cachedDate = DateHeaderParser.parseDate(since);
@@ -136,7 +132,7 @@ public class ContentRootImpl extends Impl {
 
           res.status(HttpStatus.$412).headerString(Connection, "close").headerString(
               Last$2dModified, DateHeaderParser.formatHttpHeaderDate(fdate));
-          int write = channel.write(res.as(ByteBuffer.class));
+          int write = getChannel().write(res.as(ByteBuffer.class));
           key.interestOps(OP_READ).attach(null);
           return;
         }
@@ -177,9 +173,9 @@ public class ContentRootImpl extends Impl {
       if (null != ceString)
         res.headerString(Content$2dEncoding, ceString);
       ByteBuffer response = res.as(ByteBuffer.class);
-      channel.write(response);
+      getChannel().write(response);
       final int sendBufferSize = 4 << 10;
-      final long[] progress = {fileChannel.transferTo(0, sendBufferSize, channel)};
+      final long[] progress = {fileChannel.transferTo(0, sendBufferSize, getChannel())};
       key.interestOps(OP_WRITE | OP_CONNECT);
       key.selector().wakeup();
       key.attach(new Impl() {
@@ -187,7 +183,7 @@ public class ContentRootImpl extends Impl {
         public void onWrite(SelectionKey key) throws Exception {
           long remaining = total - progress[0];
           progress[0] +=
-              fileChannel.transferTo(progress[0], min(sendBufferSize, remaining), channel);
+              fileChannel.transferTo(progress[0], min(sendBufferSize, remaining), getChannel());
           remaining = total - progress[0];
           if (0 == remaining) {
             fileChannel.close();
@@ -203,12 +199,43 @@ public class ContentRootImpl extends Impl {
 
         public void onWrite(SelectionKey key) throws Exception {
 
-          channel.write(req.$res().status(HttpStatus.$404).headerString(Content$2dLength, "0").as(
-              ByteBuffer.class));
+          getChannel().write(
+              getReq().$res().status(HttpStatus.$404).headerString(Content$2dLength, "0").as(
+                  ByteBuffer.class));
           key.selector().wakeup();
           key.interestOps(OP_READ).attach(null);
         }
       });
     }
+  }
+
+  @Override
+  public ByteBuffer getCursor() {
+    return cursor;
+  }
+
+  @Override
+  public void setCursor(ByteBuffer cursor) {
+    this.cursor = cursor;
+  }
+
+  @Override
+  public SocketChannel getChannel() {
+    return channel;
+  }
+
+  @Override
+  public void setChannel(SocketChannel channel) {
+    this.channel = channel;
+  }
+
+  @Override
+  public HttpRequest getReq() {
+    return req;
+  }
+
+  @Override
+  public void setReq(HttpRequest req) {
+    this.req = req;
   }
 }
