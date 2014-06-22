@@ -129,7 +129,7 @@ public interface CouchService<E> {
 
     @Override
     public CouchTx deleteAttachment(String fileName) {
-      CouchTx tx = DocDelete.$().db(db).docId(id + "/" + fileName).to().fire().tx();
+      CouchTx tx = DocDelete.$().db(db).docId(id + "/" + fileName).rev(rev).to().fire().tx();
       rev = tx.rev();
       return tx;
     }
