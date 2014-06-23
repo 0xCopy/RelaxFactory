@@ -10,8 +10,8 @@
         <java.compiler.version>${java.specification.version}</java.compiler.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <gwt.style>OBF</gwt.style>
-        <gwt.plugin.version>2.5.1</gwt.plugin.version>
-        <gwt.version>2.5.1</gwt.version>
+        <gwt.plugin.version>2.6.0</gwt.plugin.version>
+        <gwt.version>2.6.0</gwt.version>
         <gwt-maven-plugin.compileReport>false</gwt-maven-plugin.compileReport>
         <gwt-maven-plugin.soycDetailed>false</gwt-maven-plugin.soycDetailed>
         <gwt-maven-plugin.strict>false</gwt-maven-plugin.strict>
@@ -75,7 +75,8 @@
             <releases>
                 <enabled>true</enabled>
             </releases>
-        </repository>-->
+        </repository>--><repository><id>misc-repo</id><url>http://raw.github.com/jnorthrup/misc-repo/master/</url></repository>
+
         <repository>
             <id>sonatype-snapshots</id>
             <url>http://oss.sonatype.org/content/repositories/snapshots</url>
