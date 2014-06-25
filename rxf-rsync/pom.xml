@@ -1,35 +1,32 @@
 <?xml version="1.0"?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>rxf</groupId>
-    <artifactId>relaxfactory</artifactId>
-    <version>0.9.9.0</version>
-  </parent>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <modelVersion>4.0.0</modelVersion>
     <artifactId>rxf-rsync</artifactId>
-  <name>rxf-rsync</name>
-  <url>http://maven.apache.org</url>
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
-  <dependencies>
-
-
-      <dependency>
-          <groupId>javolution</groupId>
-          <artifactId>javolution</artifactId>
-          <version>5.5.1</version>
-      </dependency>
-      <dependency>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava</artifactId>
-          <version>16.0</version>
-      </dependency>
-      <dependency>
-          <groupId>rxf</groupId>
-          <artifactId>rxf-couch</artifactId>
-          <version>${project.parent.version}</version>
-      </dependency>
-  </dependencies>
+    <parent>
+        <groupId>rxf</groupId>
+        <artifactId>relaxfactory</artifactId>
+        <version>0.9.9.0</version>
+    </parent>
+    <name>rxf-rsync</name>
+    <url>http://maven.apache.org</url>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
+        <dependency>
+        <groupId>javolution</groupId>
+        <artifactId>javolution</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>rxf</groupId>
+            <artifactId>rxf-couch</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+    </dependencies>
 </project>

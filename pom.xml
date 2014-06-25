@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>rxf</groupId>
     <artifactId>relaxfactory</artifactId>
@@ -10,11 +11,12 @@
         <java.compiler.version>${java.specification.version}</java.compiler.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <gwt.style>OBF</gwt.style>
-        <gwt.plugin.version>2.6.0</gwt.plugin.version>
-        <gwt.version>2.6.0</gwt.version>
+        <gwt.plugin.version>2.6.1</gwt.plugin.version>
+        <gwt.version>2.6.1</gwt.version>
         <gwt-maven-plugin.compileReport>false</gwt-maven-plugin.compileReport>
         <gwt-maven-plugin.soycDetailed>false</gwt-maven-plugin.soycDetailed>
         <gwt-maven-plugin.strict>false</gwt-maven-plugin.strict>
+        <guava.version>17.0</guava.version>
     </properties>
     <profiles>
         <profile>
@@ -75,7 +77,11 @@
             <releases>
                 <enabled>true</enabled>
             </releases>
-        </repository>--><repository><id>misc-repo</id><url>http://raw.github.com/jnorthrup/misc-repo/master/</url></repository>
+        </repository>-->
+        <repository>
+            <id>misc-repo</id>
+            <url>http://raw.github.com/jnorthrup/misc-repo/master/</url>
+        </repository>
 
         <repository>
             <id>sonatype-snapshots</id>
@@ -94,38 +100,85 @@
             <url>http://maven-idea-plugin.googlecode.com/svn/maven-repo</url>
         </pluginRepository>
     </pluginRepositories>
-    <dependencies>
-        <dependency>
-            <groupId>com.google.gwt</groupId>
-            <artifactId>gwt-user</artifactId>
-            <version>${gwt.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.json</groupId>
-            <artifactId>json</artifactId>
-            <version>20090211</version>
-        </dependency>
+    <dependencyManagement>
 
-        <dependency>
-            <groupId>javax.validation</groupId>
-            <artifactId>validation-api</artifactId>
-            <version>1.1.0.Beta2</version>
-        </dependency>
+        <dependencies>
+            <dependency>
+                <groupId>com.google.gwt</groupId>
+                <artifactId>gwt-user</artifactId>
+                <version>${gwt.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.google.web.bindery</groupId>
+                <artifactId>requestfactory-server</artifactId>
+                <version>${gwt.version}</version>
+                <scope>provided</scope>
+            </dependency>
 
-        <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-validator</artifactId>
-            <version>5.0.0.Alpha2</version>
-        </dependency>
+            <dependency>
+                <groupId>com.google.gwt</groupId>
+                <artifactId>gwt-servlet</artifactId>
+                <version>${gwt.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <!-- see sample projects for correct placement -->
+            <dependency>
+                <groupId>com.google.web.bindery</groupId>
+                <artifactId>requestfactory-apt</artifactId>
+                <version>${gwt.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava-gwt</artifactId>
+                <version>${guava.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.json</groupId>
+                <artifactId>json</artifactId>
+                <version>20140107</version>
+            </dependency>
+            <dependency>
+                <groupId>javax.validation</groupId>
+                <artifactId>validation-api</artifactId>
+                <version>1.1.0.Beta2</version>
+            </dependency>
+            <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-validator</artifactId>
+                <version>5.0.0.Alpha2</version>
+            </dependency>
+            <dependency>
+                <groupId>org.httpunit</groupId>
+                <artifactId>httpunit</artifactId>
+                <version>1.7.2</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.11</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.google.code.gson</groupId>
+                <artifactId>gson</artifactId>
+                <version>2.2.4</version>
+            </dependency>
+            <dependency>
+                <groupId>javolution</groupId>
+                <artifactId>javolution</artifactId>
+                <version>5.5.1</version>
+            </dependency>
+        </dependencies>
 
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.11</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+    </dependencyManagement>
     <modules>
         <module>rxf-shared</module>
         <module>rxf-pouch</module>
@@ -134,7 +187,7 @@
         <module>rxf-couch</module>
         <module>rxf-guice</module>
         <module>rxf-rsync</module>
-  </modules>
+    </modules>
     <build>
         <pluginManagement>
             <plugins>
@@ -145,10 +198,10 @@
                     <configuration>
                         <source>1.7</source>
                         <target>1.7</target>
-<!--
-                        <source>${java.specification.version}</source>
-                        <target>${java.specification.version}</target>
--->
+                        <!--
+                                                <source>${java.specification.version}</source>
+                                                <target>${java.specification.version}</target>
+                        -->
                     </configuration>
                 </plugin>
 
@@ -156,33 +209,34 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-site-plugin</artifactId>
                     <version>3.2</version>
-                </plugin><!-- unmaintained?
-                <plugin>
-                    <groupId>com.googlecode</groupId>
-                    <artifactId>maven-idea-plugin</artifactId>
-                    <version>1.6</version>
-                    <configuration>
-                        <compileInBackground>true</compileInBackground>
-                        <jdkName>1.8</jdkName>
-                        <jdkLevel>JDK_1_8</jdkLevel>
-                        <downloadSources>true</downloadSources>
-                        <downloadJavadocs>true</downloadJavadocs>
-                        <assertNotNull>false</assertNotNull>
-                        <optimizeImportsBeforeCommit>false</optimizeImportsBeforeCommit>
-                        <reformatCodeBeforeCommit>false</reformatCodeBeforeCommit>
-                        <performCodeAnalisisBeforeCommit>false</performCodeAnalisisBeforeCommit>
-                        <autoscrollToSource>false</autoscrollToSource>
-                        <autoscrollFromSource>true</autoscrollFromSource>
-                        <hideEmptyPackages>false</hideEmptyPackages>
-                    </configuration>
-                </plugin>-->
+                </plugin>
+                <!-- unmaintained?
+                                <plugin>
+                                    <groupId>com.googlecode</groupId>
+                                    <artifactId>maven-idea-plugin</artifactId>
+                                    <version>1.6</version>
+                                    <configuration>
+                                        <compileInBackground>true</compileInBackground>
+                                        <jdkName>1.8</jdkName>
+                                        <jdkLevel>JDK_1_8</jdkLevel>
+                                        <downloadSources>true</downloadSources>
+                                        <downloadJavadocs>true</downloadJavadocs>
+                                        <assertNotNull>false</assertNotNull>
+                                        <optimizeImportsBeforeCommit>false</optimizeImportsBeforeCommit>
+                                        <reformatCodeBeforeCommit>false</reformatCodeBeforeCommit>
+                                        <performCodeAnalisisBeforeCommit>false</performCodeAnalisisBeforeCommit>
+                                        <autoscrollToSource>false</autoscrollToSource>
+                                        <autoscrollFromSource>true</autoscrollFromSource>
+                                        <hideEmptyPackages>false</hideEmptyPackages>
+                                    </configuration>
+                                </plugin>-->
             </plugins>
         </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>com.googlecode.maven-java-formatter-plugin</groupId>
                 <artifactId>maven-java-formatter-plugin</artifactId>
-                <version>0.3.1</version>
+                <version>0.4</version>
                 <executions>
                     <execution>
                         <goals>
@@ -191,12 +245,11 @@
                     </execution>
                 </executions>
                 <configuration>
-                            <compilerSource>1.7</compilerSource>
-                        <compilerCompliance>1.7</compilerCompliance>
+                    <compilerSource>1.7</compilerSource>
+                    <compilerCompliance>1.7</compilerCompliance>
                     <compilerTargetPlatform>1.7</compilerTargetPlatform>
                     <!--<configFile>${project.basedir}/../fmt/ugh.xml</configFile>-->
                     <!--<configFile>https://raw.github.com/jnorthrup/RelaxFactory/x0uchdb/fmt/gwt-format.xml</configFile>-->
-
                     <!--http://code.google.com/p/google-web-toolkit/source/browse/trunk/eclipse/settings/code-style/gwt-format.xml</configFile>&ndash;&gt;-->
                     <configFile>${project.basedir}/../fmt/gwt-format.xml</configFile>
                     <lineEnding>LF</lineEnding>

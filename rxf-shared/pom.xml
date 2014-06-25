@@ -9,31 +9,22 @@
         <artifactId>relaxfactory</artifactId>
     </parent>
     <dependencies>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>16.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>2.2.4</version>
-        </dependency>
-        <dependency>
-            <groupId>org.javolution</groupId>
-            <artifactId>javolution</artifactId>
-            <version>5.3.1</version>
-        </dependency>
+
+
         <dependency>
             <groupId>org.httpunit</groupId>
             <artifactId>httpunit</artifactId>
-            <version>1.7.2</version>
+             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.11</version>
-        </dependency>
+         </dependency>
+        <dependency>
+            <groupId>com.google.web.bindery</groupId>
+            <artifactId>requestfactory-server</artifactId>
+            <scope>provided</scope>
+         </dependency>
     </dependencies>
     <packaging>jar</packaging>
     <build>
