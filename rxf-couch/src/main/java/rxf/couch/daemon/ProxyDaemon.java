@@ -23,17 +23,16 @@ import static rxf.core.Config.get;
 
 /**
  * <ul>
- * <li> Accepts external socket connections on behalf of Couchdb or other REST couch
+ * <li>Accepts external socket connections on behalf of Couchdb or other REST couch
  * <p/>
  * </ul>
- *
- * User: jnorthrup
- * Date: 10/1/13
- * Time: 7:26 PM
+ * 
+ * User: jnorthrup Date: 10/1/13 Time: 7:26 PM
  */
 public class ProxyDaemon extends AsioVisitor.Impl {
   /**
-   * until proven otherwise, all http requests must conform to crlf line-endings, and it is the primary termination token we are seeking in bytebuffer operations.
+   * until proven otherwise, all http requests must conform to crlf line-endings, and it is the primary termination
+   * token we are seeking in bytebuffer operations.
    */
   public static final byte[] TERMINATOR = new byte[] {'\r', '\n', '\r', '\n'};
   /**
@@ -72,10 +71,10 @@ public class ProxyDaemon extends AsioVisitor.Impl {
 
   /**
    * creates a http-specific socket proxy to move bytes between innerKey and outerKey in the async framework.
-   *
+   * 
    * @param outerKey connection to the f5
    * @param innerKey connection to the Distributor
-   * @param b        the DMA ByteBuffers where applicable
+   * @param b the DMA ByteBuffers where applicable
    */
   public static void pipe(SelectionKey innerKey, final SelectionKey outerKey, final ByteBuffer... b) {
     String s = "pipe-" + counter;
@@ -100,8 +99,8 @@ public class ProxyDaemon extends AsioVisitor.Impl {
               Rfc822HeaderState.HttpResponse httpResponse =
                   new Rfc822HeaderState().headerInterest(HttpHeaders.Content$2dLength).read(
                       (ByteBuffer) getInBuffer().duplicate().flip()).$res();
-              //              if (BlobAntiPatternObject.suffixMatchChunks(TERMINATOR, httpResponse.headerBuf()
-              //                                .duplicate())) ;
+              // if (BlobAntiPatternObject.suffixMatchChunks(TERMINATOR, httpResponse.headerBuf()
+              // .duplicate())) ;
               break;
           }
         }
@@ -149,7 +148,7 @@ public class ProxyDaemon extends AsioVisitor.Impl {
         InetSocketAddress address =
             (InetSocketAddress) outterChannel.socket().getRemoteSocketAddress();
 
-        //grab a frame of int offsets
+        // grab a frame of int offsets
         Map<String, int[]> headers = HttpHeaders.getHeaders((ByteBuffer) headersBuf.flip());
         int[] hosts = headers.get("Host");
 
@@ -206,7 +205,7 @@ public class ProxyDaemon extends AsioVisitor.Impl {
 
   @Override
   public void onWrite(SelectionKey key) throws Exception {
-    super.onWrite(key); //To change body of overridden methods use File | Settings | File Templates.
+    super.onWrite(key); // To change body of overridden methods use File | Settings | File Templates.
   }
 
 }

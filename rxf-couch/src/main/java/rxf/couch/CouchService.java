@@ -20,12 +20,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Declares a generated service that can be implemented automatically by CouchServiceFactory.
- * Specific to a single entity backed by CouchDB, E. Comes with two built-in methods: to find an
- * object by key, and to persist a given object.
+ * Declares a generated service that can be implemented automatically by CouchServiceFactory. Specific to a single
+ * entity backed by CouchDB, E. Comes with two built-in methods: to find an object by key, and to persist a given
+ * object.
  * <p/>
  * The views will all be created in a design document in the specific database for E.
- *
+ * 
  * @param <E> the entity this service is concerned with.
  */
 public interface CouchService<E> {
@@ -136,8 +136,8 @@ public interface CouchService<E> {
   }
 
   /**
-   * Describes the JavaScript view to run in CouchDB when this method is invoked. The
-   * map function is required, but the reduce function is optional.
+   * Describes the JavaScript view to run in CouchDB when this method is invoked. The map function is required, but the
+   * reduce function is optional.
    * <p/>
    * Methods decorated with this should return List or CouchResultSet
    */
@@ -182,8 +182,8 @@ public interface CouchService<E> {
   }
 
   /**
-   * Marks a service method or parameter as being used on a couchdb view GET request as
-   * "keys". Typically used on a parameter that accepts an array or collection of keys.
+   * Marks a service method or parameter as being used on a couchdb view GET request as "keys". Typically used on a
+   * parameter that accepts an array or collection of keys.
    */
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.PARAMETER)
@@ -193,52 +193,47 @@ public interface CouchService<E> {
   }
 
   /**
-   * Marks a service method or parameter as being used on a couchdb view GET request as
-   * "limit". A value need not be provided if used on a parameter, but the annotation is
-   * useless on the method without a value.
+   * Marks a service method or parameter as being used on a couchdb view GET request as "limit". A value need not be
+   * provided if used on a parameter, but the annotation is useless on the method without a value.
    * <p/>
    * (Not yet supported on a method)
    */
   @Retention(RetentionPolicy.RUNTIME)
-  @Target( {ElementType.PARAMETER, ElementType.METHOD})
+  @Target({ElementType.PARAMETER, ElementType.METHOD})
   @CouchRequestParam("limit")
   @Documented
   public @interface Limit {
     /**
-     * Value to use as the "limit" parameter. Annotations on the method override possible
-     * parameters.
+     * Value to use as the "limit" parameter. Annotations on the method override possible parameters.
      */
     int value() default -1;
   }
 
   /**
-   * Marks a service method or parameter as being used on a couchdb view GET request
-   * as "skip". A value need not be provided if used on a parameter, but the annotation
-   * is useless on the method without a value.
+   * Marks a service method or parameter as being used on a couchdb view GET request as "skip". A value need not be
+   * provided if used on a parameter, but the annotation is useless on the method without a value.
    * <p/>
-   * From http://wiki.apache.org/couchdb/HTTP_view_API#Querying_Options:
-   * <blockquote>"The skip option should only be used with small values, as skipping a large range of documents this way is
-   * inefficient (it scans the index from the startkey and then skips N elements, but still needs to read all the index
-   * values to do that). For efficient paging you'll need to use startkey and limit. If you expect to have multiple
-   * documents emit identical keys, you'll need to use startkey_docid in addition to startkey to paginate correctly. The
-   * reason is that startkey alone will no longer be sufficient to uniquely identify a row."</blockquote>
+   * From http://wiki.apache.org/couchdb/HTTP_view_API#Querying_Options: <blockquote>"The skip option should only be
+   * used with small values, as skipping a large range of documents this way is inefficient (it scans the index from the
+   * startkey and then skips N elements, but still needs to read all the index values to do that). For efficient paging
+   * you'll need to use startkey and limit. If you expect to have multiple documents emit identical keys, you'll need to
+   * use startkey_docid in addition to startkey to paginate correctly. The reason is that startkey alone will no longer
+   * be sufficient to uniquely identify a row."</blockquote>
    */
   @Retention(RetentionPolicy.RUNTIME)
-  @Target( {ElementType.PARAMETER, ElementType.METHOD})
+  @Target({ElementType.PARAMETER, ElementType.METHOD})
   @CouchRequestParam("skip")
   @Documented
   public @interface Skip {
     /**
-     * Value to use as the "skip" parameter. Annotations on the method override possible
-     * parameters.
+     * Value to use as the "skip" parameter. Annotations on the method override possible parameters.
      */
     int value() default -1;
   }
 
   /**
-   * Marks a service method or parameter as being used on a couchdb view GET request as
-   * "startkey". In conjunction with endkey and/or limit can be used to implement basic
-   * prefix search
+   * Marks a service method or parameter as being used on a couchdb view GET request as "startkey". In conjunction with
+   * endkey and/or limit can be used to implement basic prefix search
    */
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.PARAMETER)
@@ -248,8 +243,7 @@ public interface CouchService<E> {
   }
 
   /**
-   * Marks a service method or parameter as being used on a couchdb view GET request as
-   * "endkey".
+   * Marks a service method or parameter as being used on a couchdb view GET request as "endkey".
    */
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.PARAMETER)
@@ -259,9 +253,8 @@ public interface CouchService<E> {
   }
 
   /**
-   * Marks a service method or parameter as being used on a couchdb view GET request as
-   * "startkey_docid". Allows for pagination by id in case of duplicate 'startkey', and
-   * without the performance issues of 'skip'.
+   * Marks a service method or parameter as being used on a couchdb view GET request as "startkey_docid". Allows for
+   * pagination by id in case of duplicate 'startkey', and without the performance issues of 'skip'.
    */
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.PARAMETER)
@@ -271,8 +264,8 @@ public interface CouchService<E> {
   }
 
   /**
-   * Marks a service method or parameter as being used on a couchdb view GET request as
-   * "endkey_docid". Allows for pagination by id in case of duplicate 'endkey'.
+   * Marks a service method or parameter as being used on a couchdb view GET request as "endkey_docid". Allows for
+   * pagination by id in case of duplicate 'endkey'.
    */
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.PARAMETER)
@@ -285,7 +278,7 @@ public interface CouchService<E> {
    * Changes the direction of a search.
    */
   @Retention(RetentionPolicy.RUNTIME)
-  @Target( {ElementType.PARAMETER, ElementType.METHOD})
+  @Target({ElementType.PARAMETER, ElementType.METHOD})
   @CouchRequestParam("descending")
   @Documented
   public @interface Descending {
@@ -296,7 +289,7 @@ public interface CouchService<E> {
    * The group option controls whether the reduce function reduces to a set of distinct keys or to a single result row.
    */
   @Retention(RetentionPolicy.RUNTIME)
-  @Target( {ElementType.PARAMETER, ElementType.METHOD})
+  @Target({ElementType.PARAMETER, ElementType.METHOD})
   @CouchRequestParam("group")
   @Documented
   public @interface Group {
@@ -307,7 +300,7 @@ public interface CouchService<E> {
    * The group_level argument. See http://wiki.apache.org/couchdb/HTTP_view_API#Querying_Options for additional details.
    */
   @Retention(RetentionPolicy.RUNTIME)
-  @Target( {ElementType.PARAMETER, ElementType.METHOD})
+  @Target({ElementType.PARAMETER, ElementType.METHOD})
   @CouchRequestParam("group")
   @Documented
   public @interface GroupLevel {

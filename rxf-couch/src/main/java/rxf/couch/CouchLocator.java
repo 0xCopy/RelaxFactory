@@ -31,7 +31,7 @@ public abstract class CouchLocator<T> extends Locator<T, String> implements Couc
    *
    * [data not shown]
    * </pre>
-   *
+   * 
    * @param clazz
    * @return
    */
@@ -56,7 +56,7 @@ public abstract class CouchLocator<T> extends Locator<T, String> implements Couc
 
   /**
    * used by CouchAgent to create event channels on entities by sending it a locator
-   *
+   * 
    * @return
    */
   @Override
@@ -95,18 +95,18 @@ public abstract class CouchLocator<T> extends Locator<T, String> implements Couc
   }
 
   List<T> findAll() {
-    return null; //To change body of created methods use File | Settings | File Templates.
+    return null; // To change body of created methods use File | Settings | File Templates.
   }
 
   List<T> search(String queryParm) {
-    return null; //To change body of created methods use File | Settings | File Templates.
+    return null; // To change body of created methods use File | Settings | File Templates.
   }
 
-  ///CouchNS boilerplate
+  // /CouchNS boilerplate
 
   private String entityName;
 
-  //threadlocals dont help much.  rf is dispatched to new threads in a seperate executor.
+  // threadlocals dont help much. rf is dispatched to new threads in a seperate executor.
   private String orgname = null;
 
   public void setEntityName(String entityName) {
@@ -115,7 +115,7 @@ public abstract class CouchLocator<T> extends Locator<T, String> implements Couc
 
   /**
    * tbd -- longpolling feed rf token
-   *
+   * 
    * @param queryParm
    * @return
    */

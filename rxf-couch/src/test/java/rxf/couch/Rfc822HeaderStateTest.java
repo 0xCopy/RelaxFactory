@@ -109,13 +109,14 @@ public class Rfc822HeaderStateTest {
   @Test
   public void testStateTransition() {
     Rfc822HeaderState state = ActionBuilder.get().state();/*
-                                                          System.err.println(
-                                                          state.as(String.class));*/
+                                                           * System.err.println( state.as(String.class));
+                                                           */
     Rfc822HeaderState.HttpRequest httpRequest = state.$req();
     httpRequest.headerStrings().put("foo", "bar");
 
     Rfc822HeaderState.HttpResponse httpResponse = httpRequest.$res();
-    /*System.err.println(httpResponse.as(String.class));
+    /*
+     * System.err.println(httpResponse.as(String.class));
      */
 
     assertTrue(httpResponse.headerStrings().containsValue("bar"));

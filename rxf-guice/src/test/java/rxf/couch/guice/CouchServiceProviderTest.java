@@ -43,7 +43,7 @@ public class CouchServiceProviderTest {
       public void run() {
         AsioVisitor topLevel = new ProtocolMethodDispatch();
         try {
-          RelaxFactoryServerImpl.init(topLevel/*, 1000*/);
+          RelaxFactoryServerImpl.init(topLevel/* , 1000 */);
 
         } catch (Exception e) {
           Assert.fail();

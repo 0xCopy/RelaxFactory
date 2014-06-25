@@ -34,10 +34,10 @@ public class Server {
 
   /**
    * handles the threadlocal ugliness if any to registering user threads into the selector/reactor pattern
-   *
+   * 
    * @param channel the socketchanel
-   * @param op      int ChannelSelector.operator
-   * @param s       the payload: grammar {enum,data1,data..n}
+   * @param op int ChannelSelector.operator
+   * @param s the payload: grammar {enum,data1,data..n}
    */
   public static void enqueue(SelectableChannel channel, int op, Object... s) {
     assert channel != null && !killswitch : "Server appears to have shut down, cannot enqueue";

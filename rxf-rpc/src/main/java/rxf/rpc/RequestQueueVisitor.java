@@ -27,9 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 
 /**
- * User: jim
- * Date: 6/3/12
- * Time: 7:42 PM
+ * User: jim Date: 6/3/12 Time: 7:42 PM
  */
 @PreRead
 public class RequestQueueVisitor extends Impl implements SerializationPolicyProvider {
@@ -144,7 +142,7 @@ public class RequestQueueVisitor extends Impl implements SerializationPolicyProv
             key.interestOps(SelectionKey.OP_WRITE);
           } catch (Exception e) {
             key.cancel();
-            e.printStackTrace(); //todo: verify for a purpose
+            e.printStackTrace(); // todo: verify for a purpose
           } finally {
           }
         }
@@ -153,16 +151,16 @@ public class RequestQueueVisitor extends Impl implements SerializationPolicyProv
     }
     int write = channel.write(cursor);
     if (!cursor.hasRemaining()) {
-      /*Socket socket = channel.socket();
-         socket.getOutputStream().flush();
-         socket.close();*/
+      /*
+       * Socket socket = channel.socket(); socket.getOutputStream().flush(); socket.close();
+       */
       key.interestOps(SelectionKey.OP_READ).attach(null);
     }
 
   }
 
   public final SerializationPolicy getSerializationPolicy(String moduleBaseURL, String strongName) {
-    //TODO cache policies in weakrefmap? cleaner than reading from fs?
+    // TODO cache policies in weakrefmap? cleaner than reading from fs?
 
     // Translate the module path to a path on the filesystem, and grab a stream
     InputStream is = null;

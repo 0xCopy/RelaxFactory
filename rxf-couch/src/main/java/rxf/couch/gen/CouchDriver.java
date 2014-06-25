@@ -25,7 +25,7 @@ import static rxf.core.Rfc822HeaderState.avoidStarvation;
  */
 public interface CouchDriver {
 
-  //generated items
+  // generated items
 
   class DbCreate extends DbKeysBuilder {
 
@@ -600,7 +600,9 @@ public interface CouchDriver {
     }
 
   }
-  //   rnewson	"Note: Multiple keys request to a reduce function only supports group=true and NO group_level (identical to group_level=exact). The resulting error is "Multi-key fetchs for reduce view must include group=true""
+  // rnewson
+  // "Note: Multiple keys request to a reduce function only supports group=true and NO group_level (identical to group_level=exact). The resulting error is "Multi-key
+  // fetchs for reduce view must include group=true""
 
   class ViewFetch extends DbKeysBuilder {
 

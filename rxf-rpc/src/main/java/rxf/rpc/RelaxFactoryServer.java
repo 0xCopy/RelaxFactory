@@ -6,11 +6,8 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 
 /**
- * Created with IntelliJ IDEA.
- * User: jim
- * Date: 1/2/13
- * Time: 8:12 PM
- * To change this template use File | Settings | File Templates.
+ * Created with IntelliJ IDEA. User: jim Date: 1/2/13 Time: 8:12 PM To change this template use File | Settings | File
+ * Templates.
  */
 public interface RelaxFactoryServer {
 
@@ -23,10 +20,9 @@ public interface RelaxFactoryServer {
   boolean isRunning();
 
   /**
-   * Returns the port the couch has started on. Useful in the case where
-   * {@link #init(String, int, one.xio.AsioVisitor)} was invoked with 0, {@link #start()} called,
-   * and the couch selected its own port.
-   *
+   * Returns the port the couch has started on. Useful in the case where {@link #init(String, int, one.xio.AsioVisitor)}
+   * was invoked with 0, {@link #start()} called, and the couch selected its own port.
+   * 
    * @return
    */
   int getPort();

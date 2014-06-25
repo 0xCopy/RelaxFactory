@@ -25,9 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 
 /**
- * User: jim
- * Date: 6/3/12
- * Time: 7:42 PM
+ * User: jim Date: 6/3/12 Time: 7:42 PM
  */
 @PreRead
 public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
@@ -109,7 +107,8 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
         @Override
         public void run() {
           try {
-            String reqPayload = StandardCharsets.UTF_8.decode((ByteBuffer) cursor.rewind()).toString();
+            String reqPayload =
+                StandardCharsets.UTF_8.decode((ByteBuffer) cursor.rewind()).toString();
 
             RPCRequest rpcRequest =
                 RPC.decodeRequest(reqPayload, delegate.getClass(), GwtRpcVisitor.this);
@@ -121,7 +120,7 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
             } catch (IncompatibleRemoteServiceException | RpcTokenException ex) {
               payload = RPC.encodeResponseForFailure(null, ex);
             }
-              ByteBuffer pbuf = (ByteBuffer) StandardCharsets.UTF_8.encode(payload).rewind();
+            ByteBuffer pbuf = (ByteBuffer) StandardCharsets.UTF_8.encode(payload).rewind();
             final int limit = pbuf.rewind().limit();
             Rfc822HeaderState.HttpResponse res = req.$res();
             res.status(HttpStatus.$200);
@@ -138,7 +137,7 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
             key.interestOps(SelectionKey.OP_WRITE);
           } catch (Exception e) {
             key.cancel();
-            e.printStackTrace(); //todo: verify for a purpose
+            e.printStackTrace(); // todo: verify for a purpose
           } finally {
           }
         }
@@ -153,7 +152,7 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
   }
 
   public final SerializationPolicy getSerializationPolicy(String moduleBaseURL, String strongName) {
-    //TODO cache policies in weakrefmap? cleaner than reading from fs?
+    // TODO cache policies in weakrefmap? cleaner than reading from fs?
 
     // Translate the module path to a path on the filesystem, and grab a stream
     InputStream is;

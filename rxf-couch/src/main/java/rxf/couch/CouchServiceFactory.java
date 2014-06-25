@@ -28,8 +28,8 @@ import static rxf.web.inf.ProtocolMethodDispatch.deepToString;
 import static rxf.rpc.RpcHelper.getDefaultOrgName;
 
 /**
- * Creates CouchService instances by translating {@literal @}View annotations into CouchDB design documents
- * and invoking them when the methods are called.
+ * Creates CouchService instances by translating {@literal @}View annotations into CouchDB design documents and invoking
+ * them when the methods are called.
  */
 public class CouchServiceFactory {
   public static <S extends CouchService<?>> S get(Class<S> clazz, String... ns)
@@ -40,26 +40,26 @@ public class CouchServiceFactory {
   }
 
   /**
-   * Actual generated instance for each proxy. This is designed to play nice with RequestFactory
-   * and javascript (in the couch views) so uniqueness is by method _name_, not full signature.
-   *
-   * @param <E> type of entity that will be handled with this service proxy, used to be explicit about
-   *            types in private members
+   * Actual generated instance for each proxy. This is designed to play nice with RequestFactory and javascript (in the
+   * couch views) so uniqueness is by method _name_, not full signature.
+   * 
+   * @param <E> type of entity that will be handled with this service proxy, used to be explicit about types in private
+   *          members
    */
   private static class CouchServiceHandler<E> implements InvocationHandler, CouchNamespace {
     private final Class<E> entityType;
     private Map<String, String> viewMethods = null;
     private Future<Void> init;
     private String entityName;
-    //threadlocals dont help much.  rf is dispatched to new threads in a seperate executor.
+    // threadlocals dont help much. rf is dispatched to new threads in a seperate executor.
     private String orgname;
-    //slightly lazy
+    // slightly lazy
     private String pathPrefix;
 
     public CouchServiceHandler(Class<? extends CouchService<E>> serviceInterface, String... ns)
         throws ExecutionException, InterruptedException {
       Type[] genericInterfaces = serviceInterface.getGenericInterfaces();
-      //TODO this assert might get tripped if we extend intermediate interfaces
+      // TODO this assert might get tripped if we extend intermediate interfaces
       ParameterizedType genericInterface = (ParameterizedType) genericInterfaces[0];
       assert CouchService.class.isAssignableFrom((Class<?>) genericInterface.getRawType()) : genericInterface;
 
@@ -77,10 +77,10 @@ public class CouchServiceFactory {
             ns.values()[i].setMe(CouchServiceHandler.this, n);
           }
           try {
-            //verify the DB exists
+            // verify the DB exists
             ensureDbExists(getPathPrefix());
 
-            //harvest, construct a view instance based on the interface. Probably not cheap, should be avoided.
+            // harvest, construct a view instance based on the interface. Probably not cheap, should be avoided.
             CouchDesignDoc design = new CouchDesignDoc();
             String designId = design.id = "_design/" + serviceInterface.getName();
             CouchDesignDoc existingDesignDoc = null;
@@ -92,7 +92,7 @@ public class CouchServiceFactory {
             viewMethods = new TreeMap<String, String>();
             for (Method m : serviceInterface.getMethods()) {
               String methodName = m.getName();
-              returnTypes.put(methodName, m.getReturnType());//not sure if this is good enough
+              returnTypes.put(methodName, m.getReturnType());// not sure if this is good enough
               View viewAnnotation = m.getAnnotation(View.class);
               if (null != viewAnnotation) {
                 CouchView view = new CouchView();
@@ -114,12 +114,12 @@ public class CouchServiceFactory {
                   queryBuilder.append("key=%1$s");
                 } else {
                   // else we assume sane, annotated parameters - if a param is not sane, skip
-                  //TODO emit warning for useless params
+                  // TODO emit warning for useless params
                   Map<String, String> queryParams = new TreeMap<String, String>();
                   for (int i = 0; i < paramAnnotations.length; i++) {
                     // look for a CouchRequestParam on this param, if none, ignore
                     Annotation[] param = paramAnnotations[i];
-                    for (int j = 0; j < param.length; j++) {//only the first param that fits
+                    for (int j = 0; j < param.length; j++) {// only the first param that fits
                       CouchRequestParam paramData =
                           param[j].annotationType().getAnnotation(CouchRequestParam.class);
                       if (paramData != null) {
@@ -153,7 +153,7 @@ public class CouchServiceFactory {
             }
             viewMethods = Collections.unmodifiableMap(viewMethods);
 
-            //Now, before sending this new design doc, confirm that it isn't the same as the existing:
+            // Now, before sending this new design doc, confirm that it isn't the same as the existing:
             if (!viewMethods.isEmpty()
                 && (null == design.version || !design.equals(existingDesignDoc =
                     CouchMetaDriver.gson().fromJson(
@@ -162,7 +162,7 @@ public class CouchServiceFactory {
               System.err.println("Existing design doc out of date, updating...");
               final String stringParam = CouchMetaDriver.gson().toJson(design);
               final JsonSendTerminalBuilder fire = new JsonSend().opaque(getPathPrefix())
-              /*.docId(design.key)*/.validjson(stringParam).to().fire();
+              /* .docId(design.key) */.validjson(stringParam).to().fire();
               if (RpcHelper.DEBUG_SENDJSON) {
                 CouchTx tx = fire.tx();
                 assert tx.ok() : tx.error();
@@ -183,8 +183,8 @@ public class CouchServiceFactory {
     private boolean ensureDbExists(String dbName) {
       String json = new DocFetch().db("").docId(dbName).to().fire().json();
       if (json == null) {
-        //			CouchTx tx = CouchDriver.GSON.fromJson(json, CouchTx.class);
-        //			if (tx.error() == null) {
+        // CouchTx tx = CouchDriver.GSON.fromJson(json, CouchTx.class);
+        // if (tx.error() == null) {
         // Need to create the DB
         CouchTx tx = new DbCreate().db(getPathPrefix()).to().fire().tx();
         assert tx.ok() : tx.error();
@@ -194,23 +194,23 @@ public class CouchServiceFactory {
       return true;
     }
 
-    ///CouchNS boilerplate
+    // /CouchNS boilerplate
 
     public Object invoke(Object proxy, final Method method, final Object[] args)
         throws ExecutionException, InterruptedException {
       init.get();
 
       if (viewMethods.containsKey(method.getName())) {
-        //view methods have several types they can returns, based on whether or not they use
-        //reduce, if they return the key (simple or composite) as part of the data in a map
-        //or just a list of data items, and how they return the data, as the full document,
+        // view methods have several types they can returns, based on whether or not they use
+        // reduce, if they return the key (simple or composite) as part of the data in a map
+        // or just a list of data items, and how they return the data, as the full document,
         // or some simplified format.
 
         return RpcHelper.EXECUTOR_SERVICE.submit(new Callable<Object>() {
           public Object call() throws Exception {
             String name = method.getName();
             String[] jsonArgs = null;
-            if (args != null) {//apparently args is null for a zero-arg method
+            if (args != null) {// apparently args is null for a zero-arg method
               jsonArgs = new String[args.length];
               for (int i = 0; i < args.length; i++) {
                 jsonArgs[i] = URLEncoder.encode(CouchMetaDriver.gson().toJson(args[i]), "UTF-8");
@@ -220,32 +220,32 @@ public class CouchServiceFactory {
             Type valueType;
 
             if (method.getGenericReturnType() instanceof Class) {
-              //not generic, either just a simple object (reduce obj such as _stats) or primitive
-              //read rows, unwrap to primitive/boxed/obj, return it
+              // not generic, either just a simple object (reduce obj such as _stats) or primitive
+              // read rows, unwrap to primitive/boxed/obj, return it
               if (method.getReturnType().isPrimitive()) {
                 valueType = Primitives.wrap(method.getReturnType());
               } else {
                 valueType = method.getReturnType();
               }
             } else {
-              //assume list or map, parametrized type, else give up and use entityType
+              // assume list or map, parametrized type, else give up and use entityType
               ParameterizedType returnType = (ParameterizedType) method.getGenericReturnType();
               if (returnType.getRawType() == Map.class) {
                 Map map = new HashMap();
-                //do map from assumed key type to assumed data type
+                // do map from assumed key type to assumed data type
                 keyType = returnType.getActualTypeArguments()[0];
                 valueType = returnType.getActualTypeArguments()[1];
               } else if (returnType.getRawType() == List.class) {
                 valueType = returnType.getActualTypeArguments()[0];
               } else {
-                //no idea, go with something somewhat sane
+                // no idea, go with something somewhat sane
                 valueType = entityType;
               }
             }
 
-            /*       dont forget to uncomment this after new CouchResult gen*/
+            /* dont forget to uncomment this after new CouchResult gen */
             final Map<String, String> stringStringMap = viewMethods;
-            //Object[] cast to make varargs behave
+            // Object[] cast to make varargs behave
             String format = String.format(stringStringMap.get(name), (Object[]) jsonArgs);
             final ViewFetchTerminalBuilder fire =
                 new ViewFetch().db(getPathPrefix()).type(valueType).keyType(keyType).view(format)
@@ -253,27 +253,27 @@ public class CouchServiceFactory {
             CouchResultSet<?, ?> rows = fire.rows();
 
             if (method.getGenericReturnType() instanceof Class) {
-              //not generic, either just a simple object (reduce obj such as _stats) or primitive
-              //read rows, unwrap to primitive/boxed/obj, return it
+              // not generic, either just a simple object (reduce obj such as _stats) or primitive
+              // read rows, unwrap to primitive/boxed/obj, return it
               return rows.rows.get(0).value;
             } else {
-              //assume list or map, parameterized type
+              // assume list or map, parameterized type
               ParameterizedType returnType = (ParameterizedType) method.getGenericReturnType();
               if (returnType.getRawType() == Map.class) {
                 Map map = new HashMap();
-                //populate map of specified type
+                // populate map of specified type
                 if (null != rows && null != rows.rows) {
                   for (tuple<?, ?> row : rows.rows) {
                     map.put(row.key, (E) row.value);
                   }
                 }
 
-                //return map
+                // return map
                 return map;
               } else if (returnType.getRawType() == List.class) {
                 List list = new ArrayList();
-                //assume items in collection
-                //iterate through items in rowset, populating list
+                // assume items in collection
+                // iterate through items in rowset, populating list
                 if (null != rows && null != rows.rows) {
                   List<E> ar = new ArrayList<E>();
                   for (tuple<?, ?> row : rows.rows) {
@@ -287,9 +287,9 @@ public class CouchServiceFactory {
           }
         }).get();
       } else {
-        //persist or find by key
+        // persist or find by key
         if ("persist".equals(method.getName())) {
-          //again, no point, see above with DocPersist
+          // again, no point, see above with DocPersist
           String stringParam = CouchMetaDriver.gson().toJson(args[0]);
           final DocPersistActionBuilder to =
               new DocPersist().db(getPathPrefix()).validjson(stringParam).to();
@@ -323,7 +323,7 @@ public class CouchServiceFactory {
     }
 
     public String getDefaultEntityName() {
-      return /*getOrgName() +*/entityType.getSimpleName().toLowerCase();
+      return /* getOrgName() + */entityType.getSimpleName().toLowerCase();
     }
 
     public String getOrgName() {

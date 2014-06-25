@@ -14,36 +14,37 @@ import java.util.Map;
 
 @PreRead
 public abstract class TemplateContentImpl extends ContentRootImpl {
-    static Map<File, File> content = new LinkedHashMap<>();
+  static Map<File, File> content = new LinkedHashMap<>();
 
-    @Override
-    public void onWrite(final SelectionKey key) throws Exception {
+  @Override
+  public void onWrite(final SelectionKey key) throws Exception {
 
-        //todo: paths
-        String finalFname = fileScrub(getRootPath() + SLASHDOTSLASH + this.getReq().path().split("\\?")[0]);
-        File file = new File(finalFname);
-        if (file.isDirectory()) {
-            file = new File(finalFname + "/index.html");
-        }
-        finalFname = file.getCanonicalPath();
-
-
-        boolean send200 = file.canRead() && file.isFile();
-
-        if (send200) {
-            File rxf;
-            if (!content.containsKey(file)) {
-                rxf = File.createTempFile("rxf", ".html");
-                rxf.deleteOnExit();
-                try (FileWriter fileWriter = new FileWriter(rxf)) {
-                    fileWriter.write(doReplace(CharStreams.toString(new FileReader(file))));
-                }
-                content.put(file, rxf);
-            } else
-                rxf = content.get(file);
-            sendFile(key, finalFname, rxf, new Date(), getReq().asResponse().status(HttpStatus.$200), null);
-        }
+    // todo: paths
+    String finalFname =
+        fileScrub(getRootPath() + SLASHDOTSLASH + this.getReq().path().split("\\?")[0]);
+    File file = new File(finalFname);
+    if (file.isDirectory()) {
+      file = new File(finalFname + "/index.html");
     }
+    finalFname = file.getCanonicalPath();
 
-    public    abstract String doReplace(String src);
+    boolean send200 = file.canRead() && file.isFile();
+
+    if (send200) {
+      File rxf;
+      if (!content.containsKey(file)) {
+        rxf = File.createTempFile("rxf", ".html");
+        rxf.deleteOnExit();
+        try (FileWriter fileWriter = new FileWriter(rxf)) {
+          fileWriter.write(doReplace(CharStreams.toString(new FileReader(file))));
+        }
+        content.put(file, rxf);
+      } else
+        rxf = content.get(file);
+      sendFile(key, finalFname, rxf, new Date(), getReq().asResponse().status(HttpStatus.$200),
+          null);
+    }
+  }
+
+  public abstract String doReplace(String src);
 }

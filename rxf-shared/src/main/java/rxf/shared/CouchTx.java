@@ -58,7 +58,7 @@ public class CouchTx {
     return this;
   }
 
-  ////////////////////////////// RF hideousity below
+  // //////////////////////////// RF hideousity below
 
   public Boolean getOk() {
     return ok;

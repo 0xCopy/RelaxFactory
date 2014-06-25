@@ -17,9 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Guice bindings to configure RelaxFactory with injection for each visitor impl. Binds
- * a singleton instance of {@link rxf.rpc.RelaxFactoryServer} which can then be manipulated
- * elsewhere.
+ * Guice bindings to configure RelaxFactory with injection for each visitor impl. Binds a singleton instance of
+ * {@link rxf.rpc.RelaxFactoryServer} which can then be manipulated elsewhere.
  */
 public class RxfModule extends AbstractModule {
   private Integer port;
@@ -27,7 +26,7 @@ public class RxfModule extends AbstractModule {
 
   private List<VisitorDef> defs = new ArrayList<VisitorDef>();
 
-  //ugly practice, consider a private module instead
+  // ugly practice, consider a private module instead
   private AsioVisitor topLevel;
 
   @Override

@@ -9,14 +9,12 @@ import static one.xio.HttpHeaders.Content$2dLength;
 import static one.xio.HttpHeaders.ETag;
 
 /**
- * User: jim
- * Date: 5/29/12
- * Time: 1:58 PM
+ * User: jim Date: 5/29/12 Time: 1:58 PM
  */
 public abstract class ActionBuilder {
 
-  public static final String[] HEADER_INTEREST =
-      Rfc822HeaderState.staticHeaderStrings(ETag, Content$2dLength);
+  public static final String[] HEADER_INTEREST = Rfc822HeaderState.staticHeaderStrings(ETag,
+      Content$2dLength);
   private AtomicReference<Rfc822HeaderState> state = new AtomicReference<Rfc822HeaderState>();
   private SelectionKey key;
   protected static ThreadLocal<ActionBuilder> currentAction =

@@ -18,14 +18,12 @@ import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 
 /**
- * User: jim
- * Date: 6/3/12
- * Time: 7:42 PM
+ * User: jim Date: 6/3/12 Time: 7:42 PM
  */
 @PreRead
 public class GwtRequestFactoryVisitor extends Impl {
-  public static SimpleRequestProcessor SIMPLE_REQUEST_PROCESSOR =
-      new SimpleRequestProcessor(ServiceLayer.create());
+  public static SimpleRequestProcessor SIMPLE_REQUEST_PROCESSOR = new SimpleRequestProcessor(
+      ServiceLayer.create());
   private HttpRequest req;
   private ByteBuffer cursor = null;
   private SocketChannel channel;
@@ -111,7 +109,7 @@ public class GwtRequestFactoryVisitor extends Impl {
             key.interestOps(SelectionKey.OP_WRITE);
           } catch (Exception e) {
             key.cancel();
-            e.printStackTrace(); //todo: verify for a purpose
+            e.printStackTrace(); // todo: verify for a purpose
           } finally {
           }
         }
@@ -120,9 +118,9 @@ public class GwtRequestFactoryVisitor extends Impl {
     }
     int write = channel.write(cursor);
     if (!cursor.hasRemaining()) {
-      /*Socket socket = channel.socket();
-         socket.getOutputStream().flush();
-         socket.close();*/
+      /*
+       * Socket socket = channel.socket(); socket.getOutputStream().flush(); socket.close();
+       */
       key.interestOps(SelectionKey.OP_READ).attach(null);
     }
 

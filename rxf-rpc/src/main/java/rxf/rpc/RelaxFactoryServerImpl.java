@@ -26,12 +26,12 @@ public class RelaxFactoryServerImpl implements RelaxFactoryServer {
 
   /**
    * handles the threadlocal ugliness if any to registering user threads into the selector/reactor pattern
-   *
+   * 
    * @param channel the socketchanel
-   * @param op      int ChannelSelector.operator
-   * @param s       the payload: grammar {enum,data1,data..n}
+   * @param op int ChannelSelector.operator
+   * @param s the payload: grammar {enum,data1,data..n}
    * @throws java.nio.channels.ClosedChannelException
-   *
+   * 
    */
   public static void enqueue(SelectableChannel channel, int op, Object... s)
       throws ClosedChannelException {

@@ -8,15 +8,12 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
- * User: jim
- * Date: 6/25/12
- * Time: 1:24 PM
+ * User: jim Date: 6/25/12 Time: 1:24 PM
  */
 public interface CouchNamespace {
 
   /**
-   * a map of http methods each containing an ordered map of regexes tested in order of
-   * map insertion.
+   * a map of http methods each containing an ordered map of regexes tested in order of map insertion.
    */
   Map<HttpMethod, Map<Pattern, Class<? extends Impl>>> NAMESPACE =
       new EnumMap<HttpMethod, Map<Pattern, Class<? extends Impl>>>(HttpMethod.class);

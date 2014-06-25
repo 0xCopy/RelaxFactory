@@ -9,9 +9,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
 
 /**
- * this launches the main service thread and assigns the proxy port to socketservers.
- * User: jnorthrup
- * Date: 10/1/13
+ * this launches the main service thread and assigns the proxy port to socketservers. User: jnorthrup Date: 10/1/13
  * Time: 7:27 PM
  */
 public class ProxyTask implements Runnable {
@@ -34,7 +32,7 @@ public class ProxyTask implements Runnable {
   }
 
   public static void main(final String[] args) {
-    //boilerplate HttpMethod.init() here
+    // boilerplate HttpMethod.init() here
     RpcHelper.getEXECUTOR_SERVICE().submit(new ProxyTask() {
       {
         proxyPorts = args;

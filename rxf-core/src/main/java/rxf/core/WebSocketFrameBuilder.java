@@ -27,8 +27,7 @@ public class WebSocketFrameBuilder {
   }
 
   /**
-   * @param isMasked
-   *            if true, also sets a random mask when no mask is set.
+   * @param isMasked if true, also sets a random mask when no mask is set.
    * @return this
    */
   public WebSocketFrameBuilder setIsMasked(boolean isMasked) {

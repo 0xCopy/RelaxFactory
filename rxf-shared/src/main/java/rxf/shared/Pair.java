@@ -2,7 +2,7 @@ package rxf.shared;
 
 /**
  * Simple pair class.
- *
+ * 
  * @param <A> any type
  * @param <B> any type
  */

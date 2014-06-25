@@ -4,11 +4,9 @@ import com.google.web.bindery.requestfactory.shared.ProxyForName;
 import com.google.web.bindery.requestfactory.shared.ValueProxy;
 
 /**
- * User: jim
- * Date: 5/14/12
- * Time: 7:21 PM
+ * User: jim Date: 5/14/12 Time: 7:21 PM
  */
-@ProxyForName(value = "rxf.couch.CouchTx")
+@ProxyForName("rxf.couch.CouchTx")
 public interface CouchTxProxy extends ValueProxy {
   Boolean getOk();
 

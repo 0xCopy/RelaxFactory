@@ -25,9 +25,7 @@ import static java.nio.channels.SelectionKey.*;
 import static one.xio.HttpHeaders.*;
 
 /**
- * User: jim
- * Date: 6/4/12
- * Time: 1:42 AM
+ * User: jim Date: 6/4/12 Time: 1:42 AM
  */
 @PreRead
 public class ContentRootImpl extends Impl implements ServiceHandoff {
@@ -40,20 +38,6 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
   private SocketChannel channel;
   private HttpRequest req;
 
-  /*
-   public ContentRootImpl() {
-
-   }
-
-
-   public ContentRootImpl(String rootPath) {
-   this.rootPath = rootPath;
-   File dir = new File(this.rootPath);
-   if (!dir.isDirectory() && dir.canRead())
-   throw new IllegalAccessError("can't verify readable dir at " + this.rootPath);
-   }
-
-   */
   public static String fileScrub(String scrubMe) {
     char inverseChar = '/' == File.separatorChar ? '\\' : '/';
     return null == scrubMe ? null : scrubMe.trim().replace(inverseChar, File.separatorChar)

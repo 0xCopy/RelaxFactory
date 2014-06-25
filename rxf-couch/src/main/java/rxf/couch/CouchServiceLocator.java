@@ -6,9 +6,7 @@ import rxf.core.CouchNamespace;
 import java.util.concurrent.ExecutionException;
 
 /**
- * User: jim
- * Date: 7/2/12
- * Time: 7:19 PM
+ * User: jim Date: 7/2/12 Time: 7:19 PM
  */
 public class CouchServiceLocator implements ServiceLocator {
 

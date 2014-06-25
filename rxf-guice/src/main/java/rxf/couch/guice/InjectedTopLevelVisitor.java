@@ -27,8 +27,8 @@ import static rxf.rpc.RpcHelper.isDEBUG_SENDJSON;
 import static rxf.core.CouchNamespace.NAMESPACE;
 
 public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
-  private final Map<HttpMethod, Map<String, Key<? extends AsioVisitor>>> bindings =
-      new EnumMap(HttpMethod.class);
+  private final Map<HttpMethod, Map<String, Key<? extends AsioVisitor>>> bindings = new EnumMap(
+      HttpMethod.class);
 
   private Injector injector;
 
@@ -62,14 +62,14 @@ public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
     ByteBuffer cursor = ByteBuffer.allocateDirect(4 << 10);
     int read = channel.read(cursor);
     if (-1 == read) {
-      ((SocketChannel) key.channel()).socket().close();//cancel();
+      ((SocketChannel) key.channel()).socket().close();// cancel();
       return;
     }
 
     HttpMethod method = null;
     HttpRequest httpRequest = null;
     try {
-      //find the method to dispatch
+      // find the method to dispatch
       Rfc822HeaderState state = new Rfc822HeaderState().read((ByteBuffer) cursor.flip());
       httpRequest = state.$req();
       if (isDEBUG_SENDJSON()) {
@@ -83,7 +83,7 @@ public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
     }
 
     if (null == method) {
-      ((SocketChannel) key.channel()).socket().close();//cancel();
+      ((SocketChannel) key.channel()).socket().close();// cancel();
 
       return;
     }

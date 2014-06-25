@@ -169,67 +169,72 @@ public class WebSocketFrame {
 
   /**
    * decides binary message struct
-   *
+   * 
    * @param cursor
    * @return
    */
   public boolean apply(ByteBuffer cursor) {
-        cursor.mark();
-        try {
-            byte b = cursor.get();
-            isFin = (b & 0b1000_0000) != 0;
-            int i = b & 0b1111;
-            opcode = OpCode.values()[i];
-            System.err.println("<<" + (isFin ? '=' : '+') + " " + opcode.name());
-            b = cursor.get();
-            isMasked = (b & 0b1000_0000) != 0;
-            int payload31 = b & 0b0111_1111;
-            switch (payload31) {
-                case 126:
-                    payloadLength = cursor.getShort() & 0xffff;
-                    break;
-                case 127:
-                    payloadLength = cursor.getLong();
-                    break;
-                default:
-                    payloadLength = payload31;
-                    break;
-            }
-            if (isMasked) cursor.get(maskingKey = new byte[4]);
-            if (payloadLength > Integer.MAX_VALUE) throw new RuntimeException("length too large: " + payloadLength);
+    cursor.mark();
+    try {
+      byte b = cursor.get();
+      isFin = (b & 0b1000_0000) != 0;
+      int i = b & 0b1111;
+      opcode = OpCode.values()[i];
+      System.err.println("<<" + (isFin ? '=' : '+') + " " + opcode.name());
+      b = cursor.get();
+      isMasked = (b & 0b1000_0000) != 0;
+      int payload31 = b & 0b0111_1111;
+      switch (payload31) {
+        case 126:
+          payloadLength = cursor.getShort() & 0xffff;
+          break;
+        case 127:
+          payloadLength = cursor.getLong();
+          break;
+        default:
+          payloadLength = payload31;
+          break;
+      }
+      if (isMasked)
+        cursor.get(maskingKey = new byte[4]);
+      if (payloadLength > Integer.MAX_VALUE)
+        throw new RuntimeException("length too large: " + payloadLength);
 
-            return true;
-        } catch (BufferUnderflowException e) {
-            cursor.reset();
-        }
-        return false;
+      return true;
+    } catch (BufferUnderflowException e) {
+      cursor.reset();
     }
+    return false;
+  }
 
   /**
-   produces a final set of buffers to transmit.
-   * @param data if payloadlength is 0 thelengths of remaining data are sum'd.  if masking is set, the mask is applied.
+   * produces a final set of buffers to transmit.
+   * 
+   * @param data if payloadlength is 0 thelengths of remaining data are sum'd. if masking is set, the mask is applied.
    * @return the first or only bytebuffer with the ws header only
    * 
    */
   public ByteBuffer as(ByteBuffer... data) {
-        ByteBuffer out= ByteBuffer.allocateDirect(16);
+    ByteBuffer out = ByteBuffer.allocateDirect(16);
 
-        if(payloadLength==0) for (ByteBuffer byteBuffer : data) {
-            payloadLength+=byteBuffer.remaining();
-        }
+    if (payloadLength == 0)
+      for (ByteBuffer byteBuffer : data) {
+        payloadLength += byteBuffer.remaining();
+      }
 
-        out.put((byte) (((opcode.ordinal() & 0b1111) | (isFin ? 0b1000_0000 : 0)) & 0xff));
-        long pl = payloadLength < 126 ? payloadLength : (payloadLength < 0x1_0000 ? 126 : 127);
-        out.put((byte) (((isMasked ? 0b1000_0000 : 0) | pl) & 0xff));
-        if (pl == 126)
-            out .putShort((short) ((short) payloadLength & 0xffff));
-        else if (pl == 127) out.putLong(payloadLength);
-        if(isMasked) {
-            out.put(maskingKey);
-            applyMask(data);
-        }
-        return (ByteBuffer) out.flip();
-     }
+    out.put((byte) (((opcode.ordinal() & 0b1111) | (isFin ? 0b1000_0000 : 0)) & 0xff));
+    long pl = payloadLength < 126 ? payloadLength : (payloadLength < 0x1_0000 ? 126 : 127);
+    out.put((byte) (((isMasked ? 0b1000_0000 : 0) | pl) & 0xff));
+    if (pl == 126)
+      out.putShort((short) ((short) payloadLength & 0xffff));
+    else if (pl == 127)
+      out.putLong(payloadLength);
+    if (isMasked) {
+      out.put(maskingKey);
+      applyMask(data);
+    }
+    return (ByteBuffer) out.flip();
+  }
 
   public void applyMask(ByteBuffer... wrap) {
     applyMask(maskingKey, wrap);

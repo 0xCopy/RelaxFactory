@@ -1,9 +1,7 @@
 package rxf.shared;
 
 /**
- * User: jim
- * Date: 4/30/12
- * Time: 12:18 AM
+ * User: jim Date: 4/30/12 Time: 12:18 AM
  */
 public enum CompressionTypes {
   gzip("gz"), bzip2("bz2"), xz;

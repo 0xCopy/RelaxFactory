@@ -8,17 +8,16 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 /**
- * A utility class for parsing and formatting HTTP dates as used in cookies and
- * other headers.  This class handles dates as defined by RFC 2616 section
- * 3.3.1 as well as some other common non-standard formats.
- *
+ * A utility class for parsing and formatting HTTP dates as used in cookies and other headers. This class handles dates
+ * as defined by RFC 2616 section 3.3.1 as well as some other common non-standard formats.
+ * 
  * @author Christopher Brown
  * @author Michael Becke
  * @overhauled Jim Northrup
  */
 public enum DateHeaderParser {
   /**
-   * 5.2.14  RFC-822 Date and Time Specification: RFC-822 Section 5
+   * 5.2.14 RFC-822 Date and Time Specification: RFC-822 Section 5
    * <p/>
    * The syntax for the date is hereby changed to:
    * <p/>
@@ -33,8 +32,7 @@ public enum DateHeaderParser {
   RFC1036("EEEE, dd-MMM-yy HH:mm:ss z"),
 
   /**
-   * Date format pattern used to parse HTTP date headers in ANSI C
-   * <code>asctime()</code> format.
+   * Date format pattern used to parse HTTP date headers in ANSI C <code>asctime()</code> format.
    */
   ISO8601("yyyy-MM-dd'T'HH:mm:ssz"), ISOMS("yyyy-MM-dd'T'HH:mm:ss.SSS zzz"), SHORT(DateFormat
       .getDateInstance(DateFormat.SHORT)), MED(DateFormat.getDateInstance(DateFormat.MEDIUM)), LONG(
@@ -51,14 +49,14 @@ public enum DateHeaderParser {
   DateHeaderParser(DateFormat dateFormat) {
     format = dateFormat;
     format.setLenient(true);
-    //for unit tests we want GMT as predictable.  for other println's we want local tz
+    // for unit tests we want GMT as predictable. for other println's we want local tz
     if (false)
       format.setTimeZone(TimeZone.getTimeZone("GMT"));
   }
 
   /**
    * Parses the date value using the given date formats.
-   *
+   * 
    * @param dateValue the date value to parse
    * @return the parsed date
    */

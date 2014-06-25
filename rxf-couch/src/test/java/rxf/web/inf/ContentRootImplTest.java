@@ -33,7 +33,7 @@ public class ContentRootImplTest {
   static public void setUp() throws Exception {
     wc = new WebConversation();
 
-    //    setDEBUG_SENDJSON(true);
+    // setDEBUG_SENDJSON(true);
     Server.setKillswitch(false);
 
     serverSocketChannel = ServerSocketChannel.open();
@@ -112,9 +112,7 @@ public class ContentRootImplTest {
 
     String url = "http://localhost:" + port + "/index.html";
     GetMethodWebRequest req = new GetMethodWebRequest(url);
-    req
-        .setHeaderField(If$2dUnmodified$2dSince.getHeader(), DateHeaderParser
-            .formatHttpHeaderDate());
+    req.setHeaderField(If$2dUnmodified$2dSince.getHeader(), DateHeaderParser.formatHttpHeaderDate());
     WebResponse res = wc.getResponse(req);
     int responseCode = res.getResponseCode();
     res.close();
@@ -154,7 +152,7 @@ public class ContentRootImplTest {
 
   }
 
-  //I think this is failing from HtmlUnit not sending Accepts: headers
+  // I think this is failing from HtmlUnit not sending Accepts: headers
   @Test
   public void testRequestGzippedFile() throws Exception {
     GetMethodWebRequest req = new GetMethodWebRequest(base + "/gzipped/");

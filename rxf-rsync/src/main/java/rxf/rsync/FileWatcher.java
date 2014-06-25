@@ -1,6 +1,5 @@
 package rxf.rsync;
 
-
 import com.google.common.hash.Hashing;
 import javolution.util.FastMap;
 import one.xio.AsioVisitor;
@@ -29,15 +28,18 @@ import static rxf.couch.driver.CouchMetaDriver.gson;
  */
 
 public class FileWatcher {
-  public static final Path NORMALIZE = Paths.get(get("FILEWATCHER_DIR", Paths.get(".").toAbsolutePath().normalize().toString()));
+  public static final Path NORMALIZE = Paths.get(get("FILEWATCHER_DIR", Paths.get(".")
+      .toAbsolutePath().normalize().toString()));
   public static final String FILEWATCHER_DB = get("FILEWATCHER_DB", "db");
   public static final String FILEWATCHER_DOCID = get("FILEWATCHER_DOCID", "doc");
-  public static String FILEWATCHER_IGNORE_EXAMPLE = get("FILEWATCHER_IGNORE_EXAMPLE", ".jar .war .class .java .symbolMap manifest.txt .log .bak compilation-mappings.txt web.xml");
+  public static String FILEWATCHER_IGNORE_EXAMPLE = get("FILEWATCHER_IGNORE_EXAMPLE",
+      ".jar .war .class .java .symbolMap manifest.txt .log .bak compilation-mappings.txt web.xml");
   public static final String IGNORE = get("FILEWATCHER_IGNORE", "").trim();
-  public static String[] FILEWATCHER_IGNORE = IGNORE.isEmpty() ? new String[0] : (IGNORE.split(" +"));
+  public static String[] FILEWATCHER_IGNORE = IGNORE.isEmpty() ? new String[0] : (IGNORE
+      .split(" +"));
 
-
-  public static final ScheduledExecutorService SCHEDULED_EXECUTOR_SERVICE = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
+  public static final ScheduledExecutorService SCHEDULED_EXECUTOR_SERVICE = Executors
+      .newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
   private final WatchService watcher;
   private final Map<WatchKey, Path> keys;
   private final boolean recursive;
@@ -72,8 +74,7 @@ public class FileWatcher {
   static Map<Path, Boolean> delta = new FastMap<>();
 
   /**
-   * Register the given directory, and all its sub-directories, with the
-   * WatchService.
+   * Register the given directory, and all its sub-directories, with the WatchService.
    */
   private void registerAll(Path start) throws IOException {
     // register directory and sub-directories
@@ -148,11 +149,11 @@ public class FileWatcher {
         Path child = (name);
 
         // print out event
-        if (first) System.out.format("%s: %s\n", event.kind().name(), child);
+        if (first)
+          System.out.format("%s: %s\n", event.kind().name(), child);
         first = false;
         // if directory is created, and watching recursively, then
         // register it and its sub-directories
-
 
         if (Files.isDirectory(child)) {
           if (kind == ENTRY_CREATE) {
@@ -165,12 +166,13 @@ public class FileWatcher {
               // ignore to keep sample readbale
             }
 
-          } else if (kind == ENTRY_DELETE) keys.remove(key);
+          } else if (kind == ENTRY_DELETE)
+            keys.remove(key);
         }
-//        Path relativize = child.relativize(NORMALIZE);
+        // Path relativize = child.relativize(NORMALIZE);
         if (Files.isRegularFile(child)) {
           System.out.println("putting child: " + child);
-          if (/*kind == ENTRY_CREATE || */ kind == ENTRY_MODIFY) {
+          if (/* kind == ENTRY_CREATE || */kind == ENTRY_MODIFY) {
 
             delta.put(child, isAvoided(child));
 
@@ -209,7 +211,8 @@ public class FileWatcher {
   private void processDelta() {
     if (!delta.isEmpty()) {
       System.err.println("processing " + delta.size());
-        String json = new CouchDriver.DocFetch().db(FILEWATCHER_DB).docId(FILEWATCHER_DOCID).to().fire().json();
+      String json =
+          new CouchDriver.DocFetch().db(FILEWATCHER_DB).docId(FILEWATCHER_DOCID).to().fire().json();
       TreeMap x = gson().fromJson(json, TreeMap.class);
       if (null == x) {
         x = new TreeMap<>();
@@ -226,29 +229,25 @@ public class FileWatcher {
 
       boolean changed = false;
       int c = 0;
-      TreeSet<Map.Entry<Path, Boolean>> bySize = new TreeSet<Map.Entry<Path, Boolean>>(new Comparator<Map.Entry<Path, Boolean>>() {
+      TreeSet<Map.Entry<Path, Boolean>> bySize =
+          new TreeSet<Map.Entry<Path, Boolean>>(new Comparator<Map.Entry<Path, Boolean>>() {
 
-        public int compare(Map.Entry<Path, Boolean> o1, Map.Entry<Path, Boolean> o2) {
-          try {
-            return -(int)
-                (
-                    (Files.isRegularFile(o2.getKey()) ? Files.size(o2.getKey()) : -1)
-                        -
-                        (Files.isRegularFile(o1.getKey()) ? Files.size(o1.getKey()) : -1)
-                );
-          } catch (IOException e) {
+            public int compare(Map.Entry<Path, Boolean> o1, Map.Entry<Path, Boolean> o2) {
+              try {
+                return -(int) ((Files.isRegularFile(o2.getKey()) ? Files.size(o2.getKey()) : -1) - (Files
+                    .isRegularFile(o1.getKey()) ? Files.size(o1.getKey()) : -1));
+              } catch (IOException e) {
 
-          } finally {
-          }
-          return 0;
+              } finally {
+              }
+              return 0;
 
-        }
+            }
 
-
-        public boolean equals(Object obj) {
-          return false;
-        }
-      });
+            public boolean equals(Object obj) {
+              return false;
+            }
+          });
       bySize.addAll(delta.entrySet());
       for (Map.Entry<Path, Boolean> entry : bySize) {
         Path key = entry.getKey();
@@ -269,7 +268,9 @@ public class FileWatcher {
           if (null == fromCouch || Boolean.TRUE.equals(keepOrDelete)) {
             try {
               byte[] bytes = Files.readAllBytes(key);
-              if (null == fromCouch || !("md5-" + base64().encode(Hashing.md5().hashBytes(bytes).asBytes())).equals(fromCouch.get("digest"))) {
+              if (null == fromCouch
+                  || !("md5-" + base64().encode(Hashing.md5().hashBytes(bytes).asBytes()))
+                      .equals(fromCouch.get("digest"))) {
                 changed = true;
                 MimeType mimeType = null;
                 try {
@@ -283,7 +284,8 @@ public class FileWatcher {
                 String data = base64().encode(bytes);
 
                 map.put("data", data);
-                attachments.put(('/') != File.separatorChar ? s.replace(File.separatorChar, '/') : s, map);
+                attachments.put(('/') != File.separatorChar ? s.replace(File.separatorChar, '/')
+                    : s, map);
 
                 c++;
               }
@@ -298,15 +300,17 @@ public class FileWatcher {
         }
       }
       if (changed) {
-          new CouchDriver.DocPersist().db(FILEWATCHER_DB).validjson(gson().toJson(x)).to().fire().tx();
+        new CouchDriver.DocPersist().db(FILEWATCHER_DB).validjson(gson().toJson(x)).to().fire()
+            .tx();
       }
     }
   }
 
   public void provision() {
     System.out.println("FileWatcher.provision()");
-      String json = new CouchDriver.DocFetch().db(FILEWATCHER_DB).docId(FILEWATCHER_DOCID).to().fire().json();
-    TreeMap x = gson() .fromJson(json, TreeMap.class);
+    String json =
+        new CouchDriver.DocFetch().db(FILEWATCHER_DB).docId(FILEWATCHER_DOCID).to().fire().json();
+    TreeMap x = gson().fromJson(json, TreeMap.class);
     if (null == x) {
       x = new TreeMap<>();
       x.put("_id", FILEWATCHER_DOCID);
@@ -329,7 +333,8 @@ public class FileWatcher {
       e.printStackTrace();
     }
 
-    // This can probably be made more efficient, but I don't want to touch the original keyset and cloning would not be faster
+    // This can probably be made more efficient, but I don't want to touch the original keyset and cloning would not be
+    // faster
     for (String couchAttachment : attachments.keySet()) {
       if (!existingFiles.containsKey(couchAttachment)) {
         System.out.println("Found removed: " + couchAttachment);
@@ -346,11 +351,11 @@ public class FileWatcher {
     private Map<String, Map<String, String>> attachments;
     private Map<String, Boolean> existingFiles;
 
-    public ProvisioningFileVisitor(Map<String, Map<String, String>> attachments, Map<String, Boolean> existingFiles) {
+    public ProvisioningFileVisitor(Map<String, Map<String, String>> attachments,
+        Map<String, Boolean> existingFiles) {
       this.attachments = attachments;
       this.existingFiles = existingFiles;
     }
-
 
     public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
       Path relative = NORMALIZE.relativize(file);
@@ -365,7 +370,9 @@ public class FileWatcher {
         try {
           byte[] bytes = Files.readAllBytes(file);
           String couchDigest = attachments.get(relativeString).get("digest");
-          if (null == couchDigest || !("md5-" + base64().encode(Hashing.md5().hashBytes(bytes).asBytes())).equals(couchDigest)) {
+          if (null == couchDigest
+              || !("md5-" + base64().encode(Hashing.md5().hashBytes(bytes).asBytes()))
+                  .equals(couchDigest)) {
             System.out.println("Found changed:  " + relative);
             delta.put(file, isAvoided(file));
           }
@@ -387,11 +394,11 @@ public class FileWatcher {
     return true;
   }
 
-  static {//boilerplate
+  static {// boilerplate
     System.setProperty("rxf.couch.realtime.unit", TimeUnit.MINUTES.name());
     SCHEDULED_EXECUTOR_SERVICE.submit(new Runnable() {
       public void run() {
-        //class initializers fire here
+        // class initializers fire here
         AsioVisitor topLevel = new ProtocolMethodDispatch();
         try {
           Server.init(topLevel);

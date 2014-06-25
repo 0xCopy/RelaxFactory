@@ -4,9 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * User: jim
- * Date: 5/16/12
- * Time: 7:56 PM
+ * User: jim Date: 5/16/12 Time: 7:56 PM
  */
 public class CouchResultSet<K, V> {
 

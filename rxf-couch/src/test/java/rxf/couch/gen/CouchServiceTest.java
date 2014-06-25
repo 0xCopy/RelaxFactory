@@ -39,7 +39,8 @@ import static rxf.couch.driver.CouchMetaDriver.gson;
  */
 public class CouchServiceTest {
   public static final String SOMEDBPREFIX = "test_somedb_";
-  public static final String SOMEDB = SOMEDBPREFIX + System.currentTimeMillis(); //ordered names of testdbs for failure postmortem....
+  public static final String SOMEDB = SOMEDBPREFIX + System.currentTimeMillis(); // ordered names of testdbs for failure
+                                                                                 // postmortem....
   public static final String DESIGN_SAMPLE = "_design/sample";
   public static ScheduledExecutorService exec;
 
@@ -61,7 +62,7 @@ public class CouchServiceTest {
     nukeTestDbs();
 
     {
-        CouchTx tx = new CouchDriver.DbCreate().db(SOMEDB).to().fire().tx();
+      CouchTx tx = new CouchDriver.DbCreate().db(SOMEDB).to().fire().tx();
       assertNotNull(tx);
       assertTrue(tx.ok());
       assertNull(tx.getError());
@@ -71,11 +72,11 @@ public class CouchServiceTest {
 
   static void nukeTestDbs() {
     try {
-        String json = new DocFetch().db("").docId("_all_dbs").to().fire().json();
+      String json = new DocFetch().db("").docId("_all_dbs").to().fire().json();
       String[] strings = gson().fromJson(json, String[].class);
       for (String s : strings) {
         if (s.startsWith(SOMEDBPREFIX))
-            new DbDelete().db(s).to().fire().tx();
+          new DbDelete().db(s).to().fire().tx();
       }
     } catch (JsonSyntaxException e) {
       e.printStackTrace();
@@ -196,19 +197,19 @@ public class CouchServiceTest {
     }
   }
 
-  //  public void testRevisionAndDelete() {
-  //    String rev = null;
-  //    try {
-  //      rev = RevisionFetch.$().db(SOMEDB).docId(DESIGN_SAMPLE).to().fire().json();
-  //      CouchTx tx = DocDelete.$().db(SOMEDB).docId(DESIGN_SAMPLE).rev(rev).to().fire().tx();
-  //      assert tx.ok();
-  //    } catch (Exception e) {
-  //      e.printStackTrace();
-  //      fail(rev);
-  //    }
-  //    String designDoc = DesignDocFetch.$().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
-  //    assertNull(designDoc);
-  //  }
+  // public void testRevisionAndDelete() {
+  // String rev = null;
+  // try {
+  // rev = RevisionFetch.$().db(SOMEDB).docId(DESIGN_SAMPLE).to().fire().json();
+  // CouchTx tx = DocDelete.$().db(SOMEDB).docId(DESIGN_SAMPLE).rev(rev).to().fire().tx();
+  // assert tx.ok();
+  // } catch (Exception e) {
+  // e.printStackTrace();
+  // fail(rev);
+  // }
+  // String designDoc = DesignDocFetch.$().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
+  // assertNull(designDoc);
+  // }
 
   @Test
   public void testMultiParamFinder() throws Exception {
@@ -262,41 +263,41 @@ public class CouchServiceTest {
     sample.brand = "-brand4";
     sample.model = "-model4";
     List<CSFTest> loaded = service.matchingTuples(sample);
-    /* returns null, whoops
-    turns out to be a json exception:
-
-    com.google.gson.JsonSyntaxException: java.lang.IllegalStateException: Expected a string but was BEGIN_OBJECT at line 2 column 49
-    at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:180)
-    at com.google.gson.internal.bind.TypeAdapterRuntimeTypeWrapper.read(TypeAdapterRuntimeTypeWrapper.java:40)
-    at com.google.gson.internal.bind.CollectionTypeAdapterFactory$Adapter.read(CollectionTypeAdapterFactory.java:81)
-    at com.google.gson.internal.bind.CollectionTypeAdapterFactory$Adapter.read(CollectionTypeAdapterFactory.java:60)
-    at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:93)
-    at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:176)
-    at com.google.gson.Gson.fromJson(Gson.java:755)
-    at com.google.gson.Gson.fromJson(Gson.java:721)
-    at com.google.gson.Gson.fromJson(Gson.java:670)
-    at rxf.couch.gen.CouchDriver$ViewFetch$ViewFetchActionBuilder$1.rows(CouchDriver.java:735)
-    at rxf.couch.CouchServiceFactory$CouchServiceHandler$2.call(CouchServiceFactory.java:198)
-    at java.util.concurrent.FutureTask$Sync.innerRun(FutureTask.java:334)
-    at java.util.concurrent.FutureTask.run(FutureTask.java:166)
-    at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$201(ScheduledThreadPoolExecutor.java:178)
-    at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:292)
-    at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1110)
-    at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:603)
-    at java.lang.Thread.run(Thread.java:722)
-    Caused by: java.lang.IllegalStateException: Expected a string but was BEGIN_OBJECT at line 2 column 49
-    at com.google.gson.stream.JsonReader.nextString(JsonReader.java:464)
-    at com.google.gson.internal.bind.TypeAdapters$13.read(TypeAdapters.java:347)
-    at com.google.gson.internal.bind.TypeAdapters$13.read(TypeAdapters.java:335)
-    at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:93)
-    at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:176)
-    ... 17 more
+    /*
+     * returns null, whoops turns out to be a json exception:
+     * 
+     * com.google.gson.JsonSyntaxException: java.lang.IllegalStateException: Expected a string but was BEGIN_OBJECT at
+     * line 2 column 49 at
+     * com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:180) at
+     * com.google.gson.internal.bind.TypeAdapterRuntimeTypeWrapper.read(TypeAdapterRuntimeTypeWrapper.java:40) at
+     * com.google.gson.internal.bind.CollectionTypeAdapterFactory$Adapter.read(CollectionTypeAdapterFactory.java:81) at
+     * com.google.gson.internal.bind.CollectionTypeAdapterFactory$Adapter.read(CollectionTypeAdapterFactory.java:60) at
+     * com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:93) at
+     * com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:176) at
+     * com.google.gson.Gson.fromJson(Gson.java:755) at com.google.gson.Gson.fromJson(Gson.java:721) at
+     * com.google.gson.Gson.fromJson(Gson.java:670) at
+     * rxf.couch.gen.CouchDriver$ViewFetch$ViewFetchActionBuilder$1.rows(CouchDriver.java:735) at
+     * rxf.couch.CouchServiceFactory$CouchServiceHandler$2.call(CouchServiceFactory.java:198) at
+     * java.util.concurrent.FutureTask$Sync.innerRun(FutureTask.java:334) at
+     * java.util.concurrent.FutureTask.run(FutureTask.java:166) at
+     * java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask
+     * .access$201(ScheduledThreadPoolExecutor.java:178) at
+     * java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:292) at
+     * java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1110) at
+     * java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:603) at
+     * java.lang.Thread.run(Thread.java:722) Caused by: java.lang.IllegalStateException: Expected a string but was
+     * BEGIN_OBJECT at line 2 column 49 at com.google.gson.stream.JsonReader.nextString(JsonReader.java:464) at
+     * com.google.gson.internal.bind.TypeAdapters$13.read(TypeAdapters.java:347) at
+     * com.google.gson.internal.bind.TypeAdapters$13.read(TypeAdapters.java:335) at
+     * com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:93) at
+     * com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:176)
+     * ... 17 more
      */
 
-    //Comment in these tests to see it fail, currently fails silently, returning null
-    //    assertNotNull(loaded);
-    //    assertEquals(1, loaded.size());
-    //    assertNotNull(loaded.get(0)._id);
+    // Comment in these tests to see it fail, currently fails silently, returning null
+    // assertNotNull(loaded);
+    // assertEquals(1, loaded.size());
+    // assertNotNull(loaded.get(0)._id);
   }
 
   @Test
@@ -488,7 +489,7 @@ public class CouchServiceTest {
     assert content.length() == data._attachments.get("file.txt").getLength();
     assert "text/plain".equals(data._attachments.get("file.txt").getContentType());
 
-    //make sure changing other properties doesnt break the attachments map
+    // make sure changing other properties doesnt break the attachments map
     data.data = "asdf";
     tx = service.persist(data);
     assert tx.ok() : tx.error();
@@ -499,7 +500,7 @@ public class CouchServiceTest {
     assert content.length() == data._attachments.get("file.txt").getLength();
     assert "text/plain".equals(data._attachments.get("file.txt").getContentType());
 
-    //update an attachment, make sure it takes the new length and same content type
+    // update an attachment, make sure it takes the new length and same content type
     String content2 = "new, shorter file";
     tx = service.attachments(data).updateAttachment(content2, "file.txt", "text/plain");
     assert tx.ok() : tx.error();
@@ -509,13 +510,13 @@ public class CouchServiceTest {
     assert content2.length() == data._attachments.get("file.txt").getLength();
     assert "text/plain".equals(data._attachments.get("file.txt").getContentType());
 
-    //modify contenttype, make sure it takes
+    // modify contenttype, make sure it takes
     tx = service.attachments(data).updateAttachment("<html></html>", "file.txt", "text/html");
     assert tx.ok() : tx.error();
     data = service.find(tx.id());
     assert "text/html".equals(data._attachments.get("file.txt").getContentType());
 
-    //remove an item from the attachments map, be sure it persists
+    // remove an item from the attachments map, be sure it persists
     data._attachments.remove("file.txt");
     tx = service.persist(data);
     assert tx.ok() : tx.error();
@@ -529,7 +530,8 @@ public class CouchServiceTest {
     public String data;
     public Map<String, Attachment> _attachments = new HashMap<>();
   }
-  public interface AttachmentService extends CouchService<DataWithAttachments> { }
+  public interface AttachmentService extends CouchService<DataWithAttachments> {
+  }
 
   public interface SimpleCouchService extends CouchService<CSFTest> {
     @View(map = "function(doc){emit(doc.brand, doc); }")

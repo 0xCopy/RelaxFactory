@@ -6,15 +6,11 @@ import rxf.rpc.RpcHelper;
 import javax.validation.ValidationException;
 
 /**
- * User: jim
- * Date: 5/29/12
- * Time: 1:58 PM
+ * User: jim Date: 5/29/12 Time: 1:58 PM
  */
 public abstract class DbKeysBuilder {
-  protected static ThreadLocal<DbKeysBuilder> currentKeys =
-      new InheritableThreadLocal<>();
-  protected final java.util.EnumMap<etype, Object> parms =
-      new java.util.EnumMap<>(etype.class);
+  protected static ThreadLocal<DbKeysBuilder> currentKeys = new InheritableThreadLocal<>();
+  protected final java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<>(etype.class);
 
   private Throwable trace;
 
@@ -55,7 +51,7 @@ public abstract class DbKeysBuilder {
 
   /**
    * creates a trace object here and now.
-   *
+   * 
    * @return
    */
   public DbKeysBuilder debug() {

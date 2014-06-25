@@ -27,7 +27,8 @@ import static junit.framework.TestCase.*;
 public class CouchDriverTest {
 
   public static final String SOMEDBPREFIX = "test_somedb_";
-  public static final String SOMEDB = SOMEDBPREFIX + System.currentTimeMillis(); //ordered names of testdbs for failure postmortem....
+  public static final String SOMEDB = SOMEDBPREFIX + System.currentTimeMillis(); // ordered names of testdbs for failure
+                                                                                 // postmortem....
   public static final String DESIGN_SAMPLE = "_design/sample";
   public static ScheduledExecutorService exec;
 
@@ -58,7 +59,7 @@ public class CouchDriverTest {
   }
 
   static void nukeTestDbs() {
-    //REALLY NUKE THE OLD TESTS
+    // REALLY NUKE THE OLD TESTS
 
     try {
       String json = new DocFetch().db("").docId("_all_dbs").to().fire().json();
@@ -76,20 +77,21 @@ public class CouchDriverTest {
   @AfterClass
   static public void tearDown() throws Exception {
 
-    //    DbDelete.$().db(SOMEDB).to().fire().oneWay();
+    // DbDelete.$().db(SOMEDB).to().fire().oneWay();
 
     try {
       Server.killswitch = true;
       Server.getSelector().close();
-      //      HttpMethod.broke = null;
+      // HttpMethod.broke = null;
       exec.shutdown();
-      //Thread.sleep(4000);//more than 3 seconds, standard timeout
+      // Thread.sleep(4000);//more than 3 seconds, standard timeout
     } catch (Exception ignore) {
     }
   }
 
   /*
-    public static final String DB = "rxf_csftest";*/
+   * public static final String DB = "rxf_csftest";
+   */
 
   public static class CSFTest {
     public String _id, _rev;
@@ -123,7 +125,7 @@ public class CouchDriverTest {
   public void testMissingDocLowLevelFailure() {
 
     CouchTx tx = new DocPersist().db("dne_dne").validjson("{}").to().fire().tx();
-    //new contract for non-20x results is find the nearest window and get to ground.
+    // new contract for non-20x results is find the nearest window and get to ground.
     assertNull(tx);
   }
 
@@ -141,7 +143,7 @@ public class CouchDriverTest {
     String doc =
         "{" + "  \"_id\" : \"" + DESIGN_SAMPLE + "\"," + "  \"views\" : {" + "    \"foo\" : {"
             + "      \"map\" : \"function(doc){ emit(doc.name, doc); }\"" + "    }" + "  }" + "}";
-    //TODO inconsistent with DesignDocFetch
+    // TODO inconsistent with DesignDocFetch
     CouchTx tx = new JsonSend().opaque(SOMEDB).validjson(doc).to().fire().tx();
     assertNotNull(tx);
     assertTrue(tx.ok());
@@ -172,14 +174,14 @@ public class CouchDriverTest {
     new DocPersist().db(SOMEDB).validjson(
         "{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to()
         .fire().tx();
-    //running view
+    // running view
     final ViewFetchTerminalBuilder fire =
         new ViewFetch().db(SOMEDB).type(Map.class).view(DESIGN_SAMPLE + "/_view/foo?key=\"a\"")
             .to().fire();
     CouchResultSet<?, Map<String, String>> data = fire.rows();
     assertNotNull(data);
     assertEquals(1, data.rows.size());
-    assertEquals("a", data.rows.get(0).value.get("name")); //TODO no consistent way to write designdoc
+    assertEquals("a", data.rows.get(0).value.get("name")); // TODO no consistent way to write designdoc
     String designDoc =
         new DesignDocFetch().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
     assertNotNull(designDoc);

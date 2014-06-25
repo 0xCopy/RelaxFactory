@@ -13,66 +13,51 @@ import java.util.EnumMap;
 import java.util.Iterator;
 
 /**
- * This enum defines the HTTP Cookie and Set-Cookie header fields.
- * Using the Set-Cookie header field, an HTTP couch can pass name/value
- * pairs and associated metadata (called cookies) to a user agent.  When
- * the user agent makes subsequent requests to the couch, the user
- * agent uses the metadata and other information to determine whether to
- * return the name/value pairs in the Cookie header.
+ * This enum defines the HTTP Cookie and Set-Cookie header fields. Using the Set-Cookie header field, an HTTP couch can
+ * pass name/value pairs and associated metadata (called cookies) to a user agent. When the user agent makes subsequent
+ * requests to the couch, the user agent uses the metadata and other information to determine whether to return the
+ * name/value pairs in the Cookie header.
  * <p/>
- * Although simple on their surface, cookies have a number of
- * complexities.  For example, the couch indicates a scope for each
- * cookie when sending it to the user agent.  The scope indicates the
- * maximum amount of time in which the user agent should return the
- * cookie, the servers to which the user agent should return the cookie,
- * and the URI schemes for which the cookie is applicable.
+ * Although simple on their surface, cookies have a number of complexities. For example, the couch indicates a scope for
+ * each cookie when sending it to the user agent. The scope indicates the maximum amount of time in which the user agent
+ * should return the cookie, the servers to which the user agent should return the cookie, and the URI schemes for which
+ * the cookie is applicable.
  * <p/>
- * For historical reasons, cookies contain a number of security and
- * privacy infelicities.  For example, a couch can indicate that a
- * given cookie is intended for "secure" connections, but the Secure
- * attribute does not provide integrity in the presence of an active
- * network attacker.  Similarly, cookies for a given host are shared
- * across all the ports on that host, even though the usual "same-origin
- * policy" used by web browsers isolates content retrieved via different
- * ports.
+ * For historical reasons, cookies contain a number of security and privacy infelicities. For example, a couch can
+ * indicate that a given cookie is intended for "secure" connections, but the Secure attribute does not provide
+ * integrity in the presence of an active network attacker. Similarly, cookies for a given host are pouch across all the
+ * ports on that host, even though the usual "same-origin policy" used by web browsers isolates content retrieved via
+ * different ports.
  * <p/>
- * There are two audiences for this specification: developers of cookie-
- * generating servers and developers of cookie-consuming user agents.
+ * There are two audiences for this specification: developers of cookie- generating servers and developers of
+ * cookie-consuming user agents.
  * <p/>
- * To maximize interoperability with user agents, servers SHOULD limit
- * themselves to the well-behaved profile defined in Section 4 when
- * generating cookies.
+ * To maximize interoperability with user agents, servers SHOULD limit themselves to the well-behaved profile defined in
+ * Section 4 when generating cookies.
  * <p/>
- * User agents MUST implement the more liberal processing rules defined
- * in Section 5, in order to maximize interoperability with existing
- * servers that do not conform to the well-behaved profile defined in
- * Section 4.
+ * User agents MUST implement the more liberal processing rules defined in Section 5, in order to maximize
+ * interoperability with existing servers that do not conform to the well-behaved profile defined in Section 4.
  * <p/>
- * This document specifies the syntax and semantics of these headers as
- * they are actually used on the Internet.  In particular, this document
- * does not create new syntax or semantics beyond those in use today.
- * The recommendations for cookie generation provided in Section 4
- * represent a preferred subset of current couch behavior, and even the
- * more liberal cookie processing algorithm provided in Section 5 does
- * not recommend all of the syntactic and semantic variations in use
- * today.  Where some existing software differs from the recommended
- * protocol in significant ways, the document contains a note explaining
- * the difference.
+ * This document specifies the syntax and semantics of these headers as they are actually used on the Internet. In
+ * particular, this document does not create new syntax or semantics beyond those in use today. The recommendations for
+ * cookie generation provided in Section 4 represent a preferred subset of current couch behavior, and even the more
+ * liberal cookie processing algorithm provided in Section 5 does not recommend all of the syntactic and semantic
+ * variations in use today. Where some existing software differs from the recommended protocol in significant ways, the
+ * document contains a note explaining the difference.
  * <p/>
- * Prior to this document, there were at least three descriptions of
- * cookies: the so-called "Netscape cookie specification" [Netscape],
- * RFC 2109 [RFC2109], and RFC 2965 [RFC2965].  However, none of these
- * documents describe how the Cookie and Set-Cookie headers are actually
- * used on the Internet (see [Kri2001] for historical context).  In
- * relation to previous IETF specifications of HTTP state management
- * mechanisms, this document requests the following actions:
- * <ol> <li> Change the status of [RFC2109] to Historic (it has already been obsoleted by [RFC2965]). </li>
- * <li> Change the status of [RFC2965] to Historic. </li>
- * <li> Indicate that [RFC2965] has been obsoleted by this document. </li>      </ol>
+ * Prior to this document, there were at least three descriptions of cookies: the so-called
+ * "Netscape cookie specification" [Netscape], RFC 2109 [RFC2109], and RFC 2965 [RFC2965]. However, none of these
+ * documents describe how the Cookie and Set-Cookie headers are actually used on the Internet (see [Kri2001] for
+ * historical context). In relation to previous IETF specifications of HTTP state management mechanisms, this document
+ * requests the following actions:
+ * <ol>
+ * <li>Change the status of [RFC2109] to Historic (it has already been obsoleted by [RFC2965]).</li>
+ * <li>Change the status of [RFC2965] to Historic.</li>
+ * <li>Indicate that [RFC2965] has been obsoleted by this document.</li>
+ * </ol>
  * <p/>
- * In particular, in moving RFC 2965 to Historic and obsoleting it, this
- * document deprecates the use of the Cookie2 and Set-Cookie2 header
- * fields.
+ * In particular, in moving RFC 2965 to Historic and obsoleting it, this document deprecates the use of the Cookie2 and
+ * Set-Cookie2 header fields.
  */
 public enum CookieRfc6265Util {
   /**
@@ -118,27 +103,23 @@ public enum CookieRfc6265Util {
     }
   },
   /**
-   * 5.2.1.  The Expires Attribute
+   * 5.2.1. The Expires Attribute
    * <p/>
-   * If the attribute-name case-insensitively matches the string
-   * "Expires", the user agent MUST process the cookie-av as follows.
+   * If the attribute-name case-insensitively matches the string "Expires", the user agent MUST process the cookie-av as
+   * follows.
    * <p/>
-   * Let the expiry-time be the result of parsing the attribute-value as
-   * cookie-date (see Section 5.1.1).
+   * Let the expiry-time be the result of parsing the attribute-value as cookie-date (see Section 5.1.1).
    * <p/>
-   * If the attribute-value failed to parse as a cookie date, ignore the
-   * cookie-av.
+   * If the attribute-value failed to parse as a cookie date, ignore the cookie-av.
    * <p/>
-   * If the expiry-time is later than the last date the user agent can
-   * represent, the user agent MAY replace the expiry-time with the last
-   * representable date.
+   * If the expiry-time is later than the last date the user agent can represent, the user agent MAY replace the
+   * expiry-time with the last representable date.
    * <p/>
-   * If the expiry-time is earlier than the earliest date the user agent
-   * can represent, the user agent MAY replace the expiry-time with the
-   * earliest representable date.
+   * If the expiry-time is earlier than the earliest date the user agent can represent, the user agent MAY replace the
+   * expiry-time with the earliest representable date.
    * <p/>
-   * Append an attribute to the cookie-attribute-list with an attribute-
-   * name of Expires and an attribute-value of expiry-time.
+   * Append an attribute to the cookie-attribute-list with an attribute- name of Expires and an attribute-value of
+   * expiry-time.
    */
   Expires {
     @Override
@@ -171,25 +152,22 @@ public enum CookieRfc6265Util {
     }
   },
   /**
-   * 5.2.2.  The Max-Age Attribute
+   * 5.2.2. The Max-Age Attribute
    * <p/>
-   * If the attribute-name case-insensitively matches the string "Max-
-   * Age", the user agent MUST process the cookie-av as follows.
+   * If the attribute-name case-insensitively matches the string "Max- Age", the user agent MUST process the cookie-av
+   * as follows.
    * <p/>
-   * If the first character of the attribute-value is not a DIGIT or a "-"
-   * character, ignore the cookie-av.
+   * If the first character of the attribute-value is not a DIGIT or a "-" character, ignore the cookie-av.
    * <p/>
-   * If the remainder of attribute-value contains a non-DIGIT character,
-   * ignore the cookie-av.
+   * If the remainder of attribute-value contains a non-DIGIT character, ignore the cookie-av.
    * <p/>
    * Let delta-seconds be the attribute-value converted to an integer.
    * <p/>
-   * If delta-seconds is less than or equal to zero (0), let expiry-time
-   * be the earliest representable date and time.  Otherwise, let the
-   * expiry-time be the current date and time plus delta-seconds seconds.
+   * If delta-seconds is less than or equal to zero (0), let expiry-time be the earliest representable date and time.
+   * Otherwise, let the expiry-time be the current date and time plus delta-seconds seconds.
    * <p/>
-   * Append an attribute to the cookie-attribute-list with an attribute-
-   * name of Max-Age and an attribute-value of expiry-time.
+   * Append an attribute to the cookie-attribute-list with an attribute- name of Max-Age and an attribute-value of
+   * expiry-time.
    */
   Max$2dAge {
     @Override
@@ -223,18 +201,17 @@ public enum CookieRfc6265Util {
 
   },
   /**
-   * 5.2.3.  The Domain Attribute
+   * 5.2.3. The Domain Attribute
    * <p/>
-   * If the attribute-name case-insensitively matches the string "Domain",
-   * the user agent MUST process the cookie-av as follows.
+   * If the attribute-name case-insensitively matches the string "Domain", the user agent MUST process the cookie-av as
+   * follows.
    * <p/>
-   * If the attribute-value is empty, the behavior is undefined.  However,
-   * the user agent SHOULD ignore the cookie-av entirely.
+   * If the attribute-value is empty, the behavior is undefined. However, the user agent SHOULD ignore the cookie-av
+   * entirely.
    * <p/>
    * If the first character of the attribute-value string is %x2E ("."):
    * <p/>
-   * Let cookie-domain be the attribute-value without the leading %x2E
-   * (".") character.
+   * Let cookie-domain be the attribute-value without the leading %x2E (".") character.
    * <p/>
    * Otherwise:
    * <p/>
@@ -242,8 +219,8 @@ public enum CookieRfc6265Util {
    * <p/>
    * Convert the cookie-domain to lower case.
    * <p/>
-   * Append an attribute to the cookie-attribute-list with an attribute-
-   * name of Domain and an attribute-value of cookie-domain.
+   * Append an attribute to the cookie-attribute-list with an attribute- name of Domain and an attribute-value of
+   * cookie-domain.
    */
   Domain {
     @Override
@@ -271,13 +248,12 @@ public enum CookieRfc6265Util {
   },
 
   /**
-   * 5.2.4.  The Path Attribute
+   * 5.2.4. The Path Attribute
    * <p/>
-   * If the attribute-name case-insensitively matches the string "Path",
-   * the user agent MUST process the cookie-av as follows.
+   * If the attribute-name case-insensitively matches the string "Path", the user agent MUST process the cookie-av as
+   * follows.
    * <p/>
-   * If the attribute-value is empty or if the first character of the
-   * attribute-value is not %x2F ("/"):
+   * If the attribute-value is empty or if the first character of the attribute-value is not %x2F ("/"):
    * <p/>
    * Let cookie-path be the default-path.
    * <p/>
@@ -285,8 +261,8 @@ public enum CookieRfc6265Util {
    * <p/>
    * Let cookie-path be the attribute-value.
    * <p/>
-   * Append an attribute to the cookie-attribute-list with an attribute-
-   * name of Path and an attribute-value of cookie-path.
+   * Append an attribute to the cookie-attribute-list with an attribute- name of Path and an attribute-value of
+   * cookie-path.
    */
   Path {
     @Override
@@ -312,11 +288,10 @@ public enum CookieRfc6265Util {
     }
   },
   /**
-   * 5.2.5.  The Secure Attribute
+   * 5.2.5. The Secure Attribute
    * <p/>
-   * If the attribute-name case-insensitively matches the string "Secure",
-   * the user agent MUST append an attribute to the cookie-attribute-list
-   * with an attribute-name of Secure and an empty attribute-value.
+   * If the attribute-name case-insensitively matches the string "Secure", the user agent MUST append an attribute to
+   * the cookie-attribute-list with an attribute-name of Secure and an empty attribute-value.
    */
   Secure {
     @Override
@@ -342,12 +317,10 @@ public enum CookieRfc6265Util {
     }
   },
   /**
-   * 5.2.6.  The HttpOnly Attribute
+   * 5.2.6. The HttpOnly Attribute
    * <p/>
-   * If the attribute-name case-insensitively matches the string
-   * "HttpOnly", the user agent MUST append an attribute to the cookie-
-   * attribute-list with an attribute-name of HttpOnly and an empty
-   * attribute-value.
+   * If the attribute-name case-insensitively matches the string "HttpOnly", the user agent MUST append an attribute to
+   * the cookie- attribute-list with an attribute-name of HttpOnly and an empty attribute-value.
    */
   HttpOnly {
     @Override
@@ -413,7 +386,7 @@ public enum CookieRfc6265Util {
 
   /**
    * @param filter ByteBuffers as keys for cookies
-   * @param input  unescaped bytes split by ';'
+   * @param input unescaped bytes split by ';'
    * @return slist of cookies
    */
   public static Pair<Pair<ByteBuffer, ByteBuffer>, ? extends Pair> parseCookie(ByteBuffer input,
@@ -449,16 +422,16 @@ public enum CookieRfc6265Util {
             while (filt.hasRemaining() && ckey.hasRemaining() && filt.get() == ckey.get());
             if (!filt.hasRemaining() && !ckey.hasRemaining()) {
               ret =
-                  new Pair<Pair<Object, ByteBuffer>, Pair>(new Pair(ckey.reset(), ((ByteBuffer) buf.duplicate().reset().flip()
-                      .position(vBegin)).slice()), ret);
+                  new Pair<Pair<Object, ByteBuffer>, Pair>(new Pair(ckey.reset(), ((ByteBuffer) buf
+                      .duplicate().reset().flip().position(vBegin)).slice()), ret);
               break;
             }
           }
         }
       } else
         ret =
-            new Pair<Pair<ByteBuffer, ByteBuffer>, Pair<?, ?>>(new Pair<>(ckey, ((ByteBuffer) buf.duplicate().reset().flip().position(vBegin))
-                .slice()), ret);
+            new Pair<Pair<ByteBuffer, ByteBuffer>, Pair<?, ?>>(new Pair<>(ckey, ((ByteBuffer) buf
+                .duplicate().reset().flip().position(vBegin)).slice()), ret);
     }
     return (Pair<Pair<ByteBuffer, ByteBuffer>, ? extends Pair>) ret;
   }

@@ -11,8 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Module generateDriver to facilitate declaring {@link CouchService} types and the entities they will manage.
- * When created, will wire up the {@link CouchServiceFactory} to create requested service instances.
+ * Module generateDriver to facilitate declaring {@link CouchService} types and the entities they will manage. When
+ * created, will wire up the {@link CouchServiceFactory} to create requested service instances.
  */
 public class CouchModuleBuilder {
   public static final String NAMESPACE = "couch_namespace";
@@ -22,8 +22,8 @@ public class CouchModuleBuilder {
       new ArrayList<Class<? extends CouchService<?>>>();
 
   /**
-   * Creates a new generateDriver. No namespace has been declared, a String constant must be bound to
-   * {@literal @Named(} {@value #NAMESPACE}) to allow this to correctly create service instances.
+   * Creates a new generateDriver. No namespace has been declared, a String constant must be bound to {@literal @Named(}
+   * {@value #NAMESPACE}) to allow this to correctly create service instances.
    */
   public CouchModuleBuilder() {
     this(null);
@@ -31,7 +31,7 @@ public class CouchModuleBuilder {
 
   /**
    * Creates a new generateDriver, with the given namespace for all databases.
-   *
+   * 
    * @param namespace
    */
   public CouchModuleBuilder(String namespace) {
@@ -58,7 +58,7 @@ public class CouchModuleBuilder {
           requireBinding(Key.get(String.class, Names.named(NAMESPACE)));
         }
 
-        //TODO setup some init for the entities so their DBs are known to exist before needed
+        // TODO setup some init for the entities so their DBs are known to exist before needed
 
         for (Class<? extends CouchService<?>> service : services) {
           bindService(service);
@@ -74,6 +74,7 @@ public class CouchModuleBuilder {
 
       /**
        * Helps validate that the current setup makes sense
+       * 
        * @param serviceType
        * @return
        */

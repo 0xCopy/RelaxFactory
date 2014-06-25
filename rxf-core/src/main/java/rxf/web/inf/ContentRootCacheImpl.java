@@ -11,8 +11,8 @@ import java.util.regex.Pattern;
 public class ContentRootCacheImpl extends ContentRootImpl {
 
   public static final long YEAR = TimeUnit.MILLISECONDS.convert(365, TimeUnit.DAYS);
-  public static final Pattern CACHE_PATTERN =
-      Pattern.compile(".*(clear.cache.gif|[0-9A-F]{32}[.]cache[.]html)$");
+  public static final Pattern CACHE_PATTERN = Pattern
+      .compile(".*(clear.cache.gif|[0-9A-F]{32}[.]cache[.]html)$");
 
   @Override
   public void onWrite(SelectionKey key) throws Exception {
