@@ -1,4 +1,4 @@
-package rxf.shared;
+package rxf.pouch;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.shared.GWT;
@@ -16,6 +16,7 @@ import java.util.Set;
 
 /**
  * usage:
+ * 
  * <pre>
  * String dbSpec = "http://" + Window.Location.getHost() + "/api/campaigns";
  * final PouchProxy campaigns = PouchProxy._create("campaigns");
@@ -128,25 +129,27 @@ public class PouchProxy extends JavaScriptObject {
    * <ul>
    * Fetch multiple documents, deleted document are only included if options.keys is specified.
    * <p/>
-   * <li> options.include_docs: Include the document in each row in the doc field
-   * <li> options.conflicts: Include conflicts in the _conflicts field of a doc
-   * <li> options.startkey & options.endkey: Get documents with keys in a certain range
-   * <li> options.descending: Reverse the order of the output table
-   * <li> options.keys: array of keys you want to get
-   * <ul><li> neither startkey nor endkey can be specified with this option
-   * <li> the rows are returned in the same order as the supplied "keys" array
-   * <li> the row for a deleted document will have the revision ID of the deletion, and an extra key "deleted":true in the "value" property
-   * <li> the row for a nonexistent document will just contain an "error" property with the value "not_found"
+   * <li>options.include_docs: Include the document in each row in the doc field
+   * <li>options.conflicts: Include conflicts in the _conflicts field of a doc
+   * <li>options.startkey & options.endkey: Get documents with keys in a certain range
+   * <li>options.descending: Reverse the order of the output table
+   * <li>options.keys: array of keys you want to get
+   * <ul>
+   * <li>neither startkey nor endkey can be specified with this option
+   * <li>the rows are returned in the same order as the supplied "keys" array
+   * <li>the row for a deleted document will have the revision ID of the deletion, and an extra key "deleted":true in
+   * the "value" property
+   * <li>the row for a nonexistent document will just contain an "error" property with the value "not_found"
    * </ul>
-   * <li> options.attachments: Include attachment data
-   *
+   * <li>options.attachments: Include attachment data
+   * 
    * @param docId
    * @param callback
    * @param options
    * @return
    */
   public final void fetchDoc(String docId, AsyncCallback<Splittable> callback, FetchOptions options) {
-    //    new JSONObject()
+    // new JSONObject()
 
     _fetchDoc(docId, callback, (null == options) ? JavaScriptObject.createObject()
         : parse(AutoBeanCodex.encode(generic.fetchoptions(options)).getPayload()));
@@ -165,15 +168,16 @@ public class PouchProxy extends JavaScriptObject {
                                 }-*/;
 
   /**
-   * Create a new document or update an existing document. If the document already exists you must specify its revision _rev, otherwise a conflict will occur.
+   * Create a new document or update an existing document. If the document already exists you must specify its revision
+   * _rev, otherwise a conflict will occur.
    * <p/>
    * There are some restrictions on valid property names of the documents, these are explained here.
    */
   public final <T> PouchProxy put(AutoBean<T> t, AsyncCallback<String> cb) {
     JavaScriptObject o;
     if (!GWT.isScript()) {
-      //      System.out.println(AutoBeanCodex.encode(t));
-      //      System.out.println(AutoBeanCodex.encode(t).getPayload());
+      // System.out.println(AutoBeanCodex.encode(t));
+      // System.out.println(AutoBeanCodex.encode(t).getPayload());
       o = parse(AutoBeanCodex.encode(t).getPayload());
     } else {
       o = (JavaScriptObject) t;
@@ -182,7 +186,8 @@ public class PouchProxy extends JavaScriptObject {
   }
 
   /**
-   * Create a new document or update an existing document. If the document already exists you must specify its revision _rev, otherwise a conflict will occur.
+   * Create a new document or update an existing document. If the document already exists you must specify its revision
+   * _rev, otherwise a conflict will occur.
    * <p/>
    * There are some restrictions on valid property names of the documents, these are explained here.
    */
@@ -242,11 +247,11 @@ public class PouchProxy extends JavaScriptObject {
         if (!GWT.isScript()) {
 
           String x = new JSONObject(result).toString();
-          //          System.err.println(x);
+          // System.err.println(x);
           decode = AutoBeanCodex.decode(resFactory, resultsClass, x);
         } else
           decode = AutoBeanCodex.decode(resFactory, resultsClass, (Splittable) result.cast());
-        //        System.err.println("decoded successfully");
+        // System.err.println("decoded successfully");
         cb.onSuccess(decode.as());
       }
     });
@@ -303,7 +308,8 @@ public class PouchProxy extends JavaScriptObject {
     List<String> getRevs_info();
 
     /**
-     * Fetch all leaf revisions if openrevs="all" or fetch all leaf revisions specified in openrevs array. Leaves will be returned in the same order as specified in input array
+     * Fetch all leaf revisions if openrevs="all" or fetch all leaf revisions specified in openrevs array. Leaves will
+     * be returned in the same order as specified in input array
      */
     Splittable getOpen_revs();
 
@@ -323,8 +329,9 @@ public class PouchProxy extends JavaScriptObject {
     Boolean getLocal_seq();
 
     /**
-     * An object of options to be sent to the ajax requester. In Node they are sent ver batim to request with the exception of:
-     * options.ajax.cache: Appends a random string to the end of all HTTP GET requests to avoid them being cached on IE. Set this to true to prevent this happening.
+     * An object of options to be sent to the ajax requester. In Node they are sent ver batim to request with the
+     * exception of: options.ajax.cache: Appends a random string to the end of all HTTP GET requests to avoid them being
+     * cached on IE. Set this to true to prevent this happening.
      */
     Splittable getAjax();
   }
@@ -355,7 +362,8 @@ public class PouchProxy extends JavaScriptObject {
     Set<String> getDoc_ids();
 
     /**
-     * Initialize the replication on the couch. The response is the CouchDB POST _replicate response and is different from the PouchDB replication response. Also, Splittable get_onChange is not supported on couch replications.
+     * Initialize the replication on the couch. The response is the CouchDB POST _replicate response and is different
+     * from the PouchDB replication response. Also, Splittable get_onChange is not supported on couch replications.
      */
     Boolean getServer();
 
@@ -416,12 +424,11 @@ public class PouchProxy extends JavaScriptObject {
     String getEndkey();
 
     /**
-     * array of keys you want to get
-     * neither startkey nor endkey can be specified with this option
+     * array of keys you want to get neither startkey nor endkey can be specified with this option
      * <p/>
-     * the rows are returned in the same order as the supplied "keys" array
-     * the row for a deleted document will have the revision ID of the deletion, and an extra id "deleted":true in the "value" property
-     * the row for a nonexistent document will just contain an "error" property with the value "not_found"
+     * the rows are returned in the same order as the supplied "keys" array the row for a deleted document will have the
+     * revision ID of the deletion, and an extra id "deleted":true in the "value" property the row for a nonexistent
+     * document will just contain an "error" property with the value "not_found"
      */
 
     Set<String> getKeys();
@@ -445,11 +452,10 @@ public class PouchProxy extends JavaScriptObject {
     }
 
     /**
-     * {
-     * "total_rows": 1,
-     * "rows": [
-     * { "doc": { "_id": "0B3358C1-BA4B-4186-8795-9024203EB7DD", "_rev": "1-5782E71F1E4BF698FA3793D9D5A96393", "blog_post": "my blog post" }, "id": "0B3358C1-BA4B-4186-8795-9024203EB7DD", "id": "0B3358C1-BA4B-4186-8795-9024203EB7DD", "value": { "rev": "1-5782E71F1E4BF698FA3793D9D5A96393" } }
-     * ] }
+     * { "total_rows": 1, "rows": [ { "doc": { "_id": "0B3358C1-BA4B-4186-8795-9024203EB7DD", "_rev":
+     * "1-5782E71F1E4BF698FA3793D9D5A96393", "blog_post": "my blog post" }, "id":
+     * "0B3358C1-BA4B-4186-8795-9024203EB7DD", "id": "0B3358C1-BA4B-4186-8795-9024203EB7DD", "value": { "rev":
+     * "1-5782E71F1E4BF698FA3793D9D5A96393" } } ] }
      */
 
     interface Results {
