@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.lang.Math.abs;
 import static java.util.Arrays.asList;
+import static java.util.Arrays.deepToString;
 
 /**
  * this is a utility class to parse a HttpRequest header or $res header according to declared need of header/cookies
@@ -405,11 +406,11 @@ public class Rfc822HeaderState {
 
   @Override
   public String toString() {
-    return "Rfc822HeaderState:{" + "headerInterest:" + headerInterest() + ", cookies:" + cookies
-        + ", sourceRoute:" + sourceRoute() + ", headerBuf:" + headerBuf() + ", headerStrings:"
-        + headerStrings() + ", methodProtocol:" + methodProtocol() + ", pathRescode:"
-        + pathResCode() + ", protocolStatus:" + protocolStatus() + ", sourceKey:" + sourceKey()
-        + '}';
+    return "Rfc822HeaderState:{" + "headerInterest:" + deepToString(headerInterest())
+        + ", cookies:" + cookies + ", sourceRoute:" + sourceRoute() + ", headerBuf:" + headerBuf()
+        + ", headerStrings:" + headerStrings() + ", methodProtocol:" + methodProtocol()
+        + ", pathRescode:" + pathResCode() + ", protocolStatus:" + protocolStatus()
+        + ", sourceKey:" + sourceKey() + '}';
   }
 
   public <T> T as(final Class<T> clazz) {
