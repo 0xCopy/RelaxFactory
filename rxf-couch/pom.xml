@@ -25,15 +25,6 @@
             <version>${parent.version}</version>
         </dependency>
 
-        <!--        <dependency>
-                    <groupId>1xio</groupId>
-                    <artifactId>1xio</artifactId>
-                    <version>${one.xio.version}</version>
-                </dependency>-->
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-         </dependency>
         <dependency>
             <groupId>com.google.web.bindery</groupId>
             <artifactId>requestfactory-server</artifactId>

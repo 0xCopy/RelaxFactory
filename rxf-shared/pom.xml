@@ -18,13 +18,13 @@
         </dependency>
         <dependency>
             <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
+            <artifactId>junit</artifactId><scope>test</scope>
          </dependency>
-        <dependency>
+      <!--  <dependency>
             <groupId>com.google.web.bindery</groupId>
-            <artifactId>requestfactory-server</artifactId>
+            <artifactId>requestfactory-apt</artifactId>
             <scope>provided</scope>
-         </dependency>
+         </dependency>-->
     </dependencies>
     <packaging>jar</packaging>
     <build>

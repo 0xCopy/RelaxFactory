@@ -16,10 +16,6 @@
     </properties>
     <dependencies>
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-        </dependency>
-        <dependency>
         <groupId>javolution</groupId>
         <artifactId>javolution</artifactId>
         </dependency>
