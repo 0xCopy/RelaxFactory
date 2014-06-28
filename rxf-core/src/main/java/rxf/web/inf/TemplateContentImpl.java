@@ -14,7 +14,16 @@ import java.util.Map;
 
 @PreRead
 public abstract class TemplateContentImpl extends ContentRootImpl {
-  static Map<File, File> content = new LinkedHashMap<>();
+
+  private static Map<File, File> content = new LinkedHashMap<>();
+
+  public static Map<File, File> getContent() {
+    return content;
+  }
+
+  public static void setContent(Map<File, File> content) {
+    TemplateContentImpl.content = content;
+  }
 
   @Override
   public void onWrite(final SelectionKey key) throws Exception {
@@ -32,15 +41,15 @@ public abstract class TemplateContentImpl extends ContentRootImpl {
 
     if (send200) {
       File rxf;
-      if (!content.containsKey(file)) {
+      if (!getContent().containsKey(file)) {
         rxf = File.createTempFile("rxf", ".html");
         rxf.deleteOnExit();
         try (FileWriter fileWriter = new FileWriter(rxf)) {
           fileWriter.write(doReplace(CharStreams.toString(new FileReader(file))));
         }
-        content.put(file, rxf);
+        getContent().put(file, rxf);
       } else
-        rxf = content.get(file);
+        rxf = getContent().get(file);
       sendFile(key, finalFname, rxf, new Date(), getReq().asResponse().status(HttpStatus.$200),
           null);
     }

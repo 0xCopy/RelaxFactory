@@ -47,6 +47,10 @@ public class Errors {
     error(key, HttpStatus.$400, "Bad Request");
   }
 
+  public static void $401(SelectionKey key, String reason) {
+    error(key, HttpStatus.$404, HttpStatus.$404.caption + ": " + reason);
+  }
+
   public static void $404(SelectionKey key, String path) {
     error(key, HttpStatus.$404, "Not Found: " + path);
   }

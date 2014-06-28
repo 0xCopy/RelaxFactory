@@ -12,7 +12,6 @@ import java.nio.channels.SelectionKey;
 public class FinishRead extends AsioVisitor.Impl {
   public FinishRead(ByteBuffer cursor, Runnable success) {
     this.cursor = cursor;
-
     this.success = success;
   }
 

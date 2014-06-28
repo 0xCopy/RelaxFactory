@@ -2,10 +2,11 @@ package rxf.web.inf;
 
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpMethod;
-import rxf.shared.PreRead;
 import rxf.core.Rfc822HeaderState;
 import rxf.core.Rfc822HeaderState.HttpRequest;
 import rxf.core.Server;
+import rxf.shared.PreRead;
+import rxf.shared.KeepMatcher;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -21,7 +22,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static java.lang.StrictMath.min;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static one.xio.HttpMethod.GET;
 import static one.xio.HttpMethod.POST;
@@ -99,7 +99,6 @@ public class ProtocolMethodDispatch extends Impl {
 
   public void onRead(SelectionKey key) throws Exception {
     SocketChannel channel = (SocketChannel) key.channel();
-
     ByteBuffer cursor = ByteBuffer.allocateDirect(4 << 10);
     int read = channel.read(cursor);
     if (-1 == read) {
@@ -119,13 +118,11 @@ public class ProtocolMethodDispatch extends Impl {
       }
       String method1 = httpRequest.method();
       method = HttpMethod.valueOf(method1);
-
     } catch (Exception e) {
     }
 
     if (null == method) {
       ((SocketChannel) key.channel()).socket().close();// cancel();
-
       return;
     }
 
@@ -133,7 +130,7 @@ public class ProtocolMethodDispatch extends Impl {
     String path = httpRequest.path();
     for (Entry<Pattern, Class<? extends Impl>> visitorEntry : entries) {
       Matcher matcher = visitorEntry.getKey().matcher(path);
-      if (matcher.find()) {
+      if (matcher.matches()) {
         if (DEBUG_SENDJSON) {
           System.err.println("+?+?+? using " + matcher.toString());
         }
@@ -141,7 +138,10 @@ public class ProtocolMethodDispatch extends Impl {
         Impl impl;
 
         impl = value.newInstance();
-        Object a[] = {impl, httpRequest, cursor};
+        boolean keepMatch = value.isAnnotationPresent(KeepMatcher.class);
+        Object a[] =
+            keepMatch ? new Object[] {impl, httpRequest, cursor, matcher.toMatchResult()}
+                : new Object[] {impl, httpRequest, cursor};
         key.attach(a);
         if (value.isAnnotationPresent(PreRead.class))
           impl.onRead(key);

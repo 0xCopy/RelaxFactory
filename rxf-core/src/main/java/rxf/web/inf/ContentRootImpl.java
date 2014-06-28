@@ -19,6 +19,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.util.regex.MatchResult;
 
 import static java.lang.Math.min;
 import static java.nio.channels.SelectionKey.*;
@@ -37,6 +38,7 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
   private ByteBuffer cursor;
   private SocketChannel channel;
   private HttpRequest req;
+  private MatchResult matchResults;
 
   public static String fileScrub(String scrubMe) {
     char inverseChar = '/' == File.separatorChar ? '\\' : '/';
@@ -57,6 +59,10 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
           }
           if (o instanceof Rfc822HeaderState) {
             setReq(((Rfc822HeaderState) o).$req());
+            continue;
+          }
+          if (o instanceof MatchResult) {
+            setMatchResults((MatchResult) o);
             continue;
           }
         }
@@ -235,5 +241,13 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
 
   public void setRootPath(String rootPath) {
     this.rootPath = rootPath;
+  }
+
+  public void setMatchResults(MatchResult matchResults) {
+    this.matchResults = matchResults;
+  }
+
+  public MatchResult getMatchResults() {
+    return matchResults;
   }
 }
