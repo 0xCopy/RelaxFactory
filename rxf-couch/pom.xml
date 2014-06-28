@@ -35,6 +35,10 @@
                     <artifactId>json</artifactId>
                     <groupId>org.json</groupId>
                 </exclusion>
+                <exclusion>
+                    <artifactId>validation-api</artifactId>
+                    <groupId>javax.validation</groupId>
+                </exclusion>
             </exclusions>
         </dependency>
         <!-- see sample projects for correct placement -->

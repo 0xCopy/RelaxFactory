@@ -3,10 +3,7 @@ package rxf.core;
 import one.xio.AsioVisitor;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.channels.*;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Queue;
 import java.util.Set;
@@ -19,7 +16,8 @@ import static java.lang.StrictMath.min;
  */
 public class Server {
   public static final Queue<Object[]> q = new ConcurrentLinkedQueue<>();
-  public static final boolean DEBUG_SENDJSON = false;
+  public static final boolean DEBUG_SENDJSON = Config.get("RXF_DEBUG_SENDJSON", "false").equals(
+      "true");
   public static Thread selectorThread;
   public static boolean killswitch;
   public static Selector selector;

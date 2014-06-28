@@ -3,7 +3,7 @@ package rxf.couch;
 import rxf.couch.driver.CouchMetaDriver.etype;
 import rxf.rpc.RpcHelper;
 
-import javax.validation.ValidationException;
+import java.lang.IllegalArgumentException;
 
 /**
  * User: jim Date: 5/29/12 Time: 1:58 PM
@@ -27,7 +27,7 @@ public abstract class DbKeysBuilder {
     for (etype etype : parms.keySet()) {
       Object o = get(etype);
       if (!etype.validate(o)) {
-        throw new ValidationException("!!! " + etype + " fails with value: " + o);
+        throw new IllegalArgumentException("!!! " + etype + " fails with value: " + o);
       }
     }
     return true;

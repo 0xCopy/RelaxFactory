@@ -117,9 +117,9 @@ public class Rfc822HeaderState {
 
   @SuppressWarnings({"RedundantCast"})
   public static class HttpRequest extends Rfc822HeaderState {
-      ByteBuffer[] cookieInterest;
+    ByteBuffer[] cookieInterest;
 
-      public HttpRequest(Rfc822HeaderState proto) {
+    public HttpRequest(Rfc822HeaderState proto) {
       super(proto);
       String protocol = protocol();
       if (null != protocol && !protocol.startsWith(HTTP)) {
@@ -208,7 +208,7 @@ public class Rfc822HeaderState {
       return this;
     }
 
-      /**
+    /**
      * @param keys optional list of keys , default is full cookieInterest
      * @return stringy cookie map
      */
