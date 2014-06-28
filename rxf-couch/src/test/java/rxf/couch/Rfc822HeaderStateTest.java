@@ -99,7 +99,7 @@ public class Rfc822HeaderStateTest {
 
     Map<String, String> cookies = httpRequest.getCookies("SAPISID", "SSID");
     assertEquals(String.valueOf(cookies),
-        "{SAPISID=tgSIdsbz9xkHOX1P/Agnhtasdf2FpF, SSID=A3ZS9cJVATN-UjcZP}");
+        "{SAPISID=tgSIdsbz9xkHOX1P/Agnhtasdf2FpFQ, SSID=A3ZS9cJVATN-UjcZP}");
 
     String ssid = httpRequest.getCookie("SSID");
     assertEquals("A3ZS9cJVATN-UjcZP", ssid);

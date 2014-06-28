@@ -1,5 +1,7 @@
 package rxf.core;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.util.concurrent.Atomics;
 
 import one.xio.HttpHeaders;
@@ -110,16 +112,14 @@ public class Rfc822HeaderState {
 
   public String headerString(HttpHeaders httpHeader) {
     return headerString(httpHeader.getHeader()); // To change body of created methods use File | Settings | File
-                                                 // Templates.
+    // Templates.
   }
 
   @SuppressWarnings({"RedundantCast"})
   public static class HttpRequest extends Rfc822HeaderState {
-    public static final ByteBuffer[] EMPTY_BBAR = new ByteBuffer[0];
-    ByteBuffer[] cookieInterest;
-    Pair<Pair<ByteBuffer, ByteBuffer>, ? extends Pair> parsedCookies;
+      ByteBuffer[] cookieInterest;
 
-    public HttpRequest(Rfc822HeaderState proto) {
+      public HttpRequest(Rfc822HeaderState proto) {
       super(proto);
       String protocol = protocol();
       if (null != protocol && !protocol.startsWith(HTTP)) {
@@ -153,7 +153,7 @@ public class Rfc822HeaderState {
 
     public HttpRequest protocol(String protocol) {
       return (HttpRequest) protocolStatus(protocol); // To change body of overridden methods use File | Settings | File
-                                                     // Templates.
+      // Templates.
     }
 
     @Override
@@ -208,97 +208,38 @@ public class Rfc822HeaderState {
       return this;
     }
 
-    /**
-     * @return slist of cookie pairs
-     */
-    Pair<Pair<ByteBuffer, ByteBuffer>, ? extends Pair> parsedCookies() {
-
-      if (null != parsedCookies)
-        return parsedCookies;
-      else {
-        cookieInterest = null == cookieInterest ? EMPTY_BBAR : cookieInterest;
-        Pair<ByteBuffer, ? extends Pair> p1 = headerExtract(HttpHeaders.Cookie.getToken());
-        parsedCookies = null;
-        while (null != p1) {
-          Pair<Pair<ByteBuffer, ByteBuffer>, ? extends Pair> p2 =
-              CookieRfc6265Util.parseCookie(p1.getA());
-          if (null != parsedCookies) {// seek to null of prev.
-            Pair<Pair<ByteBuffer, ByteBuffer>, ? extends Pair> p3 = parsedCookies;
-            Pair<Pair<ByteBuffer, ByteBuffer>, ? extends Pair> p4 = parsedCookies;
-            while (null != p3)
-              p3 = (p4 = p3).getB();
-            parsedCookies = new Pair<Pair<ByteBuffer, ByteBuffer>, Pair>(p4.getA(), p2);
-          } else {
-            parsedCookies = p2;
-          }
-          p1 = p1.getB();
-
-        }
-      }
-      return parsedCookies;
-    }
-
-    /**
-     * warning: interns the keys. make them count!
-     * 
+      /**
      * @param keys optional list of keys , default is full cookieInterest
      * @return stringy cookie map
      */
     public Map<String, String> getCookies(String... keys) {
 
-      ByteBuffer[] k;
-      if (0 >= keys.length) {
-        k = cookieInterest;
-      } else {
-        k = new ByteBuffer[keys.length];
-        for (int i = 0; i < keys.length; i++) {
-          String key = keys[i];
-          k[i] = (ByteBuffer) ByteBuffer.wrap(key.intern().getBytes(StandardCharsets.UTF_8));
+      List<String> headersNamed = getHeadersNamed(HttpHeaders.Cookie);
+      String join = Joiner.on(';').join(headersNamed);
+      Iterable<String> split = Splitter.on(';')/* .withKeyValueSeparator("=") */.split(join);
+      Map<String, String> r = new TreeMap<>();
+      Set<String> strings = keys.length > 0 ? new HashSet<>(asList(keys)) : null;
+
+      for (Iterator<String> iterator = split.iterator(); iterator.hasNext() && keys.length == 0
+          || keys.length > r.size();) {
+        String s = iterator.next();
+        int i = s.indexOf('=');
+        String key = s.substring(0, i).trim();
+        if (null == strings || strings.contains(key)) {
+          String v = s.substring(i + 1).trim();
+          r.put(key, v);
         }
       }
-      Map<String, String> ret = new TreeMap<>();
-      Pair<Pair<ByteBuffer, ByteBuffer>, ? extends Pair> pair = parsedCookies();
-      List<ByteBuffer> kl = new LinkedList<>(asList(k));
-      while (null != pair && !kl.isEmpty()) {
-        Pair<ByteBuffer, ByteBuffer> a1 = pair.getA();
-        ByteBuffer ckey = (ByteBuffer) a1.getA();
-        ListIterator<ByteBuffer> ki = kl.listIterator();
-        while (ki.hasNext()) {
-          ByteBuffer interestKey = ki.next();
-          if (interestKey.equals(ckey)) {
-            ret.put(StandardCharsets.UTF_8.decode(interestKey).toString().intern(),
-                StandardCharsets.UTF_8.decode(a1.getB()).toString());
-            ki.remove();
-            break;
-          }
-        }
-        pair = pair.getB();
-      }
-      return ret;
+
+      return r;
     }
 
     /**
-     * warning! interns the key. make it count!
-     * 
      * @param key
      * @return cookie value
      */
-
     public String getCookie(String key) {
-      ByteBuffer k =
-          (ByteBuffer) ByteBuffer.wrap(key.intern().getBytes(StandardCharsets.UTF_8)).mark();
-      Pair<Pair<ByteBuffer, ByteBuffer>, ? extends Pair> pair = parsedCookies();
-      while (null != pair) {
-
-        Pair<ByteBuffer, ByteBuffer> a1 = pair.getA();
-        ByteBuffer a = (ByteBuffer) a1.getA();
-        if (a.equals(k)) {
-          return String.valueOf(StandardCharsets.UTF_8.decode(avoidStarvation((ByteBuffer) a1
-              .getB())));
-        }
-        pair = pair.getB();
-      }
-      return null;
+      return getCookies(key).values().iterator().next();
     }
   }
 
@@ -519,7 +460,7 @@ public class Rfc822HeaderState {
    */
   public Rfc822HeaderState headerString(HttpHeaders hdrEnum, String s) {
     return headerString(hdrEnum.getHeader().trim(), s); // To change body of created methods use File | Settings | File
-                                                        // Templates.
+    // Templates.
   }
 
   /**
@@ -1048,9 +989,9 @@ public class Rfc822HeaderState {
    */
   public SelectionKey sourceKey() {
     return null == sourceKey ? (sourceKey = Atomics.newReference()).get() : sourceKey.get(); // To change body of
-                                                                                             // created methods use File
-                                                                                             // | Settings | File
-                                                                                             // Templates.
+    // created methods use File
+    // | Settings | File
+    // Templates.
   }
 
   public static boolean moveCaretToDoubleEol(ByteBuffer buffer) {
