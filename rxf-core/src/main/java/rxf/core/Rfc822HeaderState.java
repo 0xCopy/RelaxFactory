@@ -12,7 +12,6 @@ import rxf.web.inf.ProtocolMethodDispatch;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.IntBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SelectionKey;
@@ -213,12 +212,15 @@ public class Rfc822HeaderState {
      * @return stringy cookie map
      */
     public Map<String, String> getCookies(String... keys) {
+      Map<String, String> r = null;
 
       List<String> headersNamed = getHeadersNamed(HttpHeaders.Cookie);
+      if (null == headersNamed || headersNamed.isEmpty()) {
+        return null;
+      }
       String join = Joiner.on(';').join(headersNamed);
       Iterable<String> split = Splitter.on(';')/* .withKeyValueSeparator("=") */.split(join);
       Set<String> strings = keys.length > 0 ? new HashSet<>(asList(keys)) : null;
-      Map<String, String> r = null;
 
       for (Iterator<String> iterator = split.iterator(); iterator.hasNext();) {
         String s = iterator.next();
@@ -516,29 +518,6 @@ public class Rfc822HeaderState {
    * <p/>
    * performs rewind
    * 
-   * @param header a header name
-   * @return a list of values
-   */
-  public List<String> getHeadersNamed(String header) {
-    CharBuffer charBuffer = CharBuffer.wrap(header);
-    ByteBuffer henc = UTF_8.encode(charBuffer);
-
-    Pair<ByteBuffer, ? extends Pair> ret = headerExtract(henc);
-
-    List<String> objects = new ArrayList<>();
-    while (null != ret) {
-      objects.add(UTF_8.decode(ret.getA()).toString());
-      ret = ret.getB();
-    }
-
-    return objects;
-  }
-
-  /**
-   * this is agrep of the full header state to find one or more headers of a given name.
-   * <p/>
-   * performs rewind
-   * 
    * @param theHeader a header enum
    * @return a list of values
    */
@@ -584,7 +563,7 @@ public class Rfc822HeaderState {
             while (slice.hasRemaining() && slice.get() != '\n');
             slice.mark();
             {
-              if (!Character.isWhitespace(slice.get())) {
+              if (!slice.hasRemaining() || !Character.isWhitespace(slice.get())) {
                 slice.reset().flip();
                 String trim = UTF_8.decode(slice).toString().trim();
                 r.add(trim);
@@ -595,65 +574,6 @@ public class Rfc822HeaderState {
       }
     }
     return r.isEmpty() ? null : r;
-  }
-
-  /**
-   * string-averse buffer based header extraction
-   * 
-   * @param hdrEnc a header token
-   * @return a backwards singley-linked list of pairs.
-   */
-  public Pair<ByteBuffer, ? extends Pair> headerExtract(ByteBuffer hdrEnc) {
-    hdrEnc = (ByteBuffer) hdrEnc.asReadOnlyBuffer().rewind();
-    ByteBuffer buf = avoidStarvation(headerBuf());
-
-    Pair<ByteBuffer, ? extends Pair> ret = null;
-    int hdrTokenEnd = hdrEnc.limit();
-
-    while (buf.hasRemaining()) {
-      int begin = buf.position();
-      while (buf.hasRemaining() && ':' != buf.get() && buf.position() - 1 - begin <= hdrTokenEnd);
-      int tokenEnd = buf.position() - 1 - begin;
-      if (tokenEnd == hdrTokenEnd) {
-        ByteBuffer sampleHdr =
-            (ByteBuffer) ((ByteBuffer) buf.duplicate().position(begin)).slice().limit(hdrTokenEnd);
-        if (sampleHdr.equals(hdrEnc.rewind())) {
-          // found it for sure
-          begin = buf.position();
-          while (buf.hasRemaining()) {
-            int endl = buf.position();
-            byte b;
-            while (buf.hasRemaining() && LF != (b = buf.get())) {
-              if (!Character.isWhitespace(b)) {
-                endl = buf.position();
-              }
-            }
-
-            buf.mark();
-            if (buf.hasRemaining()) {
-              b = buf.get();
-              if (!Character.isWhitespace(b)) {
-
-                ByteBuffer outBuf =
-                    (ByteBuffer) ((ByteBuffer) buf.reset()).duplicate().position(begin).limit(endl);
-                while (outBuf.hasRemaining()
-                    && Character.isWhitespace(((ByteBuffer) outBuf.mark()).get())) {
-                }
-                outBuf.reset();// ltrim()
-                ret = new Pair<ByteBuffer, Pair>(outBuf, ret);
-                break;
-              }
-            }
-
-          }
-        }
-      }
-      if (buf.remaining() > hdrTokenEnd + 3) {
-        while (buf.hasRemaining() && LF != buf.get()) {
-        }
-      }
-    }
-    return ret;
   }
 
   /**
@@ -806,12 +726,13 @@ public class Rfc822HeaderState {
    * <p/>
    * these addHeaderInterest are mapped at cardinality<=1 when {@link #apply(ByteBuffer)} is called.
    * <p/>
-   * for cardinality=>1 addHeaderInterest {@link #getHeadersNamed(String)} is a pure grep over the entire ByteBuffer.
+   * for cardinality=>1 addHeaderInterest {@link #getHeadersNamed(one.xio.HttpHeaders)} is a pure grep over the entire
+   * ByteBuffer.
    * <p/>
    * 
    * @param newInterest
    * @return
-   * @see #getHeadersNamed(String)
+   * @see #getHeadersNamed(one.xio.HttpHeaders)
    * @see #apply(ByteBuffer)
    */
   public Rfc822HeaderState addHeaderInterest(String... newInterest) {
@@ -890,7 +811,7 @@ public class Rfc822HeaderState {
    * <p/>
    * the value of a header appearing more than once is unspecified.
    * <p/>
-   * multiple occuring headers require {@link #getHeadersNamed(String)}
+   * multiple occuring headers require {@link #getHeadersNamed(one.xio.HttpHeaders)}
    * 
    * @return the parsed values designated by the {@link #headerInterest} list of keys. addHeaderInterest present in
    *         {@link #headerInterest} not appearing in the {@link ByteBuffer} input will not be in this map.

@@ -1,20 +1,15 @@
 package rxf.couch;
 
 import one.xio.HttpHeaders;
-import org.junit.Assert;
 import org.junit.Test;
-import rxf.core.CookieRfc6265Util;
 import rxf.core.Rfc822HeaderState;
-import rxf.shared.Pair;
 
-import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
 
 import static junit.framework.Assert.assertEquals;
-import static junit.framework.TestCase.assertNotNull;
-import static org.junit.Assert.assertArrayEquals;
 
 public class CookieRfc6265UtilTest {
 
@@ -132,76 +127,9 @@ public class CookieRfc6265UtilTest {
     buf.toString();
 
     Rfc822HeaderState apply = ActionBuilder.get().state().read(buf);
-    List<String> headersNamed = apply.$req().getHeadersNamed("P3P");
+    List<String> headersNamed = apply.$req().getHeadersNamed(HttpHeaders.P3P);
     Iterator<String> iterator = headersNamed.iterator();
     assertEquals(FB_P3P_POLICY, iterator.next());
   }
 
-  @Test
-  public void testFilteredCookies() {
-    ByteBuffer buf = (ByteBuffer) StandardCharsets.UTF_8.encode(H4).rewind();
-
-    Rfc822HeaderState apply = ActionBuilder.get().state().read(buf);
-    Pair<ByteBuffer, ? extends Pair> byteBufferPair =
-        apply.headerExtract(HttpHeaders.Cookie.getToken());
-    assertNotNull(byteBufferPair);
-    ByteBuffer a = byteBufferPair.getA();
-    Pair<Pair<ByteBuffer, ByteBuffer>, ? extends Pair> pairPair =
-        CookieRfc6265Util.parseCookie(a, ByteBuffer
-            .wrap("SAPISID".getBytes(StandardCharsets.UTF_8)), ByteBuffer.wrap("SSID"
-            .getBytes(StandardCharsets.UTF_8)));
-    assertNotNull(pairPair);
-    LinkedHashMap objectObjectLinkedHashMap = new LinkedHashMap();
-    while (pairPair != null) {
-      Pair<ByteBuffer, ByteBuffer> a1 = pairPair.getA();
-      objectObjectLinkedHashMap.put(StandardCharsets.UTF_8.decode(a1.getA()),
-          StandardCharsets.UTF_8.decode(a1.getB()));
-      pairPair = pairPair.getB();
-    }
-    assertEquals("{SAPISID=tgSIdsbz9xkHOX1P/Agnhtasdf2FpF, SSID=A3ZS9cJVATN-UjcZP}", String
-        .valueOf(objectObjectLinkedHashMap));
-  }
-
-  @Test
-  public void testGiantCookies() {
-    ByteBuffer buf = (ByteBuffer) StandardCharsets.UTF_8.encode(H4).rewind();
-
-    Rfc822HeaderState apply = ActionBuilder.get().state().read(buf);
-    Pair<ByteBuffer, ? extends Pair> byteBufferPair =
-        apply.headerExtract(HttpHeaders.Cookie.getToken());
-    assertNotNull(byteBufferPair);
-    ByteBuffer a = byteBufferPair.getA();
-    Pair<Pair<ByteBuffer, ByteBuffer>, ? extends Pair> pairPair = CookieRfc6265Util.parseCookie(a);
-    assertNotNull(pairPair);
-    LinkedHashMap<Object, Object> objectObjectLinkedHashMap = new LinkedHashMap();
-    while (pairPair != null) {
-      Pair<ByteBuffer, ByteBuffer> a1 = pairPair.getA();
-      objectObjectLinkedHashMap.put(StandardCharsets.UTF_8.decode(a1.getA()),
-          StandardCharsets.UTF_8.decode(a1.getB()));
-      pairPair = pairPair.getB();
-    }
-    assertEquals(
-        "{SAPISID=tgSIdsbz9xkHOX1P/Agnhtasdf2FpF, APISID=DHxcLasdfsdfH/AxXWzuqwfHtg295qj, SSID=A3ZS9cJVATN-UjcZP, HSID=ALfs2asdfNogoY, SID=DQAAAJYBAACJjEbykiLymnsmCijJ7sPIiCsCwT3v_yD44NeDI1i_r5mhm6Hnf-_RkyYccS7t06YAC5U7bmilftFnUYXMydh1JjzbltkVug8NoPwiluQ7WXVB2mSCk2aOJoSZ1J3IckydUz2y8Hznun6YoFC0rWkWyPuChf_X7devicDNd7dtSAo8OunVXn2hbGkBC3AuQb27lXtcf7ATLIz9Arh4xLTM0dDj_Z9CVeBWAkDBFpk-wU7MDijwAZuxeUTAZiGPBFvO8S0FuZnP9IasdfRJJpIFoKQm_uvvJ6_JJ9fXNyllr3w36HaqF42tzTmJ6rA7eiqDsWWd-pfjWe3Qs9uUtlzsG0jd3FOVWO9KihjJOlO5YuXLZjLiqWD027T-yiLh7KV9Zlrs-sZyPeyk31z1AasdfasdfNxN9rHe8K_kfn4k8XFGPbwQpiExiQwon6_H7BoNm7RYa2BHP_9arlNBSagylN_GV54MWLKMWxbsw4q2DfBmT_bCfmkpQ, NID=67=dy_0k2SRmS5-q7gEtD5f-az0WwCpNciGDvuiP3x0kJLsarI5pQRzKqvd0ajnn3-Dq6MWimIBE-C8ySfOOqx5j17vatu3pfuZsfrdthMTVaUIL7cE5z94j_E7_TYak95N1DfpFsAl50GetpjXd0MjjiuD2V0V4DDMttm0cxEscxSCgtTfEvmfHkwfC9f8BJ28tPoHaq8Pigxi0Dj1NZmHIHbVibm7fhFBneIpf_g42_YU, PREF=ID=5a2sdfa90e7:U=8c514sfda77f:FF=0:LD=en:TM=1357sadf00:LM=1358625547:GM=1:S=rYMmpjBrqo0Q78y5, S=gmail=fgbZW4vIzVWCtZnFVCoOMg, GX=DQAAAJkBAAAlnE4Pu1mJmcasdfasdffKRTN5voSQURUbGUSv3qLINpHwX0dRuye6XdWZLyJ4skV14FXZGVT2mvjmjxi8cDkQw0N25elAqh2B-BfGg8GnRBUO8J7ic6tkXp2af3c-jSVcgAHky3me9Thw9wQaeYEJ9GIXCzx5A00Feg790rPprZHMzaV6PQ1Id1iRsrBwgV4e5l7c3zjZ1cJ_1ovcVIubMc1pIyhAAyx0gdg90fm5mVmRDGEzc6MQClM70pmbfo1aFfV0HjonpFZ011DUnUWfk4mulIwpLFrbwE7oCWSRJff72Qj2BPMTyp0CbcvVjdtZaJ5x1mE0_yQCkoXNdd_6LBLFoOwGE_oDQd6Yq0fwOgUadf0_odvD9QRmZYb5VF43QN4AKxcvHp4g5HIb_isBUVH__xVtpM_PWhtqLqHr2ruPuLTFbD8-EKFIENxDvZqJNMzMo8UFxiNr6sdfasdfiCQMMelmpqSgCJNmAEskM9zj8GOeTpyh7nnjMXZzERAzrK7w, GMAIL_IMP=v*2%2Fgd-t*1*1150!http%3A%252f%252fwww.google.com%252fig%252fmodules%252fcalendar-gmail.xml%2Fip-il*0%2Fip-o*0%2Fip-dil*0%2Fip-r*1%2Fip-oe*1%2Fip-p*1%2Fgd-t*1*2094!http%3A%252f%252fwww.google.com%252fig%252fmodules%252fdocs.xml%2Fbc-se6*1%2Fbc-se12*1%2Fpf-s*4673, GMAIL_AT=AF6bupPsadfasdfaAFWB8ps4MXleg, gmailchat=sadfasdaf@gmail.com/902064}",
-        String.valueOf(objectObjectLinkedHashMap));
-  }
-
-  @Test
-  public void testParseSetCookies() {
-    ByteBuffer buf = (ByteBuffer) StandardCharsets.UTF_8.encode(H5).rewind();
-
-    Rfc822HeaderState.HttpResponse apply = ActionBuilder.get().state().read(buf).$res();
-
-    Pair<ByteBuffer, ? extends Pair> byteBufferPair =
-        apply.headerExtract(HttpHeaders.Set$2dCookie.getToken());
-    ByteBuffer a = byteBufferPair.getA();
-    EnumMap<CookieRfc6265Util, Serializable> rfc6265SerializableEnumMap =
-        CookieRfc6265Util.parseSetCookie(a);
-    Assert.assertEquals(new Date("Fri Jan 20 21:53:14 PST 2023"), rfc6265SerializableEnumMap
-        .get(CookieRfc6265Util.Expires));
-    assertArrayEquals(".google.com".getBytes(StandardCharsets.UTF_8),
-        (byte[]) rfc6265SerializableEnumMap.get(CookieRfc6265Util.Domain));
-    assertArrayEquals("/".getBytes(StandardCharsets.UTF_8), (byte[]) rfc6265SerializableEnumMap
-        .get(CookieRfc6265Util.Path));
-
-  }
 }
