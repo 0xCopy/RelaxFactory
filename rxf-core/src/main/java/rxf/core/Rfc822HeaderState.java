@@ -217,17 +217,22 @@ public class Rfc822HeaderState {
       List<String> headersNamed = getHeadersNamed(HttpHeaders.Cookie);
       String join = Joiner.on(';').join(headersNamed);
       Iterable<String> split = Splitter.on(';')/* .withKeyValueSeparator("=") */.split(join);
-      Map<String, String> r = new TreeMap<>();
       Set<String> strings = keys.length > 0 ? new HashSet<>(asList(keys)) : null;
+      Map<String, String> r = null;
 
-      for (Iterator<String> iterator = split.iterator(); iterator.hasNext() && keys.length == 0
-          || keys.length > r.size();) {
+      for (Iterator<String> iterator = split.iterator(); iterator.hasNext();) {
         String s = iterator.next();
         int i = s.indexOf('=');
-        String key = s.substring(0, i).trim();
-        if (null == strings || strings.contains(key)) {
-          String v = s.substring(i + 1).trim();
-          r.put(key, v);
+        if (-1 != i) {
+          if (null == r)
+            r = new TreeMap<>();
+          String key = s.substring(0, i).trim();
+          if (null == strings || strings.contains(key)) {
+            String v = s.substring(i + 1).trim();
+            r.put(key, v);
+            if (keys.length > 0 && r.size() == keys.length)
+              break;
+          }
         }
       }
 
@@ -239,7 +244,8 @@ public class Rfc822HeaderState {
      * @return cookie value
      */
     public String getCookie(String key) {
-      return getCookies(key).values().iterator().next();
+      Map<String, String> cookies1 = getCookies(key);
+      return null != cookies1 && (!cookies1.isEmpty()) ? cookies1.values().iterator().next() : null;
     }
   }
 
@@ -537,13 +543,14 @@ public class Rfc822HeaderState {
    * @return a list of values
    */
   public List<String> getHeadersNamed(HttpHeaders theHeader) {
-
-    Pair<ByteBuffer, ? extends Pair> ret = headerExtract(theHeader.getToken());
+    if (!headerBuf().hasRemaining())
+      headerBuf().rewind();
+    Pair<ByteBuffer, ? extends Pair> slist = headerExtract(theHeader.getToken());
 
     List<String> objects = new ArrayList<>();
-    while (null != ret) {
-      objects.add(StandardCharsets.UTF_8.decode(ret.getA()).toString());
-      ret = ret.getB();
+    while (null != slist) {
+      objects.add(StandardCharsets.UTF_8.decode(slist.getA()).toString());
+      slist = slist.getB();
     }
 
     return objects;
