@@ -6,7 +6,6 @@ import rxf.core.Rfc822HeaderState;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
@@ -87,23 +86,6 @@ public class Rfc822HeaderStateTest {
     ByteBuffer buf = resp.asByteBuffer();
     String result = StandardCharsets.UTF_8.decode(buf).toString();
     assertEquals("HTTP/1.0 501 Unsupported Method\r\nConnection: close\r\n\r\n", result);
-  }
-
-  @Test
-  public void testFilteredCookies() {
-    ByteBuffer buf = (ByteBuffer) StandardCharsets.UTF_8.encode(CookieRfc6265UtilTest.H4).rewind();
-
-    Rfc822HeaderState.HttpRequest httpRequest =
-        ActionBuilder.get().state().$req().cookieInterest("SAPISID", "SSID");
-    httpRequest.read(buf);
-
-    Map<String, String> cookies = httpRequest.getCookies("SAPISID", "SSID");
-    assertEquals(String.valueOf(cookies),
-        "{SAPISID=tgSIdsbz9xkHOX1P/Agnhtasdf2FpFQ, SSID=A3ZS9cJVATN-UjcZP}");
-
-    String ssid = httpRequest.getCookie("SSID");
-    assertEquals("A3ZS9cJVATN-UjcZP", ssid);
-
   }
 
   @Test

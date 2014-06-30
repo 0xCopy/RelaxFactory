@@ -116,8 +116,6 @@ public class Rfc822HeaderState {
 
   @SuppressWarnings({"RedundantCast"})
   public static class HttpRequest extends Rfc822HeaderState {
-    ByteBuffer[] cookieInterest;
-
     public HttpRequest(Rfc822HeaderState proto) {
       super(proto);
       String protocol = protocol();
@@ -183,31 +181,6 @@ public class Rfc822HeaderState {
     }
 
     /**
-     * warning !!! interns your keys. thinking of high tx here.
-     * 
-     * @param keys
-     * @return
-     */
-    public HttpRequest cookieInterest(String... keys) {
-      if (0 == keys.length) { // rare event
-        Set<String> strings = new CopyOnWriteArraySet<>(asList(headerInterest()));
-        strings.remove(HttpHeaders.Cookie.getHeader());
-        headerInterest(strings.toArray(new String[strings.size()]));
-
-        cookieInterest = null;
-      } else {
-        addHeaderInterest(HttpHeaders.Cookie);
-        cookieInterest = new ByteBuffer[keys.length];
-        for (int i = 0; i < keys.length; i++) {
-          String s = keys[i];
-          cookieInterest[i] = ByteBuffer.wrap(s.intern().getBytes(UTF_8));
-        }
-      }
-
-      return this;
-    }
-
-    /**
      * @param keys optional list of keys , default is full cookieInterest
      * @return stringy cookie map
      */
@@ -249,6 +222,7 @@ public class Rfc822HeaderState {
       Map<String, String> cookies1 = getCookies(key);
       return null != cookies1 && (!cookies1.isEmpty()) ? cookies1.values().iterator().next() : null;
     }
+
   }
 
   public static class HttpResponse extends Rfc822HeaderState {
