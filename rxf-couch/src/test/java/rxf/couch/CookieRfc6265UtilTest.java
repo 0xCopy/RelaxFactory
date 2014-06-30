@@ -47,12 +47,16 @@ public class CookieRfc6265UtilTest {
       + "Accept-Language: en-US,en;q=0.5\n" + "Accept-Encoding: gzip, deflate\n" + "DNT: 1\n"
       + "Cookie: " + TMID_8627085284984078588 + "\n" + "x-insight: activate\n"
       + "Connection: keep-alive\n",
-      H2 = "GET / HTTP/1.1\n"
-          + "Host: www.facebook.com\n"
-          + "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:18.0) Gecko/20100101 Firefox/18.0 FirePHP/0.7.1\n"
-          + "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\n"
-          + "Accept-Language: en-US,en;q=0.5\n" + "Accept-Encoding: gzip, deflate\n" + "DNT: 1\n"
-          + "Cookie: " + FBSTUFF1 + "\n" + "x-insight: activate\n" + "Connection: keep-alive\n"
+      H2 = "GET / HTTP/1.1\n"//
+          + "Host: www.facebook.com\n"//
+          + "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:18.0) Gecko/20100101 Firefox/18.0 FirePHP/0.7.1\n"//
+          + "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\n"//
+          + "Accept-Language: en-US,en;q=0.5\n" //
+          + "Accept-Encoding: gzip, deflate\n" //
+          + "DNT: 1\n" //
+          + "Cookie: " + FBSTUFF1 + "\n" //
+          + "x-insight: activate\n" //
+          + "Connection: keep-alive\n"//
           + "Cookie: " + TMID_8627085284984078588 + "\n" + "Cache-Control: max-age=0\n" + "\n",
       SPDY2 = "HTTP/1.1 200 OK\n"
           + "Cache-Control: private, no-cache, no-store, must-revalidate\n"
@@ -118,8 +122,8 @@ public class CookieRfc6265UtilTest {
     Rfc822HeaderState apply = ActionBuilder.get().state().read(buf);
     List<String> headersNamed = apply.$req().getHeadersNamed(HttpHeaders.Cookie);
     Iterator<String> iterator = headersNamed.iterator();
-    assertEquals(TMID_8627085284984078588, iterator.next());
     assertEquals(FBSTUFF1, iterator.next());
+    assertEquals(TMID_8627085284984078588, iterator.next());
   }
 
   @Test

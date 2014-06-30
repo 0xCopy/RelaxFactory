@@ -3,22 +3,31 @@ package rxf.web.inf;
 import one.xio.AsioVisitor;
 
 import java.nio.ByteBuffer;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.WritableByteChannel;
 
 /**
  * Created by jim on 5/21/14.
  */
-public class FinishWrite extends AsioVisitor.Impl {
-  public FinishWrite(ByteBuffer cursor, Runnable success) {
-    this.cursor = cursor;
+public abstract class FinishWrite extends AsioVisitor.Impl implements HasSuccess {
 
-    this.success = success;
+  public FinishWrite(ByteBuffer... x) {
+    int total = 0;
+    if (x.length > 1) {
+      for (ByteBuffer byteBuffer : x) {
+        total += byteBuffer.remaining();
+      }
+      cursor = ByteBuffer.allocateDirect(total);
+      for (ByteBuffer byteBuffer : x) {
+        cursor.put(byteBuffer);
+
+      }
+      cursor.rewind();
+    } else
+      this.cursor = x[0];
   }
 
   ByteBuffer cursor;
-  private Runnable success;
 
   @Override
   public void onWrite(SelectionKey key) throws Exception {
@@ -26,7 +35,7 @@ public class FinishWrite extends AsioVisitor.Impl {
     if (write == -1)
       key.cancel();
     if (!cursor.hasRemaining())
-      success.run();
+      onSuccess();
 
   }
 }

@@ -9,14 +9,12 @@ import java.nio.channels.SelectionKey;
 /**
  * Created by jim on 5/21/14.
  */
-public class FinishRead extends AsioVisitor.Impl {
-  public FinishRead(ByteBuffer cursor, Runnable success) {
+public abstract class FinishRead extends AsioVisitor.Impl implements HasSuccess {
+  public FinishRead(ByteBuffer cursor) {
     this.cursor = cursor;
-    this.success = success;
   }
 
   ByteBuffer cursor;
-  private Runnable success;
 
   @Override
   public void onRead(SelectionKey key) throws Exception {
@@ -24,6 +22,6 @@ public class FinishRead extends AsioVisitor.Impl {
     if (read == -1)
       key.cancel();
     if (!cursor.hasRemaining())
-      success.run();
+      onSuccess();
   }
 }

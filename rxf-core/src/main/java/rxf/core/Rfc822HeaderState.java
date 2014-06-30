@@ -3,7 +3,6 @@ package rxf.core;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.util.concurrent.Atomics;
-
 import one.xio.HttpHeaders;
 import one.xio.HttpMethod;
 import one.xio.HttpStatus;
@@ -14,16 +13,17 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
+import java.nio.IntBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.lang.Math.abs;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.deepToString;
 
@@ -180,7 +180,7 @@ public class Rfc822HeaderState {
      */
     public ByteBuffer asByteBuffer() {
       String protocol = asRequestHeaderString();
-      return ByteBuffer.wrap(protocol.getBytes(StandardCharsets.UTF_8));
+      return ByteBuffer.wrap(protocol.getBytes(UTF_8));
     }
 
     /**
@@ -201,7 +201,7 @@ public class Rfc822HeaderState {
         cookieInterest = new ByteBuffer[keys.length];
         for (int i = 0; i < keys.length; i++) {
           String s = keys[i];
-          cookieInterest[i] = ByteBuffer.wrap(s.intern().getBytes(StandardCharsets.UTF_8));
+          cookieInterest[i] = ByteBuffer.wrap(s.intern().getBytes(UTF_8));
         }
       }
 
@@ -333,7 +333,7 @@ public class Rfc822HeaderState {
      */
     public ByteBuffer asByteBuffer() {
       String protocol = asResponseHeaderString();
-      return ByteBuffer.wrap(protocol.getBytes(StandardCharsets.UTF_8));
+      return ByteBuffer.wrap(protocol.getBytes(UTF_8));
     }
   }
 
@@ -521,13 +521,13 @@ public class Rfc822HeaderState {
    */
   public List<String> getHeadersNamed(String header) {
     CharBuffer charBuffer = CharBuffer.wrap(header);
-    ByteBuffer henc = StandardCharsets.UTF_8.encode(charBuffer);
+    ByteBuffer henc = UTF_8.encode(charBuffer);
 
     Pair<ByteBuffer, ? extends Pair> ret = headerExtract(henc);
 
     List<String> objects = new ArrayList<>();
     while (null != ret) {
-      objects.add(StandardCharsets.UTF_8.decode(ret.getA()).toString());
+      objects.add(UTF_8.decode(ret.getA()).toString());
       ret = ret.getB();
     }
 
@@ -543,17 +543,58 @@ public class Rfc822HeaderState {
    * @return a list of values
    */
   public List<String> getHeadersNamed(HttpHeaders theHeader) {
-    if (!headerBuf().hasRemaining())
-      headerBuf().rewind();
-    Pair<ByteBuffer, ? extends Pair> slist = headerExtract(theHeader.getToken());
-
-    List<String> objects = new ArrayList<>();
-    while (null != slist) {
-      objects.add(StandardCharsets.UTF_8.decode(slist.getA()).toString());
-      slist = slist.getB();
+    ByteBuffer bb = avoidStarvation(headerBuf.duplicate());
+    while (bb.hasRemaining() && bb.get() != '\n');// skip path
+    IntBuffer idx = IntBuffer.allocate(bb.remaining() / 5);
+    ArrayList<String> r = new ArrayList<>();
+    while (bb.hasRemaining()) {
+      int start = bb.position();
+      byte b;
+      while (bb.hasRemaining() && ((b = bb.get()) != '\n') && !Character.isWhitespace(b));
+      idx.put(start);
     }
+    idx.flip();
+    int limit = bb.limit();
+    while (idx.hasRemaining()) {
+      int start = idx.get();
+      bb.position(start);
+      byte b;
+      boolean w = false;
+      while (bb.hasRemaining() && (b = ((ByteBuffer) bb.mark()).get()) != ':'
+          && !(w = Character.isWhitespace(b)));
+      int tokenLen = theHeader.getTokenLen();
+      if ((bb.reset().position() - start) == tokenLen) {// maybe found
+        bb.position(start).limit(start + tokenLen);
 
-    return objects;
+        ByteBuffer slice1 = bb.slice();
+        /*
+         * CharBuffer decode = UTF_8.decode(slice1.duplicate()); System.err.println("---"+ decode);
+         */
+        ByteBuffer that = avoidStarvation(theHeader.getToken());
+        /*
+         * CharBuffer decode1 = UTF_8.decode(that.duplicate()); System.err.println("---"+ decode1);
+         */
+        int i = slice1.compareTo(that);
+        bb.limit(limit);
+        if (0 == i) {// found
+          while (bb.get() != ':');
+          start = bb.position();
+          ByteBuffer slice = bb.slice();
+          while (slice.hasRemaining()) {
+            while (slice.hasRemaining() && slice.get() != '\n');
+            slice.mark();
+            {
+              if (!Character.isWhitespace(slice.get())) {
+                slice.reset().flip();
+                String trim = UTF_8.decode(slice).toString().trim();
+                r.add(trim);
+              }
+            }
+          }
+        }
+      }
+    }
+    return r.isEmpty() ? null : r;
   }
 
   /**
@@ -635,7 +676,7 @@ public class Rfc822HeaderState {
     ByteBuffer slice = cursor.duplicate().slice();
     while (slice.hasRemaining() && SPC != slice.get()) {
     }
-    methodProtocol.set(StandardCharsets.UTF_8.decode((ByteBuffer) slice.flip()).toString().trim());
+    methodProtocol.set(UTF_8.decode((ByteBuffer) slice.flip()).toString().trim());
 
     while (cursor.hasRemaining() && SPC != cursor.get()) {
       // method/proto
@@ -643,14 +684,14 @@ public class Rfc822HeaderState {
     slice = cursor.slice();
     while (slice.hasRemaining() && SPC != slice.get()) {
     }
-    pathRescode.set(StandardCharsets.UTF_8.decode((ByteBuffer) slice.flip()).toString().trim());
+    pathRescode.set(UTF_8.decode((ByteBuffer) slice.flip()).toString().trim());
 
     while (cursor.hasRemaining() && SPC != cursor.get()) {
     }
     slice = cursor.slice();
     while (slice.hasRemaining() && LF != slice.get()) {
     }
-    protocolStatus.set(StandardCharsets.UTF_8.decode((ByteBuffer) slice.flip()).toString().trim());
+    protocolStatus.set(UTF_8.decode((ByteBuffer) slice.flip()).toString().trim());
 
     boolean wantsCookies = null != cookies;
     boolean wantsHeaders = wantsCookies || 0 < headerInterest.get().length;
@@ -665,8 +706,7 @@ public class Rfc822HeaderState {
         if (null != o1) {
           headerStrings.get().put(
               o,
-              StandardCharsets.UTF_8.decode(
-                  (ByteBuffer) headerBuf.duplicate().clear().position(o1[0]).limit(o1[1]))
+              UTF_8.decode((ByteBuffer) headerBuf.duplicate().clear().position(o1[0]).limit(o1[1]))
                   .toString().trim());
         }
       }
@@ -694,7 +734,7 @@ public class Rfc822HeaderState {
     ByteBuffer slice = cursor.duplicate().slice();
     while (slice.hasRemaining() && SPC != slice.get()) {
     }
-    methodProtocol.set(StandardCharsets.UTF_8.decode((ByteBuffer) slice.flip()).toString().trim());
+    methodProtocol.set(UTF_8.decode((ByteBuffer) slice.flip()).toString().trim());
 
     while (cursor.hasRemaining() && SPC != cursor.get()) {
       // method/proto
@@ -702,14 +742,14 @@ public class Rfc822HeaderState {
     slice = cursor.slice();
     while (slice.hasRemaining() && SPC != slice.get()) {
     }
-    pathRescode.set(StandardCharsets.UTF_8.decode((ByteBuffer) slice.flip()).toString().trim());
+    pathRescode.set(UTF_8.decode((ByteBuffer) slice.flip()).toString().trim());
 
     while (cursor.hasRemaining() && SPC != cursor.get()) {
     }
     slice = cursor.slice();
     while (slice.hasRemaining() && LF != slice.get()) {
     }
-    protocolStatus.set(StandardCharsets.UTF_8.decode((ByteBuffer) slice.flip()).toString().trim());
+    protocolStatus.set(UTF_8.decode((ByteBuffer) slice.flip()).toString().trim());
 
     headerBuf = null;
     boolean wantsCookies = null != cookies;
@@ -726,7 +766,7 @@ public class Rfc822HeaderState {
           if (null != o1) {
             headerStrings.get().put(
                 o,
-                StandardCharsets.UTF_8.decode(
+                UTF_8.decode(
                     (ByteBuffer) headerBuf.duplicate().clear().position(o1[0]).limit(o1[1]))
                     .toString().trim());
           }
