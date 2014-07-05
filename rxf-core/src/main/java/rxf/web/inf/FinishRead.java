@@ -24,4 +24,18 @@ public abstract class FinishRead extends AsioVisitor.Impl implements HasSuccess 
     if (!cursor.hasRemaining())
       onSuccess();
   }
+
+  public static FinishRead finishRead(ByteBuffer payload, final Runnable success) {
+    return new FinishRead(payload) {
+
+      @Override
+      public void onSuccess() {
+        success.run();
+      }
+    };
+  }
+
+  public static void finishRead(SelectionKey key, ByteBuffer payload, Runnable runnable) {
+    key.interestOps(SelectionKey.OP_READ).attach(finishRead(payload, runnable));
+  }
 }
