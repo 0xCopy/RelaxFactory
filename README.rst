@@ -6,4 +6,3 @@ Developer Usecases:
  * streaming java async events on couchdb _changes
  * GWT with long-poll/channels via couch REST _changes
  * HA RequestFactory concurrency via bigcouch
-
