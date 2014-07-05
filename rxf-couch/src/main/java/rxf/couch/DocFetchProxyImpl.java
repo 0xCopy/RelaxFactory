@@ -32,8 +32,7 @@ import static rxf.couch.gen.CouchDriver.DocFetch;
  */
 @PreRead
 @KeepMatcher
-public abstract class DocFetchProxyImpl extends ContentRootImpl {
-
+public class DocFetchProxyImpl extends ContentRootImpl {
     @Override
     public void onRead(final SelectionKey outerKey) throws Exception {
 
@@ -55,8 +54,7 @@ public abstract class DocFetchProxyImpl extends ContentRootImpl {
             final HttpRequest outerRequest = getReq();
             final String path = outerRequest.path();
 
-            MatchResult matcher = getMatchResults();
-            String link = UriUtils.sanitizeUri(getPrefix() + matcher.group(1) + getSuffix());
+            String link = transformLink();
             if (link.endsWith("/")) {
                 link += "index.html";
             }
@@ -89,17 +87,26 @@ public abstract class DocFetchProxyImpl extends ContentRootImpl {
         }
     }
 
+    /** very default implementation
+     *
+     * @return a transformed string
+     */
+    public  String transformLink() {
+        MatchResult matcher = getMatchResults();
+        return UriUtils.sanitizeUri(getPrefix() + matcher.group(1) + getSuffix());
+    }
+
     /**
      * prepended to inner request
      *
      * @return string
      */
-    public abstract String getPrefix();
+    public String getPrefix(){return "";};
 
     /**
      * appended to inner request
      *
      * @return string
      */
-    public abstract String getSuffix();
+    public String getSuffix(){return "";};
 }
