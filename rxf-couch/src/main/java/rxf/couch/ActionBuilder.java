@@ -12,11 +12,18 @@ import static one.xio.HttpHeaders.ETag;
  * User: jim Date: 5/29/12 Time: 1:58 PM
  */
 public abstract class ActionBuilder {
-
+  /**
+   * defaults.
+   */
   public static final String[] HEADER_INTEREST = Rfc822HeaderState.staticHeaderStrings(ETag,
       Content$2dLength);
-  private AtomicReference<Rfc822HeaderState> state = new AtomicReference<Rfc822HeaderState>();
+  /** not threadlocal state */
   private SelectionKey key;
+  /** not threadlocal state */
+  private AtomicReference<Rfc822HeaderState> state = new AtomicReference<Rfc822HeaderState>();
+  /**
+   * threadlocal state pumped in to outer thread to hold #state and #key above
+   */
   protected static ThreadLocal<ActionBuilder> currentAction =
       new InheritableThreadLocal<ActionBuilder>();
 
