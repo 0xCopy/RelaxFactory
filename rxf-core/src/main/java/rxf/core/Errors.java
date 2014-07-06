@@ -12,15 +12,16 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class Errors {
 
-  public static void $301(SelectionKey key, String newUrl) {
+  public static Void $301(SelectionKey key, String newUrl) {
     redir(key, newUrl);
+    return null;
   }
 
-  public static void $303(SelectionKey key, String newUrl) {
-    redir(key, newUrl);
+  public static Void $303(SelectionKey key, String newUrl) {
+    return redir(key, newUrl);
   }
 
-  private static void redir(SelectionKey key, final String newUrl) {
+  private static Void redir(SelectionKey key, final String newUrl) {
     String message = "Resource moved to <a href='" + newUrl + "'>" + newUrl + "</a>";
     final String html =
         "<html><head><title>Resource Moved</title></head><body><div>" + message
@@ -41,25 +42,27 @@ public class Errors {
       }
     });
     key.interestOps(SelectionKey.OP_WRITE);
+    return null;
   }
 
-  public static void $400(SelectionKey key) {
-    error(key, HttpStatus.$400, "Bad Request");
+  public static Void $400(SelectionKey key) {
+    return error(key, HttpStatus.$400, "Bad Request");
   }
 
-  public static void $401(SelectionKey key, String reason) {
+  public static Void $401(SelectionKey key, String reason) {
     error(key, HttpStatus.$404, HttpStatus.$404.caption + ": " + reason);
+    return null;
   }
 
-  public static void $404(SelectionKey key, String path) {
-    error(key, HttpStatus.$404, "Not Found: " + path);
+  public static Void $404(SelectionKey key, String path) {
+    return error(key, HttpStatus.$404, "Not Found: " + path);
   }
 
-  public static void $500(SelectionKey key) {
-    error(key, HttpStatus.$500, "Internal Server Error");
+  public static Void $500(SelectionKey key) {
+    return error(key, HttpStatus.$500, "Internal Server Error");
   }
 
-  private static void error(SelectionKey key, final HttpStatus code, String message) {
+  private static Void error(SelectionKey key, final HttpStatus code, String message) {
     final String html = message;
     key.attach(new AsioVisitor.Impl() {
       @Override
@@ -76,5 +79,6 @@ public class Errors {
       }
     });
     key.interestOps(SelectionKey.OP_WRITE);
+    return null;
   }
 }

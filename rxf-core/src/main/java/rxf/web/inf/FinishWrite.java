@@ -53,11 +53,13 @@ public abstract class FinishWrite extends AsioVisitor.Impl implements HasSuccess
     return finishWrite(onSuccess, payload);
   }
 
-  public static void finishWrite(SelectionKey key, Runnable onSuccess, ByteBuffer... payload) {
+  public static Void finishWrite(SelectionKey key, Runnable onSuccess, ByteBuffer... payload) {
     key.interestOps(SelectionKey.OP_WRITE).attach(finishWrite(onSuccess, payload));
+    return null;
   }
 
-  public static void finishWrite(SelectionKey key, ByteBuffer payload, Runnable onSuccess) {
+  public static Void finishWrite(SelectionKey key, ByteBuffer payload, Runnable onSuccess) {
     key.interestOps(SelectionKey.OP_WRITE).attach(finishWrite(onSuccess, payload));
+    return null;
   }
 }

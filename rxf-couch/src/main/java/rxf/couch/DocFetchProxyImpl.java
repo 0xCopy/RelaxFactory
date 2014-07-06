@@ -4,6 +4,7 @@ package rxf.couch;
 
 import com.google.gwt.safehtml.shared.UriUtils;
 import one.xio.HttpStatus;
+import rxf.core.Tx;
 import rxf.core.Errors;
 import rxf.core.Rfc822HeaderState;
 import rxf.couch.driver.CouchMetaDriver;
@@ -63,15 +64,16 @@ public class DocFetchProxyImpl extends ContentRootImpl {
       RpcHelper.EXECUTOR_SERVICE.submit(new Runnable() {
         // static calls happen in outer thread.
         DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
-        ActionBuilder actionBuilder = ActionBuilder.get();
+        Tx tx = Tx.current();
 
         public void run() {
           DbKeysBuilder.currentKeys.set(dbKeysBuilder);
-          ActionBuilder.currentAction.set(actionBuilder);
+          Tx.current(tx);
           try {
-            HttpResponse innerResponse = actionBuilder.state().$res();
+            HttpResponse innerResponse = tx.state().$res();
             // getReq() is never sent in any part to couchdb here.
-            ByteBuffer outerPayload = CouchMetaDriver.DocFetch.visit(dbKeysBuilder, actionBuilder);
+            CouchMetaDriver.DocFetch.visit(dbKeysBuilder, tx);
+
             HttpStatus innerStatus = innerResponse.statusEnum();
             if (HttpStatus.$404 == innerStatus) {
               Errors.$404(outerKey, path);
@@ -86,10 +88,9 @@ public class DocFetchProxyImpl extends ContentRootImpl {
               @Override
               public void run() {
                 outerKey.interestOps(OP_READ).attach(null);
-
               }
             };
-            FinishWrite.finishWrite(outerKey, task, byteBuffer, outerPayload);
+            FinishWrite.finishWrite(outerKey, task, byteBuffer, (tx.payload()));
           } catch (Exception e) {
             Errors.$500(outerKey);
             e.printStackTrace();

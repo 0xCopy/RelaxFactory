@@ -2,6 +2,7 @@ package rxf.couch;
 
 import one.xio.HttpHeaders;
 import org.junit.Test;
+import rxf.core.Tx;
 import rxf.core.Rfc822HeaderState;
 
 import java.nio.ByteBuffer;
@@ -103,7 +104,7 @@ public class CookieRfc6265UtilTest {
     ByteBuffer buf = (ByteBuffer) StandardCharsets.UTF_8.encode(H1).rewind();
     buf.toString();
 
-    Rfc822HeaderState apply = ActionBuilder.get().state().read(buf);
+    Rfc822HeaderState apply = Tx.current().state().read(buf);
     List<String> headersNamed = apply.$req().getHeadersNamed(HttpHeaders.Cookie);
     assertEquals(TMID_8627085284984078588, headersNamed.iterator().next());
 
@@ -114,7 +115,7 @@ public class CookieRfc6265UtilTest {
     ByteBuffer buf = (ByteBuffer) StandardCharsets.UTF_8.encode(H2).rewind();
     buf.toString();
 
-    Rfc822HeaderState apply = ActionBuilder.get().state().read(buf);
+    Rfc822HeaderState apply = Tx.current().state().read(buf);
     List<String> headersNamed = apply.$req().getHeadersNamed(HttpHeaders.Cookie);
     Iterator<String> iterator = headersNamed.iterator();
     assertEquals(FBSTUFF1, iterator.next());
@@ -126,7 +127,7 @@ public class CookieRfc6265UtilTest {
     ByteBuffer buf = (ByteBuffer) StandardCharsets.UTF_8.encode(H3).rewind();
     buf.toString();
 
-    Rfc822HeaderState apply = ActionBuilder.get().state().read(buf);
+    Rfc822HeaderState apply = Tx.current().state().read(buf);
     List<String> headersNamed = apply.$req().getHeadersNamed(HttpHeaders.P3P);
     Iterator<String> iterator = headersNamed.iterator();
     assertEquals(FB_P3P_POLICY, iterator.next());

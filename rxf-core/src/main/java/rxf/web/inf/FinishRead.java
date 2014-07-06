@@ -35,7 +35,8 @@ public abstract class FinishRead extends AsioVisitor.Impl implements HasSuccess 
     };
   }
 
-  public static void finishRead(SelectionKey key, ByteBuffer payload, Runnable runnable) {
+  public static Void finishRead(SelectionKey key, ByteBuffer payload, Runnable runnable) {
     key.interestOps(SelectionKey.OP_READ).attach(finishRead(payload, runnable));
+    return null;
   }
 }

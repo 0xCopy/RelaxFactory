@@ -112,9 +112,9 @@ public class PouchProxy extends JavaScriptObject {
       return new $wnd.PouchDB(dbSpec)
   }-*/;
 
-  public static void delete(String name) {
-
+  public static Void delete(String name) {
     _delete(name);
+    return null;
   }
 
   public static native void _delete(String name)/*-{

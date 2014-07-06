@@ -2,6 +2,7 @@ package rxf.couch;
 
 import org.junit.Assert;
 import org.junit.Test;
+import rxf.core.Tx;
 import rxf.core.Rfc822HeaderState;
 
 import java.nio.ByteBuffer;
@@ -90,9 +91,9 @@ public class Rfc822HeaderStateTest {
 
   @Test
   public void testStateTransition() {
-    Rfc822HeaderState state = ActionBuilder.get().state();/*
-                                                           * System.err.println( state.as(String.class));
-                                                           */
+    Rfc822HeaderState state = Tx.current().state();/*
+                                                    * System.err.println( state.as(String.class));
+                                                    */
     Rfc822HeaderState.HttpRequest httpRequest = state.$req();
     httpRequest.headerStrings().put("foo", "bar");
 

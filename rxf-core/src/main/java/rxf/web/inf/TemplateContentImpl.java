@@ -23,6 +23,7 @@ public abstract class TemplateContentImpl extends ContentRootImpl {
 
   public static void setContent(Map<File, File> content) {
     TemplateContentImpl.content = content;
+
   }
 
   @Override

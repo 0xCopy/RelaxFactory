@@ -1,20 +1,22 @@
 package rxf.couch;
 
+import rxf.core.Tx;
 import rxf.couch.driver.CouchMetaDriver.etype;
 import rxf.rpc.RpcHelper;
 
 import java.lang.IllegalArgumentException;
+import java.util.EnumMap;
 
 /**
  * User: jim Date: 5/29/12 Time: 1:58 PM
  */
 public abstract class DbKeysBuilder {
   protected static ThreadLocal<DbKeysBuilder> currentKeys = new InheritableThreadLocal<>();
-  protected final java.util.EnumMap<etype, Object> parms = new java.util.EnumMap<>(etype.class);
+  protected final EnumMap<etype, Object> parms = new EnumMap<>(etype.class);
 
   private Throwable trace;
 
-  protected abstract ActionBuilder to();
+  protected abstract Tx to();
 
   public DbKeysBuilder() {
     currentKeys.set(this);
