@@ -983,7 +983,6 @@ public enum CouchMetaDriver {
     }
   },
 
-
   BlobSend {
     public void visit(DbKeysBuilder dbKeysBuilder, final Tx tx) throws Exception {
       final Phaser phaser = new Phaser(2);

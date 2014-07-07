@@ -12,13 +12,13 @@ import rxf.rpc.RpcHelper;
 import rxf.shared.KeepMatcher;
 import rxf.shared.PreRead;
 import rxf.web.inf.ContentRootImpl;
-import rxf.web.inf.FinishWrite;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.util.regex.MatchResult;
 
 import static java.nio.channels.SelectionKey.OP_READ;
+import static one.xio.AsioVisitor.Helper.finishWrite;
 import static one.xio.HttpHeaders.Content$2dLength;
 import static one.xio.HttpHeaders.Content$2dType;
 import static rxf.core.Rfc822HeaderState.HttpRequest;
@@ -80,17 +80,18 @@ public class DocFetchProxyImpl extends ContentRootImpl {
               return;
             }
             HttpResponse outerResponse = outerRequest.$res();
-            ByteBuffer byteBuffer =
-                outerResponse.status(innerStatus).headerString(Content$2dType,
-                    innerResponse.headerString(Content$2dType)).headerString(Content$2dLength,
-                    innerResponse.headerString(Content$2dLength)).asByteBuffer();
-            Runnable task = new Runnable() {
+            String ctype = innerResponse.headerString(Content$2dType);
+            String clen = innerResponse.headerString(Content$2dLength);
+            ByteBuffer responseHeaders = outerResponse.status(innerStatus)//
+                .headerString(Content$2dType, ctype)//
+                .headerString(Content$2dLength, clen)//
+                .asByteBuffer();
+            finishWrite(new Runnable() {
               @Override
               public void run() {
                 outerKey.interestOps(OP_READ).attach(null);
               }
-            };
-            FinishWrite.finishWrite(outerKey, task, byteBuffer, (tx.payload()));
+            }, responseHeaders, tx.payload());
           } catch (Exception e) {
             Errors.$500(outerKey);
             e.printStackTrace();
