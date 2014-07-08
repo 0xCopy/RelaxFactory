@@ -10,9 +10,9 @@ import one.xio.HttpStatus;
 import javax.xml.bind.DatatypeConverter;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Random;
 import java.util.TreeMap;
 
 import static one.xio.HttpHeaders.*;
@@ -25,18 +25,19 @@ public class Rfc6455WsInitiator {
    * <li>exists with all the state needed from surrounding enclosures.
    * </ul>
    * <p/>
+   * <p/>
    * 
    * <pre>
-   *
-   * 2.   The method of the request MUST be GET,
-   * For example, if the WebSocket URI is "ws://example.com/chat",
-   * the first line sent should be "GET /chat HTTP/1.1".
-   *
-   * @param httpRequest
-   * @param ws_uri
-   * @param host
-   * @param wsProto
-   * @return a HttpResponse suitable for .as(String.class) or .as(ByteBuffer.class)
+     *
+     * 2.   The method of the request MUST be GET,
+     * For example, if the WebSocket URI is "ws://example.com/chat",
+     * the first line sent should be "GET /chat HTTP/1.1".
+     *
+     * @param httpRequest
+     * @param ws_uri
+     * @param host
+     * @param wsProto
+     * @return a HttpResponse suitable for .as(String.class) or .as(ByteBuffer.class)
    */
   public Rfc822HeaderState.HttpResponse parseInitiatorRequest(
       Rfc822HeaderState.HttpRequest httpRequest, URI ws_uri, String host, String wsProto)
@@ -182,13 +183,48 @@ public class Rfc6455WsInitiator {
     return httpRequest.$res().status(HttpStatus.$401).status(err);
   }
 
+  public static final Random RANDOM = new Random();
+
   /**
    * initiator requries at least 6 headers. this will provide those.
    * 
+   * @param path
+   * @param host
+   * @param origin
+   * @param protocol
+   * @return a request object with relevant interest. returns nonce in .headerString(Sec$2dWebSocket$2dKey )
+   */
+  public static Rfc822HeaderState.HttpRequest req(String path, String host, String origin,
+      String protocol) {
+    byte[] nonce = new byte[16];
+    RANDOM.nextBytes(nonce);
+    String encode = BaseEncoding.base64().encode(nonce);
+    Rfc822HeaderState.HttpRequest req = headerInterest(new Rfc822HeaderState())//
+        .headerString(Connection, "Upgrade")//
+        .headerString(Host, host)//
+        .headerString(Origin, origin)//
+        .headerString(Sec$2dWebSocket$2dKey, encode)//
+        .headerString(Sec$2dWebSocket$2dProtocol, protocol)//
+        .headerString(Sec$2dWebSocket$2dVersion, "13")//
+        .headerString(Upgrade, "websocket")//
+        .$req().path(path);
+    return req;
+  }
+
+  public static String accept(String encode) {
+    return BaseEncoding.base64().encode(
+        Hashing.sha1().hashString(encode + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11",
+            StandardCharsets.UTF_8).asBytes());
+  }
+
+  /**
+   * initiator requries at least 6 headers. this will provide those.
+   * 
+   * @param rfc822HeaderState
    * @return a request object with relevant interest
    */
-  public static Rfc822HeaderState.HttpRequest req() {
-    return new Rfc822HeaderState().headerInterest(Connection, Host, Origin, Sec$2dWebSocket$2dKey,
-        Sec$2dWebSocket$2dProtocol, Sec$2dWebSocket$2dVersion, Upgrade).$req();
+  public static Rfc822HeaderState headerInterest(Rfc822HeaderState rfc822HeaderState) {
+    return rfc822HeaderState.addHeaderInterest(Connection, Host, Origin, Sec$2dWebSocket$2dKey,
+        Sec$2dWebSocket$2dProtocol, Sec$2dWebSocket$2dVersion, Upgrade);
   }
 }
