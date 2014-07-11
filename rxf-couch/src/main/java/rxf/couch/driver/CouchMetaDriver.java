@@ -3,6 +3,7 @@ package rxf.couch.driver;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import one.xio.AsioVisitor;
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpMethod;
 import one.xio.HttpStatus;
@@ -36,6 +37,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static java.nio.channels.SelectionKey.*;
 import static one.xio.AsioVisitor.FSM.read;
 import static one.xio.AsioVisitor.Helper.toRead;
+import static one.xio.AsioVisitor.Helper.toWrite;
 import static one.xio.HttpHeaders.*;
 import static one.xio.HttpMethod.*;
 import static rxf.core.Server.enqueue;
@@ -275,101 +277,99 @@ public enum CouchMetaDriver {
     public void visit(final DbKeysBuilder dbKeysBuilder, final Tx tx) throws Exception {
       final SocketChannel channel = createCouchConnection();
       final Phaser phaser = new Phaser(2);
-      enqueue(channel, OP_CONNECT | OP_WRITE, new Impl() {
-        // *******************************
-        // *******************************
-        // pathological buffersize traits
-        // *******************************
-        // *******************************
+      tx.payload(null);
+      tx.state(null);
+      enqueue(channel, OP_CONNECT | OP_WRITE, toWrite(new AsioVisitor.Helper.F() {
+        final String db = (String) dbKeysBuilder.get(etype.db);
+        final String id = (String) dbKeysBuilder.get(docId);
+        final HttpRequest request = tx.state().$req();
 
-        String db = (String) dbKeysBuilder.get(etype.db);
-        String id = (String) dbKeysBuilder.get(docId);
-        HttpRequest request = tx.state().$req();
         ByteBuffer header = (ByteBuffer) request.path(
             scrub("/" + db + (null == id ? "" : "/" + id))).method(GET).addHeaderInterest(
             STATIC_CONTENT_LENGTH_ARR).asByteBuffer();
 
-        public void onWrite(SelectionKey key) throws Exception {
-          int write = FSM.write(key, header);
+        @Override
+        public void apply(SelectionKey key) throws Exception {
+          int write = AsioVisitor.FSM.write(key, header);
           assert !header.hasRemaining();
           header = null;
 
-          key.interestOps(OP_READ);/* WRITE-READ implicit turnaround in 1xio won't need .selector().wakeup() */
-        }
+          toRead(key, new AsioVisitor.Helper.F() {
+            @Override
+            public void apply(SelectionKey key) throws Exception {
+              if (null == tx.payload()) { // haven't started body yet
+                // geometric, vulnerable to dev/null if not max'd here.
+                if (null == header)
+                  header = ByteBuffer.allocateDirect(4 << 10);
+                else
+                  header =
+                      header.hasRemaining() ? header : ByteBuffer.allocateDirect(
+                          header.capacity() * 2).put((ByteBuffer) header.flip());
 
-        ByteBuffer cursor;
-
-        public void onRead(SelectionKey key) throws Exception {
-          if (null == cursor) { // haven't started body yet
-            // geometric, vulnerable to dev/null if not max'd here.
-            if (null == header)
-              header = ByteBuffer.allocateDirect(4 << 10);
-            else
-              header =
-                  header.hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2)
-                      .put((ByteBuffer) header.flip());
-
-            int read = read(channel, header);
-            if (-1 == read) {// nothing else to read from the header, never started body, something is wrong
-              phaser.forceTermination();
-              key.cancel();
-              channel.close();
-              return;
-            }
-            ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
-            HttpResponse response = request.headerInterest(STATIC_JSON_SEND_HEADERS).$res();
-            response.read((ByteBuffer) flip);
-
-            if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR,
-                response.headerBuf())) {
-              cursor = (ByteBuffer) flip.slice();
-              header = null;
-
-              if (RpcHelper.DEBUG_SENDJSON) {
-                System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(),
-                    response, this, StandardCharsets.UTF_8.decode((ByteBuffer) cursor.duplicate()
-                        .rewind())));
-              }
-
-              HttpStatus httpStatus = response.statusEnum();
-              switch (httpStatus) {
-                case $200:
-                  int remaining = Integer.parseInt(response.headerString(Content$2dLength));
-
-                  if (remaining == cursor.remaining()) {// we have all of the body already, just deliver
-                    deliver();
-                  } else { // we need more, allocate a buffer the size we need, and put what we already have
-                    cursor = ByteBuffer.allocateDirect(remaining).put(cursor);
-                  }
-                  break;
-                default: // error
+                int read = read(channel, header);
+                if (-1 == read) {// nothing else to read from the header, never started body, something is wrong
                   phaser.forceTermination();
+                  key.cancel();
                   channel.close();
+                  return;
+                }
+                ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
+                HttpResponse response = request.headerInterest(STATIC_JSON_SEND_HEADERS).$res();
+                response.read((ByteBuffer) flip);
+
+                if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR,
+                    response.headerBuf())) {
+                  tx.payload((ByteBuffer) flip.slice());
+                  header = null;
+
+                  if (RpcHelper.DEBUG_SENDJSON) {
+                    System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(),
+                        response, this, StandardCharsets.UTF_8.decode((ByteBuffer) tx.payload()
+                            .duplicate().rewind())));
+                  }
+
+                  HttpStatus httpStatus = response.statusEnum();
+                  switch (httpStatus) {
+                    case $200:
+                      int remaining = Integer.parseInt(response.headerString(Content$2dLength));
+
+                      if (remaining == tx.payload().remaining()) {// we have all of the body already, just deliver
+                        deliver();
+                      } else { // we need more, allocate a buffer the size we need, and put what we already have
+                        tx.payload(ByteBuffer.allocateDirect(remaining).put(tx.payload()));
+                      }
+                      break;
+                    default: // error
+                      phaser.forceTermination();
+                      channel.close();
+                  }
+                }
+              } else {// we've already begun the body, but didn't finish, and may do so now
+                // read further of the body
+                int read = read(channel, tx.payload());
+                switch (read) {// if we didn't actually read, something is wrong
+                  case -1:
+                    phaser.forceTermination();
+                    channel.close();
+                    return;
+                }
+                if (!tx.payload().hasRemaining()) {// we've read to the end, flip to beginning and deliver
+                  tx.payload().flip();
+                  deliver();
+                }
               }
             }
-          } else {// we've already begun the body, but didn't finish, and may do so now
-            // read further of the body
-            int read = read(channel, cursor);
-            switch (read) {// if we didn't actually read, something is wrong
-              case -1:
-                phaser.forceTermination();
-                channel.close();
-                return;
-            }
-            if (!cursor.hasRemaining()) {// we've read to the end, flip to beginning and deliver
-              cursor.flip();
-              deliver();
-            }
-          }
-        }
 
-        private void deliver() {
-          assert null != cursor;
-          tx.payload((ByteBuffer) cursor.rewind());
-          phaser.arrive();
-          recycleChannel(channel);
+            private void deliver() {
+              assert null != tx.payload();
+              tx.payload((ByteBuffer) tx.payload().rewind());
+              phaser.arrive();
+              recycleChannel(channel);
+            }
+          });
         }
-      });
+      }));
+
       try {
         phaser.awaitAdvanceInterruptibly(phaser.arrive(), REALTIME_CUTOFF, REALTIME_UNIT);
       } catch (TimeoutException | InterruptedException e) {
@@ -379,7 +379,6 @@ public enum CouchMetaDriver {
         }
       }
     }
-
   },
 
   // @DbTask( {json, future})

@@ -2,6 +2,7 @@ package rxf.couch.gen;
 
 import com.google.gson.JsonSyntaxException;
 import one.xio.AsioVisitor;
+import one.xio.HttpStatus;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -219,8 +220,10 @@ public class CouchDriverTest {
       e.printStackTrace();
       fail(rev);
     }
-    designDoc = new DesignDocFetch().db(SOMEDB).designDocId(DESIGN_SAMPLE).to().fire().json();
-    assertNull(designDoc);
+    DesignDocFetch.DesignDocFetchActionBuilder tx1 =
+        new DesignDocFetch().db(SOMEDB).designDocId(DESIGN_SAMPLE).to();
+    tx1.fire();
+    assertFalse(HttpStatus.$200 == tx1.state().$res().statusEnum());
   }
 
 }

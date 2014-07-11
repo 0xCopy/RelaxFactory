@@ -709,7 +709,6 @@ public interface CouchDriver {
   }
 
   class JsonSend extends DbKeysBuilder {
-
     public JsonSendActionBuilder to() {
       assert 2 <= parms.size() : "required parameters are: [opaque, validjson]";
       return new JsonSendActionBuilder();

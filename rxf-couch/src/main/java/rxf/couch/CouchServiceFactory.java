@@ -2,10 +2,11 @@ package rxf.couch;
 
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.internal.Primitives;
+import one.xio.HttpStatus;
 import rxf.core.CouchNamespace;
 import rxf.couch.CouchResultSet.tuple;
-import rxf.couch.CouchService.CouchRequestParam;
 import rxf.couch.CouchService.AttachmentsImpl;
+import rxf.couch.CouchService.CouchRequestParam;
 import rxf.couch.CouchService.View;
 import rxf.couch.driver.CouchMetaDriver;
 import rxf.couch.gen.CouchDriver.*;
@@ -24,8 +25,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import static rxf.web.inf.ProtocolMethodDispatch.deepToString;
 import static rxf.rpc.RpcHelper.getDefaultOrgName;
+import static rxf.web.inf.ProtocolMethodDispatch.deepToString;
 
 /**
  * Creates CouchService instances by translating {@literal @}View annotations into CouchDB design documents and invoking
@@ -88,8 +89,8 @@ public class CouchServiceFactory {
             String pathPrefix1 = getPathPrefix();
             design.version = new RevisionFetch().db(pathPrefix1).docId(designId).to().fire().json();
 
-            Map<String, Type> returnTypes = new TreeMap<String, Type>();
-            viewMethods = new TreeMap<String, String>();
+            Map<String, Type> returnTypes = new TreeMap<>();
+            viewMethods = new TreeMap<>();
             for (Method m : serviceInterface.getMethods()) {
               String methodName = m.getName();
               returnTypes.put(methodName, m.getReturnType());// not sure if this is good enough
@@ -115,7 +116,7 @@ public class CouchServiceFactory {
                 } else {
                   // else we assume sane, annotated parameters - if a param is not sane, skip
                   // TODO emit warning for useless params
-                  Map<String, String> queryParams = new TreeMap<String, String>();
+                  Map<String, String> queryParams = new TreeMap<>();
                   for (int i = 0; i < paramAnnotations.length; i++) {
                     // look for a CouchRequestParam on this param, if none, ignore
                     Annotation[] param = paramAnnotations[i];
@@ -161,7 +162,8 @@ public class CouchServiceFactory {
                         CouchDesignDoc.class)))) {
               System.err.println("Existing design doc out of date, updating...");
               final String stringParam = CouchMetaDriver.gson().toJson(design);
-              final JsonSendTerminalBuilder fire = new JsonSend().opaque(getPathPrefix())
+              String pathPrefix2 = getPathPrefix();
+              final JsonSendTerminalBuilder fire = new JsonSend().opaque(pathPrefix2)
               /* .docId(design.key) */.validjson(stringParam).to().fire();
               if (RpcHelper.DEBUG_SENDJSON) {
                 CouchTx tx = fire.tx();
@@ -181,13 +183,14 @@ public class CouchServiceFactory {
     }
 
     private boolean ensureDbExists(String dbName) {
-      String json = new DocFetch().db("").docId(dbName).to().fire().json();
-      if (json == null) {
+      DocFetch.DocFetchActionBuilder tx1 = new DocFetch().db("").docId(dbName).to();
+      String json = tx1.fire().json();
+      if (HttpStatus.$200 != tx1.state().$res().statusEnum()) {
         // CouchTx tx = CouchDriver.GSON.fromJson(json, CouchTx.class);
         // if (tx.error() == null) {
         // Need to create the DB
-        CouchTx tx = new DbCreate().db(getPathPrefix()).to().fire().tx();
-        assert tx.ok() : tx.error();
+        CouchTx couchTx = new DbCreate().db(getPathPrefix()).to().fire().tx();
+        assert couchTx.ok() : couchTx.error();
         System.err.println("had to create " + dbName);
         return false;
       }
@@ -274,7 +277,7 @@ public class CouchServiceFactory {
                 // assume items in collection
                 // iterate through items in rowset, populating list
                 if (null != rows && null != rows.rows) {
-                  List<E> ar = new ArrayList<E>();
+                  List<E> ar = new ArrayList<>();
                   for (tuple<?, ?> row : rows.rows) {
                     ar.add((E) row.value);
                   }
@@ -357,7 +360,7 @@ public class CouchServiceFactory {
       @SerializedName("_rev")
       public String version;
       public String language = "javascript";
-      public Map<String, CouchView> views = new TreeMap<String, CouchView>();
+      public Map<String, CouchView> views = new TreeMap<>();
 
       @Override
       public boolean equals(Object obj) {
