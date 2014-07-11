@@ -675,10 +675,10 @@ public interface CouchDriver {
                         }
 
                         public Type[] getActualTypeArguments() {
-                          Type key = (Type) ViewFetch.this.get(CouchMetaDriver.etype.keyType);
+                          Type key = (Type) get(CouchMetaDriver.etype.keyType);
                           return new Type[] {
                               null == key ? Object.class : key,
-                              (Type) ViewFetch.this.get(CouchMetaDriver.etype.type)};
+                              (Type) get(CouchMetaDriver.etype.type)};
                         }
                       });
             } catch (Exception e) {
@@ -812,10 +812,10 @@ public interface CouchDriver {
                         }
 
                         public Type[] getActualTypeArguments() {
-                          Type key = (Type) JsonSend.this.get(CouchMetaDriver.etype.keyType);
+                          Type key = (Type) get(CouchMetaDriver.etype.keyType);
                           return new Type[] {
                               null == key ? Object.class : key,
-                              (Type) JsonSend.this.get(CouchMetaDriver.etype.type)};
+                              (Type) get(CouchMetaDriver.etype.type)};
                         }
                       });
             } catch (Exception e) {

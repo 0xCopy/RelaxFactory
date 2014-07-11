@@ -3,7 +3,6 @@ package rxf.couch.driver;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import one.xio.AsioVisitor;
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpMethod;
 import one.xio.HttpStatus;
@@ -35,9 +34,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.nio.channels.SelectionKey.*;
+import static one.xio.AsioVisitor.FSM;
 import static one.xio.AsioVisitor.FSM.read;
-import static one.xio.AsioVisitor.Helper.toRead;
-import static one.xio.AsioVisitor.Helper.toWrite;
+import static one.xio.AsioVisitor.Helper.*;
 import static one.xio.HttpHeaders.*;
 import static one.xio.HttpMethod.*;
 import static rxf.core.Server.enqueue;
@@ -82,42 +81,35 @@ public enum CouchMetaDriver {
     public void visit(final DbKeysBuilder dbKeysBuilder, final Tx tx) throws Exception {
       final Phaser phaser = new Phaser(2);
       final SocketChannel channel = createCouchConnection();
-      enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
-        // *******************************
-        // pathological buffersize traits
-        // *******************************
+      enqueue(channel, OP_WRITE | OP_CONNECT, toWrite(new F() {
+        @Override
+        public void apply(SelectionKey key) throws Exception {
+          String db = (String) dbKeysBuilder.get(etype.db);
 
-        String db = (String) dbKeysBuilder.get(etype.db);
-
-        ByteBuffer header = (ByteBuffer) tx.state().$req().method(PUT).path("/" + db)
-        // .headerString(Content$2dLength, "0")
-            .asByteBuffer();
-
-        public void onWrite(SelectionKey key) throws Exception {
-          int write = FSM.write(key, header);
-          assert !header.hasRemaining();
-          header.clear();
+          final ByteBuffer[] header =
+              {(ByteBuffer) tx.state().$req().method(PUT).path("/" + db).asByteBuffer()};
+          int write = FSM.write(key, header[0]);
+          assert !header[0].hasRemaining();
+          header[0].clear();
           final HttpResponse response =
               tx.state().$req().headerInterest(STATIC_JSON_SEND_HEADERS).$res();
-
-          toRead(key, new Helper.F() {
+          toRead(key, new F() {
             @Override
             public void apply(SelectionKey key) throws Exception {
               if (null == tx.payload()) {
                 // geometric, vulnerable to dev/null if not max'd here.
-                header =
-                    null == header ? ByteBuffer.allocateDirect(4 << 10) : header.hasRemaining()
-                        ? header : ByteBuffer.allocateDirect(header.capacity() * 2).put(
-                            (ByteBuffer) header.flip());
-
-                int read = read(channel, header);
-                ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
+                header[0] =
+                    null == header[0] ? ByteBuffer.allocateDirect(4 << 10) : header[0]
+                        .hasRemaining() ? header[0] : ByteBuffer.allocateDirect(
+                        header[0].capacity() * 2).put((ByteBuffer) header[0].flip());
+                int read = read(channel, header[0]);
+                ByteBuffer flip = (ByteBuffer) header[0].duplicate().flip();
                 response.read((ByteBuffer) flip);
 
                 if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR,
                     response.headerBuf())) {
                   tx.payload((ByteBuffer) flip.slice());
-                  header = null;
+                  header[0] = null;
 
                   if (RpcHelper.DEBUG_SENDJSON) {
                     System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(),
@@ -132,7 +124,8 @@ public enum CouchMetaDriver {
                       int remaining = Integer.parseInt(response.headerString(Content$2dLength));
 
                       if (remaining == tx.payload().remaining()) {
-                        deliver();
+                        recycleChannel(channel);
+                        phaser.arrive();
                       } else {
                         tx.payload(ByteBuffer.allocateDirect(remaining).put(tx.payload()));
                       }
@@ -153,20 +146,15 @@ public enum CouchMetaDriver {
                 }
                 if (!tx.payload().hasRemaining()) {
                   tx.payload().flip();
-                  deliver();
+                  recycleChannel(channel);
+                  phaser.arrive();
                 }
               }
             }
           });
         }
+      }));
 
-        private void deliver() {
-          tx.payload(tx.payload());
-          recycleChannel(channel);
-          phaser.arrive();
-        }
-
-      });
       try {
         phaser.awaitAdvanceInterruptibly(phaser.arrive(), REALTIME_CUTOFF, REALTIME_UNIT);
       } catch (Exception e) {
@@ -279,7 +267,7 @@ public enum CouchMetaDriver {
       final Phaser phaser = new Phaser(2);
       tx.payload(null);
       tx.state(null);
-      enqueue(channel, OP_CONNECT | OP_WRITE, toWrite(new AsioVisitor.Helper.F() {
+      enqueue(channel, OP_CONNECT | OP_WRITE, toWrite(new F() {
         final String db = (String) dbKeysBuilder.get(etype.db);
         final String id = (String) dbKeysBuilder.get(docId);
         final HttpRequest request = tx.state().$req();
@@ -290,11 +278,11 @@ public enum CouchMetaDriver {
 
         @Override
         public void apply(SelectionKey key) throws Exception {
-          int write = AsioVisitor.FSM.write(key, header);
+          int write = FSM.write(key, header);
           assert !header.hasRemaining();
           header = null;
 
-          toRead(key, new AsioVisitor.Helper.F() {
+          toRead(key, new F() {
             @Override
             public void apply(SelectionKey key) throws Exception {
               if (null == tx.payload()) { // haven't started body yet
@@ -900,7 +888,7 @@ public enum CouchMetaDriver {
             header.clear();
             final HttpResponse response = tx.state().$res();
             tx.payload(null);
-            toRead(key, new Helper.F() {
+            toRead(key, new F() {
               @Override
               public void apply(SelectionKey key) throws Exception {
                 if (null == tx.payload()) {
