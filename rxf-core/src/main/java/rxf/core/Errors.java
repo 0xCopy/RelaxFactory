@@ -70,7 +70,7 @@ public class Errors {
         ByteBuffer headers =
             new Rfc822HeaderState().$res().status(code).headerString(HttpHeaders.Content$2dType,
                 "text/html").headerString(HttpHeaders.Content$2dLength,
-                String.valueOf(html.length())).as(ByteBuffer.class);
+                String.valueOf(html.length())).asByteBuffer();
 
         ((SocketChannel) key.channel()).write(headers);
         ((SocketChannel) key.channel()).write(UTF_8.encode(html));

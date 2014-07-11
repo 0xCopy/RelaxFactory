@@ -127,7 +127,7 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
 
           res.status(HttpStatus.$412).headerString(Connection, "close").headerString(
               Last$2dModified, DateHeaderParser.formatHttpHeaderDate(fdate));
-          int write = FSM.write(getChannel(), res.as(ByteBuffer.class));
+          int write = FSM.write(getChannel(), res.asByteBuffer());
           key.interestOps(OP_READ).attach(null);
           return;
         }
@@ -161,7 +161,7 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
         public void onWrite(SelectionKey key) throws Exception {
 
           FSM.write(key, getReq().$res().status(HttpStatus.$404)
-              .headerString(Content$2dLength, "0").as(ByteBuffer.class));
+              .headerString(Content$2dLength, "0").asByteBuffer());
           key.selector().wakeup();
           key.interestOps(OP_READ).attach(null);
         }
@@ -185,7 +185,7 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
         DateHeaderParser.formatHttpHeaderDate(fdate));
     if (null != ceString)
       res.headerString(Content$2dEncoding, ceString);
-    ByteBuffer response = res.as(ByteBuffer.class);
+    ByteBuffer response = res.asByteBuffer();
     FSM.write(key, response);
     final int sendBufferSize = 4 << 10;
     final long[] progress = {fileChannel.transferTo(0, sendBufferSize, getChannel())};

@@ -89,7 +89,7 @@ public enum CouchMetaDriver {
 
         ByteBuffer header = (ByteBuffer) tx.state().$req().method(PUT).path("/" + db)
         // .headerString(Content$2dLength, "0")
-            .as(ByteBuffer.class);
+            .asByteBuffer();
 
         public void onWrite(SelectionKey key) throws Exception {
           int write = channel.write(header);
@@ -185,7 +185,7 @@ public enum CouchMetaDriver {
 
       enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
         ByteBuffer header = (ByteBuffer) tx.state().$req().method(DELETE).pathResCode(
-            "/" + dbKeysBuilder.get(db)).as(ByteBuffer.class);
+            "/" + dbKeysBuilder.get(db)).asByteBuffer();
         public HttpResponse response;
 
         public void onWrite(SelectionKey key) throws Exception {
@@ -287,7 +287,7 @@ public enum CouchMetaDriver {
         HttpRequest request = tx.state().$req();
         ByteBuffer header = (ByteBuffer) request.path(
             scrub("/" + db + (null == id ? "" : "/" + id))).method(GET).addHeaderInterest(
-            STATIC_CONTENT_LENGTH_ARR).as(ByteBuffer.class);
+            STATIC_CONTENT_LENGTH_ARR).asByteBuffer();
 
         public void onWrite(SelectionKey key) throws Exception {
           int write = channel.write(header);
@@ -400,7 +400,7 @@ public enum CouchMetaDriver {
         String id = (String) dbKeysBuilder.get(docId);
         HttpRequest request = tx.state().$req();
         final String scrub = scrub("/" + db + (null != id ? "/" + id : ""));
-        ByteBuffer header = (ByteBuffer) request.path(scrub).method(HEAD).as(ByteBuffer.class);
+        ByteBuffer header = (ByteBuffer) request.path(scrub).method(HEAD).asByteBuffer();
         public HttpResponse response;
         public ByteBuffer cursor;
 
@@ -506,7 +506,7 @@ public enum CouchMetaDriver {
         private HttpResponse response;
         ByteBuffer header = (ByteBuffer) request.path(
             scrub("/" + dbKeysBuilder.get(db) + "/" + dbKeysBuilder.get(docId) + "?rev="
-                + dbKeysBuilder.get(rev))).method(DELETE).as(ByteBuffer.class);
+                + dbKeysBuilder.get(rev))).method(DELETE).asByteBuffer();
         ByteBuffer cursor;
 
         public void onWrite(SelectionKey key) throws Exception {
@@ -632,7 +632,7 @@ public enum CouchMetaDriver {
           ByteBuffer header =
               (ByteBuffer) request.method(GET)
                   .path(scrub('/' + db + '/' + dbKeysBuilder.get(view))).headerString(Accept,
-                      MimeType.json.contentType).as(ByteBuffer.class);
+                      MimeType.json.contentType).asByteBuffer();
           int wrote = channel.write(header);
           assert !header.hasRemaining() : "Failed to complete write in one pass, need to re-interest(READ)";
           key.interestOps(OP_READ);
@@ -871,7 +871,7 @@ public enum CouchMetaDriver {
       ByteBuffer header =
           (ByteBuffer) request.method(method).path(opaque).headerInterest(STATIC_JSON_SEND_HEADERS)
               .headerString(Content$2dLength, String.valueOf(outbound.length)).headerString(Accept,
-                  MimeType.json.contentType).as(ByteBuffer.class);
+                  MimeType.json.contentType).asByteBuffer();
       if (RpcHelper.DEBUG_SENDJSON) {
         System.err.println(ProtocolMethodDispatch.deepToString(opaque, validjson,
             StandardCharsets.UTF_8.decode(header.duplicate()), tx.state()));
@@ -1022,7 +1022,7 @@ public enum CouchMetaDriver {
           ByteBuffer as =
               request.method(PUT).path(sb).headerString(Expect, "100-Continue").headerString(
                   Content$2dType, ctype).headerString(Accept, MimeType.json.contentType)
-                  .headerString(Content$2dLength, String.valueOf(limit)).as(ByteBuffer.class);
+                  .headerString(Content$2dLength, String.valueOf(limit)).asByteBuffer();
           channel.write((ByteBuffer) as.rewind());
           key.interestOps(OP_READ);
         }
