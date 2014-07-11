@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.nio.channels.SelectionKey.*;
+import static one.xio.AsioVisitor.FSM.read;
 import static one.xio.AsioVisitor.Helper.toRead;
 import static one.xio.HttpHeaders.*;
 import static one.xio.HttpMethod.*;
@@ -107,7 +108,7 @@ public enum CouchMetaDriver {
                         ? header : ByteBuffer.allocateDirect(header.capacity() * 2).put(
                             (ByteBuffer) header.flip());
 
-                int read = channel.read(header);
+                int read = read(channel, header);
                 ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
                 response.read((ByteBuffer) flip);
 
@@ -140,7 +141,7 @@ public enum CouchMetaDriver {
                   }
                 }
               } else {
-                int read = channel.read(tx.payload());
+                int read = read(channel, tx.payload());
                 switch (read) {
                   case -1:
                     phaser.forceTermination();
@@ -204,7 +205,7 @@ public enum CouchMetaDriver {
                     ? header : ByteBuffer.allocateDirect(header.capacity() * 2).put(
                         (ByteBuffer) header.flip());
 
-            int read = channel.read(header);
+            int read = read(channel, header);
             ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
             response.read((ByteBuffer) flip);
 
@@ -236,7 +237,7 @@ public enum CouchMetaDriver {
               }
             }
           } else {
-            int read = channel.read(tx.payload());
+            int read = read(channel, tx.payload());
             switch (read) {
               case -1:
                 phaser.forceTermination();
@@ -308,7 +309,7 @@ public enum CouchMetaDriver {
                   header.hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2)
                       .put((ByteBuffer) header.flip());
 
-            int read = channel.read(header);
+            int read = read(channel, header);
             if (-1 == read) {// nothing else to read from the header, never started body, something is wrong
               phaser.forceTermination();
               key.cancel();
@@ -348,7 +349,7 @@ public enum CouchMetaDriver {
             }
           } else {// we've already begun the body, but didn't finish, and may do so now
             // read further of the body
-            int read = channel.read(cursor);
+            int read = read(channel, cursor);
             switch (read) {// if we didn't actually read, something is wrong
               case -1:
                 phaser.forceTermination();
@@ -421,7 +422,7 @@ public enum CouchMetaDriver {
                     ? header : ByteBuffer.allocateDirect(header.capacity() * 2).put(
                         (ByteBuffer) header.flip());
 
-            int read = channel.read(header);
+            int read = read(channel, header);
             if (-1 != read) {
               ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
               response.read((ByteBuffer) flip);
@@ -525,7 +526,7 @@ public enum CouchMetaDriver {
                     ? header : ByteBuffer.allocateDirect(header.capacity() * 2).put(
                         (ByteBuffer) header.flip());
 
-            int read = channel.read(header);
+            int read = read(channel, header);
             switch (read) {
               case -1:
                 phaser.forceTermination();
@@ -555,7 +556,7 @@ public enum CouchMetaDriver {
               }
             }
           } else {
-            int read = channel.read(cursor);
+            int read = read(channel, cursor);
             if (!cursor.hasRemaining()) {
               cursor.flip();
               deliver();
@@ -640,7 +641,7 @@ public enum CouchMetaDriver {
         public void onRead(SelectionKey key) throws IOException {
           if (null != cursor) {
             try {
-              int read = channel.read(cursor);
+              int read = read(channel, cursor);
               if (-1 == read) {
                 // we were asked to read again, but no more content to read, just deliver what we already saw
                 if (0 < cursor.position()) {
@@ -682,7 +683,7 @@ public enum CouchMetaDriver {
                   ByteBuffer.allocateDirect(header.capacity() * 2).put((ByteBuffer) header.flip());
             }
 
-            int read = channel.read(header);
+            int read = read(channel, header);
             ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
             HttpResponse response =
                 (HttpResponse) new Rfc822HeaderState().$res().headerInterest(STATIC_VF_HEADERS);
@@ -721,7 +722,7 @@ public enum CouchMetaDriver {
                               remaining).put(cursor);
 
                       public void onRead(SelectionKey key) throws Exception {
-                        int read1 = channel.read(cursor1);
+                        int read1 = read(channel, cursor1);
                         switch (read1) {
                           case -1:
                             phaser.forceTermination();
@@ -911,7 +912,7 @@ public enum CouchMetaDriver {
                               (ByteBuffer) header.flip());
 
                   try {
-                    int read = channel.read(header);
+                    int read = read(channel, header);
                   } catch (IOException e) {
                     phaser.forceTermination();// .reset();
                     ProtocolMethodDispatch.deepToString(this, e);
@@ -949,7 +950,7 @@ public enum CouchMetaDriver {
                     }
                   }
                 } else {
-                  int read = channel.read(tx.payload());
+                  int read = read(channel, tx.payload());
                   if (-1 == read) {
                     phaser.forceTermination();
 
@@ -1029,7 +1030,7 @@ public enum CouchMetaDriver {
         @Override
         public void onRead(SelectionKey key) throws Exception {
           ByteBuffer[] byteBuffer = {ByteBuffer.allocateDirect(4 << 10)};
-          int read = channel.read(byteBuffer[0]);
+          int read = read(channel, byteBuffer[0]);
           HttpResponse httpResponse = request.$res();
 
           Rfc822HeaderState apply = httpResponse.read((ByteBuffer) byteBuffer[0].flip());
@@ -1062,7 +1063,7 @@ public enum CouchMetaDriver {
 
                   if (null == tx.payload())
                     tx.payload(ByteBuffer.allocateDirect(4 << 10));
-                  int read = channel.read(tx.payload());
+                  int read = read(channel, tx.payload());
                   if (-1 == read) {
                     phaser.forceTermination();
                     key.cancel();

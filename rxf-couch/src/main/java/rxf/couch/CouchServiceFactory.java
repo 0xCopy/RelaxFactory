@@ -200,12 +200,11 @@ public class CouchServiceFactory {
         throws ExecutionException, InterruptedException {
       init.get();
 
-      if (viewMethods.containsKey(method.getName())) {
-        // view methods have several types they can returns, based on whether or not they use
-        // reduce, if they return the key (simple or composite) as part of the data in a map
-        // or just a list of data items, and how they return the data, as the full document,
-        // or some simplified format.
-
+      // view methods have several types they can returns, based on whether or not they use
+      // reduce, if they return the key (simple or composite) as part of the data in a map
+      // or just a list of data items, and how they return the data, as the full document,
+      // or some simplified format.
+      if (viewMethods.containsKey(method.getName()))
         return RpcHelper.EXECUTOR_SERVICE.submit(new Callable<Object>() {
           public Object call() throws Exception {
             String name = method.getName();
@@ -286,7 +285,7 @@ public class CouchServiceFactory {
             return null;
           }
         }).get();
-      } else {
+      else {
         // persist or find by key
         if ("persist".equals(method.getName())) {
           // again, no point, see above with DocPersist
@@ -297,14 +296,8 @@ public class CouchServiceFactory {
           CouchTx tx = fire.tx();
           return tx;
         } else if ("attachments".equals(method.getName())) {
-          try {
-            return new AttachmentsImpl(getPathPrefix(), (E) args[0]);
-          } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-          } catch (IllegalAccessException e) {
-            e.printStackTrace();
-          }
-          return null;
+          return new AttachmentsImpl(getPathPrefix(), (E) args[0]);
+
         } else {
           assert "find" == (method.getName().intern());
           String doc =

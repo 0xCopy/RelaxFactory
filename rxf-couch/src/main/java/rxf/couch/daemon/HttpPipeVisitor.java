@@ -37,7 +37,7 @@ public class HttpPipeVisitor extends AsioVisitor.Impl {
   public void onRead(SelectionKey key) throws Exception {
     SocketChannel channel = (SocketChannel) key.channel();
     if (otherKey.isValid()) {
-      int read = channel.read(getInBuffer());
+      int read = FSM.read(key, getInBuffer());
       if (read == -1) /* key.cancel(); */
       {
         channel.shutdownInput();

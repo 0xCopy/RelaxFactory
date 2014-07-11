@@ -51,13 +51,11 @@ public interface CouchService<E> {
   }
 
   static class AttachmentsImpl<E> implements Attachments {
-    private final E entity;
     private String rev;
     private String id;
     private String db;
 
-    public AttachmentsImpl(String db, E entity) throws NoSuchFieldException, IllegalAccessException {
-      this.entity = entity;
+    public AttachmentsImpl(String db, E entity) {
       JsonObject obj = CouchMetaDriver.gson().toJsonTree(entity).getAsJsonObject();
       rev = obj.get("_rev").getAsString();
       id = obj.get("_id").getAsString();

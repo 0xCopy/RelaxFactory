@@ -177,7 +177,6 @@
                 <version>5.5.1</version>
             </dependency>
         </dependencies>
-
     </dependencyManagement>
     <modules>
         <module>rxf-shared</module>

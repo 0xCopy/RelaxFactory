@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static java.lang.StrictMath.min;
+import static one.xio.AsioVisitor.FSM;
 
 /**
  * Created by jim on 5/19/14.
@@ -18,17 +19,7 @@ public class Server {
   public static final Queue<Object[]> q = new ConcurrentLinkedQueue<>();
   public static final boolean DEBUG_SENDJSON = Config.get("RXF_DEBUG_SENDJSON", "false").equals(
       "true");
-  public static Thread selectorThread;
   public static boolean killswitch;
-  public static Selector selector;
-
-  public static Selector getSelector() {
-    return selector;
-  }
-
-  public static void setSelector(Selector selector) {
-    Server.selector = selector;
-  }
 
   /**
    * handles the threadlocal ugliness if any to registering user threads into the selector/reactor pattern
@@ -39,24 +30,26 @@ public class Server {
    */
   public static void enqueue(SelectableChannel channel, int op, Object... s) {
     assert channel != null && !killswitch : "Server appears to have shut down, cannot enqueue";
-    if (Thread.currentThread() == selectorThread)
+
+    if (Thread.currentThread() == FSM.selectorThread)
       try {
-        channel.register(getSelector(), op, s);
+        channel.register(FSM.getSelector(), op, s);
       } catch (ClosedChannelException e) {
         e.printStackTrace();
       }
     else {
       q.add(new Object[] {channel, op, s});
     }
-    Selector selector1 = getSelector();
+    Selector selector1 = FSM.getSelector();
     if (null != selector1)
       selector1.wakeup();
   }
 
   public static void init(AsioVisitor protocoldecoder) throws IOException {
 
-    setSelector(Selector.open());
-    selectorThread = Thread.currentThread();
+    FSM.setSelector(Selector.open());
+
+    FSM.selectorThread = Thread.currentThread();
 
     long timeoutMax = 1024, timeout = 1;
 
@@ -64,7 +57,7 @@ public class Server {
       while (!q.isEmpty()) {
         Object[] s = q.remove();
         SelectableChannel x = (SelectableChannel) s[0];
-        Selector sel = getSelector();
+        Selector sel = FSM.getSelector();
         Integer op = (Integer) s[1];
         Object att = s[2];
 
@@ -76,7 +69,7 @@ public class Server {
           e.printStackTrace();
         }
       }
-      int select = selector.select(timeout);
+      int select = FSM.getSelector().select(timeout);
 
       timeout = 0 == select ? min(timeout << 1, timeoutMax) : 1;
       if (0 != select)
@@ -85,7 +78,7 @@ public class Server {
   }
 
   public static void innerloop(AsioVisitor protocoldecoder) throws IOException {
-    Set<SelectionKey> keys = selector.selectedKeys();
+    Set<SelectionKey> keys = FSM.getSelector().selectedKeys();
 
     for (Iterator<SelectionKey> i = keys.iterator(); i.hasNext();) {
       SelectionKey key = i.next();
@@ -167,5 +160,9 @@ public class Server {
 
   public static void setKillswitch(boolean killswitch) {
     Server.killswitch = killswitch;
+  }
+
+  public static Selector getSelector() {
+    return FSM.getSelector();
   }
 }

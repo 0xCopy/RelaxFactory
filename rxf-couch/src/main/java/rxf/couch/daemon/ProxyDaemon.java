@@ -89,7 +89,7 @@ public class ProxyDaemon extends AsioVisitor.Impl {
       public void onRead(SelectionKey key) throws Exception {
         if (!ib.isLimit() || fail) {
           SocketChannel channel = (SocketChannel) key.channel();
-          int read = channel.read(getInBuffer());
+          int read = FSM.read(key, getInBuffer());
           switch (read) {
             case -1:
               channel.close();
@@ -123,7 +123,7 @@ public class ProxyDaemon extends AsioVisitor.Impl {
     if (cursor == null)
       cursor = ByteBuffer.allocate(4 << 10);
     final SocketChannel outterChannel = (SocketChannel) outerKey.channel();
-    int read = outterChannel.read(cursor);
+    int read = FSM.read(outerKey, cursor);
     if (-1 != read) {
       boolean timeHeaders = RPS_SHOW && counter % 1000 == 0;
       long l = 0;

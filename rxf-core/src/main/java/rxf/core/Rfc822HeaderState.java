@@ -536,12 +536,10 @@ public class Rfc822HeaderState {
           while (slice.hasRemaining()) {
             while (slice.hasRemaining() && slice.get() != '\n');
             slice.mark();
-            {
-              if (!slice.hasRemaining() || !Character.isWhitespace(slice.get())) {
-                slice.reset().flip();
-                String trim = UTF_8.decode(slice).toString().trim();
-                r.add(trim);
-              }
+            if (!slice.hasRemaining() || !Character.isWhitespace(slice.get())) {
+              slice.reset().flip();
+              String trim = UTF_8.decode(slice).toString().trim();
+              r.add(trim);
             }
           }
         }

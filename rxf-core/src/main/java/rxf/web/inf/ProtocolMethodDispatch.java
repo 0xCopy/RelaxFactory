@@ -100,7 +100,7 @@ public class ProtocolMethodDispatch extends Impl {
   public void onRead(SelectionKey key) throws Exception {
     SocketChannel channel = (SocketChannel) key.channel();
     ByteBuffer cursor = ByteBuffer.allocateDirect(4 << 10);
-    int read = channel.read(cursor);
+    int read = FSM.read(key, cursor);
     if (-1 == read) {
       ((SocketChannel) key.channel()).socket().close();// cancel();
       return;

@@ -17,9 +17,8 @@ import java.util.List;
 public class CouchModuleBuilder {
   public static final String NAMESPACE = "couch_namespace";
   private final String ns;
-  private final List<Class<?>> entities = new ArrayList<Class<?>>();
-  private final List<Class<? extends CouchService<?>>> services =
-      new ArrayList<Class<? extends CouchService<?>>>();
+  private final List<Class<?>> entities = new ArrayList<>();
+  private final List<Class<? extends CouchService<?>>> services = new ArrayList<>();
 
   /**
    * Creates a new generateDriver. No namespace has been declared, a String constant must be bound to {@literal @Named(}
@@ -67,7 +66,7 @@ public class CouchModuleBuilder {
 
       private <S extends CouchService<?>> void bindService(Class<S> serviceType) {
         assert hasAnEntity(serviceType);
-        CouchServiceProvider<S> provider = new CouchServiceProvider<S>(serviceType);
+        CouchServiceProvider<S> provider = new CouchServiceProvider<>(serviceType);
         requestInjection(provider);
         bind(serviceType).toProvider(provider).asEagerSingleton();
       }

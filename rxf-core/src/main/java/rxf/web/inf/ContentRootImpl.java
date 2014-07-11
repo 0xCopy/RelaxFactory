@@ -72,7 +72,9 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
     setCursor(null == getCursor() ? ByteBuffer.allocateDirect(4 << 10) : getCursor().hasRemaining()
         ? getCursor() : ByteBuffer.allocateDirect(getCursor().capacity() << 1).put(
             (ByteBuffer) getCursor().rewind()));
-    int read = getChannel().read(getCursor());
+    SocketChannel channel1 = getChannel();
+    ByteBuffer cursor1 = getCursor();
+    int read = FSM.read(channel1, cursor1);
     if (read == -1)
       key.cancel();
     Buffer flip = getCursor().duplicate().flip();
@@ -109,7 +111,9 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
 
         res.status(HttpStatus.$304).headerString(Connection, "close").headerString(Last$2dModified,
             DateHeaderParser.formatHttpHeaderDate(fdate));
-        int write = getChannel().write(res.as(ByteBuffer.class));
+        SocketChannel channel1 = getChannel();
+        ByteBuffer payload = res.asByteBuffer();
+        int write = FSM.write(channel1, payload);
         key.interestOps(OP_READ).attach(null);
         return;
       }
@@ -123,7 +127,7 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
 
           res.status(HttpStatus.$412).headerString(Connection, "close").headerString(
               Last$2dModified, DateHeaderParser.formatHttpHeaderDate(fdate));
-          int write = getChannel().write(res.as(ByteBuffer.class));
+          int write = FSM.write(getChannel(), res.as(ByteBuffer.class));
           key.interestOps(OP_READ).attach(null);
           return;
         }
@@ -156,9 +160,8 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
 
         public void onWrite(SelectionKey key) throws Exception {
 
-          getChannel().write(
-              getReq().$res().status(HttpStatus.$404).headerString(Content$2dLength, "0").as(
-                  ByteBuffer.class));
+          FSM.write(key, getReq().$res().status(HttpStatus.$404)
+              .headerString(Content$2dLength, "0").as(ByteBuffer.class));
           key.selector().wakeup();
           key.interestOps(OP_READ).attach(null);
         }
@@ -183,7 +186,7 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
     if (null != ceString)
       res.headerString(Content$2dEncoding, ceString);
     ByteBuffer response = res.as(ByteBuffer.class);
-    getChannel().write(response);
+    FSM.write(key, response);
     final int sendBufferSize = 4 << 10;
     final long[] progress = {fileChannel.transferTo(0, sendBufferSize, getChannel())};
     key.interestOps(OP_WRITE | OP_CONNECT);
