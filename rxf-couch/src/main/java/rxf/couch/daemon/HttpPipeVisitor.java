@@ -61,7 +61,7 @@ public class HttpPipeVisitor extends AsioVisitor.Impl {
       CharBuffer decode = StandardCharsets.UTF_8.decode(flip.duplicate());
       System.err.println("writing to " + name + ": " + decode + "-");
     }
-    int write = channel.write(flip);
+    int write = FSM.write(key, flip);
 
     if (-1 == write || isLimit() /* && null != remaining && 0 == remaining.get() */) {
       key.cancel();

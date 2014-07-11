@@ -116,7 +116,7 @@ public class GwtRequestFactoryVisitor extends Impl {
       });
       return;
     }
-    int write = channel.write(cursor);
+    int write = FSM.write(key, cursor);
     if (!cursor.hasRemaining()) {
       /*
        * Socket socket = channel.socket(); socket.getOutputStream().flush(); socket.close();

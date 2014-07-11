@@ -144,7 +144,7 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
       });
       return;
     }
-    channel.write(cursor);
+    FSM.write(key, cursor);
     if (!cursor.hasRemaining()) {
       key.interestOps(SelectionKey.OP_READ).attach(null);
     }

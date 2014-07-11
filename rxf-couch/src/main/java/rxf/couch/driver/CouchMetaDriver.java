@@ -92,7 +92,7 @@ public enum CouchMetaDriver {
             .asByteBuffer();
 
         public void onWrite(SelectionKey key) throws Exception {
-          int write = channel.write(header);
+          int write = FSM.write(key, header);
           assert !header.hasRemaining();
           header.clear();
           final HttpResponse response =
@@ -189,7 +189,7 @@ public enum CouchMetaDriver {
         public HttpResponse response;
 
         public void onWrite(SelectionKey key) throws Exception {
-          int write = channel.write(header);
+          int write = FSM.write(key, header);
           assert !header.hasRemaining();
           header.clear();
           response = tx.state().$req().headerInterest(STATIC_JSON_SEND_HEADERS).$res();
@@ -290,7 +290,7 @@ public enum CouchMetaDriver {
             STATIC_CONTENT_LENGTH_ARR).asByteBuffer();
 
         public void onWrite(SelectionKey key) throws Exception {
-          int write = channel.write(header);
+          int write = FSM.write(key, header);
           assert !header.hasRemaining();
           header = null;
 
@@ -405,7 +405,7 @@ public enum CouchMetaDriver {
         public ByteBuffer cursor;
 
         public void onWrite(SelectionKey key) throws Exception {
-          int write = channel.write(header);
+          int write = FSM.write(key, header);
           assert !header.hasRemaining();
           header.clear();
           response = request.headerInterest(ETag).$res();
@@ -510,7 +510,7 @@ public enum CouchMetaDriver {
         ByteBuffer cursor;
 
         public void onWrite(SelectionKey key) throws Exception {
-          int write = channel.write(header);
+          int write = FSM.write(key, header);
           assert !header.hasRemaining();
           header.clear();
           response = request.headerInterest(STATIC_CONTENT_LENGTH_ARR).$res();
@@ -633,7 +633,7 @@ public enum CouchMetaDriver {
               (ByteBuffer) request.method(GET)
                   .path(scrub('/' + db + '/' + dbKeysBuilder.get(view))).headerString(Accept,
                       MimeType.json.contentType).asByteBuffer();
-          int wrote = channel.write(header);
+          int wrote = FSM.write(key, header);
           assert !header.hasRemaining() : "Failed to complete write in one pass, need to re-interest(READ)";
           key.interestOps(OP_READ);
         }
@@ -893,7 +893,7 @@ public enum CouchMetaDriver {
 
         public void onWrite(SelectionKey key) throws Exception {
           if (null == tx.payload()) {
-            int write = channel.write(header);
+            int write = FSM.write(key, header);
             tx.payload(ByteBuffer.wrap(outbound));
           }
           int write = channel.write(tx.payload());
@@ -1044,7 +1044,7 @@ public enum CouchMetaDriver {
 
                 @Override
                 public void onWrite(SelectionKey key) throws Exception {
-                  channel.write(payload);
+                  FSM.write(key, payload);
                   if (!payload.hasRemaining()) {
                     key.interestOps(OP_READ);
                   }
