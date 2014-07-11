@@ -50,7 +50,7 @@ public class GwtRequestFactoryVisitor extends Impl {
     cursor =
         null == cursor ? ByteBuffer.allocateDirect(4 << 10) : cursor.hasRemaining() ? cursor
             : ByteBuffer.allocateDirect(cursor.capacity() << 1).put((ByteBuffer) cursor.rewind());
-    int read = channel.read(cursor);
+    int read = FSM.read(key, cursor);
     if (read == -1)
       key.cancel();
     Buffer flip = cursor.duplicate().flip();
@@ -66,7 +66,7 @@ public class GwtRequestFactoryVisitor extends Impl {
       key.attach(new Impl() {
         @Override
         public void onRead(SelectionKey key) throws Exception {
-          int read1 = channel.read(cursor);
+          int read1 = FSM.read(key, cursor);
           if (read1 == -1) {
             key.cancel();
           }
