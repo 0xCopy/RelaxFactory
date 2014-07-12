@@ -1,18 +1,18 @@
 package rxf.core;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static one.xio.AsioVisitor.FSM.read;
 import static one.xio.HttpHeaders.Content$2dLength;
 import static one.xio.HttpHeaders.ETag;
 
-/**
- * 
+/** 
  * when a transaction requires an inner call to couchdb or some other tier this abstraction holds a reversible header
  * state for outbound request and inbound response, and as of this comment a payload for the inbound results that a
- * service might provide, to take the place of more complex fire() grammars.
- * 
+ * service might provide, to take the place of more complex fire() grammars. 
  * 
  * User: jim Date: 5/29/12 Time: 1:58 PM
  */
@@ -52,10 +52,46 @@ public abstract class Tx {
 
   /**
    * there can be only one [per thread]
-   * 
    */
   public Tx() {
     current.set(this);
+  }
+  /**
+   *<ol>
+   *
+   *  convenince method for http protocol which
+   *  <li>creates a buffer for {@link #headers} if current one is null.</li>
+   *  <li>grows buffer if current one is full</li>
+   *  <li>parses buffer for http results</li>
+   *  <li>reads contentlength if present and sizes {@link #payload} suitable for {@link one.xio.AsioVisitor.Helper#finishRead(java.nio.ByteBuffer, one.xio.AsioVisitor.Helper.F)} }</li>
+   *  <li>else throws remainder slice of buffer into {@link #payload} as a full buffer</li>
+   *</ol>
+   * @param key
+   * @return
+   * @throws IOException
+   */
+  public int readHttpResponse(SelectionKey key) throws IOException {
+    ByteBuffer byteBuffer = state().headerBuf();
+    if(null==byteBuffer) state().headerBuf(byteBuffer = ByteBuffer.allocateDirect(4 << 10));
+    if(!byteBuffer.hasRemaining())
+      state().headerBuf(byteBuffer = ByteBuffer.allocateDirect(byteBuffer.capacity() << 1).put((ByteBuffer) byteBuffer.flip()));
+    int prior = byteBuffer.position();  //if the headers are extensive, this may be a buffer that has been extended
+    int read = read(key, byteBuffer);
+
+    if(0!=read) //0 on read is quite likely ssl intervention.  just let this bounce through.
+    {
+      if (state().asResponse().apply(byteBuffer)) {
+        ByteBuffer slice = ((ByteBuffer) byteBuffer.duplicate().limit(prior + read)).slice();
+        try {
+          int remaining = Integer.parseInt(state().headerString(Content$2dLength.getHeader()));
+          payload(ByteBuffer.allocateDirect(remaining).put(slice));
+        } catch (NumberFormatException e) {
+          payload(slice);
+
+        }
+      }
+    }
+    return read;
   }
 
   public abstract TerminalBuilder fire();
@@ -108,6 +144,6 @@ public abstract class Tx {
   }
 
   Tx clear() {
-    return this.payload(null).state(null);
-  };
+    return payload(null).state(null);
+  }
 }
