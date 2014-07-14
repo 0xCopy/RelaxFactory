@@ -1,7 +1,7 @@
 package rxf.core;
 
 /**
- * Created by jim on 4/6/14.
+ * Created by jim per 4/6/14.
  */
 
 import java.nio.BufferUnderflowException;
@@ -109,7 +109,7 @@ import java.nio.ByteBuffer;
  * All frames sent from the client to the couch are masked by a
  * 32-bit value that is contained within the frame.  This field is
  * present if the mask bit is set to 1 and is absent if the mask bit
- * is set to 0.  See Section 5.3 for further information on client-
+ * is set to 0.  See Section 5.3 for further information per client-
  * to-couch masking.
  * <p>
  * Payload data:  (StripeLeveler+y) bytes

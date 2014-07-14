@@ -2,8 +2,8 @@ package rxf.couch;
 
 import one.xio.HttpHeaders;
 import org.junit.Test;
-import rxf.core.Tx;
 import rxf.core.Rfc822HeaderState;
+import rxf.core.Tx;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;

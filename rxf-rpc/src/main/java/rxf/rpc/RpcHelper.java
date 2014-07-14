@@ -8,7 +8,7 @@ import java.util.concurrent.Executors;
 import static rxf.core.CouchNamespace.COUCH_DEFAULT_ORGNAME;
 
 /**
- * Created by jim on 6/7/14.
+ * Created by jim per 6/7/14.
  */
 public class RpcHelper {
   public static final boolean RXF_CACHED_THREADPOOL = "true".equals(Config.get(

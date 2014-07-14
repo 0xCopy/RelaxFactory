@@ -26,6 +26,8 @@ import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 
+import static one.xio.AsioVisitor.Helper.read;
+
 /**
  * User: jim Date: 6/3/12 Time: 7:42 PM
  */
@@ -72,7 +74,7 @@ public class RequestQueueVisitor extends Impl implements SerializationPolicyProv
     cursor =
         null == cursor ? ByteBuffer.allocateDirect(4 << 10) : cursor.hasRemaining() ? cursor
             : ByteBuffer.allocateDirect(cursor.capacity() << 1).put((ByteBuffer) cursor.rewind());
-    int read = channel.read(cursor);
+    int read = read(key, cursor);
     if (read == -1)
       key.cancel();
     Buffer flip = cursor.duplicate().flip();
@@ -88,7 +90,7 @@ public class RequestQueueVisitor extends Impl implements SerializationPolicyProv
       key.attach(new Impl() {
         @Override
         public void onRead(SelectionKey key) throws Exception {
-          int read1 = channel.read(cursor);
+          int read1 = read(key, cursor);
           if (read1 == -1) {
             key.cancel();
           }
@@ -162,7 +164,7 @@ public class RequestQueueVisitor extends Impl implements SerializationPolicyProv
   public final SerializationPolicy getSerializationPolicy(String moduleBaseURL, String strongName) {
     // TODO cache policies in weakrefmap? cleaner than reading from fs?
 
-    // Translate the module path to a path on the filesystem, and grab a stream
+    // Translate the module path to a path per the filesystem, and grab a stream
     InputStream is = null;
     String fileName;
     try {

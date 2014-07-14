@@ -4,7 +4,15 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>rxf</groupId>
     <artifactId>relaxfactory</artifactId>
-    <version>0.9.9.1</version>
+    <version>0.9.9.2</version>
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
     <packaging>pom</packaging>
     <properties>
         <gwt.draftCompile>false</gwt.draftCompile>
@@ -102,7 +110,11 @@
     </pluginRepositories>
     <dependencyManagement>
 
-        <dependencies>
+        <dependencies>       <dependency>
+            <groupId>1xio</groupId>
+            <artifactId>1xio</artifactId>
+            <version>2.0.1</version>
+        </dependency>
             <dependency>
                 <groupId>com.google.gwt</groupId>
                 <artifactId>gwt-user</artifactId>

@@ -3,14 +3,14 @@
          xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>rxf-rsync</artifactId>
+    <artifactId>rxf-sslsandbox</artifactId>
     <parent>
         <groupId>rxf</groupId>
         <artifactId>relaxfactory</artifactId>
         <version>0.9.9.2</version>
     </parent>
-    <name>rxf-rsync</name>
-    <url>http://maven.apache.org</url>
+
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>

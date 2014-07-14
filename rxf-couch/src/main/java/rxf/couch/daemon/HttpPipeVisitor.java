@@ -37,16 +37,15 @@ public class HttpPipeVisitor extends AsioVisitor.Impl {
   public void onRead(SelectionKey key) throws Exception {
     SocketChannel channel = (SocketChannel) key.channel();
     if (otherKey.isValid()) {
-      int read = channel.read(getInBuffer());
-      if (read == -1) /* key.cancel(); */
-      {
+      int read = Helper.read(key, getInBuffer());
+      if (read == -1) /* key.cancel(); */{
         channel.shutdownInput();
         key.interestOps(OP_WRITE);
-        channel.write(ByteBuffer.allocate(0));
+        Helper.write(key, ByteBuffer.allocate(0));
       } else {
         // if buffer fills up, stop the read option for a bit
         otherKey.interestOps(OP_READ | OP_WRITE);
-        channel.write(ByteBuffer.allocate(0));
+        Helper.write(key, ByteBuffer.allocate(0));
       }
     } else {
       key.cancel();

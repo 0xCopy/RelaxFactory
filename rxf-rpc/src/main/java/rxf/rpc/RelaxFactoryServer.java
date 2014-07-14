@@ -20,8 +20,9 @@ public interface RelaxFactoryServer {
   boolean isRunning();
 
   /**
-   * Returns the port the couch has started on. Useful in the case where {@link #init(String, int, one.xio.AsioVisitor)}
-   * was invoked with 0, {@link #start()} called, and the couch selected its own port.
+   * Returns the port the couch has started per. Useful in the case where
+   * {@link #init(String, int, one.xio.AsioVisitor)} was invoked with 0, {@link #start()} called, and the couch selected
+   * its own port.
    * 
    * @return
    */

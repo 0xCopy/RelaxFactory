@@ -24,6 +24,8 @@ import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 
+import static one.xio.AsioVisitor.Helper.write;
+
 /**
  * User: jim Date: 6/3/12 Time: 7:42 PM
  */
@@ -31,7 +33,7 @@ import java.text.ParseException;
 public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
 
   private HttpRequest req;
-  private ByteBuffer cursor = null;
+  private ByteBuffer cursor;
   private SocketChannel channel;
   private String payload;
 
@@ -69,7 +71,7 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
     cursor =
         null == cursor ? ByteBuffer.allocateDirect(4 << 10) : cursor.hasRemaining() ? cursor
             : ByteBuffer.allocateDirect(cursor.capacity() << 1).put((ByteBuffer) cursor.rewind());
-    int read = channel.read(cursor);
+    int read = Helper.read(key, cursor);
     if (read == -1)
       key.cancel();
     Buffer flip = cursor.duplicate().flip();
@@ -85,7 +87,7 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
       key.attach(new Impl() {
         @Override
         public void onRead(SelectionKey key) throws Exception {
-          int read1 = channel.read(cursor);
+          int read1 = Helper.read(key, cursor);
           if (read1 == -1) {
             key.cancel();
           }
@@ -144,17 +146,17 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
       });
       return;
     }
-    channel.write(cursor);
+    write(channel, cursor);
     if (!cursor.hasRemaining()) {
       key.interestOps(SelectionKey.OP_READ).attach(null);
     }
 
   }
 
-  public final SerializationPolicy getSerializationPolicy(String moduleBaseURL, String strongName) {
+  public SerializationPolicy getSerializationPolicy(String moduleBaseURL, String strongName) {
     // TODO cache policies in weakrefmap? cleaner than reading from fs?
 
-    // Translate the module path to a path on the filesystem, and grab a stream
+    // Translate the module path to a path per the filesystem, and grab a stream
     InputStream is;
     String fileName;
     try {

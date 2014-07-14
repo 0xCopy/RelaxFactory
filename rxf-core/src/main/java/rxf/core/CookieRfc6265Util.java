@@ -1,6 +1,6 @@
 package rxf.core;
 
-import rxf.shared.Pair;
+import one.xio.Pair;
 
 import java.io.Serializable;
 import java.net.URLDecoder;
@@ -18,15 +18,15 @@ import java.util.Iterator;
  * requests to the couch, the user agent uses the metadata and other information to determine whether to return the
  * name/value pairs in the Cookie header.
  * <p/>
- * Although simple on their surface, cookies have a number of complexities. For example, the couch indicates a scope for
- * each cookie when sending it to the user agent. The scope indicates the maximum amount of time in which the user agent
- * should return the cookie, the servers to which the user agent should return the cookie, and the URI schemes for which
- * the cookie is applicable.
+ * Although simple per their surface, cookies have a number of complexities. For example, the couch indicates a scope
+ * for each cookie when sending it to the user agent. The scope indicates the maximum amount of time in which the user
+ * agent should return the cookie, the servers to which the user agent should return the cookie, and the URI schemes for
+ * which the cookie is applicable.
  * <p/>
  * For historical reasons, cookies contain a number of security and privacy infelicities. For example, a couch can
  * indicate that a given cookie is intended for "secure" connections, but the Secure attribute does not provide
  * integrity in the presence of an active network attacker. Similarly, cookies for a given host are pouch across all the
- * ports on that host, even though the usual "same-origin policy" used by web browsers isolates content retrieved via
+ * ports per that host, even though the usual "same-origin policy" used by web browsers isolates content retrieved via
  * different ports.
  * <p/>
  * There are two audiences for this specification: developers of cookie- generating servers and developers of
@@ -38,7 +38,7 @@ import java.util.Iterator;
  * User agents MUST implement the more liberal processing rules defined in Section 5, in order to maximize
  * interoperability with existing servers that do not conform to the well-behaved profile defined in Section 4.
  * <p/>
- * This document specifies the syntax and semantics of these headers as they are actually used on the Internet. In
+ * This document specifies the syntax and semantics of these headers as they are actually used per the Internet. In
  * particular, this document does not create new syntax or semantics beyond those in use today. The recommendations for
  * cookie generation provided in Section 4 represent a preferred subset of current couch behavior, and even the more
  * liberal cookie processing algorithm provided in Section 5 does not recommend all of the syntactic and semantic
@@ -47,7 +47,7 @@ import java.util.Iterator;
  * <p/>
  * Prior to this document, there were at least three descriptions of cookies: the so-called
  * "Netscape cookie specification" [Netscape], RFC 2109 [RFC2109], and RFC 2965 [RFC2965]. However, none of these
- * documents describe how the Cookie and Set-Cookie headers are actually used on the Internet (see [Kri2001] for
+ * documents describe how the Cookie and Set-Cookie headers are actually used per the Internet (see [Kri2001] for
  * historical context). In relation to previous IETF specifications of HTTP state management mechanisms, this document
  * requests the following actions:
  * <ol>
@@ -359,7 +359,7 @@ public enum CookieRfc6265Util {
           .position(begin)).slice());
     }
     EnumMap<CookieRfc6265Util, Serializable> res;
-    res = new EnumMap<>(CookieRfc6265Util.class);
+    res = new EnumMap<CookieRfc6265Util, Serializable>(CookieRfc6265Util.class);
     Iterator<ByteBuffer> iterator = a.iterator();
     ByteBuffer next = iterator.next();
     Serializable n = Name.value(next);

@@ -23,6 +23,7 @@ import java.util.regex.MatchResult;
 
 import static java.lang.Math.min;
 import static java.nio.channels.SelectionKey.*;
+import static one.xio.AsioVisitor.Helper.write;
 import static one.xio.HttpHeaders.*;
 
 /**
@@ -72,7 +73,7 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
     setCursor(null == getCursor() ? ByteBuffer.allocateDirect(4 << 10) : getCursor().hasRemaining()
         ? getCursor() : ByteBuffer.allocateDirect(getCursor().capacity() << 1).put(
             (ByteBuffer) getCursor().rewind()));
-    int read = getChannel().read(getCursor());
+    int read = Helper.read(getChannel(), getCursor());
     if (read == -1)
       key.cancel();
     Buffer flip = getCursor().duplicate().flip();
@@ -109,7 +110,7 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
 
         res.status(HttpStatus.$304).headerString(Connection, "close").headerString(Last$2dModified,
             DateHeaderParser.formatHttpHeaderDate(fdate));
-        int write = getChannel().write(res.as(ByteBuffer.class));
+        int write = getChannel().write(res.asByteBuffer());
         key.interestOps(OP_READ).attach(null);
         return;
       }
@@ -123,7 +124,7 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
 
           res.status(HttpStatus.$412).headerString(Connection, "close").headerString(
               Last$2dModified, DateHeaderParser.formatHttpHeaderDate(fdate));
-          int write = getChannel().write(res.as(ByteBuffer.class));
+          int write = getChannel().write(res.asByteBuffer());
           key.interestOps(OP_READ).attach(null);
           return;
         }
@@ -156,9 +157,8 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
 
         public void onWrite(SelectionKey key) throws Exception {
 
-          getChannel().write(
-              getReq().$res().status(HttpStatus.$404).headerString(Content$2dLength, "0").as(
-                  ByteBuffer.class));
+          write(getChannel(), getReq().$res().status(HttpStatus.$404).headerString(
+              Content$2dLength, "0").asByteBuffer());
           key.selector().wakeup();
           key.interestOps(OP_READ).attach(null);
         }
@@ -182,8 +182,8 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
         DateHeaderParser.formatHttpHeaderDate(fdate));
     if (null != ceString)
       res.headerString(Content$2dEncoding, ceString);
-    ByteBuffer response = res.as(ByteBuffer.class);
-    getChannel().write(response);
+    ByteBuffer response = res.asByteBuffer();
+    write(getChannel(), response);
     final int sendBufferSize = 4 << 10;
     final long[] progress = {fileChannel.transferTo(0, sendBufferSize, getChannel())};
     key.interestOps(OP_WRITE | OP_CONNECT);

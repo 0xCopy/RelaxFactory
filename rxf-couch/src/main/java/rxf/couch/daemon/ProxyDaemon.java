@@ -23,7 +23,7 @@ import static rxf.core.Config.get;
 
 /**
  * <ul>
- * <li>Accepts external socket connections on behalf of Couchdb or other REST couch
+ * <li>Accepts external socket connections per behalf of Couchdb or other REST couch
  * <p/>
  * </ul>
  * 
@@ -45,7 +45,7 @@ public class ProxyDaemon extends AsioVisitor.Impl {
   private static final boolean RPS_SHOW = "true".equals(get("RPS_SHOW", "true"));
   private static final boolean PROXY_DEBUG = "true".equals(get("PROXY_DEBUG", "false"));
   /**
-   * master counter for stats on inbound requests
+   * master counter for stats per inbound requests
    */
   public static int counter = 0;
   public FileChannel hdrStream;
@@ -89,7 +89,7 @@ public class ProxyDaemon extends AsioVisitor.Impl {
       public void onRead(SelectionKey key) throws Exception {
         if (!ib.isLimit() || fail) {
           SocketChannel channel = (SocketChannel) key.channel();
-          int read = channel.read(getInBuffer());
+          int read = Helper.read(key, getInBuffer());
           switch (read) {
             case -1:
               channel.close();
@@ -123,7 +123,7 @@ public class ProxyDaemon extends AsioVisitor.Impl {
     if (cursor == null)
       cursor = ByteBuffer.allocate(4 << 10);
     final SocketChannel outterChannel = (SocketChannel) outerKey.channel();
-    int read = outterChannel.read(cursor);
+    int read = Helper.read(outterChannel, cursor);
     if (-1 != read) {
       boolean timeHeaders = RPS_SHOW && counter % 1000 == 0;
       long l = 0;

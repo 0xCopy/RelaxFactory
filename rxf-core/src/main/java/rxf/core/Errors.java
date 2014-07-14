@@ -6,9 +6,9 @@ import one.xio.HttpStatus;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
-import java.nio.channels.SocketChannel;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static one.xio.AsioVisitor.Helper.write;
 
 public class Errors {
 
@@ -35,8 +35,8 @@ public class Errors {
                 .headerString(HttpHeaders.Content$2dLength, String.valueOf(html.length())).as(
                     ByteBuffer.class);
 
-        ((SocketChannel) key.channel()).write(headers);
-        ((SocketChannel) key.channel()).write(UTF_8.encode(html));
+        write(key, headers);
+        write(key, UTF_8.encode(html));
         key.selector().wakeup();
         key.interestOps(SelectionKey.OP_READ).attach(null);
       }
@@ -67,13 +67,13 @@ public class Errors {
     key.attach(new AsioVisitor.Impl() {
       @Override
       public void onWrite(SelectionKey key) throws Exception {
-        ByteBuffer headers =
+        ByteBuffer byteBuffer =
             new Rfc822HeaderState().$res().status(code).headerString(HttpHeaders.Content$2dType,
                 "text/html").headerString(HttpHeaders.Content$2dLength,
-                String.valueOf(html.length())).as(ByteBuffer.class);
+                String.valueOf(html.length())).asByteBuffer();
 
-        ((SocketChannel) key.channel()).write(headers);
-        ((SocketChannel) key.channel()).write(UTF_8.encode(html));
+        write(key, byteBuffer);
+        write(key, UTF_8.encode(html));
         key.selector().wakeup();
         key.interestOps(SelectionKey.OP_READ).attach(null);
       }

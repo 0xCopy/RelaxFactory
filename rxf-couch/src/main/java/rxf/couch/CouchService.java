@@ -172,7 +172,7 @@ public interface CouchService<E> {
   }
 
   /**
-   * Marks a service call parameter as being used on a couchdb view GET request as "key".
+   * Marks a service call parameter as being used per a couchdb view GET request as "key".
    */
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.PARAMETER)
@@ -182,7 +182,7 @@ public interface CouchService<E> {
   }
 
   /**
-   * Marks a service method or parameter as being used on a couchdb view GET request as "keys". Typically used on a
+   * Marks a service method or parameter as being used per a couchdb view GET request as "keys". Typically used per a
    * parameter that accepts an array or collection of keys.
    */
   @Retention(RetentionPolicy.RUNTIME)
@@ -193,10 +193,10 @@ public interface CouchService<E> {
   }
 
   /**
-   * Marks a service method or parameter as being used on a couchdb view GET request as "limit". A value need not be
-   * provided if used on a parameter, but the annotation is useless on the method without a value.
+   * Marks a service method or parameter as being used per a couchdb view GET request as "limit". A value need not be
+   * provided if used per a parameter, but the annotation is useless per the method without a value.
    * <p/>
-   * (Not yet supported on a method)
+   * (Not yet supported per a method)
    */
   @Retention(RetentionPolicy.RUNTIME)
   @Target({ElementType.PARAMETER, ElementType.METHOD})
@@ -204,14 +204,14 @@ public interface CouchService<E> {
   @Documented
   public @interface Limit {
     /**
-     * Value to use as the "limit" parameter. Annotations on the method override possible parameters.
+     * Value to use as the "limit" parameter. Annotations per the method override possible parameters.
      */
     int value() default -1;
   }
 
   /**
-   * Marks a service method or parameter as being used on a couchdb view GET request as "skip". A value need not be
-   * provided if used on a parameter, but the annotation is useless on the method without a value.
+   * Marks a service method or parameter as being used per a couchdb view GET request as "skip". A value need not be
+   * provided if used per a parameter, but the annotation is useless per the method without a value.
    * <p/>
    * From http://wiki.apache.org/couchdb/HTTP_view_API#Querying_Options: <blockquote>"The skip option should only be
    * used with small values, as skipping a large range of documents this way is inefficient (it scans the index from the
@@ -226,13 +226,13 @@ public interface CouchService<E> {
   @Documented
   public @interface Skip {
     /**
-     * Value to use as the "skip" parameter. Annotations on the method override possible parameters.
+     * Value to use as the "skip" parameter. Annotations per the method override possible parameters.
      */
     int value() default -1;
   }
 
   /**
-   * Marks a service method or parameter as being used on a couchdb view GET request as "startkey". In conjunction with
+   * Marks a service method or parameter as being used per a couchdb view GET request as "startkey". In conjunction with
    * endkey and/or limit can be used to implement basic prefix search
    */
   @Retention(RetentionPolicy.RUNTIME)
@@ -243,7 +243,7 @@ public interface CouchService<E> {
   }
 
   /**
-   * Marks a service method or parameter as being used on a couchdb view GET request as "endkey".
+   * Marks a service method or parameter as being used per a couchdb view GET request as "endkey".
    */
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.PARAMETER)
@@ -253,7 +253,7 @@ public interface CouchService<E> {
   }
 
   /**
-   * Marks a service method or parameter as being used on a couchdb view GET request as "startkey_docid". Allows for
+   * Marks a service method or parameter as being used per a couchdb view GET request as "startkey_docid". Allows for
    * pagination by id in case of duplicate 'startkey', and without the performance issues of 'skip'.
    */
   @Retention(RetentionPolicy.RUNTIME)
@@ -264,7 +264,7 @@ public interface CouchService<E> {
   }
 
   /**
-   * Marks a service method or parameter as being used on a couchdb view GET request as "endkey_docid". Allows for
+   * Marks a service method or parameter as being used per a couchdb view GET request as "endkey_docid". Allows for
    * pagination by id in case of duplicate 'endkey'.
    */
   @Retention(RetentionPolicy.RUNTIME)

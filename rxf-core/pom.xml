@@ -6,7 +6,7 @@
     <parent>
         <groupId>rxf</groupId>
         <artifactId>relaxfactory</artifactId>
-        <version>0.9.9.1</version>
+        <version>0.9.9.2</version>
     </parent>
 
     <artifactId>rxf-core</artifactId>
@@ -20,8 +20,7 @@
         <dependency>
             <groupId>1xio</groupId>
             <artifactId>1xio</artifactId>
-            <version>2.0</version>
-        </dependency>
+         </dependency>
         <dependency>
             <groupId>rxf</groupId>
             <artifactId>rxf-shared</artifactId>

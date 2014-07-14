@@ -37,7 +37,7 @@ public class Rfc6455WsInitiator {
      * @param ws_uri
      * @param host
      * @param wsProto
-     * @return a HttpResponse suitable for .as(String.class) or .as(ByteBuffer.class)
+     * @return a HttpResponse suitable for .as(String.class) or .asByteBuffer()
    */
   public Rfc822HeaderState.HttpResponse parseInitiatorRequest(
       Rfc822HeaderState.HttpRequest httpRequest, URI ws_uri, String host, String wsProto)
@@ -157,7 +157,7 @@ public class Rfc6455WsInitiator {
         Rfc822HeaderState.HttpResponse response1 =
             httpResponse.resCode(HttpStatus.$101).status(HttpStatus.$101).headerStrings(
                 headerStrings).$res()
-        /* .as(ByteBuffer.class) */;
+        /* .asByteBuffer() */;
         System.err.println("sending back: " + httpResponse.as(String.class));
         return response1;
       case POST:

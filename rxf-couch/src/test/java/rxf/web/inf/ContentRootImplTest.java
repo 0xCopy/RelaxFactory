@@ -63,7 +63,7 @@ public class ContentRootImplTest {
   static public void tearDown() throws Exception {
     try {
       Server.setKillswitch(true);
-      Server.getSelector().close();
+      AsioVisitor.Helper.getSelector().close();
       serverSocketChannel.close();
 
       exec.shutdown();

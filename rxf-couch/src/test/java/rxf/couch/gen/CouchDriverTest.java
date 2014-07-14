@@ -81,7 +81,7 @@ public class CouchDriverTest {
 
     try {
       Server.killswitch = true;
-      Server.getSelector().close();
+      AsioVisitor.Helper.getSelector().close();
       // HttpMethod.broke = null;
       exec.shutdown();
       // Thread.sleep(4000);//more than 3 seconds, standard timeout

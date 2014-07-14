@@ -80,7 +80,7 @@ public class CouchServiceFactory {
             // verify the DB exists
             ensureDbExists(getPathPrefix());
 
-            // harvest, construct a view instance based on the interface. Probably not cheap, should be avoided.
+            // harvest, construct a view instance based per the interface. Probably not cheap, should be avoided.
             CouchDesignDoc design = new CouchDesignDoc();
             String designId = design.id = "_design/" + serviceInterface.getName();
             CouchDesignDoc existingDesignDoc = null;
@@ -117,7 +117,7 @@ public class CouchServiceFactory {
                   // TODO emit warning for useless params
                   Map<String, String> queryParams = new TreeMap<String, String>();
                   for (int i = 0; i < paramAnnotations.length; i++) {
-                    // look for a CouchRequestParam on this param, if none, ignore
+                    // look for a CouchRequestParam per this param, if none, ignore
                     Annotation[] param = paramAnnotations[i];
                     for (int j = 0; j < param.length; j++) {// only the first param that fits
                       CouchRequestParam paramData =
@@ -128,7 +128,7 @@ public class CouchServiceFactory {
                       }
                     }
                   }
-                  // after visiting args, check out the annotations on the method itself
+                  // after visiting args, check out the annotations per the method itself
                   Annotation[] methodAnnotations = m.getAnnotations();
                   for (Annotation a : methodAnnotations) {
                     CouchRequestParam paramData =
@@ -201,7 +201,7 @@ public class CouchServiceFactory {
       init.get();
 
       if (viewMethods.containsKey(method.getName())) {
-        // view methods have several types they can returns, based on whether or not they use
+        // view methods have several types they can returns, based per whether or not they use
         // reduce, if they return the key (simple or composite) as part of the data in a map
         // or just a list of data items, and how they return the data, as the full document,
         // or some simplified format.

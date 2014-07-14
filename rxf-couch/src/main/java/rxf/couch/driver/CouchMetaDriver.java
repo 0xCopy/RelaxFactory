@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.nio.channels.SelectionKey.*;
 import static one.xio.AsioVisitor.Helper.toRead;
+import static one.xio.AsioVisitor.Helper.write;
 import static one.xio.HttpHeaders.*;
 import static one.xio.HttpMethod.*;
 import static rxf.core.Server.enqueue;
@@ -43,7 +44,7 @@ import static rxf.couch.CouchConnectionFactory.recycleChannel;
 import static rxf.couch.driver.CouchMetaDriver.etype.*;
 
 /**
- * confers traits on an oo platform...
+ * confers traits per an oo platform...
  * <p/>
  * CouchDriver defines an interface and a method for each {@link CouchMetaDriver } enum attribute. presently the
  * generator does not wire that interface up anywhere but the inner classes of the interface use this enum for slotted
@@ -88,7 +89,7 @@ public enum CouchMetaDriver {
 
         ByteBuffer header = (ByteBuffer) tx.state().$req().method(PUT).path("/" + db)
         // .headerString(Content$2dLength, "0")
-            .as(ByteBuffer.class);
+            .asByteBuffer();
 
         public void onWrite(SelectionKey key) throws Exception {
           int write = channel.write(header);
@@ -107,7 +108,7 @@ public enum CouchMetaDriver {
                         ? header : ByteBuffer.allocateDirect(header.capacity() * 2).put(
                             (ByteBuffer) header.flip());
 
-                int read = channel.read(header);
+                int read = Helper.read(key, header);
                 ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
                 response.read((ByteBuffer) flip);
 
@@ -140,7 +141,7 @@ public enum CouchMetaDriver {
                   }
                 }
               } else {
-                int read = channel.read(tx.payload());
+                int read = Helper.read(key, tx.payload());
                 switch (read) {
                   case -1:
                     phaser.forceTermination();
@@ -184,7 +185,7 @@ public enum CouchMetaDriver {
 
       enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
         ByteBuffer header = (ByteBuffer) tx.state().$req().method(DELETE).pathResCode(
-            "/" + dbKeysBuilder.get(db)).as(ByteBuffer.class);
+            "/" + dbKeysBuilder.get(db)).asByteBuffer();
         public HttpResponse response;
 
         public void onWrite(SelectionKey key) throws Exception {
@@ -204,7 +205,7 @@ public enum CouchMetaDriver {
                     ? header : ByteBuffer.allocateDirect(header.capacity() * 2).put(
                         (ByteBuffer) header.flip());
 
-            int read = channel.read(header);
+            int read = Helper.read(key, header);
             ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
             response.read((ByteBuffer) flip);
 
@@ -236,7 +237,7 @@ public enum CouchMetaDriver {
               }
             }
           } else {
-            int read = channel.read(tx.payload());
+            int read = Helper.read(key, tx.payload());
             switch (read) {
               case -1:
                 phaser.forceTermination();
@@ -286,7 +287,7 @@ public enum CouchMetaDriver {
         HttpRequest request = tx.state().$req();
         ByteBuffer header = (ByteBuffer) request.path(
             scrub("/" + db + (null == id ? "" : "/" + id))).method(GET).addHeaderInterest(
-            STATIC_CONTENT_LENGTH_ARR).as(ByteBuffer.class);
+            STATIC_CONTENT_LENGTH_ARR).asByteBuffer();
 
         public void onWrite(SelectionKey key) throws Exception {
           int write = channel.write(header);
@@ -308,7 +309,7 @@ public enum CouchMetaDriver {
                   header.hasRemaining() ? header : ByteBuffer.allocateDirect(header.capacity() * 2)
                       .put((ByteBuffer) header.flip());
 
-            int read = channel.read(header);
+            int read = Helper.read(key, header);
             if (-1 == read) {// nothing else to read from the header, never started body, something is wrong
               phaser.forceTermination();
               key.cancel();
@@ -348,7 +349,7 @@ public enum CouchMetaDriver {
             }
           } else {// we've already begun the body, but didn't finish, and may do so now
             // read further of the body
-            int read = channel.read(cursor);
+            int read = Helper.read(key, cursor);
             switch (read) {// if we didn't actually read, something is wrong
               case -1:
                 phaser.forceTermination();
@@ -399,7 +400,7 @@ public enum CouchMetaDriver {
         String id = (String) dbKeysBuilder.get(docId);
         HttpRequest request = tx.state().$req();
         final String scrub = scrub("/" + db + (null != id ? "/" + id : ""));
-        ByteBuffer header = (ByteBuffer) request.path(scrub).method(HEAD).as(ByteBuffer.class);
+        ByteBuffer header = (ByteBuffer) request.path(scrub).method(HEAD).asByteBuffer();
         public HttpResponse response;
         public ByteBuffer cursor;
 
@@ -421,7 +422,7 @@ public enum CouchMetaDriver {
                     ? header : ByteBuffer.allocateDirect(header.capacity() * 2).put(
                         (ByteBuffer) header.flip());
 
-            int read = channel.read(header);
+            int read = Helper.read(key, header);
             if (-1 != read) {
               ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
               response.read((ByteBuffer) flip);
@@ -505,7 +506,7 @@ public enum CouchMetaDriver {
         private HttpResponse response;
         ByteBuffer header = (ByteBuffer) request.path(
             scrub("/" + dbKeysBuilder.get(db) + "/" + dbKeysBuilder.get(docId) + "?rev="
-                + dbKeysBuilder.get(rev))).method(DELETE).as(ByteBuffer.class);
+                + dbKeysBuilder.get(rev))).method(DELETE).asByteBuffer();
         ByteBuffer cursor;
 
         public void onWrite(SelectionKey key) throws Exception {
@@ -525,7 +526,7 @@ public enum CouchMetaDriver {
                     ? header : ByteBuffer.allocateDirect(header.capacity() * 2).put(
                         (ByteBuffer) header.flip());
 
-            int read = channel.read(header);
+            int read = Helper.read(key, header);
             switch (read) {
               case -1:
                 phaser.forceTermination();
@@ -555,7 +556,7 @@ public enum CouchMetaDriver {
               }
             }
           } else {
-            int read = channel.read(cursor);
+            int read = Helper.read(key, cursor);
             if (!cursor.hasRemaining()) {
               cursor.flip();
               deliver();
@@ -592,7 +593,7 @@ public enum CouchMetaDriver {
   /**
    * a statistically imperfect chunked encoding reader which searches the end of current input for a token.
    * <p/>
-   * <u> statistically imperfect </u>means that data containing said token {@link #CE_TERMINAL} delivered on a packet
+   * <u> statistically imperfect </u>means that data containing said token {@link #CE_TERMINAL} delivered per a packet
    * boundary or byte-at-a-time will false trigger the suffix.
    */
   // @DbTask( {rows, future, continuousFeed})
@@ -631,7 +632,7 @@ public enum CouchMetaDriver {
           ByteBuffer header =
               (ByteBuffer) request.method(GET)
                   .path(scrub('/' + db + '/' + dbKeysBuilder.get(view))).headerString(Accept,
-                      MimeType.json.contentType).as(ByteBuffer.class);
+                      MimeType.json.contentType).asByteBuffer();
           int wrote = channel.write(header);
           assert !header.hasRemaining() : "Failed to complete write in one pass, need to re-interest(READ)";
           key.interestOps(OP_READ);
@@ -640,7 +641,7 @@ public enum CouchMetaDriver {
         public void onRead(SelectionKey key) throws IOException {
           if (null != cursor) {
             try {
-              int read = channel.read(cursor);
+              int read = Helper.read(key, cursor);
               if (-1 == read) {
                 // we were asked to read again, but no more content to read, just deliver what we already saw
                 if (0 < cursor.position()) {
@@ -682,7 +683,7 @@ public enum CouchMetaDriver {
                   ByteBuffer.allocateDirect(header.capacity() * 2).put((ByteBuffer) header.flip());
             }
 
-            int read = channel.read(header);
+            int read = Helper.read(key, header);
             ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
             HttpResponse response =
                 (HttpResponse) new Rfc822HeaderState().$res().headerInterest(STATIC_VF_HEADERS);
@@ -692,7 +693,7 @@ public enum CouchMetaDriver {
             if (!Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR,
                 currentBuff)) {
               // not enough content to finish loading headers, wait for more
-              rxf.core.Server.getSelector().wakeup();
+              Helper.getSelector().wakeup();
               return;
             }
             cursor = (ByteBuffer) flip.slice();
@@ -721,7 +722,7 @@ public enum CouchMetaDriver {
                               remaining).put(cursor);
 
                       public void onRead(SelectionKey key) throws Exception {
-                        int read1 = channel.read(cursor1);
+                        int read1 = Helper.read(key, cursor1);
                         switch (read1) {
                           case -1:
                             phaser.forceTermination();
@@ -870,7 +871,7 @@ public enum CouchMetaDriver {
       ByteBuffer header =
           (ByteBuffer) request.method(method).path(opaque).headerInterest(STATIC_JSON_SEND_HEADERS)
               .headerString(Content$2dLength, String.valueOf(outbound.length)).headerString(Accept,
-                  MimeType.json.contentType).as(ByteBuffer.class);
+                  MimeType.json.contentType).asByteBuffer();
       if (RpcHelper.DEBUG_SENDJSON) {
         System.err.println(ProtocolMethodDispatch.deepToString(opaque, validjson,
             StandardCharsets.UTF_8.decode(header.duplicate()), tx.state()));
@@ -911,7 +912,7 @@ public enum CouchMetaDriver {
                               (ByteBuffer) header.flip());
 
                   try {
-                    int read = channel.read(header);
+                    int read = Helper.read(key, header);
                   } catch (IOException e) {
                     phaser.forceTermination();// .reset();
                     ProtocolMethodDispatch.deepToString(this, e);
@@ -949,7 +950,7 @@ public enum CouchMetaDriver {
                     }
                   }
                 } else {
-                  int read = channel.read(tx.payload());
+                  int read = Helper.read(key, tx.payload());
                   if (-1 == read) {
                     phaser.forceTermination();
 
@@ -1021,15 +1022,15 @@ public enum CouchMetaDriver {
           ByteBuffer as =
               request.method(PUT).path(sb).headerString(Expect, "100-Continue").headerString(
                   Content$2dType, ctype).headerString(Accept, MimeType.json.contentType)
-                  .headerString(Content$2dLength, String.valueOf(limit)).as(ByteBuffer.class);
-          channel.write((ByteBuffer) as.rewind());
+                  .headerString(Content$2dLength, String.valueOf(limit)).asByteBuffer();
+          write(channel, (ByteBuffer) as.rewind());
           key.interestOps(OP_READ);
         }
 
         @Override
         public void onRead(SelectionKey key) throws Exception {
           ByteBuffer[] byteBuffer = {ByteBuffer.allocateDirect(4 << 10)};
-          int read = channel.read(byteBuffer[0]);
+          int read = Helper.read(key, byteBuffer[0]);
           HttpResponse httpResponse = request.$res();
 
           Rfc822HeaderState apply = httpResponse.read((ByteBuffer) byteBuffer[0].flip());
@@ -1043,7 +1044,7 @@ public enum CouchMetaDriver {
 
                 @Override
                 public void onWrite(SelectionKey key) throws Exception {
-                  channel.write(payload);
+                  write(channel, payload);
                   if (!payload.hasRemaining()) {
                     key.interestOps(OP_READ);
                   }
@@ -1062,7 +1063,7 @@ public enum CouchMetaDriver {
 
                   if (null == tx.payload())
                     tx.payload(ByteBuffer.allocateDirect(4 << 10));
-                  int read = channel.read(tx.payload());
+                  int read = Helper.read(key, tx.payload());
                   if (-1 == read) {
                     phaser.forceTermination();
                     key.cancel();
@@ -1160,7 +1161,7 @@ public enum CouchMetaDriver {
   }
 
   /**
-   * allow non-rxf code on registration of type adapters to null the gson used by the driver.
+   * allow non-rxf code per registration of type adapters to null the gson used by the driver.
    * 
    * @param v null to rebuild with new TypeAdapters
    */
@@ -1189,7 +1190,7 @@ public enum CouchMetaDriver {
   }
 
   /**
-   * sets the GsonBuilder for the driver and those depending on its gson marshalling.
+   * sets the GsonBuilder for the driver and those depending per its gson marshalling.
    * 
    * @param BUILDER
    */

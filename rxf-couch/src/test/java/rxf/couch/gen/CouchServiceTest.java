@@ -23,7 +23,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import static rxf.core.Server.getSelector;
+import static one.xio.AsioVisitor.Helper.getSelector;
 import static rxf.core.Server.init;
 import static rxf.core.Server.setKillswitch;
 import static org.junit.Assert.assertEquals;

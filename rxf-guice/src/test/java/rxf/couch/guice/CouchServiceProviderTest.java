@@ -61,7 +61,7 @@ public class CouchServiceProviderTest {
   public static void tearDown() throws Exception {
     try {
       Server.killswitch = true;
-      Server.getSelector().close();
+      AsioVisitor.Helper.getSelector().close();
       exec.shutdown();
     } catch (Exception ignore) {
     }

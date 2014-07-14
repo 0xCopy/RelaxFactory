@@ -55,7 +55,7 @@ public abstract class CouchLocator<T> extends Locator<T, String> implements Couc
   }
 
   /**
-   * used by CouchAgent to create event channels on entities by sending it a locator
+   * used by CouchAgent to create event channels per entities by sending it a locator
    * 
    * @return
    */

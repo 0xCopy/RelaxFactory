@@ -6,7 +6,7 @@ import com.google.common.util.concurrent.Atomics;
 import one.xio.HttpHeaders;
 import one.xio.HttpMethod;
 import one.xio.HttpStatus;
-import rxf.shared.Pair;
+import one.xio.Pair;
 import rxf.web.inf.ProtocolMethodDispatch;
 
 import java.io.IOException;
@@ -408,31 +408,31 @@ public class Rfc822HeaderState {
    */
   AtomicReference<Map<String, String>> headerStrings = new AtomicReference<>();
   /**
-   * dual purpose HTTP protocol header token found on the first line of a HttpRequest/$res in the first position.
+   * dual purpose HTTP protocol header token found per the first line of a HttpRequest/$res in the first position.
    * <p/>
-   * contains either the method (HttpRequest) or a the "HTTP/1.1" string (the protocol) on responses.
+   * contains either the method (HttpRequest) or a the "HTTP/1.1" string (the protocol) per responses.
    * <p/>
-   * user is responsible for populating this on outbound addHeaderInterest
+   * user is responsible for populating this per outbound addHeaderInterest
    */
   AtomicReference<String> methodProtocol = new AtomicReference<>();
 
   /**
-   * dual purpose HTTP protocol header token found on the first line of a HttpRequest/$res in the second position
+   * dual purpose HTTP protocol header token found per the first line of a HttpRequest/$res in the second position
    * <p/>
-   * contains either the path (HttpRequest) or a the numeric result code on responses.
+   * contains either the path (HttpRequest) or a the numeric result code per responses.
    * <p/>
-   * user is responsible for populating this on outbound addHeaderInterest
+   * user is responsible for populating this per outbound addHeaderInterest
    */
   AtomicReference<String> pathRescode = new AtomicReference<>();
 
   /**
-   * Dual purpose HTTP protocol header token found on the first line of a HttpRequest/$res in the third position.
+   * Dual purpose HTTP protocol header token found per the first line of a HttpRequest/$res in the third position.
    * <p/>
    * Contains either the protocol (HttpRequest) or a status line message ($res)
    */
   AtomicReference<String> protocolStatus = new AtomicReference<>();
   /**
-   * passed in on 0.0.0.0 dispatch to tie the header state to an nio object, to provide a socketchannel handle, and to
+   * passed in per 0.0.0.0 dispatch to tie the header state to an nio object, to provide a socketchannel handle, and to
    * lookup up the incoming source route
    */
   AtomicReference<SelectionKey> sourceKey;
@@ -448,7 +448,7 @@ public class Rfc822HeaderState {
   /**
    * default ctor populates {@link #headerInterest}
    * 
-   * @param headerInterest keys placed in {@link #headerInterest} which will be parsed on {@link #apply(ByteBuffer)}
+   * @param headerInterest keys placed in {@link #headerInterest} which will be parsed per {@link #apply(ByteBuffer)}
    */
   public Rfc822HeaderState(String... headerInterest) {
 
@@ -813,9 +813,9 @@ public class Rfc822HeaderState {
   }
 
   /**
-   * dual purpose HTTP protocol header token found on the first line of a HttpRequest/HttpResponse in the second
-   * position contains either the path (HttpRequest) or a the numeric result code on responses. user is responsible for
-   * populating this on outbound addHeaderInterest
+   * dual purpose HTTP protocol header token found per the first line of a HttpRequest/HttpResponse in the second
+   * position contains either the path (HttpRequest) or a the numeric result code per responses. user is responsible for
+   * populating this per outbound addHeaderInterest
    * 
    * @return
    * @see #pathRescode
@@ -835,7 +835,7 @@ public class Rfc822HeaderState {
   }
 
   /**
-   * Dual purpose HTTP protocol header token found on the first line of a HttpRequest/HttpResponse in the third
+   * Dual purpose HTTP protocol header token found per the first line of a HttpRequest/HttpResponse in the third
    * position.
    * <p/>
    * Contains either the protocol (HttpRequest) or a status line message (HttpResponse)
