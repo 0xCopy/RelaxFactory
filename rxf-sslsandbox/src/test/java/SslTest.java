@@ -1,6 +1,5 @@
 import one.xio.AsioVisitor;
-import one.xio.AsioVisitor.Helper;
-import one.xio.AsioVisitor.Helper.F;
+import one.xio.AsioVisitor.Helper.*;
 import one.xio.HttpMethod;
 import one.xio.Pair;
 import org.junit.AfterClass;
@@ -10,28 +9,22 @@ import org.junit.Test;
 import rxf.core.Rfc822HeaderState;
 import rxf.core.Server;
 import rxf.core.Tx;
-import rxf.rpc.RpcHelper;
 import rxf.web.inf.ProtocolMethodDispatch;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLEngineResult;
-import javax.net.ssl.SSLEngineResult.HandshakeStatus;
-import javax.net.ssl.SSLEngineResult.Status;
-import javax.net.ssl.SSLException;
+import javax.net.ssl.*;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.LinkedHashMap;
 import java.util.concurrent.Future;
 
 import static java.nio.channels.SelectionKey.OP_WRITE;
-import static one.xio.AsioVisitor.Helper.sslGoal;
-import static one.xio.AsioVisitor.Helper.toRead;
+import static one.xio.AsioVisitor.Helper.*;
 import static org.junit.Assert.fail;
-import static rxf.core.Server.enqueue;
 import static rxf.core.Server.init;
 import static rxf.core.Server.setKillswitch;
 import static rxf.rpc.RpcHelper.getEXECUTOR_SERVICE;
@@ -39,19 +32,23 @@ import static rxf.rpc.RpcHelper.setDEBUG_SENDJSON;
 
 /**
  * Created by jim per 7/14/14.
+ *
+ * http://stackoverflow.com/questions/23324807/randomly-sslexception-unsupported-record-version-unknown-0-0 matters
+ *
  */
 public class SslTest {
 
+//  public static final String HTTP_SITE = "omgrentbbq.appspot.com";
   public static final String HTTP_SITE = "httpbin.org";
   private static Future<?> submit;
   Tx tx;
-  public static final ByteBuffer[] NIL = new ByteBuffer[]{};
-
+  SSLException dammit;
   @BeforeClass
   static public void setUp() throws Exception {
     setDEBUG_SENDJSON(true);
     setKillswitch(false);
-    submit = RpcHelper.getEXECUTOR_SERVICE().submit(new Runnable() {
+    setExecutorService(getEXECUTOR_SERVICE());//one-time installation
+    submit = getEXECUTOR_SERVICE().submit(new Runnable() {
       public void run() {
         AsioVisitor topLevel = new ProtocolMethodDispatch();
         try {
@@ -78,45 +75,81 @@ public class SslTest {
   }
 
   @Test
-  public void testSSLClient() {
+  public void testSSLClient() throws IOException {
+
+/*
+    */
+//      @SuppressWarnings("UnnecessaryFullyQualifiedName") Object content = new java.net.URL("https://" +HTTP_SITE).getContent();
+
+
     try {
       final SocketChannel socketChannel = SocketChannel.open();
       socketChannel.configureBlocking(false);
       socketChannel.connect(new InetSocketAddress(HTTP_SITE, 443));
-      Server.enqueue(socketChannel, SelectionKey.OP_CONNECT, Helper.toConnect(new F() {
+      Server.enqueue(socketChannel, SelectionKey.OP_CONNECT, toConnect(new F() {
 
         private String host;
         private int port;
 
-        @Override
+
         public void apply(final SelectionKey key) throws Exception {
           if (((SocketChannel) key.channel()).finishConnect()) {
             port = 443;
             host = HTTP_SITE;
-            final SSLEngine sslEngine = SSLContext.getDefault().createSSLEngine(host, port);
-            sslEngine.setUseClientMode(true);
-            sslEngine.setEnableSessionCreation(true);
+            SSLContext sslContext = SSLContext.getInstance("TLS");
 
-
-            sslGoal.put(key, Pair.pair(OP_WRITE, (Object) Helper.finishWrite(new Runnable() {
+            sslContext.init(null, new TrustManager[]{new X509TrustManager() {
               @Override
+              public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+
+              }
+
+              @Override
+              public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+
+              }
+
+              @Override
+              public X509Certificate[] getAcceptedIssuers() {
+                return new X509Certificate[0];
+              }
+            }}, null);
+            sslContext.setDefault(sslContext);
+
+
+            final SSLEngine sslEngine = sslContext
+                .createSSLEngine(host, port);
+            sslEngine.setUseClientMode(true);
+            sslEngine.setNeedClientAuth(false);
+            sslEngine.setWantClientAuth(false);
+
+            ByteBuffer host1 = new Rfc822HeaderState()//
+                .asRequest()//
+                .path("/")//
+                .method(HttpMethod.GET)//
+                .headerStrings(new LinkedHashMap<String, String>() {{//
+                  put("Host", HTTP_SITE);
+                  put("Connection", "keep-alive");
+                  put("User-Agent", "Java/1xio");
+
+                }}).asByteBuffer();
+            sslGoal.put(key, Pair.pair(OP_WRITE, (Object) finishWrite(new Runnable() {
+
               public void run() {
                 toRead(key, new F() {
-                  @Override
+
                   public void apply(SelectionKey key) throws Exception {
                     tx = new Tx();
                     int i = tx.readHttpResponse(key);
-                    System.err.println(""+tx.toString());
+                    System.err.println("" + tx.toString());
                   }
                 });
               }
-            }, new Rfc822HeaderState().asRequest().path("/").method(HttpMethod.GET).headerStrings(new LinkedHashMap<String, String>() {{
-              put("Host", HTTP_SITE);
-            }}).asByteBuffer())));
+            }, Rfc822HeaderState.avoidStarvation(host1))));
 
             final int packetBufferSize = sslEngine.getSession().getPacketBufferSize();
             ByteBuffer toNet = ByteBuffer.allocateDirect(32 << 10);
-            needWrap(key, sslEngine, toNet);
+            needWrap(Pair.pair(key, sslEngine));
           }
         }
       }));
@@ -129,75 +162,5 @@ public class SslTest {
       e.printStackTrace();
     }
 
-  }
-
-
-  /**
-   * this is a beast.
-   *
-   * @param key
-   * @param sslEngineResult
-   * @param sslEngine
-   * @param fromNet
-   */
-  public void beast(final SelectionKey key, final SSLEngineResult sslEngineResult, final SSLEngine sslEngine, final ByteBuffer fromNet) {
-
-    final Status status = sslEngineResult.getStatus();
-    switch (status) {
-      case BUFFER_UNDERFLOW:
-        return;
-      case BUFFER_OVERFLOW:
-        break;
-      case OK:
-        final HandshakeStatus handshakeStatus1 = sslEngineResult.getHandshakeStatus();
-        switch (handshakeStatus1) {
-          case NEED_TASK:
-            int i = Helper.delegateTasks(key, sslEngine, getEXECUTOR_SERVICE(), new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  beast(key, sslEngine.unwrap(fromNet, ByteBuffer.allocateDirect(sslEngine.getSession().getApplicationBufferSize())), sslEngine,
-                      fromNet);
-                } catch (SSLException e) {
-                  e.printStackTrace();
-                }
-              }
-            });
-          case NOT_HANDSHAKING:
-          case FINISHED:
-            Pair<Integer, Object> integerObjectPair = sslGoal.get(key);
-            enqueue(key.channel(), integerObjectPair.getA(),integerObjectPair.getB());
-            return;
-          case NEED_WRAP:
-            needWrap(key, sslEngine, fromNet);
-            return;
-          case NEED_UNWRAP:
-            toRead(key, new F() {
-              @Override
-              public void apply(SelectionKey key) throws Exception {
-                int read = ((SocketChannel) key.channel()).read(fromNet.compact());
-                ByteBuffer ignore = ByteBuffer.allocateDirect(32 << 10);//todo: trim
-                if (read > 0) {
-                  SSLEngineResult unwrap = sslEngine.unwrap((ByteBuffer) fromNet.flip(), ignore);
-                  beast(key, unwrap, sslEngine, (ByteBuffer) fromNet);
-                }
-              }
-            });
-        }
-    }
-  }
-
-  public void needWrap(SelectionKey key, SSLEngine sslEngine, ByteBuffer fromNet) {
-    try {
-      ByteBuffer toNet = ByteBuffer.allocateDirect(32 << 10);//todo: trim
-      SSLEngineResult wrap = sslEngine.wrap(NIL, toNet);
-      if (wrap.bytesProduced() > 0)
-        ((SocketChannel) key.channel()).write((ByteBuffer) toNet.flip());
-      beast(key, wrap, sslEngine, fromNet);
-    } catch (SSLException e) {
-      e.printStackTrace();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
   }
 }
