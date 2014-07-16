@@ -29,7 +29,6 @@ public class GwtRequestFactoryVisitor extends Impl {
   private SocketChannel channel;
   private String payload;
 
-  @Override
   public void onRead(SelectionKey key) throws Exception {
     channel = (SocketChannel) key.channel();
     if (cursor == null) {
@@ -64,7 +63,7 @@ public class GwtRequestFactoryVisitor extends Impl {
     final GwtRequestFactoryVisitor prev = this;
     if (cursor.remaining() != remaining) {
       key.attach(new Impl() {
-        @Override
+
         public void onRead(SelectionKey key) throws Exception {
           int read1 = Helper.read(key, cursor);
           if (read1 == -1) {
@@ -80,12 +79,11 @@ public class GwtRequestFactoryVisitor extends Impl {
     }
   }
 
-  @Override
   public void onWrite(final SelectionKey key) throws Exception {
     if (payload == null) {
       key.interestOps(0);
       RpcHelper.getEXECUTOR_SERVICE().submit(new Runnable() {
-        @Override
+
         public void run() {
           try {
 

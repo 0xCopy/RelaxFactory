@@ -33,7 +33,7 @@ import static rxf.couch.gen.CouchDriver.DocFetch;
 @PreRead
 @KeepMatcher
 public class DocFetchProxyImpl extends ContentRootImpl {
-  @Override
+
   public void onRead(final SelectionKey outerKey) throws Exception {
 
     if (outerKey.attachment() instanceof Object[]) {
@@ -87,7 +87,7 @@ public class DocFetchProxyImpl extends ContentRootImpl {
                 .headerString(Content$2dLength, clen)//
                 .asByteBuffer();
             finishWrite(new Runnable() {
-              @Override
+
               public void run() {
                 outerKey.interestOps(OP_READ).attach(null);
               }

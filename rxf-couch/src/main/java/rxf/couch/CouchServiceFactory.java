@@ -347,7 +347,6 @@ public class CouchServiceFactory {
       public String map;
       public String reduce;
 
-      @Override
       public boolean equals(Object obj) {
         if (!(obj instanceof CouchView)) {
           return false;
@@ -366,7 +365,6 @@ public class CouchServiceFactory {
       public String language = "javascript";
       public Map<String, CouchView> views = new TreeMap<String, CouchView>();
 
-      @Override
       public boolean equals(Object obj) {
         if (!(obj instanceof CouchDesignDoc)) {
           return false;

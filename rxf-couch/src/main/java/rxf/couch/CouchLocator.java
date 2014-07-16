@@ -35,7 +35,7 @@ public abstract class CouchLocator<T> extends Locator<T, String> implements Couc
    * @param clazz
    * @return
    */
-  @Override
+
   public T create(Class<? extends T> clazz) {
     try {
       return clazz.newInstance();
@@ -48,7 +48,6 @@ public abstract class CouchLocator<T> extends Locator<T, String> implements Couc
         + RelaxFactoryServerImpl.wheresWaldo(3));
   }
 
-  @Override
   public T find(Class<? extends T> clazz, String id) {
     return gson().fromJson(new DocFetch().db(getEntityName()).docId(id).to().fire().json(),
         getDomainType());
@@ -59,18 +58,15 @@ public abstract class CouchLocator<T> extends Locator<T, String> implements Couc
    * 
    * @return
    */
-  @Override
+
   abstract public Class<T> getDomainType();
 
-  @Override
   abstract public String getId(T domainObject);
 
-  @Override
   public Class<String> getIdType() {
     return String.class;
   }
 
-  @Override
   abstract public Object getVersion(T domainObject);
 
   public String getOrgName() {

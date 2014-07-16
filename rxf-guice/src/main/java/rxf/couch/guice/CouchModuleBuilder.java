@@ -50,7 +50,7 @@ public class CouchModuleBuilder {
 
   public Module build() {
     return new AbstractModule() {
-      @Override
+
       protected void configure() {
         if (ns != null) {
           bindConstant().annotatedWith(Names.named(NAMESPACE)).to(ns);

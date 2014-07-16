@@ -99,7 +99,7 @@ public enum CouchMetaDriver {
               tx.state().$req().headerInterest(STATIC_JSON_SEND_HEADERS).$res();
 
           toRead(key, new Helper.F() {
-            @Override
+
             public void apply(SelectionKey key) throws Exception {
               if (null == tx.payload()) {
                 // geometric, vulnerable to dev/null if not max'd here.
@@ -902,7 +902,7 @@ public enum CouchMetaDriver {
             final HttpResponse response = tx.state().$res();
             tx.payload(null);
             toRead(key, new Helper.F() {
-              @Override
+
               public void apply(SelectionKey key) throws Exception {
                 if (null == tx.payload()) {
                   // geometric, vulnerable to /dev/zero if not max'd here.
@@ -1015,7 +1015,7 @@ public enum CouchMetaDriver {
       final SocketChannel channel = createCouchConnection();
 
       enqueue(channel, OP_WRITE, new Impl() {
-        @Override
+
         public void onWrite(SelectionKey key) throws Exception {
 
           int limit = payload.limit();
@@ -1027,7 +1027,6 @@ public enum CouchMetaDriver {
           key.interestOps(OP_READ);
         }
 
-        @Override
         public void onRead(SelectionKey key) throws Exception {
           ByteBuffer[] byteBuffer = {ByteBuffer.allocateDirect(4 << 10)};
           int read = Helper.read(key, byteBuffer[0]);
@@ -1042,7 +1041,6 @@ public enum CouchMetaDriver {
                     Content$2dLength);
                 private ByteBuffer cursor;
 
-                @Override
                 public void onWrite(SelectionKey key) throws Exception {
                   write(channel, payload);
                   if (!payload.hasRemaining()) {
@@ -1225,7 +1223,7 @@ public enum CouchMetaDriver {
        * @param <T>
        * @return
        */
-      @Override
+
       public <T> boolean validate(T... data) {
         final String t = (String) data[0];
         return 0 < t.toString().length() && !t.startsWith("\"") && !t.endsWith("\"");

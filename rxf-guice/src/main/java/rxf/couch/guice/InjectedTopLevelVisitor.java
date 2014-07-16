@@ -111,7 +111,7 @@ public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
     // Failed to find a matching visitor, 404
     key.selector().wakeup();
     key.interestOps(OP_WRITE).attach(new Impl() {
-      @Override
+
       public void onWrite(SelectionKey key) throws Exception {
         String response = "HTTP/1.1 404 Not Found\n" + "Content-Length: 0\n\n";
         int write = channel.write(StandardCharsets.UTF_8.encode(response));

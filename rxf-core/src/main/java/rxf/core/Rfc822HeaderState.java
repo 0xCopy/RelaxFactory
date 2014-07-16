@@ -153,7 +153,6 @@ public class Rfc822HeaderState {
       // Templates.
     }
 
-    @Override
     public String toString() {
       return asRequestHeaderString();
     }
@@ -244,7 +243,6 @@ public class Rfc822HeaderState {
       return null;
     }
 
-    @Override
     public String toString() {
       return asResponseHeaderString();
     }
@@ -287,7 +285,6 @@ public class Rfc822HeaderState {
       return ((HttpResponse) protocolStatus(httpStatus.caption)).resCode(httpStatus);
     }
 
-    @Override
     public <T> T as(Class<T> clazz) {
       if (ByteBuffer.class.equals(clazz)) {
         if (null == protocol()) {
@@ -327,7 +324,6 @@ public class Rfc822HeaderState {
     return HttpResponse.class == this.getClass() ? (HttpResponse) this : new HttpResponse(this);
   }
 
-  @Override
   public String toString() {
     return "Rfc822HeaderState:{" + "headerInterest:" + deepToString(headerInterest())
         + ", cookies:" + cookies + ", sourceRoute:" + sourceRoute() + ", headerBuf:" + headerBuf()

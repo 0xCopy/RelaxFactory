@@ -35,7 +35,7 @@ public @interface SecureScope {
   class ContentRootImpl extends rxf.web.inf.ContentRootImpl {
   }
   class Forbidden extends rxf.web.inf.ContentRootImpl {
-    @Override
+
     public void onWrite(SelectionKey key) throws Exception {
       // todo: log attempted theft.
       Errors.$404(key, HttpStatus.$404.caption);

@@ -53,7 +53,6 @@ public class RequestQueueVisitor extends Impl implements SerializationPolicyProv
     this.invoker = invoker;
   }
 
-  @Override
   public void onRead(SelectionKey key) throws Exception {
     channel = (SocketChannel) key.channel();
     if (cursor == null) {
@@ -88,7 +87,7 @@ public class RequestQueueVisitor extends Impl implements SerializationPolicyProv
     final RequestQueueVisitor prev = this;
     if (cursor.remaining() != remaining) {
       key.attach(new Impl() {
-        @Override
+
         public void onRead(SelectionKey key) throws Exception {
           int read1 = read(key, cursor);
           if (read1 == -1) {
@@ -104,12 +103,11 @@ public class RequestQueueVisitor extends Impl implements SerializationPolicyProv
     }
   }
 
-  @Override
   public void onWrite(final SelectionKey key) throws Exception {
     if (payload == null) {
       key.interestOps(0);
       RpcHelper.EXECUTOR_SERVICE.submit(new Runnable() {
-        @Override
+
         public void run() {
           try {
             String reqPayload =

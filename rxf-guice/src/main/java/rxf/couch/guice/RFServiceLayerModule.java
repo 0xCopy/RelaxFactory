@@ -12,7 +12,7 @@ import rxf.rpc.GwtRequestFactoryVisitor;
  * Simple Guice module to make it easier to take over RXF's handling of RequestFactory.
  */
 public class RFServiceLayerModule extends AbstractModule {
-  @Override
+
   protected void configure() {
     requireBinding(ServiceLayerDecorator.class);
 

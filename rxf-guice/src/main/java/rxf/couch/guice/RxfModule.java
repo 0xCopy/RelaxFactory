@@ -29,7 +29,6 @@ public class RxfModule extends AbstractModule {
   // ugly practice, consider a private module instead
   private AsioVisitor topLevel;
 
-  @Override
   protected final void configure() {
     if (port != null) {
       bindConstant().annotatedWith(Names.named("port")).to(port);
@@ -68,17 +67,14 @@ public class RxfModule extends AbstractModule {
   protected VisitorKeyBindingBuilder handle(final HttpMethod verb, final String regex) {
     return new VisitorKeyBindingBuilder() {
 
-      @Override
       public void with(Key<? extends AsioVisitor> implKey) {
         defs.add(new VisitorDef(verb, regex, implKey));
       }
 
-      @Override
       public void with(Class<? extends AsioVisitor> implKey) {
         defs.add(new VisitorDef(verb, regex, Key.get(implKey)));
       }
 
-      @Override
       public void with(AsioVisitor impl) {
         Key<AsioVisitor> key = Key.get(AsioVisitor.class, UniqueAnnotations.create());
         bind(key).toInstance(impl);

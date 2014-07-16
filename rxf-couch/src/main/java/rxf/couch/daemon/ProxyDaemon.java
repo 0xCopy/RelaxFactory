@@ -85,7 +85,6 @@ public class ProxyDaemon extends AsioVisitor.Impl {
     innerKey.attach(new HttpPipeVisitor(s + "-out", outerKey, ob, b[0]) {
       public boolean fail;
 
-      @Override
       public void onRead(SelectionKey key) throws Exception {
         if (!ib.isLimit() || fail) {
           SocketChannel channel = (SocketChannel) key.channel();
@@ -109,7 +108,6 @@ public class ProxyDaemon extends AsioVisitor.Impl {
     });
   }
 
-  @Override
   public void onAccept(SelectionKey key) throws Exception {
     ServerSocketChannel c = (ServerSocketChannel) key.channel();
     final SocketChannel accept = c.accept();
@@ -117,7 +115,6 @@ public class ProxyDaemon extends AsioVisitor.Impl {
     Server.enqueue(accept, OP_READ, this);
   }
 
-  @Override
   public void onRead(final SelectionKey outerKey) throws Exception {
 
     if (cursor == null)
@@ -191,7 +188,7 @@ public class ProxyDaemon extends AsioVisitor.Impl {
         }
         innerChannel.connect(remote);
         innerChannel.register(outerKey.selector().wakeup(), OP_CONNECT, new Impl() {
-          @Override
+
           public void onConnect(SelectionKey key) throws Exception {
             if (innerChannel.finishConnect())
               pipe(key, outerKey, inwardBuffer, (ByteBuffer) ByteBuffer.allocateDirect(8 << 10)
@@ -203,7 +200,6 @@ public class ProxyDaemon extends AsioVisitor.Impl {
       outerKey.cancel();
   }
 
-  @Override
   public void onWrite(SelectionKey key) throws Exception {
     super.onWrite(key); // To change body of overridden methods use File | Settings | File Templates.
   }

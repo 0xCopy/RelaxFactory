@@ -11,7 +11,7 @@ import com.google.web.bindery.requestfactory.shared.*;
  */
 public class RFServiceLayerModuleTest {
   public static class TestModule extends AbstractModule {
-    @Override
+
     protected void configure() {
 
       install(new RFServiceLayerModule());
@@ -51,7 +51,7 @@ public class RFServiceLayerModuleTest {
   // });
   // final AtomicReference<String> holder = new AtomicReference<String>();
   // f.req().trim("   word   ").fire(new Receiver<String>() {
-  // @Override
+  //
   // public void onSuccess(String arg0) {
   // holder.set(arg0);
   // }

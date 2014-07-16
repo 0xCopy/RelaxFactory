@@ -63,7 +63,6 @@ public class RelaxFactoryServerImpl implements RelaxFactoryServer {
     this.port = port;
   }
 
-  @Override
   public void init(String hostname, int port, AsioVisitor topLevel) throws UnknownHostException {
     assert this.topLevel == null && this.serverSocketChannel == null : "Can't call init twice";
     this.topLevel = topLevel;
@@ -71,7 +70,6 @@ public class RelaxFactoryServerImpl implements RelaxFactoryServer {
     this.hostname = InetAddress.getByName(hostname);
   }
 
-  @Override
   public void start() throws IOException {
     assert serverSocketChannel == null : "Can't start already started couch";
 
@@ -91,18 +89,15 @@ public class RelaxFactoryServerImpl implements RelaxFactoryServer {
     }
   }
 
-  @Override
   public int getPort() {
     return port;
   }
 
-  @Override
   public void stop() throws IOException {
     Server.killswitch = true;
     serverSocketChannel.close();
   }
 
-  @Override
   public boolean isRunning() {
     return isRunning;
   }

@@ -40,14 +40,14 @@ public interface CouchNamespace {
 
   public enum ns {
     orgname {
-      @Override
+
       public void setMe(CouchNamespace cl, String ns) {
         cl.setOrgname(ns);
 
       }
     },
     entityName {
-      @Override
+
       public void setMe(CouchNamespace cl, String ns) {
         cl.setEntityName(ns);
       }

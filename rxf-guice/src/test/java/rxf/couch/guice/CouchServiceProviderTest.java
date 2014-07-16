@@ -1,35 +1,27 @@
 package rxf.couch.guice;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.TestCase.assertNotNull;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
+import one.xio.AsioVisitor;
+import org.junit.*;
+import rxf.core.Server;
+import rxf.couch.CouchService;
+import rxf.couch.gen.CouchDriver;
+import rxf.rpc.RelaxFactoryServerImpl;
+import rxf.rpc.RpcHelper;
+import rxf.shared.CouchTx;
+import rxf.web.inf.ProtocolMethodDispatch;
 
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import one.xio.AsioVisitor;
-
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import rxf.couch.CouchService;
-import rxf.core.Server;
-import rxf.rpc.RpcHelper;
-import rxf.shared.CouchTx;
-import rxf.rpc.RelaxFactoryServerImpl;
-import rxf.couch.gen.CouchDriver;
-import rxf.web.inf.ProtocolMethodDispatch;
-
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.name.Names;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.TestCase.assertNotNull;
 
 public class CouchServiceProviderTest {
   private static ScheduledExecutorService exec;
@@ -86,7 +78,7 @@ public class CouchServiceProviderTest {
   }
 
   public static class TestModule extends AbstractModule {
-    @Override
+
     protected void configure() {
       install(new CouchModuleBuilder("test" + System.currentTimeMillis() + "_").withEntity(
           GuiceTest.class).withService(SimpleCouchService.class).build());

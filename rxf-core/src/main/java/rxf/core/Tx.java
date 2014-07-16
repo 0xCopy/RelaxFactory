@@ -19,13 +19,9 @@ import static one.xio.HttpHeaders.ETag;
  * User: jim Date: 5/29/12 Time: 1:58 PM
  */
 public class Tx {
-  @Override
+
   public String toString() {
-    return "Tx{" +
-        "key=" + key +
-        ", headers=" + headers +
-        ", payload=" + payload +
-        '}';
+    return "Tx{" + "key=" + key + ", headers=" + headers + ", payload=" + payload + '}';
   }
 
   /**
@@ -140,7 +136,7 @@ public class Tx {
     Tx tx = current.get();
     if (null == tx)
       current(tx = new Tx() {
-        @Override
+
         public TerminalBuilder fire() {
           throw ABSTRACT_METHOD_ERROR;
         }

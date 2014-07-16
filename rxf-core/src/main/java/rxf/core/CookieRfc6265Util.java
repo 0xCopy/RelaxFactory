@@ -68,7 +68,6 @@ public enum CookieRfc6265Util {
       token = null;
     }
 
-    @Override
     public Serializable value(ByteBuffer input) {
       input = (ByteBuffer) input.duplicate().rewind();
       do {
@@ -88,7 +87,6 @@ public enum CookieRfc6265Util {
       token = null;
     }
 
-    @Override
     public Serializable value(ByteBuffer input) {
       input = (ByteBuffer) input.duplicate().rewind();
       do {
@@ -122,7 +120,7 @@ public enum CookieRfc6265Util {
    * expiry-time.
    */
   Expires {
-    @Override
+
     public Serializable value(ByteBuffer input) {
       input = input.slice();
       while (input.hasRemaining() && Character.isWhitespace(((ByteBuffer) input.mark()).get()));
@@ -170,7 +168,7 @@ public enum CookieRfc6265Util {
    * expiry-time.
    */
   Max$2dAge {
-    @Override
+
     public Serializable value(ByteBuffer input) {
       input = input.slice();
       while (input.hasRemaining() && Character.isWhitespace(((ByteBuffer) input.mark()).get()));
@@ -223,7 +221,7 @@ public enum CookieRfc6265Util {
    * cookie-domain.
    */
   Domain {
-    @Override
+
     public Serializable value(ByteBuffer input) {
       input = input.slice();
       while (input.hasRemaining() && Character.isWhitespace(((ByteBuffer) input.mark()).get()));
@@ -265,7 +263,7 @@ public enum CookieRfc6265Util {
    * cookie-path.
    */
   Path {
-    @Override
+
     public Serializable value(ByteBuffer input) {
       input = input.slice();
       while (input.hasRemaining() && Character.isWhitespace(((ByteBuffer) input.mark()).get()));
@@ -294,7 +292,7 @@ public enum CookieRfc6265Util {
    * the cookie-attribute-list with an attribute-name of Secure and an empty attribute-value.
    */
   Secure {
-    @Override
+
     public Serializable value(ByteBuffer input) {
       input.rewind();
       ByteBuffer tok = token.duplicate();
@@ -323,7 +321,7 @@ public enum CookieRfc6265Util {
    * the cookie- attribute-list with an attribute-name of HttpOnly and an empty attribute-value.
    */
   HttpOnly {
-    @Override
+
     public Serializable value(ByteBuffer input) {
       input.rewind();
       ByteBuffer tok = token.duplicate();

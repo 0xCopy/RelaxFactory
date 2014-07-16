@@ -26,7 +26,6 @@ public abstract class TemplateContentImpl extends ContentRootImpl {
 
   }
 
-  @Override
   public void onWrite(final SelectionKey key) throws Exception {
 
     // todo: paths

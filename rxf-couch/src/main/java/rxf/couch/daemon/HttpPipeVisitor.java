@@ -33,7 +33,6 @@ public class HttpPipeVisitor extends AsioVisitor.Impl {
     this.b = b;
   }
 
-  @Override
   public void onRead(SelectionKey key) throws Exception {
     SocketChannel channel = (SocketChannel) key.channel();
     if (otherKey.isValid()) {
@@ -52,7 +51,6 @@ public class HttpPipeVisitor extends AsioVisitor.Impl {
     }
   }
 
-  @Override
   public void onWrite(SelectionKey key) throws Exception {
     SocketChannel channel = (SocketChannel) key.channel();
     ByteBuffer flip = (ByteBuffer) getOutBuffer().flip();

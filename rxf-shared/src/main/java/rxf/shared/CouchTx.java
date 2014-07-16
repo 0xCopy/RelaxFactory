@@ -7,7 +7,6 @@ public class CouchTx {
   private String error;
   private String reason;
 
-  @Override
   public String toString() {
     return "CouchTx{" + "ok=" + ok + ", key='" + id + '\'' + ", rev='" + rev + '\'' + ", error='"
         + error + '\'' + ", reason='" + reason + '\'' + '}';

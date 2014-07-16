@@ -64,7 +64,6 @@ public interface CouchService<E> {
       this.db = db;
     }
 
-    @Override
     public CouchTx addAttachment(String content, String fileName, String contentType) {
       JsonSendActionBuilder actionBuilder =
           new JsonSend().opaque(db + "/" + id + "/" + fileName + "?rev=" + rev).validjson(content)
@@ -75,10 +74,9 @@ public interface CouchService<E> {
       return tx;
     }
 
-    @Override
     public Writer addAttachment(final String fileName, final String contentType) {
       return new StringWriter() {
-        @Override
+
         public void close() throws IOException {
           JsonSendActionBuilder actionBuilder =
               new JsonSend().opaque(db + "/" + id + "/" + fileName + "?rev=" + rev).validjson(
@@ -93,7 +91,6 @@ public interface CouchService<E> {
       };
     }
 
-    @Override
     public CouchTx updateAttachment(String content, String fileName, String contentType) {
       JsonSendActionBuilder actionBuilder =
           new JsonSend().opaque(db + "/" + id + "/" + fileName + "?rev=" + rev).validjson(content)
@@ -104,10 +101,9 @@ public interface CouchService<E> {
       return tx;
     }
 
-    @Override
     public Writer updateAttachment(final String fileName, final String contentType) {
       return new StringWriter() {
-        @Override
+
         public void close() throws IOException {
           JsonSendActionBuilder actionBuilder =
               new JsonSend().opaque(db + "/" + id + "/" + fileName + "?rev=" + rev).validjson(
@@ -122,12 +118,10 @@ public interface CouchService<E> {
       };
     }
 
-    @Override
     public String getAttachment(String fileName) {
       return new DocFetch().db(db).docId(id + "/" + fileName).to().fire().json();
     }
 
-    @Override
     public CouchTx deleteAttachment(String fileName) {
       CouchTx tx = new DocDelete().db(db).docId(id + "/" + fileName).to().fire().tx();
       rev = tx.rev();

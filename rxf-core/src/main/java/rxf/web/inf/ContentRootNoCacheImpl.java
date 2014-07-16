@@ -11,7 +11,6 @@ public class ContentRootNoCacheImpl extends ContentRootImpl {
 
   public static final Pattern NOCACHE_PATTERN = Pattern.compile(".*[.]nocache[.](js|html)$");
 
-  @Override
   public void onWrite(SelectionKey key) throws Exception {
     getReq().headerStrings().put(HttpHeaders.Expires.getHeader(),
         DateHeaderParser.RFC1123.getFormat().format(new Date()));

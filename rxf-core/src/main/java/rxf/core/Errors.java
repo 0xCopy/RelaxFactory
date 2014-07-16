@@ -27,7 +27,7 @@ public class Errors {
         "<html><head><title>Resource Moved</title></head><body><div>" + message
             + "</div><div><a href='/'>Back to home</a></div></body></html>";
     key.attach(new AsioVisitor.Impl() {
-      @Override
+
       public void onWrite(SelectionKey key) throws Exception {
         ByteBuffer headers =
             new Rfc822HeaderState().$res().status(HttpStatus.$303).headerString(
@@ -65,7 +65,7 @@ public class Errors {
   private static Void error(SelectionKey key, final HttpStatus code, String message) {
     final String html = message;
     key.attach(new AsioVisitor.Impl() {
-      @Override
+
       public void onWrite(SelectionKey key) throws Exception {
         ByteBuffer byteBuffer =
             new Rfc822HeaderState().$res().status(code).headerString(HttpHeaders.Content$2dType,

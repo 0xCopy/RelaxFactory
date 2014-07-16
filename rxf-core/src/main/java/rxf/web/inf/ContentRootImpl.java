@@ -47,7 +47,6 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
         .replace(DOUBLESEP, "" + File.separator).replace("..", ".");
   }
 
-  @Override
   public void onRead(SelectionKey key) throws Exception {
     setChannel((SocketChannel) key.channel());
     if (getCursor() == null) {
@@ -205,32 +204,26 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
     });
   }
 
-  @Override
   public ByteBuffer getCursor() {
     return cursor;
   }
 
-  @Override
   public void setCursor(ByteBuffer cursor) {
     this.cursor = cursor;
   }
 
-  @Override
   public SocketChannel getChannel() {
     return channel;
   }
 
-  @Override
   public void setChannel(SocketChannel channel) {
     this.channel = channel;
   }
 
-  @Override
   public HttpRequest getReq() {
     return req;
   }
 
-  @Override
   public void setReq(HttpRequest req) {
     this.req = req;
   }

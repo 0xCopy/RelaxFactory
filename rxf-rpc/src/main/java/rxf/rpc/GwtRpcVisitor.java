@@ -50,7 +50,6 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
     this.delegate = delegate;
   }
 
-  @Override
   public void onRead(SelectionKey key) throws Exception {
     channel = (SocketChannel) key.channel();
     if (cursor == null) {
@@ -85,7 +84,7 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
     final GwtRpcVisitor prev = this;
     if (cursor.remaining() != remaining) {
       key.attach(new Impl() {
-        @Override
+
         public void onRead(SelectionKey key) throws Exception {
           int read1 = Helper.read(key, cursor);
           if (read1 == -1) {
@@ -101,12 +100,11 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
     }
   }
 
-  @Override
   public void onWrite(final SelectionKey key) throws Exception {
     if (payload == null) {
       key.interestOps(0);
       RpcHelper.EXECUTOR_SERVICE.submit(new Runnable() {
-        @Override
+
         public void run() {
           try {
             String reqPayload =
