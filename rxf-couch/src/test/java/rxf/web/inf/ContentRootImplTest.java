@@ -4,11 +4,11 @@ import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
 import one.xio.AsioVisitor;
+import one.xio.AsyncSingletonServer;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import rxf.core.DateHeaderParser;
-import rxf.core.Server;
 
 import java.net.InetSocketAddress;
 import java.nio.channels.ServerSocketChannel;
@@ -34,7 +34,7 @@ public class ContentRootImplTest {
     wc = new WebConversation();
 
     // setDEBUG_SENDJSON(true);
-    Server.setKillswitch(false);
+    AsyncSingletonServer.killswitch.set(false);
 
     serverSocketChannel = ServerSocketChannel.open();
     final InetSocketAddress serverSocket = new InetSocketAddress(host, 0);
@@ -48,8 +48,8 @@ public class ContentRootImplTest {
         AsioVisitor topLevel = new ProtocolMethodDispatch();
         try {
 
-          Server.enqueue(serverSocketChannel, OP_ACCEPT);
-          Server.init(topLevel);
+          AsyncSingletonServer.SingleThreadSingletonServer.enqueue(serverSocketChannel, OP_ACCEPT);
+          AsyncSingletonServer.SingleThreadSingletonServer.init(topLevel);
 
         } catch (Exception e) {
           System.out.println("failed startup");
@@ -62,7 +62,7 @@ public class ContentRootImplTest {
   @AfterClass
   static public void tearDown() throws Exception {
     try {
-      Server.setKillswitch(true);
+      AsyncSingletonServer.killswitch.set(true);
       AsioVisitor.Helper.getSelector().close();
       serverSocketChannel.close();
 

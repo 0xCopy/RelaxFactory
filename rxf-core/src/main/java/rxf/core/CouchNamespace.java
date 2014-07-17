@@ -1,6 +1,7 @@
 package rxf.core;
 
 import one.xio.AsioVisitor.Impl;
+import one.xio.Config;
 import one.xio.HttpMethod;
 
 import java.util.EnumMap;

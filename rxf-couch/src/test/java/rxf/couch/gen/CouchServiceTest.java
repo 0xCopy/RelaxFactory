@@ -24,8 +24,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 import static one.xio.AsioVisitor.Helper.getSelector;
-import static rxf.core.Server.init;
-import static rxf.core.Server.setKillswitch;
+import static one.xio.AsyncSingletonServer.SingleThreadSingletonServer.init;
+import static one.xio.AsyncSingletonServer.killswitch;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -47,7 +47,7 @@ public class CouchServiceTest {
   @BeforeClass
   static public void setUp() throws Exception {
     setDEBUG_SENDJSON(true);
-    setKillswitch(false);
+    killswitch.set(false);
     exec = Executors.newScheduledThreadPool(2);
     exec.submit(new Runnable() {
       public void run() {
@@ -93,7 +93,7 @@ public class CouchServiceTest {
   static public void tearDown() throws Exception {
 
     try {
-      setKillswitch(true);
+      killswitch.set(true);
       getSelector().close();
       exec.shutdown();
     } catch (Exception ignore) {

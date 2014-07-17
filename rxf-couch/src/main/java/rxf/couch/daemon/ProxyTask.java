@@ -1,6 +1,6 @@
 package rxf.couch.daemon;
 
-import rxf.core.Server;
+import one.xio.AsyncSingletonServer;
 import rxf.rpc.RpcHelper;
 
 import java.net.InetSocketAddress;
@@ -19,7 +19,7 @@ public class ProxyTask implements Runnable {
   public void run() {
     try {
       for (String proxyPort : proxyPorts) {
-        Server.enqueue(ServerSocketChannel.open().bind(
+        AsyncSingletonServer.SingleThreadSingletonServer.enqueue(ServerSocketChannel.open().bind(
             new InetSocketAddress(Integer.parseInt(proxyPort)), 4096).setOption(
             StandardSocketOptions.SO_REUSEADDR, Boolean.TRUE).configureBlocking(false),
             SelectionKey.OP_ACCEPT, new ProxyDaemon(this));

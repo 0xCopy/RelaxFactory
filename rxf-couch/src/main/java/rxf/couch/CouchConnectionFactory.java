@@ -1,7 +1,7 @@
 package rxf.couch;
 
-import rxf.core.Config;
-import rxf.core.Server;
+import one.xio.Config;
+import one.xio.AsyncSingletonServer;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -36,7 +36,7 @@ public class CouchConnectionFactory {
 
   public static SocketChannel createCouchConnection() {
     SocketChannel ret = null;
-    while (!Server.killswitch) {
+    while (!AsyncSingletonServer.killswitch.get()) {
       SocketChannel socketChannel = pool.poll();
       if (null != socketChannel && socketChannel.isConnected()) {
         ret = socketChannel;

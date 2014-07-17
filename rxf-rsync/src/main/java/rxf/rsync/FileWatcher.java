@@ -3,8 +3,8 @@ package rxf.rsync;
 import com.google.common.hash.Hashing;
 import javolution.util.FastMap;
 import one.xio.AsioVisitor;
+import one.xio.AsyncSingletonServer;
 import one.xio.MimeType;
-import rxf.core.Server;
 import rxf.couch.gen.CouchDriver;
 import rxf.web.inf.ProtocolMethodDispatch;
 
@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 import static com.google.common.io.BaseEncoding.base64;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.nio.file.StandardWatchEventKinds.*;
-import static rxf.core.Config.get;
+import static one.xio.Config.get;
 import static rxf.couch.driver.CouchMetaDriver.gson;
 
 /**
@@ -401,7 +401,7 @@ public class FileWatcher {
         // class initializers fire here
         AsioVisitor topLevel = new ProtocolMethodDispatch();
         try {
-          Server.init(topLevel);
+          AsyncSingletonServer.SingleThreadSingletonServer.init(topLevel);
         } catch (Exception ignored) {
         }
       }

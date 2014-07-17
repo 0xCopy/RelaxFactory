@@ -1,7 +1,7 @@
 package rxf.rpc;
 
 import one.xio.AsioVisitor;
-import rxf.core.Server;
+import one.xio.AsyncSingletonServer;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -35,7 +35,7 @@ public class RelaxFactoryServerImpl implements RelaxFactoryServer {
    */
   public static void enqueue(SelectableChannel channel, int op, Object... s)
       throws ClosedChannelException {
-    Server.enqueue(channel, op, s);
+    AsyncSingletonServer.SingleThreadSingletonServer.enqueue(channel, op, s);
   }
 
   public static String wheresWaldo(int... depth) {
@@ -56,7 +56,7 @@ public class RelaxFactoryServerImpl implements RelaxFactoryServer {
   }
 
   public static void init(AsioVisitor protocoldecoder, String... a) throws IOException {
-    Server.init(protocoldecoder);
+    AsyncSingletonServer.SingleThreadSingletonServer.init(protocoldecoder);
   }
 
   public void setPort(int port) {
@@ -94,7 +94,7 @@ public class RelaxFactoryServerImpl implements RelaxFactoryServer {
   }
 
   public void stop() throws IOException {
-    Server.killswitch = true;
+    AsyncSingletonServer.killswitch.set(true);
     serverSocketChannel.close();
   }
 

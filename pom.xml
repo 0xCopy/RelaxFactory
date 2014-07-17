@@ -211,8 +211,8 @@
                         <source>1.7</source>
                         <target>1.7</target>
                         <!--
-                                                <source>${java.specification.version}</source>
-                                                <target>${java.specification.version}</target>
+                        <source>${java.specification.version}</source>
+                        <target>${java.specification.version}</target>
                         -->
                     </configuration>
                 </plugin>
@@ -223,25 +223,25 @@
                     <version>3.2</version>
                 </plugin>
                 <!-- unmaintained?
-                                <plugin>
-                                    <groupId>com.googlecode</groupId>
-                                    <artifactId>maven-idea-plugin</artifactId>
-                                    <version>1.6</version>
-                                    <configuration>
-                                        <compileInBackground>true</compileInBackground>
-                                        <jdkName>1.8</jdkName>
-                                        <jdkLevel>JDK_1_8</jdkLevel>
-                                        <downloadSources>true</downloadSources>
-                                        <downloadJavadocs>true</downloadJavadocs>
-                                        <assertNotNull>false</assertNotNull>
-                                        <optimizeImportsBeforeCommit>false</optimizeImportsBeforeCommit>
-                                        <reformatCodeBeforeCommit>false</reformatCodeBeforeCommit>
-                                        <performCodeAnalisisBeforeCommit>false</performCodeAnalisisBeforeCommit>
-                                        <autoscrollToSource>false</autoscrollToSource>
-                                        <autoscrollFromSource>true</autoscrollFromSource>
-                                        <hideEmptyPackages>false</hideEmptyPackages>
-                                    </configuration>
-                                </plugin>-->
+                    <plugin>
+                    <groupId>com.googlecode</groupId>
+                    <artifactId>maven-idea-plugin</artifactId>
+                    <version>1.6</version>
+                    <configuration>
+                    <compileInBackground>true</compileInBackground>
+                    <jdkName>1.8</jdkName>
+                    <jdkLevel>JDK_1_8</jdkLevel>
+                    <downloadSources>true</downloadSources>
+                    <downloadJavadocs>true</downloadJavadocs>
+                    <assertNotNull>false</assertNotNull>
+                    <optimizeImportsBeforeCommit>false</optimizeImportsBeforeCommit>
+                    <reformatCodeBeforeCommit>false</reformatCodeBeforeCommit>
+                    <performCodeAnalisisBeforeCommit>false</performCodeAnalisisBeforeCommit>
+                    <autoscrollToSource>false</autoscrollToSource>
+                    <autoscrollFromSource>true</autoscrollFromSource>
+                    <hideEmptyPackages>false</hideEmptyPackages>
+                    </configuration>
+                    </plugin>-->
             </plugins>
         </pluginManagement>
         <plugins>

@@ -1,10 +1,10 @@
 package rxf.web.inf;
 
 import one.xio.AsioVisitor.Impl;
+import one.xio.AsyncSingletonServer;
 import one.xio.HttpMethod;
 import rxf.core.Rfc822HeaderState;
 import rxf.core.Rfc822HeaderState.HttpRequest;
-import rxf.core.Server;
 import rxf.shared.PreRead;
 import rxf.shared.KeepMatcher;
 
@@ -93,7 +93,7 @@ public class ProtocolMethodDispatch extends Impl {
     ServerSocketChannel channel = (ServerSocketChannel) key.channel();
     SocketChannel accept = channel.accept();
     accept.configureBlocking(false);
-    Server.enqueue(accept, OP_READ, this);
+    AsyncSingletonServer.SingleThreadSingletonServer.enqueue(accept, OP_READ, this);
 
   }
 

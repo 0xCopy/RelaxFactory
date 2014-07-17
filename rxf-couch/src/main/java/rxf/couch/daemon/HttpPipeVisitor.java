@@ -2,7 +2,7 @@ package rxf.couch.daemon;
 
 import one.xio.AsioVisitor;
 import rxf.shared.PreRead;
-import rxf.core.Config;
+import one.xio.Config;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;

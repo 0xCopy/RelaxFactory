@@ -1,9 +1,9 @@
 package rxf.couch.daemon;
 
 import one.xio.AsioVisitor;
+import one.xio.AsyncSingletonServer;
 import one.xio.HttpHeaders;
 import rxf.core.Rfc822HeaderState;
-import rxf.core.Server;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -19,7 +19,7 @@ import java.util.Arrays;
 import java.util.Map;
 
 import static java.nio.channels.SelectionKey.*;
-import static rxf.core.Config.get;
+import static one.xio.Config.get;
 
 /**
  * <ul>
@@ -112,7 +112,7 @@ public class ProxyDaemon extends AsioVisitor.Impl {
     ServerSocketChannel c = (ServerSocketChannel) key.channel();
     final SocketChannel accept = c.accept();
     accept.configureBlocking(false);
-    Server.enqueue(accept, OP_READ, this);
+    AsyncSingletonServer.SingleThreadSingletonServer.enqueue(accept, OP_READ, this);
   }
 
   public void onRead(final SelectionKey outerKey) throws Exception {

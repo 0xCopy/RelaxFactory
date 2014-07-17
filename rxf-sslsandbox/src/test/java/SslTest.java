@@ -1,12 +1,10 @@
+import one.xio.*;
 import one.xio.AsioVisitor.Helper.*;
-import one.xio.HttpMethod;
-import one.xio.Pair;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import rxf.core.Rfc822HeaderState;
-import rxf.core.Server;
 import rxf.core.Tx;
 
 import javax.net.ssl.SSLContext;
@@ -27,7 +25,7 @@ import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.AsioVisitor.Helper.*;
 import static org.junit.Assert.fail;
 import static rxf.core.Rfc822HeaderState.avoidStarvation;
-import static rxf.core.Server.*;
+import static one.xio.AsyncSingletonServer.SingleThreadSingletonServer.*;
 import static rxf.rpc.RpcHelper.getEXECUTOR_SERVICE;
 import static rxf.rpc.RpcHelper.setDEBUG_SENDJSON;
 
@@ -50,8 +48,8 @@ public class SslTest {
   @BeforeClass
   static public void setUp() throws Exception {
     setDEBUG_SENDJSON(true);
-    setKillswitch(false);
-    setExecutorService(getEXECUTOR_SERVICE());// one-time installation
+    killswitch.set(false);
+    AsioVisitor.FSM.setExecutorService(getEXECUTOR_SERVICE());// one-time installation
     submit = getEXECUTOR_SERVICE().submit(new Runnable() {
       public void run() {
         try {
@@ -85,7 +83,7 @@ public class SslTest {
       final SocketChannel socketChannel = SocketChannel.open();
       socketChannel.configureBlocking(false);
       socketChannel.connect(new InetSocketAddress(HTTP_SITE, 443));
-      Server.enqueue(socketChannel, SelectionKey.OP_CONNECT, toConnect(new F() {
+      SingleThreadSingletonServer.enqueue(socketChannel, SelectionKey.OP_CONNECT, toConnect(new F() {
 
         private String host;
         private int port;
@@ -99,7 +97,7 @@ public class SslTest {
             if (USE_INSECURE) {
               sslContext = SSLContext.getInstance("TLS");
 
-              sslContext.init(null, new TrustManager[] {new X509TrustManager() {
+              sslContext.init(null, new TrustManager[]{new X509TrustManager() {
                 @Override
                 public void checkClientTrusted(X509Certificate[] x509Certificates, String s)
                     throws CertificateException {
@@ -140,7 +138,7 @@ public class SslTest {
                   }
                 }).asByteBuffer();
 
-            sslGoal.put(key, Pair.pair(OP_WRITE, (Object) finishWrite(new Runnable() {
+            AsioVisitor.FSM.sslGoal.put(key, Pair.pair(OP_WRITE, (Object) finishWrite(new Runnable() {
 
               public void run() {
                 toRead(key, new F() {
@@ -152,7 +150,7 @@ public class SslTest {
                     System.err.println("" + tx.toString());
 
                     key.cancel();
-                    killswitch = false;
+                    killswitch.set(false);
                   }
                 });
               }
@@ -160,7 +158,7 @@ public class SslTest {
 
             final int packetBufferSize = sslEngine.getSession().getPacketBufferSize();
             ByteBuffer toNet = ByteBuffer.allocateDirect(32 << 10);
-            needWrap(Pair.pair(key, sslEngine));
+            AsioVisitor.FSM.needWrap(Pair.pair(key, sslEngine));
           }
         }
       }));

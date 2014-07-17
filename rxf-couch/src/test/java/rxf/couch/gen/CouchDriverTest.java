@@ -2,11 +2,11 @@ package rxf.couch.gen;
 
 import com.google.gson.JsonSyntaxException;
 import one.xio.AsioVisitor;
+import one.xio.AsyncSingletonServer;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import rxf.couch.CouchResultSet;
-import rxf.core.Server;
 import rxf.rpc.RpcHelper;
 import rxf.shared.CouchTx;
 import rxf.couch.driver.CouchMetaDriver;
@@ -35,13 +35,13 @@ public class CouchDriverTest {
   @BeforeClass
   static public void setUp() throws Exception {
     RpcHelper.DEBUG_SENDJSON = true;
-    Server.killswitch = false;
+    AsyncSingletonServer.killswitch.set(false);
     exec = Executors.newScheduledThreadPool(2);
     exec.submit(new Runnable() {
       public void run() {
         AsioVisitor topLevel = new ProtocolMethodDispatch();
         try {
-          Server.init(topLevel);
+          AsyncSingletonServer.SingleThreadSingletonServer.init(topLevel);
         } catch (Exception e) {
           fail();
         }
@@ -80,7 +80,7 @@ public class CouchDriverTest {
     // DbDelete.$().db(SOMEDB).to().fire().oneWay();
 
     try {
-      Server.killswitch = true;
+      AsyncSingletonServer.killswitch.set(true);
       AsioVisitor.Helper.getSelector().close();
       // HttpMethod.broke = null;
       exec.shutdown();

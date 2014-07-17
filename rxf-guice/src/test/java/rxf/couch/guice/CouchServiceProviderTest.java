@@ -6,8 +6,8 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
 import one.xio.AsioVisitor;
+import one.xio.AsyncSingletonServer;
 import org.junit.*;
-import rxf.core.Server;
 import rxf.couch.CouchService;
 import rxf.couch.gen.CouchDriver;
 import rxf.rpc.RelaxFactoryServerImpl;
@@ -29,7 +29,7 @@ public class CouchServiceProviderTest {
   @BeforeClass
   public static void setUp() throws Exception {
     RpcHelper.setDEBUG_SENDJSON(true);
-    Server.killswitch = false;
+    AsyncSingletonServer.killswitch.set(false);
     exec = Executors.newScheduledThreadPool(2);
     exec.submit(new Runnable() {
       public void run() {
@@ -52,7 +52,7 @@ public class CouchServiceProviderTest {
   @AfterClass
   public static void tearDown() throws Exception {
     try {
-      Server.killswitch = true;
+      AsyncSingletonServer.killswitch.set(true);
       AsioVisitor.Helper.getSelector().close();
       exec.shutdown();
     } catch (Exception ignore) {
