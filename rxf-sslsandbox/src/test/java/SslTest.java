@@ -25,6 +25,7 @@ import java.util.concurrent.Future;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.AsioVisitor.Helper.*;
 import static org.junit.Assert.fail;
+import static rxf.core.Rfc822HeaderState.avoidStarvation;
 import static rxf.core.Server.init;
 import static rxf.core.Server.setKillswitch;
 import static rxf.rpc.RpcHelper.getEXECUTOR_SERVICE;
@@ -61,12 +62,8 @@ public class SslTest {
 
   }
 
-  static void nukeTestDbs() {
-  }
-
   @Before
   public void before() {
-    nukeTestDbs();
   }
 
   @AfterClass
@@ -123,7 +120,7 @@ public class SslTest {
             sslEngine.setNeedClientAuth(false);
             sslEngine.setWantClientAuth(false);
 
-            ByteBuffer host1 = new Rfc822HeaderState()//
+            ByteBuffer headerBuffer = new Rfc822HeaderState()//
                 .asRequest()//
                 .path("/")//
                 .method(HttpMethod.GET)//
@@ -133,6 +130,7 @@ public class SslTest {
                   put("User-Agent", "Java/1xio");
 
                 }}).asByteBuffer();
+
             sslGoal.put(key, Pair.pair(OP_WRITE, (Object) finishWrite(new Runnable() {
 
               public void run() {
@@ -141,11 +139,12 @@ public class SslTest {
                   public void apply(SelectionKey key) throws Exception {
                     tx = new Tx();
                     int i = tx.readHttpResponse(key);
+
                     System.err.println("" + tx.toString());
                   }
                 });
               }
-            }, Rfc822HeaderState.avoidStarvation(host1))));
+            }, avoidStarvation(headerBuffer))));
 
             final int packetBufferSize = sslEngine.getSession().getPacketBufferSize();
             ByteBuffer toNet = ByteBuffer.allocateDirect(32 << 10);

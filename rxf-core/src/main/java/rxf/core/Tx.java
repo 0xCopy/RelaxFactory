@@ -6,6 +6,7 @@ import one.xio.AsioVisitor.Helper.F;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static one.xio.HttpHeaders.Content$2dLength;
@@ -94,6 +95,7 @@ public class Tx {
 
     if (0 != read) // 0 per read is quite likely ssl intervention. just let this bounce through.
     {
+      System.err.println("<?? " + StandardCharsets.UTF_8.decode((ByteBuffer) byteBuffer.duplicate().flip()));
       if (state().asResponse().apply(byteBuffer)) {
         ByteBuffer slice = ((ByteBuffer) byteBuffer.duplicate().limit(prior + read)).slice();
         try {
