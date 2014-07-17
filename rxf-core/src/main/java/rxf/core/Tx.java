@@ -2,6 +2,7 @@ package rxf.core;
 
 import one.xio.AsioVisitor.Helper;
 import one.xio.AsioVisitor.Helper.F;
+import rxf.core.Rfc822HeaderState.HttpResponse;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -82,12 +83,13 @@ public class Tx {
    * @throws IOException
    */
   public int readHttpResponse(SelectionKey key) throws IOException {
-    ByteBuffer byteBuffer = state().headerBuf();
+    Rfc822HeaderState state = state();
+    ByteBuffer byteBuffer = state.headerBuf();
     if (null == byteBuffer)
-      state().headerBuf(byteBuffer = ByteBuffer.allocateDirect(4 << 10));
+      state.headerBuf(byteBuffer = ByteBuffer.allocateDirect(4 << 10));
     if (!byteBuffer.hasRemaining())
-      state().headerBuf(
-          byteBuffer =
+      state
+          .headerBuf(byteBuffer =
               ByteBuffer.allocateDirect(byteBuffer.capacity() << 1).put(
                   (ByteBuffer) byteBuffer.flip()));
     int prior = byteBuffer.position(); // if the headers are extensive, this may be a buffer that has been extended
@@ -95,11 +97,14 @@ public class Tx {
 
     if (0 != read) // 0 per read is quite likely ssl intervention. just let this bounce through.
     {
-      System.err.println("<?? " + StandardCharsets.UTF_8.decode((ByteBuffer) byteBuffer.duplicate().flip()));
-      if (state().asResponse().apply(byteBuffer)) {
+      System.err.println("<?? "
+          + StandardCharsets.UTF_8.decode((ByteBuffer) byteBuffer.duplicate().flip()));
+      HttpResponse httpResponse = state.asResponse();
+      boolean apply = httpResponse.addHeaderInterest(Content$2dLength).apply(byteBuffer);
+      if (apply) {
         ByteBuffer slice = ((ByteBuffer) byteBuffer.duplicate().limit(prior + read)).slice();
         try {
-          int remaining = Integer.parseInt(state().headerString(Content$2dLength.getHeader()));
+          int remaining = Integer.parseInt(state.headerString(Content$2dLength.getHeader()));
           payload(ByteBuffer.allocateDirect(remaining).put(slice));
         } catch (NumberFormatException e) {
           payload(slice);
