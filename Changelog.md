@@ -37,4 +37,6 @@ SSL:
         drop everything and control the key for network activity and then resume the application bytes.  abiding 0 byte 
         returns should stave off sweeping semantic changes to rxf.
         
-        
+QUIC
+===
+* in the midst of resume Kouchdb WebSocket implementation thhe QUIC UDP protocol caught my eye...
