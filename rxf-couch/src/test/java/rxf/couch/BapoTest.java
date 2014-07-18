@@ -18,5 +18,4 @@ public class BapoTest {
     recycleChannel(channel);
     AsyncSingletonServer.killswitch.set(true);
   }
-
 }

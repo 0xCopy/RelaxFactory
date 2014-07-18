@@ -1,5 +1,6 @@
 package rxf.couch;
 
+import com.google.gson.JsonObject;
 import one.xio.HttpHeaders;
 import rxf.couch.driver.CouchMetaDriver;
 import rxf.couch.gen.CouchDriver.DocDelete;
@@ -8,16 +9,10 @@ import rxf.couch.gen.CouchDriver.JsonSend;
 import rxf.couch.gen.CouchDriver.JsonSend.JsonSendActionBuilder;
 import rxf.shared.CouchTx;
 
-import com.google.gson.JsonObject;
-
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 /**
  * Declares a generated service that can be implemented automatically by CouchServiceFactory. Specific to a single

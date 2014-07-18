@@ -3,15 +3,15 @@ package rxf.couch.gen;
 // generated
 
 import one.xio.MimeType;
-import rxf.core.Tx;
 import rxf.core.Rfc822HeaderState;
 import rxf.core.TerminalBuilder;
-import rxf.couch.*;
+import rxf.core.Tx;
+import rxf.couch.CouchResultSet;
+import rxf.couch.DbKeysBuilder;
 import rxf.couch.driver.CouchMetaDriver;
 import rxf.rpc.RpcHelper;
 import rxf.shared.CouchTx;
 
-import java.lang.String;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;

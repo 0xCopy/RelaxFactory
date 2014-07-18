@@ -1,20 +1,18 @@
 package rxf.couch.gen;
 
+import com.google.gson.JsonSyntaxException;
 import one.xio.AsioVisitor;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import rxf.couch.Attachment;
 import rxf.couch.CouchService;
 import rxf.couch.CouchServiceFactory;
 import rxf.couch.gen.CouchDriver.DbDelete;
 import rxf.couch.gen.CouchDriver.DocFetch;
-import rxf.web.inf.ProtocolMethodDispatch;
 import rxf.shared.CouchTx;
-
-import com.google.gson.JsonSyntaxException;
-
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import rxf.web.inf.ProtocolMethodDispatch;
 
 import java.util.HashMap;
 import java.util.List;
@@ -26,13 +24,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import static one.xio.AsioVisitor.Helper.getSelector;
 import static one.xio.AsyncSingletonServer.SingleThreadSingletonServer.init;
 import static one.xio.AsyncSingletonServer.killswitch;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static rxf.rpc.RpcHelper.setDEBUG_SENDJSON;
+import static org.junit.Assert.*;
 import static rxf.couch.driver.CouchMetaDriver.gson;
+import static rxf.rpc.RpcHelper.setDEBUG_SENDJSON;
 
 /**
  * Tests out the db, cleaning up afterRXF itself. These must be run in order to work correctly and clean up.

@@ -4,8 +4,8 @@ import com.google.gson.annotations.SerializedName;
 import com.google.gson.internal.Primitives;
 import rxf.core.CouchNamespace;
 import rxf.couch.CouchResultSet.tuple;
-import rxf.couch.CouchService.CouchRequestParam;
 import rxf.couch.CouchService.AttachmentsImpl;
+import rxf.couch.CouchService.CouchRequestParam;
 import rxf.couch.CouchService.View;
 import rxf.couch.driver.CouchMetaDriver;
 import rxf.couch.gen.CouchDriver.*;
@@ -24,8 +24,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import static rxf.web.inf.ProtocolMethodDispatch.deepToString;
 import static rxf.rpc.RpcHelper.getDefaultOrgName;
+import static rxf.web.inf.ProtocolMethodDispatch.deepToString;
 
 /**
  * Creates CouchService instances by translating {@literal @}View annotations into CouchDB design documents and invoking

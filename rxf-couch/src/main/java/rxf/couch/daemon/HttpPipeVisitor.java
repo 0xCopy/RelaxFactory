@@ -1,8 +1,8 @@
 package rxf.couch.daemon;
 
 import one.xio.AsioVisitor;
+import rxf.core.Config;
 import rxf.shared.PreRead;
-import one.xio.Config;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;

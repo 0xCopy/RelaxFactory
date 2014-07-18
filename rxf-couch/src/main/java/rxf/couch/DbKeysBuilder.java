@@ -4,7 +4,6 @@ import rxf.core.Tx;
 import rxf.couch.driver.CouchMetaDriver.etype;
 import rxf.rpc.RpcHelper;
 
-import java.lang.IllegalArgumentException;
 import java.util.EnumMap;
 
 /**

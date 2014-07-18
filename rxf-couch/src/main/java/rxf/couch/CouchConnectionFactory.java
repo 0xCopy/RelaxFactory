@@ -1,7 +1,7 @@
 package rxf.couch;
 
-import one.xio.Config;
 import one.xio.AsyncSingletonServer;
+import rxf.core.Config;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -9,7 +9,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.channels.SocketChannel;
 import java.util.Queue;
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
 
 public class CouchConnectionFactory {
 

@@ -5,8 +5,8 @@ import one.xio.AsyncSingletonServer;
 import one.xio.HttpMethod;
 import rxf.core.Rfc822HeaderState;
 import rxf.core.Rfc822HeaderState.HttpRequest;
-import rxf.shared.PreRead;
 import rxf.shared.KeepMatcher;
+import rxf.shared.PreRead;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

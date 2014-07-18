@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 import static com.google.common.io.BaseEncoding.base64;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.nio.file.StandardWatchEventKinds.*;
-import static one.xio.Config.get;
+import static rxf.core.Config.get;
 import static rxf.couch.driver.CouchMetaDriver.gson;
 
 /**

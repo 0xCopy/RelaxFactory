@@ -21,8 +21,8 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.regex.MatchResult;
 
-import static java.lang.Math.min;
 import static java.nio.channels.SelectionKey.*;
+import static one.xio.AsioVisitor.Helper.finishWrite;
 import static one.xio.AsioVisitor.Helper.write;
 import static one.xio.HttpHeaders.*;
 
@@ -165,7 +165,7 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
     }
   }
 
-  public void sendFile(SelectionKey key, String finalFname, File file, java.util.Date fdate,
+  public void sendFile(final SelectionKey key, String finalFname, File file, java.util.Date fdate,
       HttpResponse res, String ceString) throws IOException {
     final RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
     final long total = randomAccessFile.length();
@@ -181,27 +181,24 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
         DateHeaderParser.formatHttpHeaderDate(fdate));
     if (null != ceString)
       res.headerString(Content$2dEncoding, ceString);
-    ByteBuffer response = res.asByteBuffer();
-    write(getChannel(), response);
-    final int sendBufferSize = 4 << 10;
-    final long[] progress = {fileChannel.transferTo(0, sendBufferSize, getChannel())};
-    key.interestOps(OP_WRITE | OP_CONNECT);
-    key.selector().wakeup();
-    key.attach(new Impl() {
 
-      public void onWrite(SelectionKey key) throws Exception {
-        long remaining = total - progress[0];
-        progress[0] +=
-            fileChannel.transferTo(progress[0], min(sendBufferSize, remaining), getChannel());
-        remaining = total - progress[0];
-        if (0 == remaining) {
-          fileChannel.close();
-          randomAccessFile.close();
-          key.selector().wakeup();
+    try {
+      finishWrite(key, new Runnable() {
+        @Override
+        public void run() {
+          try {
+            randomAccessFile.close();
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
           key.interestOps(OP_READ).attach(null);
         }
-      }
-    });
+      }, (ByteBuffer) res.asByteBuffer().rewind(), (ByteBuffer) randomAccessFile.getChannel().map(
+          FileChannel.MapMode.READ_ONLY, 0, length).rewind());
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   public ByteBuffer getCursor() {

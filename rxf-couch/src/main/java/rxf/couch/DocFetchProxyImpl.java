@@ -4,9 +4,9 @@ package rxf.couch;
 
 import com.google.gwt.safehtml.shared.UriUtils;
 import one.xio.HttpStatus;
-import rxf.core.Tx;
 import rxf.core.Errors;
 import rxf.core.Rfc822HeaderState;
+import rxf.core.Tx;
 import rxf.couch.driver.CouchMetaDriver;
 import rxf.rpc.RpcHelper;
 import rxf.shared.KeepMatcher;

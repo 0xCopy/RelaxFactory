@@ -7,11 +7,11 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import rxf.couch.CouchResultSet;
-import rxf.rpc.RpcHelper;
-import rxf.shared.CouchTx;
 import rxf.couch.driver.CouchMetaDriver;
 import rxf.couch.gen.CouchDriver.*;
 import rxf.couch.gen.CouchDriver.ViewFetch.ViewFetchTerminalBuilder;
+import rxf.rpc.RpcHelper;
+import rxf.shared.CouchTx;
 import rxf.web.inf.ProtocolMethodDispatch;
 
 import java.util.Map;

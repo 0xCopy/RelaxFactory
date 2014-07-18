@@ -3,6 +3,7 @@ package rxf.couch.daemon;
 import one.xio.AsioVisitor;
 import one.xio.AsyncSingletonServer;
 import one.xio.HttpHeaders;
+import rxf.core.Config;
 import rxf.core.Rfc822HeaderState;
 
 import java.net.InetAddress;
@@ -19,7 +20,6 @@ import java.util.Arrays;
 import java.util.Map;
 
 import static java.nio.channels.SelectionKey.*;
-import static one.xio.Config.get;
 
 /**
  * <ul>
@@ -40,10 +40,10 @@ public class ProxyDaemon extends AsioVisitor.Impl {
    */
   public static final int HOSTPREFIXLEN = "Host: ".length();
 
-  public static final int PROXY_PORT = Integer.parseInt(get("PROXY_PORT", "0"));
-  public static final String PROXY_HOST = get("PROXY_HOST", "127.0.0.1");
-  private static final boolean RPS_SHOW = "true".equals(get("RPS_SHOW", "true"));
-  private static final boolean PROXY_DEBUG = "true".equals(get("PROXY_DEBUG", "false"));
+  public static final int PROXY_PORT = Integer.parseInt(Config.get("PROXY_PORT", "0"));
+  public static final String PROXY_HOST = Config.get("PROXY_HOST", "127.0.0.1");
+  private static final boolean RPS_SHOW = "true".equals(Config.get("RPS_SHOW", "true"));
+  private static final boolean PROXY_DEBUG = "true".equals(Config.get("PROXY_DEBUG", "false"));
   /**
    * master counter for stats per inbound requests
    */

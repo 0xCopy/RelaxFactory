@@ -2,7 +2,10 @@ package rxf.couch.guice;
 
 import com.google.inject.AbstractModule;
 import com.google.web.bindery.requestfactory.server.ServiceLayerDecorator;
-import com.google.web.bindery.requestfactory.shared.*;
+import com.google.web.bindery.requestfactory.shared.Request;
+import com.google.web.bindery.requestfactory.shared.RequestContext;
+import com.google.web.bindery.requestfactory.shared.RequestFactory;
+import com.google.web.bindery.requestfactory.shared.Service;
 
 /**
  * This test may have difficulty running if the RF annotation processor isn't triggered before it.

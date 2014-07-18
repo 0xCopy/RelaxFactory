@@ -1,6 +1,6 @@
 package rxf.rpc;
 
-import one.xio.Config;
+import rxf.core.Config;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

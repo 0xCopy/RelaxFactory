@@ -1,5 +1,7 @@
-import one.xio.*;
+import one.xio.AsioVisitor.FSM;
 import one.xio.AsioVisitor.Helper.*;
+import one.xio.HttpMethod;
+import one.xio.Pair;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -22,10 +24,12 @@ import java.util.LinkedHashMap;
 import java.util.concurrent.Future;
 
 import static java.nio.channels.SelectionKey.OP_WRITE;
+import static one.xio.AsioVisitor.FSM.needWrap;
+import static one.xio.AsioVisitor.FSM.sslGoal;
 import static one.xio.AsioVisitor.Helper.*;
+import static one.xio.AsyncSingletonServer.SingleThreadSingletonServer.*;
 import static org.junit.Assert.fail;
 import static rxf.core.Rfc822HeaderState.avoidStarvation;
-import static one.xio.AsyncSingletonServer.SingleThreadSingletonServer.*;
 import static rxf.rpc.RpcHelper.getEXECUTOR_SERVICE;
 import static rxf.rpc.RpcHelper.setDEBUG_SENDJSON;
 
@@ -49,7 +53,7 @@ public class SslTest {
   static public void setUp() throws Exception {
     setDEBUG_SENDJSON(true);
     killswitch.set(false);
-    AsioVisitor.FSM.setExecutorService(getEXECUTOR_SERVICE());// one-time installation
+    FSM.setExecutorService(getEXECUTOR_SERVICE());// one-time installation
     submit = getEXECUTOR_SERVICE().submit(new Runnable() {
       public void run() {
         try {
@@ -138,7 +142,7 @@ public class SslTest {
                   }
                 }).asByteBuffer();
 
-            AsioVisitor.FSM.sslGoal.put(key, Pair.pair(OP_WRITE, (Object) finishWrite(new Runnable() {
+            sslGoal.put(key, Pair.pair(OP_WRITE, (Object) finishWrite(new Runnable() {
 
               public void run() {
                 toRead(key, new F() {
@@ -156,9 +160,7 @@ public class SslTest {
               }
             }, avoidStarvation(headerBuffer))));
 
-            final int packetBufferSize = sslEngine.getSession().getPacketBufferSize();
-            ByteBuffer toNet = ByteBuffer.allocateDirect(32 << 10);
-            AsioVisitor.FSM.needWrap(Pair.pair(key, sslEngine));
+            needWrap(Pair.pair(key, sslEngine));
           }
         }
       }));
@@ -170,6 +172,5 @@ public class SslTest {
       e.printStackTrace();
       e.printStackTrace();
     }
-
   }
 }
