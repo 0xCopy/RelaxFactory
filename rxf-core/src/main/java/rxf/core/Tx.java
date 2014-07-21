@@ -2,7 +2,6 @@ package rxf.core;
 
 import one.xio.AsioVisitor.Helper;
 import one.xio.AsioVisitor.Helper.F;
-import rxf.core.Rfc822HeaderState.HttpResponse;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -82,7 +81,7 @@ public class Tx {
    * @return
    * @throws IOException
    */
-  public int readHttpResponse(SelectionKey key) throws IOException {
+  public int readHttpHeaders(SelectionKey key) throws IOException {
     Rfc822HeaderState state = state();
     ByteBuffer byteBuffer = state.headerBuf();
     if (null == byteBuffer)
@@ -99,8 +98,7 @@ public class Tx {
     {
       System.err.println("<?? "
           + StandardCharsets.UTF_8.decode((ByteBuffer) byteBuffer.duplicate().flip()));
-      HttpResponse httpResponse = state.asResponse();
-      boolean apply = httpResponse.addHeaderInterest(Content$2dLength).apply(byteBuffer);
+       boolean apply = state.addHeaderInterest(Content$2dLength).apply(byteBuffer);
       if (apply) {
         ByteBuffer slice = ((ByteBuffer) byteBuffer.duplicate().limit(prior + read)).slice();
         try {

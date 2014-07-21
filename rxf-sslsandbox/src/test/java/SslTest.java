@@ -149,7 +149,7 @@ public class SslTest {
 
                   public void apply(SelectionKey key) throws Exception {
                     tx = new Tx();
-                    int i = tx.readHttpResponse(key);
+                    int i = tx.readHttpHeaders(key);
 
                     System.err.println("" + tx.toString());
 
