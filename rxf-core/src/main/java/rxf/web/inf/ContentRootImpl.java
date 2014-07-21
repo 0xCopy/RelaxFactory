@@ -156,8 +156,10 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
 
         public void onWrite(SelectionKey key) throws Exception {
 
-          write(getChannel(), getReq().$res().status(HttpStatus.$404).headerString(
-              Content$2dLength, "0").asByteBuffer());
+          write(getChannel(), getReq().$res().status(HttpStatus.$404)
+              .headerString(Connection,"close")
+              .headerString(
+                  Content$2dLength, "0").asByteBuffer());
           key.selector().wakeup();
           key.interestOps(OP_READ).attach(null);
         }
