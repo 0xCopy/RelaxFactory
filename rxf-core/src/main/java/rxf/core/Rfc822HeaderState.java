@@ -651,16 +651,15 @@ public class Rfc822HeaderState {
       if (wantsHeaders) {
         Map<String, int[]> headerMap = HttpHeaders.getHeaders((ByteBuffer) headerBuf.rewind());
         LinkedHashMap<String, String> stringStringLinkedHashMap = new LinkedHashMap<>();
-        headerStrings.set(stringStringLinkedHashMap);//todo: no more linkedhashmaps in parsers
+        headerStrings.set(stringStringLinkedHashMap);// todo: no more linkedhashmaps in parsers
         for (String o : headerInterest.get()) {
           int[] o1 = headerMap.get(o);
           if (null != o1) {
-            String trim = UTF_8.decode(
-                (ByteBuffer) headerBuf.duplicate().clear().position(o1[0]).limit(o1[1]))
-                .toString().trim();
-          stringStringLinkedHashMap    .put(
-                o,
-                trim);
+            String trim =
+                UTF_8.decode(
+                    (ByteBuffer) headerBuf.duplicate().clear().position(o1[0]).limit(o1[1]))
+                    .toString().trim();
+            stringStringLinkedHashMap.put(o, trim);
           }
         }
       }

@@ -638,7 +638,7 @@ public enum CouchMetaDriver {
           key.interestOps(OP_READ);
         }
 
-        public void onRead(SelectionKey key) throws IOException {
+        public void onRead(SelectionKey key) throws Exception {
           if (null != cursor) {
             try {
               int read = Helper.read(key, cursor);

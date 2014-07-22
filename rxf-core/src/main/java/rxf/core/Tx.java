@@ -81,7 +81,7 @@ public class Tx {
    * @return
    * @throws IOException
    */
-  public int readHttpHeaders(SelectionKey key) throws IOException {
+  public int readHttpHeaders(SelectionKey key) throws Exception {
     Rfc822HeaderState state = state();
     ByteBuffer byteBuffer = state.headerBuf();
     if (null == byteBuffer)
@@ -98,7 +98,8 @@ public class Tx {
     {
       System.err.println("<?? "
           + StandardCharsets.UTF_8.decode((ByteBuffer) byteBuffer.duplicate().flip()));
-       boolean apply = state.addHeaderInterest(Content$2dLength).apply((ByteBuffer) byteBuffer.flip());
+      boolean apply =
+          state.addHeaderInterest(Content$2dLength).apply((ByteBuffer) byteBuffer.flip());
       if (apply) {
         ByteBuffer slice = ((ByteBuffer) byteBuffer.duplicate().limit(prior + read)).slice();
         try {

@@ -49,7 +49,7 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
 
   public void onRead(SelectionKey key) throws Exception {
     setChannel((SocketChannel) key.channel());
-    if (getCursor() == null) {
+    if (null == getCursor()) {
       if (key.attachment() instanceof Object[]) {
         Object[] ar = (Object[]) key.attachment();
         for (Object o : ar) {
@@ -69,11 +69,13 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
       }
       key.attach(this);
     }
+    int capacity = getCursor().capacity();
     setCursor(null == getCursor() ? ByteBuffer.allocateDirect(4 << 10) : getCursor().hasRemaining()
-        ? getCursor() : ByteBuffer.allocateDirect(getCursor().capacity() << 1).put(
-            (ByteBuffer) getCursor().rewind()));
+        ? getCursor() :
+        ByteBuffer.allocateDirect(capacity << 1)
+            .put((ByteBuffer) getCursor().rewind()));
     int read = Helper.read(getChannel(), getCursor());
-    if (read == -1)
+    if (-1 == read)
       key.cancel();
     Buffer flip = getCursor().duplicate().flip();
 
@@ -156,10 +158,8 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
 
         public void onWrite(SelectionKey key) throws Exception {
 
-          write(getChannel(), getReq().$res().status(HttpStatus.$404)
-              .headerString(Connection,"close")
-              .headerString(
-                  Content$2dLength, "0").asByteBuffer());
+          write(getChannel(), getReq().$res().status(HttpStatus.$404).headerString(Connection,
+              "close").headerString(Content$2dLength, "0").asByteBuffer());
           key.selector().wakeup();
           key.interestOps(OP_READ).attach(null);
         }
@@ -170,9 +170,6 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
   public void sendFile(final SelectionKey key, String finalFname, File file, java.util.Date fdate,
       HttpResponse res, String ceString) throws IOException {
     final RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
-    final long total = randomAccessFile.length();
-    final FileChannel fileChannel = randomAccessFile.getChannel();
-
     String substring = finalFname.substring(finalFname.lastIndexOf('.') + 1);
     MimeType mimeType = MimeType.valueOf(substring);
     long length = randomAccessFile.length();
