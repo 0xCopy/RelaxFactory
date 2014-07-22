@@ -16,12 +16,14 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel.MapMode;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.regex.MatchResult;
 
-import static java.nio.channels.SelectionKey.*;
+import static java.nio.channels.SelectionKey.OP_READ;
+import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.AsioVisitor.Helper.finishWrite;
 import static one.xio.AsioVisitor.Helper.write;
 import static one.xio.HttpHeaders.*;
@@ -86,7 +88,7 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
       return;
     }
     setCursor(((ByteBuffer) flip).slice());
-    key.interestOps(SelectionKey.OP_WRITE);
+    key.interestOps(SelectionKey.OP_WRITE).selector().wakeup();
   }
 
   public void onWrite(SelectionKey key) throws Exception {
@@ -182,6 +184,10 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
       res.headerString(Content$2dEncoding, ceString);
 
     try {
+      MappedByteBuffer map = randomAccessFile.getChannel().map(
+          MapMode.READ_ONLY, 0, length);
+      Buffer fileContent = map.rewind();
+      Buffer headers = res.asByteBuffer().rewind();
       finishWrite(key, new Runnable() {
         @Override
         public void run() {
@@ -192,8 +198,7 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
           }
           key.interestOps(OP_READ).attach(null);
         }
-      }, (ByteBuffer) res.asByteBuffer().rewind(), (ByteBuffer) randomAccessFile.getChannel().map(
-          FileChannel.MapMode.READ_ONLY, 0, length).rewind());
+      }, (ByteBuffer) headers, (ByteBuffer) fileContent);
 
     } catch (Exception e) {
       e.printStackTrace();
