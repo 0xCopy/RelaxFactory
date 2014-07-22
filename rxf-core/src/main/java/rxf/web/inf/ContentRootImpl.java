@@ -73,9 +73,8 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
     }
     int capacity = getCursor().capacity();
     setCursor(null == getCursor() ? ByteBuffer.allocateDirect(4 << 10) : getCursor().hasRemaining()
-        ? getCursor() :
-        ByteBuffer.allocateDirect(capacity << 1)
-            .put((ByteBuffer) getCursor().rewind()));
+        ? getCursor() : ByteBuffer.allocateDirect(capacity << 1).put(
+            (ByteBuffer) getCursor().rewind()));
     int read = Helper.read(getChannel(), getCursor());
     if (-1 == read)
       key.cancel();
@@ -184,8 +183,7 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
       res.headerString(Content$2dEncoding, ceString);
 
     try {
-      MappedByteBuffer map = randomAccessFile.getChannel().map(
-          MapMode.READ_ONLY, 0, length);
+      MappedByteBuffer map = randomAccessFile.getChannel().map(MapMode.READ_ONLY, 0, length);
       Buffer fileContent = map.rewind();
       Buffer headers = res.asByteBuffer().rewind();
       finishWrite(key, new Runnable() {
@@ -196,7 +194,15 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
           } catch (IOException e) {
             e.printStackTrace();
           }
-          key.interestOps(OP_READ).attach(null);
+          if (FSM.sslState.containsKey(key))
+            try {
+              key.cancel();
+              key.channel().close();
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
+          else
+            key.interestOps(OP_READ).attach(null);
         }
       }, (ByteBuffer) headers, (ByteBuffer) fileContent);
 
