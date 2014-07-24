@@ -5,11 +5,11 @@ import one.xio.HttpStatus;
 import one.xio.MimeType;
 import rxf.core.CouchNamespace;
 import rxf.core.DateHeaderParser;
-import rxf.core.Rfc822HeaderState;
+import rxf.core.Errors;
 import rxf.core.Rfc822HeaderState.HttpRequest;
 import rxf.core.Rfc822HeaderState.HttpResponse;
+import rxf.core.Tx;
 import rxf.shared.CompressionTypes;
-import rxf.shared.PreRead;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,7 +19,7 @@ import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel.MapMode;
 import java.nio.channels.SelectionKey;
-import java.nio.channels.SocketChannel;
+import java.nio.file.Paths;
 import java.util.regex.MatchResult;
 
 import static java.nio.channels.SelectionKey.OP_READ;
@@ -31,63 +31,32 @@ import static one.xio.HttpHeaders.*;
 /**
  * User: jim Date: 6/4/12 Time: 1:42 AM
  */
-@PreRead
-public class ContentRootImpl extends Impl implements ServiceHandoff {
+@OpInterest(value = SelectionKey.OP_WRITE)
+public class ContentRootImpl extends Impl {
 
   public static final String SLASHDOTSLASH = File.separator + "." + File.separator;
   public static final String DOUBLESEP = File.separator + File.separator;
   private static final boolean DEBUG_SENDJSON = false;
-  private String rootPath = CouchNamespace.COUCH_DEFAULT_FS_ROOT;
+  private String rootPath = CouchNamespace.RXF_CONTENT_ROOT;
   private ByteBuffer cursor;
-  private SocketChannel channel;
-  private HttpRequest req;
   private MatchResult matchResults;
+  /**
+   * threadlocal from creation-time
+   */
+  Tx tx = Tx.current();
+
+  public ContentRootImpl() {
+    tx.state(tx.state().addHeaderInterest(Accept$2dEncoding, If$2dModified$2dSince,
+        If$2dUnmodified$2dSince).read((ByteBuffer) tx.state().headerBuf().rewind()).asRequest());
+  }
 
   public static String fileScrub(String scrubMe) {
     char inverseChar = '/' == File.separatorChar ? '\\' : '/';
-    return null == scrubMe ? null : scrubMe.trim().replace(inverseChar, File.separatorChar)
-        .replace(DOUBLESEP, "" + File.separator).replace("..", ".");
-  }
-
-  public void onRead(SelectionKey key) throws Exception {
-    setChannel((SocketChannel) key.channel());
-    if (null == getCursor()) {
-      if (key.attachment() instanceof Object[]) {
-        Object[] ar = (Object[]) key.attachment();
-        for (Object o : ar) {
-          if (o instanceof ByteBuffer) {
-            setCursor((ByteBuffer) o);
-            continue;
-          }
-          if (o instanceof Rfc822HeaderState) {
-            setReq(((Rfc822HeaderState) o).$req());
-            continue;
-          }
-          if (o instanceof MatchResult) {
-            setMatchResults((MatchResult) o);
-            continue;
-          }
-        }
-      }
-      key.attach(this);
-    }
-    int capacity = getCursor().capacity();
-    setCursor(null == getCursor() ? ByteBuffer.allocateDirect(4 << 10) : getCursor().hasRemaining()
-        ? getCursor() : ByteBuffer.allocateDirect(capacity << 1).put(
-            (ByteBuffer) getCursor().rewind()));
-    int read = Helper.read(getChannel(), getCursor());
-    if (-1 == read)
-      key.cancel();
-    Buffer flip = getCursor().duplicate().flip();
-
-    setReq((HttpRequest) new Rfc822HeaderState().addHeaderInterest(Accept$2dEncoding,
-        If$2dModified$2dSince, If$2dUnmodified$2dSince).$req().read((ByteBuffer) flip));
-    if (!Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, getReq()
-        .headerBuf())) {
-      return;
-    }
-    setCursor(((ByteBuffer) flip).slice());
-    key.interestOps(SelectionKey.OP_WRITE).selector().wakeup();
+    return null == scrubMe ? null : Paths.get(scrubMe.trim()).normalize()//
+        .toString()//
+        .replace(inverseChar, File.separatorChar)//
+        .replace(DOUBLESEP, "" + File.separator)//
+        .replace("..", ".");//
   }
 
   public void onWrite(SelectionKey key) throws Exception {
@@ -104,7 +73,7 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
     String since = getReq().headerString(If$2dModified$2dSince);
     String accepts = getReq().headerString(Accept$2dEncoding);
 
-    HttpResponse res = getReq().$res();
+    final HttpResponse res = getReq().$res();
     if (null != since) {
       java.util.Date cachedDate = DateHeaderParser.parseDate(since);
 
@@ -112,7 +81,7 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
 
         res.status(HttpStatus.$304).headerString(Connection, "close").headerString(Last$2dModified,
             DateHeaderParser.formatHttpHeaderDate(fdate));
-        int write = getChannel().write(res.asByteBuffer());
+        int write = write(key, res.asByteBuffer());
         key.interestOps(OP_READ).attach(null);
         return;
       }
@@ -126,7 +95,7 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
 
           res.status(HttpStatus.$412).headerString(Connection, "close").headerString(
               Last$2dModified, DateHeaderParser.formatHttpHeaderDate(fdate));
-          int write = getChannel().write(res.asByteBuffer());
+          int write = write(key, res.asByteBuffer());
           key.interestOps(OP_READ).attach(null);
           return;
         }
@@ -158,9 +127,7 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
       key.interestOps(OP_WRITE).attach(new Impl() {
 
         public void onWrite(SelectionKey key) throws Exception {
-
-          write(getChannel(), getReq().$res().status(HttpStatus.$404).headerString(Connection,
-              "close").headerString(Content$2dLength, "0").asByteBuffer());
+          Errors.$404(key, res.asRequest().path());
           key.selector().wakeup();
           key.interestOps(OP_READ).attach(null);
         }
@@ -219,20 +186,12 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
     this.cursor = cursor;
   }
 
-  public SocketChannel getChannel() {
-    return channel;
-  }
-
-  public void setChannel(SocketChannel channel) {
-    this.channel = channel;
-  }
-
   public HttpRequest getReq() {
-    return req;
+    return tx.state().asRequest();
   }
 
   public void setReq(HttpRequest req) {
-    this.req = req;
+    tx.state(req);
   }
 
   public String getRootPath() {

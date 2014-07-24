@@ -74,7 +74,7 @@ public class Tx {
    * <li>parses buffer for http results</li>
    * <li>reads contentlength if present and sizes {@link #payload} suitable for
    * {@link Helper#finishRead(java.nio.ByteBuffer, F)}</li>
-   * <li>else throws remainder slice of buffer into {@link #payload} as a full buffer</li>
+   * <li>else throws remainder slice of buffer into {@link #payload} as a full buffer where hasRemaining() is false</li>
    * </ol>
    * 
    * @param key
@@ -94,7 +94,7 @@ public class Tx {
     int prior = byteBuffer.position(); // if the headers are extensive, this may be a buffer that has been extended
     int read = Helper.read(key, byteBuffer);
 
-    if (0 != read) // 0 per read is quite likely ssl intervention. just let this bounce through.
+    if (-1 < read) // 0 per read is quite likely ssl intervention. just let this bounce through.
     {
       System.err.println("<?? "
           + StandardCharsets.UTF_8.decode((ByteBuffer) byteBuffer.duplicate().flip()));
@@ -138,6 +138,9 @@ public class Tx {
     return this;
   }
 
+  /**
+   * @return a lazily created threadlocal Tx
+   */
   public static Tx current() {
     Tx tx = current.get();
     if (null == tx)

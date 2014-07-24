@@ -2,9 +2,8 @@ package rxf.web.inf;
 
 import one.xio.AsioVisitor.Impl;
 import one.xio.AsyncSingletonServer;
-import one.xio.HttpMethod;
-import rxf.core.Rfc822HeaderState;
-import rxf.core.Rfc822HeaderState.HttpRequest;
+import rxf.core.Errors;
+import rxf.core.Tx;
 import rxf.shared.KeepMatcher;
 import rxf.shared.PreRead;
 
@@ -18,7 +17,6 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -98,52 +96,42 @@ public class ProtocolMethodDispatch extends Impl {
   }
 
   public void onRead(SelectionKey key) throws Exception {
-    SocketChannel channel = (SocketChannel) key.channel();
-    ByteBuffer cursor = ByteBuffer.allocateDirect(4 << 10);
-    int read = Helper.read(key, cursor);
-    if (-1 == read) {
-      ((SocketChannel) key.channel()).socket().close();// cancel();
+    Object attachment = key.attachment();
+    Tx tx = null;
+
+    if (null == attachment || attachment instanceof Object[] && ((Object[]) attachment)[0] == this) {
+      tx = Tx.current(new Tx());
+      key.attach(tx);
+    } else if (attachment instanceof Tx) {
+      tx = (Tx) attachment;
+    }
+
+    tx.readHttpHeaders(key);
+    if (null == tx.payload()) {
       return;
     }
 
-    HttpMethod method = null;
-    HttpRequest httpRequest = null;
-    try {
-      // find the method to dispatch
-      Rfc822HeaderState state = new Rfc822HeaderState().read((ByteBuffer) cursor.flip());
-      httpRequest = state.$req();
-      if (DEBUG_SENDJSON) {
-        System.err.println(deepToString(StandardCharsets.UTF_8.decode((ByteBuffer) httpRequest
-            .headerBuf().duplicate().rewind())));
-      }
-      String method1 = httpRequest.method();
-      method = HttpMethod.valueOf(method1);
-    } catch (Exception e) {
-    }
-
-    if (null == method) {
-      ((SocketChannel) key.channel()).socket().close();// cancel();
-      return;
-    }
-
-    Set<Entry<Pattern, Class<? extends Impl>>> entries = NAMESPACE.get(method).entrySet();
-    String path = httpRequest.path();
-    for (Entry<Pattern, Class<? extends Impl>> visitorEntry : entries) {
+    String path = tx.state().asRequest().path();
+    for (Entry<Pattern, Class<? extends Impl>> visitorEntry : NAMESPACE.get(
+        tx.state().asRequest().httpMethod()).entrySet()) {
       Matcher matcher = visitorEntry.getKey().matcher(path);
       if (matcher.matches()) {
         if (DEBUG_SENDJSON) {
           System.err.println("+?+?+? using " + matcher.toString());
         }
-        Class<? extends Impl> value = visitorEntry.getValue();
+        Class<? extends Impl> aClass = visitorEntry.getValue();
         Impl impl;
 
-        impl = value.newInstance();
-        boolean keepMatch = value.isAnnotationPresent(KeepMatcher.class);
+        impl = aClass.newInstance();
+        boolean keepMatch = aClass.isAnnotationPresent(KeepMatcher.class);
         Object a[] =
-            keepMatch ? new Object[] {impl, httpRequest, cursor, matcher.toMatchResult()}
-                : new Object[] {impl, httpRequest, cursor};
+            keepMatch ? new Object[] {impl, tx.state(), tx.payload(), matcher.toMatchResult()}
+                : new Object[] {impl, tx.state(), tx.payload()};
+        OpInterest opInterest = aClass.getAnnotation(OpInterest.class);
+        key.interestOps(opInterest != null ? opInterest.value() : OP_READ).attach(a);
+
         key.attach(a);
-        if (value.isAnnotationPresent(PreRead.class))
+        if (aClass.isAnnotationPresent(PreRead.class))
           impl.onRead(key);
         key.selector().wakeup();
         return;
@@ -151,6 +139,7 @@ public class ProtocolMethodDispatch extends Impl {
 
     }
     System.err.println(deepToString("!!!1!1!!", "404", path, "using", NAMESPACE));
+    Errors.$404(key, path);
   }
 
 }

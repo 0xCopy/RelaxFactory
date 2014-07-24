@@ -29,74 +29,25 @@ import static one.xio.AsioVisitor.Helper.*;
 public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
 
   private final Object delegate;
+  private Tx tx = Tx.current();
 
   public GwtRpcVisitor() {
     this(null);
   }
 
   public GwtRpcVisitor(Object delegate) {
+
     if (delegate == null) {
       delegate = this;
     }
     this.delegate = delegate;
   }
 
-  Tx tx = Tx.current(new Tx());
-
   public void onRead(final SelectionKey key) throws Exception {
-    tx.readHttpHeaders(key);
-    if (null != tx.payload())
-      finishRead(key, tx.payload(), new Runnable() {
-        @Override
-        public void run() {
-          toWrite(key, new Helper.F() {
-            @Override
-            public void apply(final SelectionKey key) throws Exception {
-              key.interestOps(0);
-              RpcHelper.EXECUTOR_SERVICE.submit(new Runnable() {
-                public void run() {
-                  try {
-
-                    RPCRequest rpcRequest =
-                        RPC.decodeRequest(StandardCharsets.UTF_8.decode(
-                            (ByteBuffer) tx.payload().rewind()).toString(), delegate.getClass(),
-                            GwtRpcVisitor.this);
-                    String payload;
-                    try {
-                      payload =
-                          RPC.invokeAndEncodeResponse(delegate, rpcRequest.getMethod(), rpcRequest
-                              .getParameters(), rpcRequest.getSerializationPolicy(), rpcRequest
-                              .getFlags());
-                    } catch (IncompatibleRemoteServiceException | RpcTokenException ex) {
-                      payload = RPC.encodeResponseForFailure(null, ex);
-                    }
-                    ByteBuffer pbuf = StandardCharsets.UTF_8.encode(payload);
-                    tx.payload(pbuf);
-
-                    tx.state().$res().status(HttpStatus.$200).headerString(
-                        HttpHeaders.Content$2dType, MimeType.json.contentType).headerString(
-                        HttpHeaders.Content$2dLength, String.valueOf(pbuf.limit()));
-
-                    finishWrite(key, new F() {
-                      @Override
-                      public void apply(SelectionKey key) throws Exception {
-                        key.interestOps(SelectionKey.OP_READ).attach(null);
-                      }
-                    }, (ByteBuffer) tx.state().asResponse().asByteBuffer().rewind(),
-                        (ByteBuffer) tx.payload().rewind());
-
-                  } catch (Exception e) {
-                    key.cancel();
-                    e.printStackTrace(); // todo: verify for a purpose
-                  } finally {
-                  }
-                }
-              });
-
-            }
-          });
-        }
-      });
+    if (tx.payload() == null)
+      tx.readHttpHeaders(key);
+    if (tx.payload() != null)
+      finishRead(key, tx.payload(), new GwtRpcTask(key));
   }
 
   public SerializationPolicy getSerializationPolicy(String moduleBaseURL, String strongName) {
@@ -127,5 +78,49 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
     }
 
     return serializationPolicy;
+  }
+
+  private class GwtRpcTask implements Runnable {
+    private final SelectionKey key;
+
+    public GwtRpcTask(SelectionKey key) {
+      this.key = key;
+    }
+
+    public void run() {
+      try {
+
+        RPCRequest rpcRequest =
+            RPC.decodeRequest(StandardCharsets.UTF_8.decode((ByteBuffer) tx.payload().rewind())
+                .toString(), delegate.getClass(), GwtRpcVisitor.this);
+        String payload;
+        try {
+          payload =
+              RPC.invokeAndEncodeResponse(delegate, rpcRequest.getMethod(), rpcRequest
+                  .getParameters(), rpcRequest.getSerializationPolicy(), rpcRequest.getFlags());
+        } catch (IncompatibleRemoteServiceException | RpcTokenException ex) {
+          payload = RPC.encodeResponseForFailure(null, ex);
+        }
+        ByteBuffer pbuf = StandardCharsets.UTF_8.encode(payload);
+        tx.payload(pbuf);
+
+        tx.state().$res().status(HttpStatus.$200).headerString(HttpHeaders.Content$2dType,
+            MimeType.json.contentType).headerString(HttpHeaders.Content$2dLength,
+            String.valueOf(pbuf.limit()));
+
+        finishWrite(key, new F() {
+          @Override
+          public void apply(SelectionKey key) throws Exception {
+            key.interestOps(SelectionKey.OP_READ).attach(null);
+          }
+        }, (ByteBuffer) tx.state().asResponse().asByteBuffer().rewind(), (ByteBuffer) tx.payload()
+            .rewind());
+
+      } catch (Exception e) {
+        key.cancel();
+        e.printStackTrace(); // todo: verify for a purpose
+      } finally {
+      }
+    }
   }
 }

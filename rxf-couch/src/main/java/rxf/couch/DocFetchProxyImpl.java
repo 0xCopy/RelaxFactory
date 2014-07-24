@@ -10,7 +10,6 @@ import rxf.core.Tx;
 import rxf.couch.driver.CouchMetaDriver;
 import rxf.rpc.RpcHelper;
 import rxf.shared.KeepMatcher;
-import rxf.shared.PreRead;
 import rxf.web.inf.ContentRootImpl;
 
 import java.nio.ByteBuffer;
@@ -30,7 +29,6 @@ import static rxf.couch.gen.CouchDriver.DocFetch;
  * <p/>
  * shows how to secure a proxy regex using $1 in regex passed in.
  */
-@PreRead
 @KeepMatcher
 public class DocFetchProxyImpl extends ContentRootImpl {
 

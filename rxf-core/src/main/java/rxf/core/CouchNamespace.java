@@ -21,7 +21,7 @@ public interface CouchNamespace {
   /**
    * defines where 1xio/rxf finds static content root.
    */
-  String COUCH_DEFAULT_FS_ROOT = Config.get("RXF_CONTENT_ROOT", "./");
+  String RXF_CONTENT_ROOT = Config.get("RXF_CONTENT_ROOT", "./");
 
   /**
    * creates the orgname used in factories without localized namespaces
