@@ -7,35 +7,26 @@ import one.xio.AsioVisitor.Impl;
 import one.xio.HttpHeaders;
 import one.xio.HttpStatus;
 import one.xio.MimeType;
-import rxf.core.Rfc822HeaderState;
-import rxf.core.Rfc822HeaderState.HttpRequest;
+import rxf.core.Tx;
 import rxf.shared.PreRead;
-import rxf.web.inf.ProtocolMethodDispatch;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
-import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 
-import static one.xio.AsioVisitor.Helper.write;
+import static one.xio.AsioVisitor.Helper.*;
 
 /**
  * User: jim Date: 6/3/12 Time: 7:42 PM
  */
 @PreRead
 public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
-
-  private HttpRequest req;
-  private ByteBuffer cursor;
-  private SocketChannel channel;
-  private String payload;
 
   private final Object delegate;
 
@@ -50,105 +41,62 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
     this.delegate = delegate;
   }
 
-  public void onRead(SelectionKey key) throws Exception {
-    channel = (SocketChannel) key.channel();
-    if (cursor == null) {
-      if (key.attachment() instanceof Object[]) {
-        Object[] ar = (Object[]) key.attachment();
-        for (Object o : ar) {
-          if (o instanceof ByteBuffer) {
-            cursor = (ByteBuffer) o;
-            continue;
-          }
-          if (o instanceof Rfc822HeaderState) {
-            req = ((Rfc822HeaderState) o).$req();
-          }
-        }
-      }
-      key.attach(this);
-    }
-    cursor =
-        null == cursor ? ByteBuffer.allocateDirect(4 << 10) : cursor.hasRemaining() ? cursor
-            : ByteBuffer.allocateDirect(cursor.capacity() << 1).put((ByteBuffer) cursor.rewind());
-    int read = Helper.read(key, cursor);
-    if (read == -1)
-      key.cancel();
-    Buffer flip = cursor.duplicate().flip();
-    req = (HttpRequest) req.headerInterest(HttpHeaders.Content$2dLength).read((ByteBuffer) flip);
-    if (!Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, req
-        .headerBuf())) {
-      return;
-    }
-    cursor = cursor.slice();
-    int remaining = Integer.parseInt(req.headerString(HttpHeaders.Content$2dLength));
-    final GwtRpcVisitor prev = this;
-    if (cursor.remaining() != remaining) {
-      key.attach(new Impl() {
+  Tx tx = Tx.current(new Tx());
 
-        public void onRead(SelectionKey key) throws Exception {
-          int read1 = Helper.read(key, cursor);
-          if (read1 == -1) {
-            key.cancel();
-          }
-          if (!cursor.hasRemaining()) {
-            key.interestOps(SelectionKey.OP_WRITE).attach(prev);
-          }
-        }
-      });
-    } else {
-      key.interestOps(SelectionKey.OP_WRITE);
-    }
-  }
-
-  public void onWrite(final SelectionKey key) throws Exception {
-    if (payload == null) {
-      key.interestOps(0);
-      RpcHelper.EXECUTOR_SERVICE.submit(new Runnable() {
-
+  public void onRead(final SelectionKey key) throws Exception {
+    tx.readHttpHeaders(key);
+    if (null != tx.payload())
+      finishRead(key, tx.payload(), new Runnable() {
+        @Override
         public void run() {
-          try {
-            String reqPayload =
-                StandardCharsets.UTF_8.decode((ByteBuffer) cursor.rewind()).toString();
+          toWrite(key, new Helper.F() {
+            @Override
+            public void apply(final SelectionKey key) throws Exception {
+              key.interestOps(0);
+              RpcHelper.EXECUTOR_SERVICE.submit(new Runnable() {
+                public void run() {
+                  try {
 
-            RPCRequest rpcRequest =
-                RPC.decodeRequest(reqPayload, delegate.getClass(), GwtRpcVisitor.this);
+                    RPCRequest rpcRequest =
+                        RPC.decodeRequest(StandardCharsets.UTF_8.decode(
+                            (ByteBuffer) tx.payload().rewind()).toString(), delegate.getClass(),
+                            GwtRpcVisitor.this);
+                    String payload;
+                    try {
+                      payload =
+                          RPC.invokeAndEncodeResponse(delegate, rpcRequest.getMethod(), rpcRequest
+                              .getParameters(), rpcRequest.getSerializationPolicy(), rpcRequest
+                              .getFlags());
+                    } catch (IncompatibleRemoteServiceException | RpcTokenException ex) {
+                      payload = RPC.encodeResponseForFailure(null, ex);
+                    }
+                    ByteBuffer pbuf = StandardCharsets.UTF_8.encode(payload);
+                    tx.payload(pbuf);
 
-            try {
-              payload =
-                  RPC.invokeAndEncodeResponse(delegate, rpcRequest.getMethod(), rpcRequest
-                      .getParameters(), rpcRequest.getSerializationPolicy(), rpcRequest.getFlags());
-            } catch (IncompatibleRemoteServiceException | RpcTokenException ex) {
-              payload = RPC.encodeResponseForFailure(null, ex);
+                    tx.state().$res().status(HttpStatus.$200).headerString(
+                        HttpHeaders.Content$2dType, MimeType.json.contentType).headerString(
+                        HttpHeaders.Content$2dLength, String.valueOf(pbuf.limit()));
+
+                    finishWrite(key, new F() {
+                      @Override
+                      public void apply(SelectionKey key) throws Exception {
+                        key.interestOps(SelectionKey.OP_READ).attach(null);
+                      }
+                    }, (ByteBuffer) tx.state().asResponse().asByteBuffer().rewind(),
+                        (ByteBuffer) tx.payload().rewind());
+
+                  } catch (Exception e) {
+                    key.cancel();
+                    e.printStackTrace(); // todo: verify for a purpose
+                  } finally {
+                  }
+                }
+              });
+
             }
-            ByteBuffer pbuf = (ByteBuffer) StandardCharsets.UTF_8.encode(payload).rewind();
-            final int limit = pbuf.rewind().limit();
-            Rfc822HeaderState.HttpResponse res = req.$res();
-            res.status(HttpStatus.$200);
-            ByteBuffer as =
-                res.headerString(HttpHeaders.Content$2dType, MimeType.json.contentType)
-                    .headerString(HttpHeaders.Content$2dLength, String.valueOf(limit)).as(
-                        ByteBuffer.class);
-            int needed = as.rewind().limit() + limit;
-
-            cursor =
-                (ByteBuffer) ((ByteBuffer) (cursor.capacity() >= needed ? cursor.clear().limit(
-                    needed) : ByteBuffer.allocateDirect(needed))).put(as).put(pbuf).rewind();
-
-            key.interestOps(SelectionKey.OP_WRITE);
-          } catch (Exception e) {
-            key.cancel();
-            e.printStackTrace(); // todo: verify for a purpose
-          } finally {
-          }
+          });
         }
       });
-      return;
-    }
-    write(channel, cursor);
-    if (!cursor.hasRemaining()) {
-      key.interestOps(SelectionKey.OP_READ).attach(null);
-    }
-
   }
 
   public SerializationPolicy getSerializationPolicy(String moduleBaseURL, String strongName) {
