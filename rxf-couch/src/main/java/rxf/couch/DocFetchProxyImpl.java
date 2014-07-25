@@ -47,12 +47,12 @@ public class DocFetchProxyImpl extends ContentRootImpl {
         }
       }
     }
-    if (null != getReq() && null != getMatchResults()) {
+    if (null != getReq() && null != getMatchResults(outerKey)) {
       outerKey.interestOps(0);
       final HttpRequest outerRequest = getReq();
       final String path = outerRequest.path();
 
-      String link = transformLink();
+      String link = transformLink(outerKey);
       if (link.endsWith("/")) {
         link += "index.html";
       }
@@ -105,9 +105,10 @@ public class DocFetchProxyImpl extends ContentRootImpl {
    * very default implementation
    * 
    * @return a transformed string
+   * @param key
    */
-  public String transformLink() {
-    MatchResult matcher = getMatchResults();
+  public String transformLink(SelectionKey key) {
+    MatchResult matcher = getMatchResults(key);
     return UriUtils.sanitizeUri(getPrefix() + matcher.group(1) + getSuffix());
   }
 

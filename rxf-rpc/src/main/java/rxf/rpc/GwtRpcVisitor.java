@@ -7,10 +7,11 @@ import one.xio.AsioVisitor.Impl;
 import one.xio.HttpHeaders;
 import one.xio.HttpStatus;
 import one.xio.MimeType;
+import rxf.core.CouchNamespace;
 import rxf.core.Tx;
-import rxf.shared.PreRead;
+import rxf.web.inf.OpInterest;
 
-import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -18,14 +19,17 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.text.ParseException;
 
-import static one.xio.AsioVisitor.Helper.*;
+import static one.xio.AsioVisitor.Helper.F;
+import static one.xio.AsioVisitor.Helper.finishWrite;
 
 /**
+ * assumes POST using Content-Length -- chunked encoding will drop on the floor
  * User: jim Date: 6/3/12 Time: 7:42 PM
  */
-@PreRead
+@OpInterest(SelectionKey.OP_WRITE)
 public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
 
   private final Object delegate;
@@ -43,11 +47,9 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
     this.delegate = delegate;
   }
 
-  public void onRead(final SelectionKey key) throws Exception {
-    if (tx.payload() == null)
-      tx.readHttpHeaders(key);
-    if (tx.payload() != null)
-      finishRead(key, tx.payload(), new GwtRpcTask(key));
+  @Override
+  public void onWrite(SelectionKey key) throws Exception {
+    key.interestOps(0);RpcHelper.getEXECUTOR_SERVICE().submit(new GwtRpcTask(key));
   }
 
   public SerializationPolicy getSerializationPolicy(String moduleBaseURL, String strongName) {
@@ -59,7 +61,7 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
     try {
       String path = new URL(moduleBaseURL).getPath();
       fileName = SerializationPolicyLoader.getSerializationPolicyFileName(path + strongName);
-      is = new File("./" + fileName).toURI().toURL().openStream();
+      is = new FileInputStream(String.valueOf(Paths.get(CouchNamespace.RXF_CONTENT_ROOT, fileName)));
     } catch (MalformedURLException e1) {
       System.out.println("ERROR: malformed moduleBaseURL: " + moduleBaseURL);
       return null;

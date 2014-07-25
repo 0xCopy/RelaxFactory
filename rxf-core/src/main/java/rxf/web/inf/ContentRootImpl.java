@@ -208,7 +208,26 @@ public class ContentRootImpl extends Impl {
     this.matchResults = matchResults;
   }
 
-  public MatchResult getMatchResults() {
+  /**
+   * todo: make cleaner. make this go away
+   * 
+   * @return
+   * @param key
+   */
+  public MatchResult getMatchResults(SelectionKey key) {
+    if (matchResults == null) {
+      Object attachment = key.attachment();
+      if (attachment instanceof Object[]) {
+        Object[] objects = (Object[]) attachment;
+        for (Object object : objects) {
+          if (object instanceof MatchResult) {
+            MatchResult matchResult1 = (MatchResult) object;
+            return matchResults = matchResult1;
+          }
+        }
+      }
+
+    }
     return matchResults;
   }
 }
