@@ -1,7 +1,7 @@
 package rxf.web.inf;
 
 import one.xio.AsioVisitor.Impl;
-import one.xio.AsyncSingletonServer;
+import one.xio.AsyncSingletonServer.SingleThreadSingletonServer;
 import rxf.core.Errors;
 import rxf.core.Tx;
 import rxf.shared.KeepMatcher;
@@ -91,55 +91,73 @@ public class ProtocolMethodDispatch extends Impl {
     ServerSocketChannel channel = (ServerSocketChannel) key.channel();
     SocketChannel accept = channel.accept();
     accept.configureBlocking(false);
-    AsyncSingletonServer.SingleThreadSingletonServer.enqueue(accept, OP_READ, this);
+    SingleThreadSingletonServer.enqueue(accept, OP_READ);
 
   }
 
+  /**
+   * this makes use of the fact that we are the default/init Visitor, allowing for temporary placement of a tx object.
+   * 
+   * @param key
+   * @throws Exception
+   */
   public void onRead(SelectionKey key) throws Exception {
-    Object attachment = key.attachment();
-    Tx tx = null;
+    Tx tx = Tx.current(acquireTx(key).readHttpHeaders(key));
+    if (null != tx) {
+      String path = tx.state().asRequest().path();
+      for (Entry<Pattern, Class<? extends Impl>> visitorEntry : NAMESPACE.get(
+          tx.state().asRequest().httpMethod()).entrySet()) {
+        Matcher matcher = visitorEntry.getKey().matcher(path);
+        if (matcher.matches()) {
+          if (DEBUG_SENDJSON) {
+            System.err.println("+?+?+? using " + matcher.toString());
+          }
+          Class<? extends Impl> aClass = visitorEntry.getValue();
+          Impl impl = aClass.newInstance();
+          boolean keepMatch = aClass.isAnnotationPresent(KeepMatcher.class);
+          Object a[] =
+              keepMatch ? new Object[] {impl, tx.state(), tx.payload(), matcher.toMatchResult()}
+                  : new Object[] {impl, tx.state(), tx.payload()};
+          OpInterest opInterest = aClass.getAnnotation(OpInterest.class);
+          key.interestOps(opInterest != null ? opInterest.value() : OP_READ).attach(a);
 
-    if (null == attachment || attachment instanceof Object[] && ((Object[]) attachment)[0] == this) {
-      tx = Tx.current(new Tx());
-      key.attach(tx);
-    } else if (attachment instanceof Tx) {
-      tx = (Tx) attachment;
-    }
-
-    tx.readHttpHeaders(key);
-    if (null == tx.payload()) {
-      return;
-    }
-
-    String path = tx.state().asRequest().path();
-    for (Entry<Pattern, Class<? extends Impl>> visitorEntry : NAMESPACE.get(
-        tx.state().asRequest().httpMethod()).entrySet()) {
-      Matcher matcher = visitorEntry.getKey().matcher(path);
-      if (matcher.matches()) {
-        if (DEBUG_SENDJSON) {
-          System.err.println("+?+?+? using " + matcher.toString());
+          key.attach(a);
+          if (aClass.isAnnotationPresent(PreRead.class))
+            impl.onRead(key);
+          key.selector().wakeup();
+          return;
         }
-        Class<? extends Impl> aClass = visitorEntry.getValue();
-        Impl impl;
 
-        impl = aClass.newInstance();
-        boolean keepMatch = aClass.isAnnotationPresent(KeepMatcher.class);
-        Object a[] =
-            keepMatch ? new Object[] {impl, tx.state(), tx.payload(), matcher.toMatchResult()}
-                : new Object[] {impl, tx.state(), tx.payload()};
-        OpInterest opInterest = aClass.getAnnotation(OpInterest.class);
-        key.interestOps(opInterest != null ? opInterest.value() : OP_READ).attach(a);
-
-        key.attach(a);
-        if (aClass.isAnnotationPresent(PreRead.class))
-          impl.onRead(key);
-        key.selector().wakeup();
-        return;
       }
-
+      System.err.println(deepToString("!!!1!1!!", "404", path, "using", NAMESPACE));
+      Errors.$404(key, path);
     }
-    System.err.println(deepToString("!!!1!1!!", "404", path, "using", NAMESPACE));
-    Errors.$404(key, path);
   }
 
+  /**
+   * if the attachment is a tx, we resume filling headers and payload by keep. if the attachment is not Tx, it is set to
+   * a fresh one.
+   * <p/>
+   * for TOP level default visitor root only!
+   * 
+   * @param key selectionKey
+   * @return a tx
+   */
+  public static Tx acquireTx(SelectionKey key) {
+    Object attachment = key.attachment();
+    if (attachment instanceof Object[]) {
+      Object[] objects = (Object[]) attachment;
+      if (objects.length == 0)
+        attachment = null;
+      if (objects.length == 1)
+        attachment = objects[0];
+    }
+    Tx tx;
+    if (attachment instanceof Tx) {
+      tx = Tx.current((Tx) attachment);
+    } else
+      tx = Tx.current(new Tx());
+    key.attach(tx);
+    return tx;
+  }
 }

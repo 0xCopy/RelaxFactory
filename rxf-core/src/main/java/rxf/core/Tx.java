@@ -81,7 +81,7 @@ public class Tx {
    * @return
    * @throws IOException
    */
-  public int readHttpHeaders(SelectionKey key) throws Exception {
+  public Tx readHttpHeaders(SelectionKey key) throws Exception {
     Rfc822HeaderState state = state();
     ByteBuffer byteBuffer = state.headerBuf();
     if (null == byteBuffer)
@@ -94,23 +94,28 @@ public class Tx {
     int prior = byteBuffer.position(); // if the headers are extensive, this may be a buffer that has been extended
     int read = Helper.read(key, byteBuffer);
 
-    if (-1 < read) // 0 per read is quite likely ssl intervention. just let this bounce through.
-    {
-      System.err.println("<?? "
-          + StandardCharsets.UTF_8.decode((ByteBuffer) byteBuffer.duplicate().flip()));
-      boolean apply =
-          state.addHeaderInterest(Content$2dLength).apply((ByteBuffer) byteBuffer.flip());
-      if (apply) {
-        ByteBuffer slice = ((ByteBuffer) byteBuffer.duplicate().limit(prior + read)).slice();
-        try {
-          int remaining = Integer.parseInt(state.headerString(Content$2dLength.getHeader()));
-          payload(ByteBuffer.allocateDirect(remaining).put(slice));
-        } catch (NumberFormatException e) {
-          payload(slice);
+    switch (read) {
+      case -1:
+        key.cancel();
+      case 0:
+        return null;
+      default:
+        System.err.println("<?? "
+            + StandardCharsets.UTF_8.decode((ByteBuffer) byteBuffer.duplicate().flip()));
+        boolean apply =
+            state.addHeaderInterest(Content$2dLength).apply((ByteBuffer) byteBuffer.flip());
+        if (apply) {
+          ByteBuffer slice = ((ByteBuffer) byteBuffer.duplicate().limit(prior + read)).slice();
+          try {
+            int remaining = Integer.parseInt(state.headerString(Content$2dLength.getHeader()));
+            payload(ByteBuffer.allocateDirect(remaining).put(slice));
+          } catch (NumberFormatException e) {
+            payload(slice);
+          }
         }
-      }
+        break;
     }
-    return read;
+    return this;
   }
 
   public TerminalBuilder fire() {

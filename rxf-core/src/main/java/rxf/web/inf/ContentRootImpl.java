@@ -37,17 +37,19 @@ public class ContentRootImpl extends Impl {
   public static final String SLASHDOTSLASH = File.separator + "." + File.separator;
   public static final String DOUBLESEP = File.separator + File.separator;
   private static final boolean DEBUG_SENDJSON = false;
-  private String rootPath = CouchNamespace.RXF_CONTENT_ROOT;
   private ByteBuffer cursor;
   private MatchResult matchResults;
   /**
    * threadlocal from creation-time
    */
   Tx tx = Tx.current();
+  public static final boolean USE_INVERSE_CHAR = '/' == File.separatorChar;
+  public static final char INVERSE_CHAR = USE_INVERSE_CHAR ? '\\' : '/';
 
   public ContentRootImpl() {
     tx.state(tx.state().addHeaderInterest(Accept$2dEncoding, If$2dModified$2dSince,
         If$2dUnmodified$2dSince).read((ByteBuffer) tx.state().headerBuf().rewind()).asRequest());
+    assert null != tx.payload() : "Tx.current() returns null, required non-null by ContentRootImpl";
   }
 
   public static String fileScrub(String scrubMe) {
@@ -195,11 +197,11 @@ public class ContentRootImpl extends Impl {
   }
 
   public String getRootPath() {
-    return rootPath;
+    return CouchNamespace.RXF_CONTENT_ROOT;
   }
 
   public void setRootPath(String rootPath) {
-    this.rootPath = rootPath;
+    throw new AbstractMethodError();
   }
 
   public void setMatchResults(MatchResult matchResults) {

@@ -12,8 +12,8 @@ import rxf.core.DateHeaderParser;
 
 import java.net.InetSocketAddress;
 import java.nio.channels.ServerSocketChannel;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 import static java.nio.channels.SelectionKey.OP_ACCEPT;
 import static one.xio.HttpHeaders.If$2dModified$2dSince;
@@ -26,7 +26,7 @@ public class ContentRootImplTest {
   public static String base;
   public static WebConversation wc;
   private static int port;
-  private static ScheduledExecutorService exec;
+  private static ExecutorService exec;
   private static ServerSocketChannel serverSocketChannel;
 
   @BeforeClass
@@ -42,14 +42,13 @@ public class ContentRootImplTest {
     port = serverSocketChannel.socket().getLocalPort();
     serverSocketChannel.configureBlocking(false);
 
-    exec = Executors.newScheduledThreadPool(2);
+    exec = Executors.newCachedThreadPool();
     exec.submit(new Runnable() {
       public void run() {
-        AsioVisitor topLevel = new ProtocolMethodDispatch();
         try {
 
           AsyncSingletonServer.SingleThreadSingletonServer.enqueue(serverSocketChannel, OP_ACCEPT);
-          AsyncSingletonServer.SingleThreadSingletonServer.init(topLevel);
+          AsyncSingletonServer.SingleThreadSingletonServer.init(new ProtocolMethodDispatch());
 
         } catch (Exception e) {
           System.out.println("failed startup");
