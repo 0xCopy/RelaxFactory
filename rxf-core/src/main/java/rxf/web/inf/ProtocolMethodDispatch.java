@@ -102,7 +102,7 @@ public class ProtocolMethodDispatch extends Impl {
    * @throws Exception
    */
   public void onRead(SelectionKey key) throws Exception {
-    Tx tx = Tx.current(acquireTx(key).readHttpHeaders(key));
+    Tx tx = Tx.current(Tx.acquireTx(key).readHttpHeaders(key));
     if (null != tx) {
       String path = tx.state().asRequest().path();
       for (Entry<Pattern, Class<? extends Impl>> visitorEntry : NAMESPACE.get(
@@ -115,7 +115,7 @@ public class ProtocolMethodDispatch extends Impl {
           Class<? extends Impl> aClass = visitorEntry.getValue();
           Impl impl = aClass.newInstance();
           boolean keepMatch = aClass.isAnnotationPresent(KeepMatcher.class);
-          Object a[] =
+          Object[] a =
               keepMatch ? new Object[] {impl, tx.state(), tx.payload(), matcher.toMatchResult()}
                   : new Object[] {impl, tx.state(), tx.payload()};
           OpInterest opInterest = aClass.getAnnotation(OpInterest.class);
@@ -134,30 +134,4 @@ public class ProtocolMethodDispatch extends Impl {
     }
   }
 
-  /**
-   * if the attachment is a tx, we resume filling headers and payload by keep. if the attachment is not Tx, it is set to
-   * a fresh one.
-   * <p/>
-   * for TOP level default visitor root only!
-   * 
-   * @param key selectionKey
-   * @return a tx
-   */
-  public static Tx acquireTx(SelectionKey key) {
-    Object attachment = key.attachment();
-    if (attachment instanceof Object[]) {
-      Object[] objects = (Object[]) attachment;
-      if (objects.length == 0)
-        attachment = null;
-      if (objects.length == 1)
-        attachment = objects[0];
-    }
-    Tx tx;
-    if (attachment instanceof Tx) {
-      tx = Tx.current((Tx) attachment);
-    } else
-      tx = Tx.current(new Tx());
-    key.attach(tx);
-    return tx;
-  }
 }

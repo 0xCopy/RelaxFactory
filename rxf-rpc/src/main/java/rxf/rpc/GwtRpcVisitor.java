@@ -2,6 +2,7 @@ package rxf.rpc;
 
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.RpcTokenException;
+import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.server.rpc.*;
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpHeaders;
@@ -18,16 +19,15 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.text.ParseException;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static one.xio.AsioVisitor.Helper.F;
 import static one.xio.AsioVisitor.Helper.finishWrite;
 
 /**
- * assumes POST using Content-Length -- chunked encoding will drop on the floor
- * User: jim Date: 6/3/12 Time: 7:42 PM
+ * assumes POST using Content-Length -- chunked encoding will drop on the floor User: jim Date: 6/3/12 Time: 7:42 PM
  */
 @OpInterest(SelectionKey.OP_WRITE)
 public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
@@ -49,7 +49,8 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
 
   @Override
   public void onWrite(SelectionKey key) throws Exception {
-    key.interestOps(0);RpcHelper.getEXECUTOR_SERVICE().submit(new GwtRpcTask(key));
+    tx.key(key.interestOps(0));
+    RpcHelper.getEXECUTOR_SERVICE().submit(new GwtRpcTask());
   }
 
   public SerializationPolicy getSerializationPolicy(String moduleBaseURL, String strongName) {
@@ -61,7 +62,8 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
     try {
       String path = new URL(moduleBaseURL).getPath();
       fileName = SerializationPolicyLoader.getSerializationPolicyFileName(path + strongName);
-      is = new FileInputStream(String.valueOf(Paths.get(CouchNamespace.RXF_CONTENT_ROOT, fileName)));
+      is =
+          new FileInputStream(String.valueOf(Paths.get(CouchNamespace.RXF_CONTENT_ROOT, fileName)));
     } catch (MalformedURLException e1) {
       System.out.println("ERROR: malformed moduleBaseURL: " + moduleBaseURL);
       return null;
@@ -78,51 +80,46 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
     } catch (IOException e) {
       System.out.println("ERROR: Could not read the policy file '" + fileName + "'");
     }
-
     return serializationPolicy;
   }
 
   private class GwtRpcTask implements Runnable {
-    private final SelectionKey key;
 
-    public GwtRpcTask(SelectionKey key) {
-      this.key = key;
+    public GwtRpcTask() {
     }
 
     public void run() {
+
+      RPCRequest rpcRequest =
+          RPC.decodeRequest(UTF_8.decode((ByteBuffer) tx.payload().rewind()).toString(), delegate
+              .getClass(), GwtRpcVisitor.this);
+      String payload = null;
       try {
-
-        RPCRequest rpcRequest =
-            RPC.decodeRequest(StandardCharsets.UTF_8.decode((ByteBuffer) tx.payload().rewind())
-                .toString(), delegate.getClass(), GwtRpcVisitor.this);
-        String payload;
+        Tx.current(tx);
+        payload =
+            RPC.invokeAndEncodeResponse(delegate, rpcRequest.getMethod(), rpcRequest
+                .getParameters(), rpcRequest.getSerializationPolicy(), rpcRequest.getFlags());
+      } catch (IncompatibleRemoteServiceException | SerializationException | RpcTokenException ex) {
         try {
-          payload =
-              RPC.invokeAndEncodeResponse(delegate, rpcRequest.getMethod(), rpcRequest
-                  .getParameters(), rpcRequest.getSerializationPolicy(), rpcRequest.getFlags());
-        } catch (IncompatibleRemoteServiceException | RpcTokenException ex) {
           payload = RPC.encodeResponseForFailure(null, ex);
+        } catch (SerializationException e) {
+          e.printStackTrace();
         }
-        ByteBuffer pbuf = StandardCharsets.UTF_8.encode(payload);
-        tx.payload(pbuf);
-
-        tx.state().$res().status(HttpStatus.$200).headerString(HttpHeaders.Content$2dType,
-            MimeType.json.contentType).headerString(HttpHeaders.Content$2dLength,
-            String.valueOf(pbuf.limit()));
-
-        finishWrite(key, new F() {
-          @Override
-          public void apply(SelectionKey key) throws Exception {
-            key.interestOps(SelectionKey.OP_READ).attach(null);
-          }
-        }, (ByteBuffer) tx.state().asResponse().asByteBuffer().rewind(), (ByteBuffer) tx.payload()
-            .rewind());
-
-      } catch (Exception e) {
-        key.cancel();
-        e.printStackTrace(); // todo: verify for a purpose
-      } finally {
       }
+      tx.payload(UTF_8.encode(payload));
+
+      tx.state().$res().status(HttpStatus.$200).headerString(HttpHeaders.Content$2dType,
+          MimeType.json.contentType).headerString(HttpHeaders.Content$2dLength,
+          String.valueOf(UTF_8.encode(payload).limit()));
+
+      finishWrite(tx.key(), new F() {
+        @Override
+        public void apply(SelectionKey key) throws Exception {
+          key.interestOps(SelectionKey.OP_READ).attach(null);
+        }
+      }, (ByteBuffer) tx.state().asResponse().asByteBuffer().rewind(), (ByteBuffer) tx.payload()
+          .rewind());
+
     }
   }
 }

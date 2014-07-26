@@ -21,6 +21,57 @@ import static one.xio.HttpHeaders.ETag;
  */
 public class Tx {
 
+  /**
+   * if the attachment is a tx, we resume filling headers and payload by keep. if the attachment is not Tx, it is set to
+   * a fresh one.
+   * <p/>
+   * for TOP level default visitor root only!
+   * 
+   * @param key selectionKey
+   * @return a tx
+   */
+  public static Tx acquireTx(SelectionKey key) {
+    Object attachment = key.attachment();
+    if (attachment instanceof Object[]) {
+      Object[] objects = (Object[]) attachment;
+      if (objects.length == 0)
+        attachment = null;
+      if (objects.length == 1)
+        attachment = objects[0];
+    }
+    Tx tx;
+    if (attachment instanceof Tx) {
+      tx = current((Tx) attachment);
+    } else
+      tx = current(new Tx());
+    key.attach(tx);
+    return tx;
+  }
+
+  /**
+   * @param key selectionKey
+   * @return a tx
+   */
+  public static <T, C extends Class<T>> T queryAttachments(SelectionKey key, C c) {
+    Object attachment = key.attachment();
+    if (!(attachment instanceof Object[])) {
+      attachment = new Object[] {attachment};
+    }
+    Object[] objects = (Object[]) attachment;
+    switch (objects.length) {
+      case 0:
+        break;
+      default:
+        for (Object object : objects) {
+          if (c.isAssignableFrom(object.getClass()))
+            return (T) object;
+        }
+        break;
+    }
+
+    return null;
+  }
+
   public String toString() {
     return "Tx{" + "key=" + key + ", headers=" + headers + ", payload=" + payload + '}';
   }
