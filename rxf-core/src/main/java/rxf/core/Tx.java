@@ -4,22 +4,30 @@ import one.xio.AsioVisitor.Helper;
 import one.xio.AsioVisitor.Helper.F;
 
 import java.io.IOException;
+import java.nio.Buffer;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static one.xio.HttpHeaders.Content$2dLength;
-import static one.xio.HttpHeaders.ETag;
+import static one.xio.HttpHeaders.*;
 
 /**
  * when a transaction requires an inner call to couchdb or some other tier this abstraction holds a reversible header
  * state for outbound request and inbound response, and as of this comment a payload for the inbound results that a
  * service might provide, to take the place of more complex fire() grammars.
- * 
+ * <p/>
  * User: jim Date: 5/29/12 Time: 1:58 PM
  */
 public class Tx {
+
+  public static final ByteBuffer NIL = ByteBuffer.allocate(0);
 
   /**
    * if the attachment is a tx, we resume filling headers and payload by keep. if the attachment is not Tx, it is set to
@@ -72,6 +80,40 @@ public class Tx {
     return null;
   }
 
+  public static ByteBuffer getNextChunk(ByteBuffer in) {
+
+    boolean ok = false;
+    byte b = 0;
+    ByteBuffer duplicate = in.duplicate();
+    while (in.hasRemaining() && (b = in.get()) != '\n' || !ok)
+      ok |= !Character.isWhitespace(b);
+    if (!in.hasRemaining() && !ok) {
+      in.position(duplicate.position()).limit(duplicate.limit());
+      throw new BufferUnderflowException();
+    }
+    ByteBuffer lenBuf = (ByteBuffer) duplicate.slice().limit(in.position() - duplicate.position());
+    int needs;
+    try {
+      needs = Integer.parseInt(String.valueOf(StandardCharsets.UTF_8.decode(lenBuf)).trim(), 0x10);
+      if (0 == needs)
+        return NIL;
+    } catch (NumberFormatException e) {
+      e.printStackTrace();
+      return null;// shhould never happen
+    }
+    if (in.remaining() < needs) {
+      // returns the condition of chunk position !=0
+      // in.Hasremaining==false
+      return ByteBuffer.allocateDirect(needs).put(in);
+    } else {
+      // returns chunk position 0
+      // in.hasRemaining=true.
+      ByteBuffer result = (ByteBuffer) in.slice().limit(needs);
+      in.position(in.position() + needs);
+      return result;
+    }
+  }
+
   public String toString() {
     return "Tx{" + "key=" + key + ", headers=" + headers + ", payload=" + payload + '}';
   }
@@ -91,16 +133,15 @@ public class Tx {
 
   /**
    * not threadlocal headers.
-   * 
+   * <p/>
    * this provides the REST details we wish to convey for a request and provides the headers per failure/success OOB.
    */
   private AtomicReference<Rfc822HeaderState> headers = new AtomicReference<>();
 
   /**
    * payload, took 2 years to deduce ByteBuffer is the most popular solution by far.
-   * 
+   * <p/>
    * //todo: may simplify the phaser/cyclical payloads being used and enable locking
-   * 
    */
   private ByteBuffer payload;
 
@@ -118,7 +159,7 @@ public class Tx {
 
   /**
    * <ol>
-   * 
+   * <p/>
    * convenince method for http protocol which
    * <li>creates a buffer for {@link #headers} if current one is null.</li>
    * <li>grows buffer if current one is full</li>
@@ -127,6 +168,10 @@ public class Tx {
    * {@link Helper#finishRead(java.nio.ByteBuffer, F)}</li>
    * <li>else throws remainder slice of buffer into {@link #payload} as a full buffer where hasRemaining() is false</li>
    * </ol>
+   * <p/>
+   * <p/>
+   * if chunked encoding is indicated, the first chunk length is parsed and the payload is sized to the indicated chunk
+   * size,
    * 
    * @param key
    * @return
@@ -153,16 +198,25 @@ public class Tx {
       default:
         System.err.println("<?? "
             + StandardCharsets.UTF_8.decode((ByteBuffer) byteBuffer.duplicate().flip()));
-        boolean apply =
-            state.addHeaderInterest(Content$2dLength).apply((ByteBuffer) byteBuffer.flip());
+        Buffer flip1 = byteBuffer.flip();
+        Rfc822HeaderState rfc822HeaderState =
+            state.addHeaderInterest(Content$2dLength).addHeaderInterest(Transfer$2dEncoding);
+        boolean apply = rfc822HeaderState.apply((ByteBuffer) flip1);
         if (apply) {
           ByteBuffer slice = ((ByteBuffer) byteBuffer.duplicate().limit(prior + read)).slice();
-          try {
-            int remaining = Integer.parseInt(state.headerString(Content$2dLength.getHeader()));
-            payload(ByteBuffer.allocateDirect(remaining).put(slice));
-          } catch (NumberFormatException e) {
-            payload(slice);
-          }
+
+          if ("POST".equals(state.asRequest().protocol())) {
+            String anObject = state.headerString(Transfer$2dEncoding);
+            if ("chunked".equals(anObject)) {
+              payload(slice);
+            }
+          } else
+            try {
+              int remaining = Integer.parseInt(state.headerString(Content$2dLength.getHeader()));
+              payload(ByteBuffer.allocateDirect(remaining).put(slice));
+            } catch (NumberFormatException e) {
+              payload(slice);
+            }
         }
         break;
     }
@@ -225,5 +279,57 @@ public class Tx {
 
   Tx clear() {
     return payload(null).state(null);
+  }
+
+  public ArrayList<ByteBuffer> decodeChunkedEncoding() throws InterruptedException,
+      BrokenBarrierException, TimeoutException {
+    // create a list of source buffers and then index them
+    ArrayList<ByteBuffer> copies = new ArrayList<>();
+    while (true) {
+      boolean needsRead = false;
+      try {
+        ByteBuffer payload = payload();
+        ByteBuffer nextChunk = getNextChunk(payload);
+        if (null != nextChunk) {
+          if (0 == nextChunk.limit()) {
+            break;// 2 bytes remain in payload.
+          }
+          Helper.debugBBuf(nextChunk);
+          copies.add(nextChunk);
+        } else {
+          needsRead = true;
+        }
+
+        if (!payload.hasRemaining())// payload has been fully consumed by nextChunk copy
+        {
+          if (nextChunk != null && nextChunk.hasRemaining()) {
+            Helper.syncFill(key(), nextChunk);
+            nextChunk.flip();
+          }
+          needsRead = true;
+        }
+
+      } catch (BufferUnderflowException e) {
+        payload(Helper.growBuffer(payload()));
+        needsRead = true;
+      }
+      if (needsRead) {
+        if (!payload().hasRemaining()) {
+          payload(ByteBuffer.allocateDirect(4 << 10));
+        }
+        final CyclicBarrier cyclicBarrier1 = new CyclicBarrier(2);
+        Helper.toRead(key(), new F() {
+          @Override
+          public void apply(SelectionKey key) throws Exception {
+            int read = Helper.read(key, payload());
+            if (0 != read) {
+              cyclicBarrier1.await();
+            }
+          }
+        });
+        cyclicBarrier1.await(1, TimeUnit.HOURS);
+      }
+    }
+    return copies;
   }
 }
