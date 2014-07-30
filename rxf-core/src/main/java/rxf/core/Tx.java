@@ -16,6 +16,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static one.xio.AsioVisitor.Helper.Do.post.grow;
+import static one.xio.AsioVisitor.Helper.Do.pre.*;
+import static one.xio.AsioVisitor.Helper.asString;
+import static one.xio.AsioVisitor.Helper.on;
 import static one.xio.HttpHeaders.*;
 
 /**
@@ -82,19 +86,10 @@ public class Tx {
 
   public static ByteBuffer getNextChunk(ByteBuffer in) {
 
-    boolean ok = false;
-    byte b = 0;
-    ByteBuffer duplicate = in.duplicate();
-    while (in.hasRemaining() && (b = in.get()) != '\n' || !ok)
-      ok |= !Character.isWhitespace(b);
-    if (!in.hasRemaining() && !ok) {
-      in.position(duplicate.position()).limit(duplicate.limit());
-      throw new BufferUnderflowException();
-    }
-    ByteBuffer lenBuf = (ByteBuffer) duplicate.slice().limit(in.position() - duplicate.position());
+    String lenString = asString(on(in, duplicate, slice, skipWs, toEol, rtrim, flip));
     int needs;
     try {
-      needs = Integer.parseInt(String.valueOf(StandardCharsets.UTF_8.decode(lenBuf)).trim(), 0x10);
+      needs = Integer.parseInt(lenString, 0x10);
       if (0 == needs)
         return NIL;
     } catch (NumberFormatException e) {
@@ -294,8 +289,7 @@ public class Tx {
           if (0 == nextChunk.limit()) {
             break;// 2 bytes remain in payload.
           }
-          Helper.debugBBuf(nextChunk);
-          copies.add(nextChunk);
+          copies.add(on(nextChunk, debug));
         } else {
           needsRead = true;
         }
@@ -303,14 +297,13 @@ public class Tx {
         if (!payload.hasRemaining())// payload has been fully consumed by nextChunk copy
         {
           if (nextChunk != null && nextChunk.hasRemaining()) {
-            Helper.syncFill(key(), nextChunk);
-            nextChunk.flip();
+            Helper.syncFill(key(), nextChunk, post.rewind);
           }
           needsRead = true;
         }
 
       } catch (BufferUnderflowException e) {
-        payload(Helper.growBuffer(payload()));
+        payload(on(payload(), grow));
         needsRead = true;
       }
       if (needsRead) {
