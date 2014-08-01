@@ -149,7 +149,8 @@ public class SslTest {
 
                   public void apply(SelectionKey key) throws Exception {
                     tx = new Tx();
-                    int i = tx.readHttpHeaders(key);
+                    boolean b = tx.readHttpHeaders();
+                    assert b;
 
                     System.err.println("" + tx.toString());
 

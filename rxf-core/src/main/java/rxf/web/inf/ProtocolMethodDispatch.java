@@ -102,8 +102,8 @@ public class ProtocolMethodDispatch extends Impl {
    * @throws Exception
    */
   public void onRead(SelectionKey key) throws Exception {
-    Tx tx = Tx.current(Tx.acquireTx(key).readHttpHeaders(key));
-    if (null != tx) {
+    Tx tx = Tx.current(Tx.acquireTx(key));
+    if (tx.readHttpHeaders()) {
       String path = tx.state().asRequest().path();
       for (Entry<Pattern, Class<? extends Impl>> visitorEntry : NAMESPACE.get(
           tx.state().asRequest().httpMethod()).entrySet()) {

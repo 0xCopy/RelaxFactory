@@ -1,25 +1,26 @@
 package rxf.core;
 
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.collect.FluentIterable;
+import one.xio.AsioVisitor.FSM;
 import one.xio.AsioVisitor.Helper;
-import one.xio.AsioVisitor.Helper.F;
+import one.xio.AsioVisitor.Helper.Do.post;
+import one.xio.AsioVisitor.Helper.*;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.nio.Buffer;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static one.xio.AsioVisitor.Helper.Do.post.grow;
 import static one.xio.AsioVisitor.Helper.Do.pre.*;
-import static one.xio.AsioVisitor.Helper.asString;
-import static one.xio.AsioVisitor.Helper.on;
+import static one.xio.AsioVisitor.Helper.*;
 import static one.xio.HttpHeaders.*;
 
 /**
@@ -31,19 +32,25 @@ import static one.xio.HttpHeaders.*;
  */
 public class Tx {
 
-  public static final ByteBuffer NIL = ByteBuffer.allocate(0);
+  /**
+   * always an empty readonly buffer singleton
+   */
+  public static final ByteBuffer NIL = ByteBuffer.allocate(0).asReadOnlyBuffer();
+  public static final char SEPARATOR = '&';
+  public static final String ASSIGNMENT_OPERATOR = "=";
+  private boolean chunked;
 
   /**
-   * if the attachment is a tx, we resume filling headers and payload by keep. if the attachment is not Tx, it is set to
-   * a fresh one.
+   * if the attachment is a tx, we resume filling headers and payload. if the attachment is not Tx, it is set to a fresh
+   * one.
    * <p/>
    * for TOP level default visitor root only!
    * 
-   * @param key selectionKey
+   * @param undefinedKey selectionKey which is not part of a visitor presently
    * @return a tx
    */
-  public static Tx acquireTx(SelectionKey key) {
-    Object attachment = key.attachment();
+  public static Tx acquireTx(SelectionKey undefinedKey) {
+    Object attachment = undefinedKey.attachment();
     if (attachment instanceof Object[]) {
       Object[] objects = (Object[]) attachment;
       if (objects.length == 0)
@@ -56,15 +63,16 @@ public class Tx {
       tx = current((Tx) attachment);
     } else
       tx = current(new Tx());
-    key.attach(tx);
+    undefinedKey.attach(tx);
+    tx.key(undefinedKey);
     return tx;
   }
 
   /**
-   * @param key selectionKey
    * @return a tx
    */
-  public static <T, C extends Class<T>> T queryAttachments(SelectionKey key, C c) {
+  public <T, C extends Class<T>> T queryAttachments(C c) {
+    SelectionKey key = key();
     Object attachment = key.attachment();
     if (!(attachment instanceof Object[])) {
       attachment = new Object[] {attachment};
@@ -82,31 +90,6 @@ public class Tx {
     }
 
     return null;
-  }
-
-  public static ByteBuffer getNextChunk(ByteBuffer in) {
-
-    String lenString = asString(on(in, duplicate, slice, skipWs, toEol, rtrim, flip));
-    int needs;
-    try {
-      needs = Integer.parseInt(lenString, 0x10);
-      if (0 == needs)
-        return NIL;
-    } catch (NumberFormatException e) {
-      e.printStackTrace();
-      return null;// shhould never happen
-    }
-    if (in.remaining() < needs) {
-      // returns the condition of chunk position !=0
-      // in.Hasremaining==false
-      return ByteBuffer.allocateDirect(needs).put(in);
-    } else {
-      // returns chunk position 0
-      // in.hasRemaining=true.
-      ByteBuffer result = (ByteBuffer) in.slice().limit(needs);
-      in.position(in.position() + needs);
-      return result;
-    }
   }
 
   public String toString() {
@@ -168,11 +151,13 @@ public class Tx {
    * if chunked encoding is indicated, the first chunk length is parsed and the payload is sized to the indicated chunk
    * size,
    * 
-   * @param key
-   * @return
+   * @return true if sane. chunked()==true when the response is chunked.
+   *         {@link #decodeChunkedEncoding(java.util.ArrayList, F)} is an optional for the client caller, it may be
+   *         desirable to get a chunk at a time.
    * @throws IOException
    */
-  public Tx readHttpHeaders(SelectionKey key) throws Exception {
+  public boolean readHttpHeaders() throws Exception {
+    assert null != key();
     Rfc822HeaderState state = state();
     ByteBuffer byteBuffer = state.headerBuf();
     if (null == byteBuffer)
@@ -183,16 +168,18 @@ public class Tx {
               ByteBuffer.allocateDirect(byteBuffer.capacity() << 1).put(
                   (ByteBuffer) byteBuffer.flip()));
     int prior = byteBuffer.position(); // if the headers are extensive, this may be a buffer that has been extended
-    int read = Helper.read(key, byteBuffer);
+    assert key != null;
+    int read = read(key, byteBuffer);
 
     switch (read) {
       case -1:
         key.cancel();
       case 0:
-        return null;
+        return false;
       default:
-        System.err.println("<?? "
-            + StandardCharsets.UTF_8.decode((ByteBuffer) byteBuffer.duplicate().flip()));
+        /*
+         * System.err.println("<?? " + StandardCharsets.UTF_8.decode((ByteBuffer) byteBuffer.duplicate().flip()));
+         */
         Buffer flip1 = byteBuffer.flip();
         Rfc822HeaderState rfc822HeaderState =
             state.addHeaderInterest(Content$2dLength).addHeaderInterest(Transfer$2dEncoding);
@@ -200,22 +187,50 @@ public class Tx {
         if (apply) {
           ByteBuffer slice = ((ByteBuffer) byteBuffer.duplicate().limit(prior + read)).slice();
 
-          if ("POST".equals(state.asRequest().protocol())) {
-            String anObject = state.headerString(Transfer$2dEncoding);
-            if ("chunked".equals(anObject)) {
-              payload(slice);
-            }
-          } else
+          String anObject = state.headerString(Transfer$2dEncoding);
+
+          if ("chunked".equals(anObject)) {
+            payload(slice);
+            chunked(true);
+          } else {
             try {
               int remaining = Integer.parseInt(state.headerString(Content$2dLength.getHeader()));
               payload(ByteBuffer.allocateDirect(remaining).put(slice));
             } catch (NumberFormatException e) {
-              payload(slice);
+              payload(NIL);
             }
+          }
+          break;
+
         }
         break;
     }
-    return this;
+    return true;
+  }
+
+  /**
+   * signals that this is transfer encoding chunked.
+   * 
+   * @param b
+   */
+  public void chunked(boolean b) {
+
+    chunked = b;
+  }
+
+  public boolean chunked() {
+    return chunked;
+  }
+
+  public static String formUrlEncode(Map<String, String> theMap) {
+    return Joiner.on(SEPARATOR).withKeyValueSeparator(ASSIGNMENT_OPERATOR).join(
+        FluentIterable.from(theMap.entrySet()).transform(new Function() {
+          public Object apply(Object o) {
+            Entry e = (Entry) o;
+            e.setValue(URLEncoder.encode((String) e.getValue()));
+            return e;
+          }
+        }));
   }
 
   public TerminalBuilder fire() {
@@ -276,53 +291,113 @@ public class Tx {
     return payload(null).state(null);
   }
 
-  public ArrayList<ByteBuffer> decodeChunkedEncoding() throws InterruptedException,
-      BrokenBarrierException, TimeoutException {
-    // create a list of source buffers and then index them
-    ArrayList<ByteBuffer> copies = new ArrayList<>();
-    while (true) {
-      boolean needsRead = false;
+  /**
+   * make payload integral regardless of chunked or content-length
+   * 
+   * @param success
+   */
+  public void finishPayload(final F success) {
+    if (chunked()) {
+      final ArrayList<ByteBuffer> res = new ArrayList<>();
       try {
-        ByteBuffer payload = payload();
-        ByteBuffer nextChunk = getNextChunk(payload);
-        if (null != nextChunk) {
-          if (0 == nextChunk.limit()) {
-            break;// 2 bytes remain in payload.
-          }
-          copies.add(on(nextChunk, debug));
-        } else {
-          needsRead = true;
-        }
-
-        if (!payload.hasRemaining())// payload has been fully consumed by nextChunk copy
-        {
-          if (nextChunk != null && nextChunk.hasRemaining()) {
-            Helper.syncFill(key(), nextChunk, post.rewind);
-          }
-          needsRead = true;
-        }
-
-      } catch (BufferUnderflowException e) {
-        payload(on(payload(), grow));
-        needsRead = true;
-      }
-      if (needsRead) {
-        if (!payload().hasRemaining()) {
-          payload(ByteBuffer.allocateDirect(4 << 10));
-        }
-        final CyclicBarrier cyclicBarrier1 = new CyclicBarrier(2);
-        Helper.toRead(key(), new F() {
+        payload().compact();
+        this.decodeChunkedEncoding(res, new F() {
           @Override
           public void apply(SelectionKey key) throws Exception {
-            int read = Helper.read(key, payload());
-            if (0 != read) {
-              cyclicBarrier1.await();
-            }
+            ByteBuffer byteBuffer = coalesceBuffers(res);
+            payload(byteBuffer);
+            success.apply(key());
           }
         });
-        cyclicBarrier1.await(1, TimeUnit.HOURS);
+      } catch (Exception e) {
+        key().cancel();
       }
+    } else
+      finishRead(key(), payload(), success);
+  }
+
+  public void decodeChunkedEncoding(final ArrayList<ByteBuffer> res, final F success) {
+    assert key() != null;
+    try {
+      while (true)
+        try {
+          final ByteBuffer chunk = getNextChunk();
+          if (NIL == chunk) {
+            success.apply(key());
+            return;
+          }
+          F advance = new F() {
+            @Override
+            public void apply(SelectionKey key) throws Exception {
+              res.add(on(chunk, flip));
+              decodeChunkedEncoding(res, success);
+            }
+          };
+          if (chunk.hasRemaining()) {
+            finishRead(key(), chunk, advance);
+            return;
+          } else
+            advance.apply(key());
+        } catch (BufferUnderflowException e) {
+
+          /**
+           * due to sslengine permitting pre-fetch backlogs, the 1xio event model is screwed. however we can access that
+           * backlog data anytime by calling read(), we just need to be immediate about it, and register normally after
+           * an initial grab
+           */
+          final boolean coerce = FSM.sslState.containsKey(key());
+
+          F fetch = new F() {
+            @Override
+            public void apply(SelectionKey key) throws Exception {
+              int read = read(key, payload().compact());
+              if (read == -1) {
+                key.cancel();
+                return;
+              }
+              assert null != on(payload, debug);
+              if (read > 0) {
+                key.interestOps(0);
+                decodeChunkedEncoding(res, success);
+              } else if (coerce)
+                toRead(key(), this);
+            }
+          };
+
+          if (coerce) {
+            fetch.apply(key());
+          } else {
+            toRead(key(), fetch);
+          }
+          return;
+        }
+    } catch (Exception e) {
+      e.printStackTrace();
     }
-    return copies;
+  }
+
+  public ByteBuffer getNextChunk() throws BufferUnderflowException {
+    on(payload(), flip);
+    int needs;
+    ByteBuffer lenBuf;
+    try {
+      lenBuf = on(payload, mark, skipWs, slice, forceToEol, rtrim, flip);
+      String lenString = asString(lenBuf, post.rewind);
+      needs = Integer.parseInt(lenString, 0x10);
+    } catch (Exception e) {
+      payload.reset();
+      throw new BufferUnderflowException();
+    }
+
+    on(payload, toEol);
+    if (needs != 0) {
+      ByteBuffer chunk;
+      chunk = ByteBuffer.allocateDirect(needs);
+      cat(payload, chunk);
+      on(payload, post.compact, debug);
+
+      return chunk;
+    }
+    return NIL;
   }
 }

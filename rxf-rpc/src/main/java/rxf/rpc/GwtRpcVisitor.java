@@ -23,7 +23,9 @@ import java.nio.file.Paths;
 import java.text.ParseException;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static one.xio.AsioVisitor.Helper.Do.pre.*;
 import static one.xio.AsioVisitor.Helper.F;
+import static one.xio.AsioVisitor.Helper.asString;
 import static one.xio.AsioVisitor.Helper.finishWrite;
 
 /**
@@ -90,9 +92,10 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
 
     public void run() {
 
+      Class<?> aClass = delegate.getClass();
+      ByteBuffer payload1 = tx.payload();
       RPCRequest rpcRequest =
-          RPC.decodeRequest(UTF_8.decode((ByteBuffer) tx.payload().rewind()).toString(), delegate
-              .getClass(), GwtRpcVisitor.this);
+          RPC.decodeRequest(asString(payload1, rewind, debug), aClass, GwtRpcVisitor.this);
       String payload = null;
       try {
         Tx.current(tx);
