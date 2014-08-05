@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>rxf</groupId>
@@ -16,13 +17,17 @@
     <packaging>pom</packaging>
     <properties>
         <gwt.draftCompile>false</gwt.draftCompile>
-        <java.compiler.version>${java.specification.version}</java.compiler.version>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <java.compiler.version>${java.specification.version}
+        </java.compiler.version>
+        <project.build.sourceEncoding>UTF-8
+        </project.build.sourceEncoding>
         <gwt.style>OBF</gwt.style>
         <gwt.plugin.version>2.6.1</gwt.plugin.version>
         <gwt.version>2.6.1</gwt.version>
-        <gwt-maven-plugin.compileReport>false</gwt-maven-plugin.compileReport>
-        <gwt-maven-plugin.soycDetailed>false</gwt-maven-plugin.soycDetailed>
+        <gwt-maven-plugin.compileReport>false
+        </gwt-maven-plugin.compileReport>
+        <gwt-maven-plugin.soycDetailed>false
+        </gwt-maven-plugin.soycDetailed>
         <gwt-maven-plugin.strict>false</gwt-maven-plugin.strict>
         <guava.version>17.0</guava.version>
     </properties>
@@ -33,20 +38,25 @@
             <properties>
                 <gwt.style>DETAILED</gwt.style>
                 <gwt.draftCompile>true</gwt.draftCompile>
-                <gwt.compiler.optimizationLevel>0</gwt.compiler.optimizationLevel>
+                <gwt.compiler.optimizationLevel>0
+                </gwt.compiler.optimizationLevel>
                 <gwt.extraJvmArgs>-Xmx6g</gwt.extraJvmArgs>
-                <gwt-maven-plugin.compileReport>true</gwt-maven-plugin.compileReport>
-                <gwt-maven-plugin.soycDetailed>true</gwt-maven-plugin.soycDetailed>
+                <gwt-maven-plugin.compileReport>true
+                </gwt-maven-plugin.compileReport>
+                <gwt-maven-plugin.soycDetailed>true
+                </gwt-maven-plugin.soycDetailed>
             </properties>
         </profile>
         <profile>
             <!--big box-->
             <id>dev</id>
             <properties>
-                <gwt-maven-plugin.strict>true</gwt-maven-plugin.strict>
+                <gwt-maven-plugin.strict>true
+                </gwt-maven-plugin.strict>
                 <gwt.style>PRETTY</gwt.style>
                 <gwt.draftCompile>true</gwt.draftCompile>
-                <gwt.compiler.optimizationLevel>0</gwt.compiler.optimizationLevel>
+                <gwt.compiler.optimizationLevel>0
+                </gwt.compiler.optimizationLevel>
                 <gwt.extraJvmArgs>-Xmx6g</gwt.extraJvmArgs>
             </properties>
         </profile>
@@ -56,7 +66,8 @@
             <properties>
                 <gwt.style>OBF</gwt.style>
                 <gwt.draftCompile>false</gwt.draftCompile>
-                <gwt.compiler.optimizationLevel>9</gwt.compiler.optimizationLevel>
+                <gwt.compiler.optimizationLevel>9
+                </gwt.compiler.optimizationLevel>
                 <gwt.extraJvmArgs>-Xmx6g</gwt.extraJvmArgs>
             </properties>
         </profile>
@@ -67,9 +78,11 @@
                 <gwt.style>OBF</gwt.style>
                 <gwt.draftCompile>true</gwt.draftCompile>
                 <gwt.extraJvmArgs>-Xmx224m</gwt.extraJvmArgs>
-                <gwt.compiler.optimizationLevel>0</gwt.compiler.optimizationLevel>
+                <gwt.compiler.optimizationLevel>0
+                </gwt.compiler.optimizationLevel>
                 <!--128 too small-->
-                <gwt.compiler.localWorkers>1</gwt.compiler.localWorkers>
+                <gwt.compiler.localWorkers>1
+                </gwt.compiler.localWorkers>
 
                 <!--linode 119 seconds, 600 without-->
             </properties>
@@ -88,12 +101,16 @@
         </repository>-->
         <repository>
             <id>misc-repo</id>
-            <url>http://raw.github.com/jnorthrup/misc-repo/master/</url>
+            <url>
+                http://raw.github.com/jnorthrup/misc-repo/master/
+            </url>
         </repository>
 
         <repository>
             <id>sonatype-snapshots</id>
-            <url>http://oss.sonatype.org/content/repositories/snapshots</url>
+            <url>
+                http://oss.sonatype.org/content/repositories/snapshots
+            </url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
@@ -105,27 +122,43 @@
     <pluginRepositories>
         <pluginRepository>
             <id>maven-idea-plugin-repo</id>
-            <url>http://maven-idea-plugin.googlecode.com/svn/maven-repo</url>
+            <url>
+                http://maven-idea-plugin.googlecode.com/svn/maven-repo
+            </url>
         </pluginRepository>
     </pluginRepositories>
     <dependencyManagement>
 
-        <dependencies>       <dependency>
-            <groupId>1xio</groupId>
-            <artifactId>1xio</artifactId>
-            <version>2.0.1</version>
-        </dependency>
+        <dependencies>
+            <dependency>
+                <groupId>1xio</groupId>
+                <artifactId>1xio</artifactId>
+                <version>2.0.1</version>
+            </dependency>
             <dependency>
                 <groupId>com.google.gwt</groupId>
                 <artifactId>gwt-user</artifactId>
                 <version>${gwt.version}</version>
                 <scope>provided</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.httpunit</groupId>
+                        <artifactId>httpunit</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>com.google.web.bindery</groupId>
                 <artifactId>requestfactory-server</artifactId>
                 <version>${gwt.version}</version>
                 <scope>provided</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.httpunit</groupId>
+                        <artifactId>httpunit</artifactId>
+                    </exclusion>
+                </exclusions>
+
             </dependency>
 
             <dependency>
@@ -133,6 +166,12 @@
                 <artifactId>gwt-servlet</artifactId>
                 <version>${gwt.version}</version>
                 <scope>provided</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.httpunit</groupId>
+                        <artifactId>httpunit</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <!-- see sample projects for correct placement -->
             <dependency>
@@ -140,6 +179,13 @@
                 <artifactId>requestfactory-apt</artifactId>
                 <version>${gwt.version}</version>
                 <scope>provided</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.httpunit</groupId>
+                        <artifactId>httpunit</artifactId>
+                    </exclusion>
+                </exclusions>
+
             </dependency>
             <dependency>
                 <groupId>com.google.guava</groupId>
@@ -246,8 +292,11 @@
         </pluginManagement>
         <plugins>
             <plugin>
-                <groupId>com.googlecode.maven-java-formatter-plugin</groupId>
-                <artifactId>maven-java-formatter-plugin</artifactId>
+                <groupId>
+                    com.googlecode.maven-java-formatter-plugin
+                </groupId>
+                <artifactId>maven-java-formatter-plugin
+                </artifactId>
                 <version>0.4</version>
                 <executions>
                     <execution>
@@ -259,11 +308,14 @@
                 <configuration>
                     <compilerSource>1.7</compilerSource>
                     <compilerCompliance>1.7</compilerCompliance>
-                    <compilerTargetPlatform>1.7</compilerTargetPlatform>
+                    <compilerTargetPlatform>1.7
+                    </compilerTargetPlatform>
                     <!--<configFile>${project.basedir}/../fmt/ugh.xml</configFile>-->
                     <!--<configFile>https://raw.github.com/jnorthrup/RelaxFactory/x0uchdb/fmt/gwt-format.xml</configFile>-->
                     <!--http://code.google.com/p/google-web-toolkit/source/browse/trunk/eclipse/settings/code-style/gwt-format.xml</configFile>&ndash;&gt;-->
-                    <configFile>${project.basedir}/../fmt/gwt-format.xml</configFile>
+                    <configFile>
+                        ${project.basedir}/../fmt/gwt-format.xml
+                    </configFile>
                     <lineEnding>LF</lineEnding>
                 </configuration>
             </plugin>
@@ -273,7 +325,8 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-report-plugin</artifactId>
+                <artifactId>maven-surefire-report-plugin
+                </artifactId>
                 <version>2.12.4</version>
             </plugin>
             <plugin>
@@ -291,23 +344,29 @@
                 <artifactId>maven-pmd-plugin</artifactId>
                 <version>2.7.1</version>
                 <configuration>
-                    <targetJdk>${java.specification.version}</targetJdk>
+                    <targetJdk>${java.specification.version}
+                    </targetJdk>
                     <rulesets>
                         <!--<ruleset>rulesets/android.xml</ruleset>-->
-                        <ruleset>rulesets/logging-java.xml</ruleset>
+                        <ruleset>rulesets/logging-java.xml
+                        </ruleset>
                         <!--<ruleset>rulesets/j2ee.xml</ruleset>-->
                         <ruleset>rulesets/design.xml</ruleset>
                         <!--<ruleset>rulesets/basic-jsp.xml</ruleset>-->
                         <ruleset>rulesets/basic.xml</ruleset>
                         <ruleset>rulesets/imports.xml</ruleset>
-                        <ruleset>rulesets/typeresolution.xml</ruleset>
+                        <ruleset>rulesets/typeresolution.xml
+                        </ruleset>
                         <ruleset>rulesets/unusedcode.xml</ruleset>
-                        <ruleset>rulesets/controversial.xml</ruleset>
+                        <ruleset>rulesets/controversial.xml
+                        </ruleset>
                         <ruleset>rulesets/coupling.xml</ruleset>
-                        <ruleset>rulesets/strictexception.xml</ruleset>
+                        <ruleset>rulesets/strictexception.xml
+                        </ruleset>
                         <ruleset>rulesets/codesize.xml</ruleset>
                         <ruleset>rulesets/junit.xml</ruleset>
-                        <ruleset>rulesets/optimizations.xml</ruleset>
+                        <ruleset>rulesets/optimizations.xml
+                        </ruleset>
                         <ruleset>rulesets/basic-jsf.xml</ruleset>
                         <ruleset>rulesets/favorites.xml</ruleset>
                     </rulesets>

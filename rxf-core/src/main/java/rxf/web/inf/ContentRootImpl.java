@@ -29,9 +29,11 @@ import static one.xio.AsioVisitor.Helper.write;
 import static one.xio.HttpHeaders.*;
 
 /**
- * User: jim Date: 6/4/12 Time: 1:42 AM
+ * 
+ * deprecated -- Tx.fetchHttpHeaders and Tx.finishRequest change things User: jim Date: 6/4/12 Time: 1:42 AM
  */
 @OpInterest(value = SelectionKey.OP_WRITE)
+@Deprecated
 public class ContentRootImpl extends Impl {
 
   public static final String SLASHDOTSLASH = File.separator + "." + File.separator;

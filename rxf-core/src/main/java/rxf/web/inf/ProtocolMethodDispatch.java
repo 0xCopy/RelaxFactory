@@ -33,6 +33,7 @@ import static rxf.core.CouchNamespace.NAMESPACE;
  * <p/>
  * User: jim Date: 4/18/12 Time: 12:37 PM
  */
+@Deprecated
 public class ProtocolMethodDispatch extends Impl {
 
   public static final ByteBuffer NONCE = ByteBuffer.allocateDirect(0);

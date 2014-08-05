@@ -55,17 +55,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.httpunit</groupId>
-            <artifactId>httpunit</artifactId>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <artifactId>junit</artifactId>
-                    <groupId>junit</groupId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
             <artifactId>junit</artifactId>
             <groupId>junit</groupId>
             <scope>test</scope>
