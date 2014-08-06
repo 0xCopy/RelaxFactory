@@ -3,7 +3,6 @@ package rxf.core;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.FluentIterable;
-import one.xio.AsioVisitor.FSM;
 import one.xio.AsioVisitor.Helper;
 import one.xio.AsioVisitor.Helper.Do.post;
 import one.xio.AsioVisitor.Helper.*;
@@ -301,7 +300,7 @@ public class Tx {
       final ArrayList<ByteBuffer> res = new ArrayList<>();
       try {
         payload().compact();
-        this.decodeChunkedEncoding(res, new F() {
+        decodeChunkedEncoding(res, new F() {
           @Override
           public void apply(SelectionKey key) throws Exception {
             ByteBuffer byteBuffer = coalesceBuffers(res);
@@ -319,58 +318,50 @@ public class Tx {
   public void decodeChunkedEncoding(final ArrayList<ByteBuffer> res, final F success) {
     assert key() != null;
     try {
-      while (true)
-        try {
-          final ByteBuffer chunk = getNextChunk();
-          if (NIL == chunk) {
-            success.apply(key());
-            return;
+      while (true) try {
+        final ByteBuffer chunk = getNextChunk();
+        if (NIL == chunk) {
+          success.apply(key());
+          return;
+        }
+        F advance = new F() {
+          @Override
+          public void apply(SelectionKey key) throws Exception {
+            res.add(on(chunk, flip));
+            decodeChunkedEncoding(res, success);
           }
-          F advance = new F() {
-            @Override
-            public void apply(SelectionKey key) throws Exception {
-              res.add(on(chunk, flip));
-              decodeChunkedEncoding(res, success);
-            }
-          };
-          if (chunk.hasRemaining()) {
-            finishRead(key(), chunk, advance);
-            return;
-          } else
-            advance.apply(key());
-        } catch (BufferUnderflowException e) {
+        };
+        if (!chunk.hasRemaining()) {
+          advance.apply(key());
+          continue;
+        }
+        finishRead(key(), chunk, advance);
+        return;
+      } catch (BufferUnderflowException e) {
 
-          /**
-           * due to sslengine permitting pre-fetch backlogs, the 1xio event model is screwed. however we can access that
-           * backlog data anytime by calling read(), we just need to be immediate about it, and register normally after
-           * an initial grab
-           */
-          final boolean coerce = FSM.sslState.containsKey(key());
+        /**
+         * due to sslengine permitting pre-fetch backlogs, the 1xio event model is screwed. however we can access that
+         * backlog data anytime by calling read(), we just need to be immediate about it, and register normally after
+         * an initial grab
+         */
 
-          F fetch = new F() {
-            @Override
-            public void apply(SelectionKey key) throws Exception {
-              int read = read(key, payload().compact());
-              if (read == -1) {
-                key.cancel();
-                return;
-              }
-              assert null != on(payload, debug);
+        toRead(key(), new F() {
+          @Override
+          public void apply(SelectionKey key) throws Exception {
+            int read = read(key, payload().compact());
+            if (read == -1) {
+              key.cancel();
+            } else {
+                /*assert null != on(payload, debug);*/
               if (read > 0) {
                 key.interestOps(0);
                 decodeChunkedEncoding(res, success);
-              } else if (coerce)
-                toRead(key(), this);
+              }
             }
-          };
-
-          if (coerce) {
-            fetch.apply(key());
-          } else {
-            toRead(key(), fetch);
           }
-          return;
-        }
+        });
+        return;
+      }
     } catch (Exception e) {
       e.printStackTrace();
     }
