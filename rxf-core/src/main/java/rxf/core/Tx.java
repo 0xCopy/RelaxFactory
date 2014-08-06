@@ -3,7 +3,6 @@ package rxf.core;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.FluentIterable;
-import one.xio.AsioVisitor.FSM;
 import one.xio.AsioVisitor.Helper;
 import one.xio.AsioVisitor.Helper.Do.post;
 import one.xio.AsioVisitor.Helper.*;
@@ -301,7 +300,7 @@ public class Tx {
       final ArrayList<ByteBuffer> res = new ArrayList<>();
       try {
         payload().compact();
-        this.decodeChunkedEncoding(res, new F() {
+        decodeChunkedEncoding(res, new F() {
           @Override
           public void apply(SelectionKey key) throws Exception {
             ByteBuffer byteBuffer = coalesceBuffers(res);
@@ -333,11 +332,12 @@ public class Tx {
               decodeChunkedEncoding(res, success);
             }
           };
-          if (chunk.hasRemaining()) {
-            finishRead(key(), chunk, advance);
-            return;
-          } else
+          if (!chunk.hasRemaining()) {
             advance.apply(key());
+            continue;
+          }
+          finishRead(key(), chunk, advance);
+          return;
         } catch (BufferUnderflowException e) {
 
           /**
@@ -345,30 +345,22 @@ public class Tx {
            * backlog data anytime by calling read(), we just need to be immediate about it, and register normally after
            * an initial grab
            */
-          final boolean coerce = FSM.sslState.containsKey(key());
 
-          F fetch = new F() {
+          toRead(key(), new F() {
             @Override
             public void apply(SelectionKey key) throws Exception {
               int read = read(key, payload().compact());
               if (read == -1) {
                 key.cancel();
-                return;
+              } else {
+                /* assert null != on(payload, debug); */
+                if (read > 0) {
+                  key.interestOps(0);
+                  decodeChunkedEncoding(res, success);
+                }
               }
-              assert null != on(payload, debug);
-              if (read > 0) {
-                key.interestOps(0);
-                decodeChunkedEncoding(res, success);
-              } else if (coerce)
-                toRead(key(), this);
             }
-          };
-
-          if (coerce) {
-            fetch.apply(key());
-          } else {
-            toRead(key(), fetch);
-          }
+          });
           return;
         }
     } catch (Exception e) {
