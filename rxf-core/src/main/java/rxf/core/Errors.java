@@ -1,6 +1,8 @@
 package rxf.core;
 
 import one.xio.AsioVisitor;
+import one.xio.AsioVisitor.Helper.F;
+import one.xio.AsioVisitor.Impl;
 import one.xio.HttpHeaders;
 import one.xio.HttpStatus;
 
@@ -9,6 +11,7 @@ import java.nio.channels.SelectionKey;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static one.xio.AsioVisitor.Helper.finishWrite;
+import static one.xio.AsioVisitor.Helper.on;
 import static one.xio.AsioVisitor.Helper.write;
 
 public class Errors {
@@ -27,7 +30,7 @@ public class Errors {
     final String html =
         "<html><head><title>Resource Moved</title></head><body><div>" + message
             + "</div><div><a href='/'>Back to home</a></div></body></html>";
-    key.attach(new AsioVisitor.Impl() {
+    key.attach(new Impl() {
 
       public void onWrite(SelectionKey key) throws Exception {
         ByteBuffer headers =
@@ -65,14 +68,14 @@ public class Errors {
 
   private static void error(SelectionKey key, final HttpStatus code, String message) {
     final String html = message;
-    finishWrite(key, new AsioVisitor.Helper.F() {
+    finishWrite(key, new F() {
       @Override
       public void apply(SelectionKey key) throws Exception {
         key.interestOps(SelectionKey.OP_READ).attach(null);
       }
-    }, (ByteBuffer) new Rfc822HeaderState().$res().status(code).headerString(
+    }, on((ByteBuffer) new Rfc822HeaderState().$res().status(code).headerString(
         HttpHeaders.Content$2dType, "text/html").headerString(HttpHeaders.Content$2dLength,
-        String.valueOf(html.length())).asByteBuffer().rewind());
+        String.valueOf(html.length())).asByteBuffer(), AsioVisitor.Helper.Do.pre.debug, AsioVisitor.Helper.Do.pre.rewind));
 
   }
 }

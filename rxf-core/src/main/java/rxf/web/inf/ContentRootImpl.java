@@ -64,7 +64,7 @@ public class ContentRootImpl extends Impl {
   }
 
   public void onWrite(SelectionKey key) throws Exception {
-
+    System.err.println("ContentRootImpl write entered");
     String finalFname = fileScrub(getRootPath() + SLASHDOTSLASH + getReq().path().split("\\?")[0]);
     File file = new File(finalFname);
     if (file.isDirectory()) {
