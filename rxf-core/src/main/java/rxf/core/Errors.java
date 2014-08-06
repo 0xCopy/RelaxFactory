@@ -75,7 +75,8 @@ public class Errors {
       }
     }, on((ByteBuffer) new Rfc822HeaderState().$res().status(code).headerString(
         HttpHeaders.Content$2dType, "text/html").headerString(HttpHeaders.Content$2dLength,
-        String.valueOf(html.length())).asByteBuffer(), AsioVisitor.Helper.Do.pre.debug, AsioVisitor.Helper.Do.pre.rewind));
+        String.valueOf(html.length())).asByteBuffer(), AsioVisitor.Helper.Do.pre.debug,
+        AsioVisitor.Helper.Do.pre.rewind));
 
   }
 }

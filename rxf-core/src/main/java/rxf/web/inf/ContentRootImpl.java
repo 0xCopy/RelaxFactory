@@ -64,13 +64,14 @@ public class ContentRootImpl extends Impl {
   }
 
   public void onWrite(SelectionKey key) throws Exception {
-    System.err.println("ContentRootImpl write entered");
+
     String finalFname = fileScrub(getRootPath() + SLASHDOTSLASH + getReq().path().split("\\?")[0]);
     File file = new File(finalFname);
     if (file.isDirectory()) {
       file = new File((finalFname + "/index.html"));
     }
     finalFname = (file.getCanonicalPath());
+    System.err.println("ContentRootImpl write entered: " + finalFname);
 
     java.util.Date fdate = new java.util.Date(file.lastModified());
 
