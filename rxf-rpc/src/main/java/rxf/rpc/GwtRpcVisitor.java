@@ -22,11 +22,16 @@ import java.nio.channels.SelectionKey;
 import java.nio.file.Paths;
 import java.text.ParseException;
 
+import static bbcursive.Cursive.post.rewind;
+import static bbcursive.Cursive.pre.debug;
+import static bbcursive.Cursive.std.str;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static one.xio.AsioVisitor.Helper.Do.pre.*;
 import static one.xio.AsioVisitor.Helper.F;
-import static one.xio.AsioVisitor.Helper.asString;
 import static one.xio.AsioVisitor.Helper.finishWrite;
+
+//import static bbcursive.Cursive.std.asString;
+
+//import static one.xio.AsioVisitor.Cursive.pre.*;
 
 /**
  * assumes POST using Content-Length -- chunked encoding will drop on the floor User: jim Date: 6/3/12 Time: 7:42 PM
@@ -95,7 +100,7 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
       Class<?> aClass = delegate.getClass();
       ByteBuffer payload1 = tx.payload();
       RPCRequest rpcRequest =
-          RPC.decodeRequest(asString(payload1, rewind, debug), aClass, GwtRpcVisitor.this);
+          RPC.decodeRequest(str(payload1, rewind, debug), aClass, GwtRpcVisitor.this);
       String payload = null;
       try {
         Tx.current(tx);

@@ -1,6 +1,6 @@
 package rxf.core;
 
-import one.xio.AsioVisitor;
+import bbcursive.Cursive;
 import one.xio.AsioVisitor.Helper.F;
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpHeaders;
@@ -9,9 +9,9 @@ import one.xio.HttpStatus;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 
+import static bbcursive.Cursive.std.bb;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static one.xio.AsioVisitor.Helper.finishWrite;
-import static one.xio.AsioVisitor.Helper.on;
 import static one.xio.AsioVisitor.Helper.write;
 
 public class Errors {
@@ -73,10 +73,10 @@ public class Errors {
       public void apply(SelectionKey key) throws Exception {
         key.interestOps(SelectionKey.OP_READ).attach(null);
       }
-    }, on((ByteBuffer) new Rfc822HeaderState().$res().status(code).headerString(
-        HttpHeaders.Content$2dType, "text/html").headerString(HttpHeaders.Content$2dLength,
-        String.valueOf(html.length())).asByteBuffer(), AsioVisitor.Helper.Do.pre.debug,
-        AsioVisitor.Helper.Do.pre.rewind));
+    }, bb((ByteBuffer) new Rfc822HeaderState().$res().status(code).headerString(
+            HttpHeaders.Content$2dType, "text/html").headerString(HttpHeaders.Content$2dLength,
+            String.valueOf(html.length())).asByteBuffer(), Cursive.pre.debug,
+        Cursive.pre.rewind));
 
   }
 }

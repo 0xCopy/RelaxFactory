@@ -4,7 +4,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.FluentIterable;
 import one.xio.AsioVisitor.Helper;
-import one.xio.AsioVisitor.Helper.Do.post;
 import one.xio.AsioVisitor.Helper.*;
 
 import java.io.IOException;
@@ -18,7 +17,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static one.xio.AsioVisitor.Helper.Do.pre.*;
+import static bbcursive.Cursive.pre.*;
+import static bbcursive.Cursive.std.bb;
+import static bbcursive.Cursive.std.str;
 import static one.xio.AsioVisitor.Helper.*;
 import static one.xio.HttpHeaders.*;
 
@@ -328,7 +329,7 @@ public class Tx {
           F advance = new F() {
             @Override
             public void apply(SelectionKey key) throws Exception {
-              res.add(on(chunk, flip));
+              res.add(std.bb(chunk, flip));
               decodeChunkedEncoding(res, success);
             }
           };
@@ -369,24 +370,24 @@ public class Tx {
   }
 
   public ByteBuffer getNextChunk() throws BufferUnderflowException {
-    on(payload(), flip);
+    bb(payload(), flip);
     int needs;
     ByteBuffer lenBuf;
     try {
-      lenBuf = on(payload, mark, skipWs, slice, forceToEol, rtrim, flip);
-      String lenString = asString(lenBuf, post.rewind);
+      lenBuf = bb(payload, mark, skipWs, slice, forceToEol, rtrim, flip);
+      String lenString = str(lenBuf, post.rewind);
       needs = Integer.parseInt(lenString, 0x10);
     } catch (Exception e) {
       payload.reset();
       throw new BufferUnderflowException();
     }
 
-    on(payload, toEol);
+    std.bb(payload, toEol);
     if (needs != 0) {
       ByteBuffer chunk;
       chunk = ByteBuffer.allocateDirect(needs);
-      cat(payload, chunk);
-      on(payload, post.compact, debug);
+      std.cat(payload, chunk);
+      std.bb(payload, post.compact, debug);
 
       return chunk;
     }
