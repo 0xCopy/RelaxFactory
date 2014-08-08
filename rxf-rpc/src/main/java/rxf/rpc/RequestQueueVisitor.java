@@ -105,53 +105,55 @@ public class RequestQueueVisitor extends Impl implements SerializationPolicyProv
   }
 
   public void onWrite(final SelectionKey key) throws Exception {
-    if (null == payload) park(key, new Helper.F() {
-      @Override
-      public void apply(final SelectionKey key) throws Exception {
-        RpcHelper.EXECUTOR_SERVICE.submit(new Runnable() {
+    if (null == payload)
+      park(key, new Helper.F() {
+        @Override
+        public void apply(final SelectionKey key) throws Exception {
+          RpcHelper.EXECUTOR_SERVICE.submit(new Runnable() {
 
-          public void run() {
-            try {
-              String reqPayload =
-                  StandardCharsets.UTF_8.decode((ByteBuffer) cursor.rewind()).toString();
-
-              RPCRequest rpcRequest =
-                  BatchInvoker.decodeRequest(reqPayload, null, RequestQueueVisitor.this);
-
+            public void run() {
               try {
-                payload =
-                    RPC.invokeAndEncodeResponse(invoker, rpcRequest.getMethod(), rpcRequest
-                        .getParameters(), rpcRequest.getSerializationPolicy(), rpcRequest.getFlags());
-              } catch (IncompatibleRemoteServiceException ex) {
-                payload = RPC.encodeResponseForFailure(null, ex);
-              } catch (RpcTokenException ex) {
-                payload = RPC.encodeResponseForFailure(null, ex);
+                String reqPayload =
+                    StandardCharsets.UTF_8.decode((ByteBuffer) cursor.rewind()).toString();
+
+                RPCRequest rpcRequest =
+                    BatchInvoker.decodeRequest(reqPayload, null, RequestQueueVisitor.this);
+
+                try {
+                  payload =
+                      RPC.invokeAndEncodeResponse(invoker, rpcRequest.getMethod(), rpcRequest
+                          .getParameters(), rpcRequest.getSerializationPolicy(), rpcRequest
+                          .getFlags());
+                } catch (IncompatibleRemoteServiceException ex) {
+                  payload = RPC.encodeResponseForFailure(null, ex);
+                } catch (RpcTokenException ex) {
+                  payload = RPC.encodeResponseForFailure(null, ex);
+                }
+                ByteBuffer pbuf = (ByteBuffer) StandardCharsets.UTF_8.encode(payload).rewind();
+                final int limit = pbuf.rewind().limit();
+                Rfc822HeaderState.HttpResponse res = req.$res();
+                res.status(HttpStatus.$200);
+                ByteBuffer as =
+                    res.headerString(HttpHeaders.Content$2dType, MimeType.json.contentType)
+                        .headerString(HttpHeaders.Content$2dLength, String.valueOf(limit)).as(
+                            ByteBuffer.class);
+                int needed = as.rewind().limit() + limit;
+
+                cursor =
+                    (ByteBuffer) ((ByteBuffer) (cursor.capacity() >= needed ? cursor.clear().limit(
+                        needed) : ByteBuffer.allocateDirect(needed))).put(as).put(pbuf).rewind();
+
+                key.interestOps(SelectionKey.OP_WRITE);
+              } catch (Exception e) {
+                key.cancel();
+                e.printStackTrace(); // todo: verify for a purpose
+              } finally {
               }
-              ByteBuffer pbuf = (ByteBuffer) StandardCharsets.UTF_8.encode(payload).rewind();
-              final int limit = pbuf.rewind().limit();
-              Rfc822HeaderState.HttpResponse res = req.$res();
-              res.status(HttpStatus.$200);
-              ByteBuffer as =
-                  res.headerString(HttpHeaders.Content$2dType, MimeType.json.contentType)
-                      .headerString(HttpHeaders.Content$2dLength, String.valueOf(limit)).as(
-                      ByteBuffer.class);
-              int needed = as.rewind().limit() + limit;
-
-              cursor =
-                  (ByteBuffer) ((ByteBuffer) (cursor.capacity() >= needed ? cursor.clear().limit(
-                      needed) : ByteBuffer.allocateDirect(needed))).put(as).put(pbuf).rewind();
-
-              key.interestOps(SelectionKey.OP_WRITE);
-            } catch (Exception e) {
-              key.cancel();
-              e.printStackTrace(); // todo: verify for a purpose
-            } finally {
             }
-          }
-        });
-        return;
-      }
-    });
+          });
+          return;
+        }
+      });
     int write = channel.write(cursor);
     if (!cursor.hasRemaining()) {
       /*

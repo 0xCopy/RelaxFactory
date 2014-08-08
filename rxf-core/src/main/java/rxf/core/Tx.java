@@ -224,11 +224,12 @@ public class Tx {
 
   /**
    * methods like HEAD may contain Content-Length and we dont want to attempt to fill the cursor with that.
-   *
+   * 
    * @param t
    */
   public Tx noPayload(boolean t) {
-    noPayload = t;return this;
+    noPayload = t;
+    return this;
   }
 
   /**
