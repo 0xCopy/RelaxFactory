@@ -40,7 +40,6 @@ public class Errors {
         key.interestOps(SelectionKey.OP_READ).attach(null);
       }
     }, bb(rfc822HeaderState), bb);
-    key.interestOps(SelectionKey.OP_WRITE);
   }
 
   public static void $400(SelectionKey key) {
