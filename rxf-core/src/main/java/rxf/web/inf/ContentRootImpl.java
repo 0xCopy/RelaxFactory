@@ -166,15 +166,11 @@ public class ContentRootImpl extends Impl {
           } catch (IOException e) {
             e.printStackTrace();
           }
-          if (FSM.sslState.containsKey(key))
-            try {
-              key.cancel();
-              key.channel().close();
-            } catch (IOException e) {
-              e.printStackTrace();
-            }
-          else
-            key.interestOps(OP_READ).attach(null);
+          try {
+            key.channel().close();
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
         }
       }, (ByteBuffer) headers, (ByteBuffer) fileContent);
 

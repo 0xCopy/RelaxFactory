@@ -74,9 +74,8 @@ public class Errors {
         key.interestOps(SelectionKey.OP_READ).attach(null);
       }
     }, bb((ByteBuffer) new Rfc822HeaderState().$res().status(code).headerString(
-            HttpHeaders.Content$2dType, "text/html").headerString(HttpHeaders.Content$2dLength,
-            String.valueOf(html.length())).asByteBuffer(), Cursive.pre.debug,
-        Cursive.pre.rewind));
+        HttpHeaders.Content$2dType, "text/html").headerString(HttpHeaders.Content$2dLength,
+        String.valueOf(html.length())).asByteBuffer(), Cursive.pre.debug, Cursive.pre.rewind));
 
   }
 }

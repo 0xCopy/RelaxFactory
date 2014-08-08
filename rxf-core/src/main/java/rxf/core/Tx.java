@@ -5,6 +5,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.FluentIterable;
 import one.xio.AsioVisitor.Helper;
 import one.xio.AsioVisitor.Helper.*;
+import one.xio.HttpHeaders;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -41,15 +42,16 @@ public class Tx {
   private boolean chunked;
 
   /**
-   * if the attachment is a tx, we resume filling headers and payload. if the attachment is not Tx, it is set to a fresh
+   * if the attachment is a tx, we resume filling headers and payload. if the attachment is not Tx, we return a fresh
    * one.
    * <p/>
    * for TOP level default visitor root only!
    * 
    * @param undefinedKey selectionKey which is not part of a visitor presently
+   * @param interest
    * @return a tx
    */
-  public static Tx acquireTx(SelectionKey undefinedKey) {
+  public static Tx acquireTx(SelectionKey undefinedKey, HttpHeaders... interest) {
     Object attachment = undefinedKey.attachment();
     if (attachment instanceof Object[]) {
       Object[] objects = (Object[]) attachment;
@@ -58,11 +60,13 @@ public class Tx {
       if (objects.length == 1)
         attachment = objects[0];
     }
-    Tx tx;
+    Tx tx = null;
     if (attachment instanceof Tx) {
       tx = current((Tx) attachment);
-    } else
-      tx = current(new Tx());
+    } else {
+      tx = current().clear();
+      Rfc822HeaderState rfc822HeaderState = tx.state().addHeaderInterest(interest);
+    }
     undefinedKey.attach(tx);
     tx.key(undefinedKey);
     return tx;
