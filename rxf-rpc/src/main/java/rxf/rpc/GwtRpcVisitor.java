@@ -24,10 +24,11 @@ import java.text.ParseException;
 
 import static bbcursive.Cursive.post.rewind;
 import static bbcursive.Cursive.pre.debug;
-import static bbcursive.Cursive.std.str;
+import static bbcursive.std.str;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static one.xio.AsioVisitor.Helper.F;
 import static one.xio.AsioVisitor.Helper.finishWrite;
+import static one.xio.AsioVisitor.Helper.park;
 
 // import static bbcursive.Cursive.std.asString;
 
@@ -56,8 +57,13 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
 
   @Override
   public void onWrite(SelectionKey key) throws Exception {
-    tx.key(key.interestOps(0));
-    RpcHelper.getEXECUTOR_SERVICE().submit(new GwtRpcTask());
+    park(key, new F() {
+      @Override
+      public void apply(SelectionKey key) throws Exception {
+        RpcHelper.getEXECUTOR_SERVICE().submit(new GwtRpcTask());
+
+      }
+    });
   }
 
   public SerializationPolicy getSerializationPolicy(String moduleBaseURL, String strongName) {

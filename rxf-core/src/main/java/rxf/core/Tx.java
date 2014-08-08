@@ -1,5 +1,6 @@
 package rxf.core;
 
+import bbcursive.std;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.FluentIterable;
@@ -19,8 +20,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static bbcursive.Cursive.pre.*;
-import static bbcursive.Cursive.std.bb;
-import static bbcursive.Cursive.std.str;
+import static bbcursive.std.*;
 import static one.xio.AsioVisitor.Helper.*;
 import static one.xio.HttpHeaders.*;
 
@@ -40,6 +40,11 @@ public class Tx {
   public static final char SEPARATOR = '&';
   public static final String ASSIGNMENT_OPERATOR = "=";
   private boolean chunked;
+  private boolean noPayload;
+
+  public Tx(SelectionKey selectionKey) {
+    key(selectionKey);
+  }
 
   /**
    * if the attachment is a tx, we resume filling headers and payload. if the attachment is not Tx, we return a fresh
@@ -47,12 +52,12 @@ public class Tx {
    * <p/>
    * for TOP level default visitor root only!
    * 
-   * @param undefinedKey selectionKey which is not part of a visitor presently
+   * @param entryPoint selectionKey which is not part of a visitor presently
    * @param interest
    * @return a tx
    */
-  public static Tx acquireTx(SelectionKey undefinedKey, HttpHeaders... interest) {
-    Object attachment = undefinedKey.attachment();
+  public static Tx acquireTx(SelectionKey entryPoint, HttpHeaders... interest) {
+    Object attachment = entryPoint.attachment();
     if (attachment instanceof Object[]) {
       Object[] objects = (Object[]) attachment;
       if (objects.length == 0)
@@ -67,8 +72,8 @@ public class Tx {
       tx = current().clear();
       Rfc822HeaderState rfc822HeaderState = tx.state().addHeaderInterest(interest);
     }
-    undefinedKey.attach(tx);
-    tx.key(undefinedKey);
+    entryPoint.attach(tx);
+    tx.key(entryPoint);
     return tx;
   }
 
@@ -136,7 +141,7 @@ public class Tx {
    * there can be only one [per thread]
    */
   public Tx() {
-    current.set(this);
+
   }
 
   /**
@@ -186,7 +191,8 @@ public class Tx {
          */
         Buffer flip1 = byteBuffer.flip();
         Rfc822HeaderState rfc822HeaderState =
-            state.addHeaderInterest(Content$2dLength).addHeaderInterest(Transfer$2dEncoding);
+            noPayload() ? state : state.addHeaderInterest(Content$2dLength).addHeaderInterest(
+                Transfer$2dEncoding);
         boolean apply = rfc822HeaderState.apply((ByteBuffer) flip1);
         if (apply) {
           ByteBuffer slice = ((ByteBuffer) byteBuffer.duplicate().limit(prior + read)).slice();
@@ -210,6 +216,19 @@ public class Tx {
         break;
     }
     return true;
+  }
+
+  public boolean noPayload() {
+    return noPayload;
+  }
+
+  /**
+   * methods like HEAD may contain Content-Length and we dont want to attempt to fill the cursor with that.
+   *
+   * @param t
+   */
+  public Tx noPayload(boolean t) {
+    noPayload = t;return this;
   }
 
   /**
@@ -333,7 +352,7 @@ public class Tx {
           F advance = new F() {
             @Override
             public void apply(SelectionKey key) throws Exception {
-              res.add(std.bb(chunk, flip));
+              res.add(bb(chunk, flip));
               decodeChunkedEncoding(res, success);
             }
           };
@@ -359,10 +378,15 @@ public class Tx {
                 key.cancel();
               } else {
                 /* assert null != on(payload, debug); */
-                if (read > 0) {
-                  key.interestOps(0);
-                  decodeChunkedEncoding(res, success);
+                if (read <= 0) {
+                  return;
                 }
+                park(key, new F() {
+                  @Override
+                  public void apply(SelectionKey key) throws Exception {
+                    decodeChunkedEncoding(res, success);
+                  }
+                });
               }
             }
           });
@@ -386,12 +410,12 @@ public class Tx {
       throw new BufferUnderflowException();
     }
 
-    std.bb(payload, toEol);
+    bb(payload, toEol);
     if (needs != 0) {
       ByteBuffer chunk;
       chunk = ByteBuffer.allocateDirect(needs);
       std.cat(payload, chunk);
-      std.bb(payload, post.compact, debug);
+      bb(payload, post.compact, debug);
 
       return chunk;
     }

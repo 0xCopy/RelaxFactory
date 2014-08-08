@@ -1,5 +1,6 @@
 package rxf.core;
 
+import bbcursive.WantsZeroCopy;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.util.concurrent.Atomics;
@@ -40,7 +41,7 @@ import static java.util.Arrays.deepToString;
  * <p/>
  * User: jim Date: 5/19/12 Time: 10:00 PM
  */
-public class Rfc822HeaderState {
+public class Rfc822HeaderState implements WantsZeroCopy {
 
   public static final String HTTP = "HTTP";
   public static final String HTTP_1_1 = HTTP + "/1.1";
@@ -363,6 +364,7 @@ public class Rfc822HeaderState {
 
   }
 
+  @Override
   public ByteBuffer asByteBuffer() {
     throw new UnsupportedOperationException(
         "must promote to as((HttpRequest|HttpResponse)).class first");

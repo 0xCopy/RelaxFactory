@@ -9,7 +9,7 @@ import one.xio.HttpStatus;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 
-import static bbcursive.Cursive.std.bb;
+import static bbcursive.std.bb;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static one.xio.AsioVisitor.Helper.finishWrite;
 import static one.xio.AsioVisitor.Helper.write;

@@ -1,5 +1,8 @@
 package rxf.core;
 
+import bbcursive.std;
+import static java.lang.System.setProperty;
+
 public class Config {
 
   public static String get(String rxf_var, String... defaultVal) {
@@ -9,8 +12,8 @@ public class Config {
     String var = null == rxfenv ? System.getProperty(javapropname) : rxfenv;
     var = null == var && defaultVal.length > 0 ? defaultVal[0] : var;
     if (null != var) {
-      System.setProperty(javapropname, var);
-      System.err.println("// -D" + javapropname + "=" + "\"" + var + "\"");
+      setProperty(javapropname, var);
+      std.log("// -D" + javapropname + "=" + "\"" + var + "\"");
     }
     return var;
   }
