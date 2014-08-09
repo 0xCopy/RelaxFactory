@@ -15,6 +15,7 @@ import rxf.couch.gen.CouchDriver.JsonSend.JsonSendTerminalBuilder;
 import rxf.couch.gen.CouchDriver.ViewFetch.ViewFetchTerminalBuilder;
 import rxf.rpc.RpcHelper;
 import rxf.shared.CouchTx;
+import rxf.shared.KouchTx;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
@@ -294,7 +295,7 @@ public class CouchServiceFactory {
           final DocPersistActionBuilder to =
               new DocPersist().db(getPathPrefix()).validjson(stringParam).to();
           DocPersistTerminalBuilder fire = to.fire();
-          CouchTx tx = fire.tx();
+          KouchTx tx = fire.tx();
           return tx;
         } else if ("attachments".equals(method.getName())) {
           try {

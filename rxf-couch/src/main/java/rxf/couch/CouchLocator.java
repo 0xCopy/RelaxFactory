@@ -6,7 +6,7 @@ import rxf.couch.gen.CouchDriver.DocFetch;
 import rxf.couch.gen.CouchDriver.DocPersist;
 import rxf.rpc.RelaxFactoryServerImpl;
 import rxf.rpc.RpcHelper;
-import rxf.shared.CouchTx;
+import rxf.shared.KouchTx;
 
 import java.util.List;
 
@@ -77,9 +77,9 @@ public abstract class CouchLocator<T> extends Locator<T, String> implements Couc
     this.orgname = orgname;
   }
 
-  public CouchTx persist(T domainObject) {
+  public KouchTx persist(T domainObject) {
 
-    CouchTx ret;
+    KouchTx ret;
 
     String pathPrefix = getEntityName();
     String id = getId(domainObject);

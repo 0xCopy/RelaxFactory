@@ -12,6 +12,7 @@ import rxf.couch.gen.CouchDriver.*;
 import rxf.couch.gen.CouchDriver.ViewFetch.ViewFetchTerminalBuilder;
 import rxf.rpc.RpcHelper;
 import rxf.shared.CouchTx;
+import rxf.shared.KouchTx;
 import rxf.web.inf.ProtocolMethodDispatch;
 
 import java.util.Map;
@@ -109,7 +110,7 @@ public class CouchDriverTest {
         CouchMetaDriver.gson().<Map<String, Object>> fromJson(data, Map.class);
     obj.put("abc", "123");
     data = CouchMetaDriver.gson().toJson(obj);
-    CouchTx updateTx = new DocPersist().db(SOMEDB).validjson(data).to().fire().tx();
+    KouchTx updateTx = new DocPersist().db(SOMEDB).validjson(data).to().fire().tx();
     assertNotNull(updateTx);
   }
 
@@ -124,7 +125,7 @@ public class CouchDriverTest {
   @Test
   public void testMissingDocLowLevelFailure() {
 
-    CouchTx tx = new DocPersist().db("dne_dne").validjson("{}").to().fire().tx();
+    KouchTx tx = new DocPersist().db("dne_dne").validjson("{}").to().fire().tx();
     // new contract for non-20x results is find the nearest window and get to ground.
     assertNull(tx);
   }

@@ -12,6 +12,7 @@ import rxf.couch.driver.CouchMetaDriver;
 import rxf.couch.driver.CouchMetaDriver.etype;
 import rxf.rpc.RpcHelper;
 import rxf.shared.CouchTx;
+import rxf.shared.KouchTx;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -120,7 +121,7 @@ public interface CouchDriver {
     }
 
     public interface DbDeleteTerminalBuilder extends TerminalBuilder {
-      CouchTx tx();
+      KouchTx tx();
 
       @Deprecated
       void oneWay();
@@ -142,8 +143,8 @@ public interface CouchDriver {
             }
           });
 
-          public CouchTx tx() {
-            CouchTx r = null;
+          public KouchTx tx() {
+            KouchTx r = null;
             try {
               r =
                   CouchMetaDriver.gson().fromJson(UTF_8.decode(future.get()).toString(),
@@ -898,7 +899,7 @@ public interface CouchDriver {
     }
 
     public interface BlobSendTerminalBuilder extends TerminalBuilder {
-      CouchTx tx();
+      KouchTx tx();
 
       Future<ByteBuffer> future();
 
@@ -921,8 +922,8 @@ public interface CouchDriver {
             }
           });
 
-          public CouchTx tx() {
-            CouchTx r = null;
+          public KouchTx tx() {
+            KouchTx r = null;
             try {
               r =
                   CouchMetaDriver.gson().fromJson(UTF_8.decode(future.get()).toString(),

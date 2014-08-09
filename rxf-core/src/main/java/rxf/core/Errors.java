@@ -33,7 +33,7 @@ public class Errors {
         .headerString(HttpHeaders.Content$2dType, "text/html")//
         .headerString(HttpHeaders.Location, newUrl)//
         .headerString(HttpHeaders.Content$2dLength, str(bb.limit()))//
-        ;
+    ;
     finishWrite(key, new F() {
       @Override
       public void apply(SelectionKey key) throws Exception {

@@ -8,6 +8,7 @@ import rxf.couch.gen.CouchDriver.DocFetch;
 import rxf.couch.gen.CouchDriver.JsonSend;
 import rxf.couch.gen.CouchDriver.JsonSend.JsonSendActionBuilder;
 import rxf.shared.CouchTx;
+import rxf.shared.KouchTx;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -41,7 +42,7 @@ public interface CouchService<E> {
 
     String getAttachment(String fileName);
 
-    CouchTx deleteAttachment(String fileName);
+    KouchTx deleteAttachment(String fileName);
 
   }
 
@@ -117,7 +118,7 @@ public interface CouchService<E> {
       return new DocFetch().db(db).docId(id + "/" + fileName).to().fire().json();
     }
 
-    public CouchTx deleteAttachment(String fileName) {
+    public KouchTx deleteAttachment(String fileName) {
       CouchTx tx = new DocDelete().db(db).docId(id + "/" + fileName).to().fire().tx();
       rev = tx.rev();
       return tx;

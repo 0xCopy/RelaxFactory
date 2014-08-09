@@ -111,8 +111,7 @@ public class Rfc822HeaderState implements WantsZeroCopy {
   }
 
   static public Map<String, String> parseQuery(String path) {
-    return Splitter.on('&').withKeyValueSeparator("=")
-        .split(path.substring(path.indexOf('?') + 1));
+    return Splitter.on('&').withKeyValueSeparator("=").split(path.substring(path.indexOf('?') + 1));
   }
 
   public String headerString(HttpHeaders httpHeader) {
