@@ -1,5 +1,6 @@
 package rxf.core;
 
+import bbcursive.WantsZeroCopy;
 import bbcursive.std;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -31,7 +32,7 @@ import static one.xio.HttpHeaders.*;
  * <p/>
  * User: jim Date: 5/29/12 Time: 1:58 PM
  */
-public class Tx {
+public class Tx implements WantsZeroCopy {
 
   /**
    * always an empty readonly buffer singleton
@@ -311,7 +312,7 @@ public class Tx {
     return this;
   }
 
-  Tx clear() {
+  public Tx clear() {
     return payload(null).state(null);
   }
 
@@ -421,5 +422,10 @@ public class Tx {
       return chunk;
     }
     return NIL;
+  }
+
+  @Override
+  public ByteBuffer asByteBuffer() {
+    return payload();
   }
 }
