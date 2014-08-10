@@ -38,8 +38,7 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
   private final Object delegate;
   private Tx tx;
 
-
-  public GwtRpcVisitor(Object delegate,Tx tx) {
+  public GwtRpcVisitor(Object delegate, Tx tx) {
     this.tx = tx;
 
     if (delegate == null) {
@@ -69,16 +68,16 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
       String path = new URL(moduleBaseURL).getPath();
       fileName = SerializationPolicyLoader.getSerializationPolicyFileName(path + strongName);
       try (FileInputStream fileInputStream =
-               new FileInputStream(String.valueOf(Paths.get(CouchNamespace.RXF_CONTENT_ROOT, fileName)))) {
+          new FileInputStream(String.valueOf(Paths.get(CouchNamespace.RXF_CONTENT_ROOT, fileName)))) {
         serializationPolicy = SerializationPolicyLoader.loadFromStream(fileInputStream, null);
       }
     } catch (ParseException e) {
-      log("ERROR: Failed to parse the policy file "
-          + Paths.get(fileName).toUri().toASCIIString());
+      log("ERROR: Failed to parse the policy file " + Paths.get(fileName).toUri().toASCIIString());
     } catch (IOException e) {
-      log("ERROR: Could not read the policy file "
-          + Paths.get(fileName).toUri().toASCIIString());
-    }catch (Throwable e){e.printStackTrace();}
+      log("ERROR: Could not read the policy file " + Paths.get(fileName).toUri().toASCIIString());
+    } catch (Throwable e) {
+      e.printStackTrace();
+    }
     return serializationPolicy;
   }
 
@@ -90,17 +89,16 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
     public void run() {
 
       Class<?> aClass = delegate.getClass();
-      log(aClass,"rpc for ");
+      log(aClass, "rpc for ");
       String payload = str(tx.payload(), Cursive.pre.flip);
-log(payload,"rpc payload ");
+      log(payload, "rpc payload ");
       RPCRequest rpcRequest = RPC.decodeRequest((payload), aClass, GwtRpcVisitor.this);
       try {
-        payload =
-            RPC.invokeAndEncodeResponse(delegate, //
-                rpcRequest.getMethod(), //
-                rpcRequest.getParameters(), //
-                rpcRequest.getSerializationPolicy(), //
-                rpcRequest.getFlags());//
+        payload = RPC.invokeAndEncodeResponse(delegate, //
+            rpcRequest.getMethod(), //
+            rpcRequest.getParameters(), //
+            rpcRequest.getSerializationPolicy(), //
+            rpcRequest.getFlags());//
       } catch (IncompatibleRemoteServiceException | SerializationException | RpcTokenException ex) {
         try {
           payload = RPC.encodeResponseForFailure(null, ex);
@@ -121,6 +119,6 @@ log(payload,"rpc payload ");
         }
       }, (ByteBuffer) tx.hdr().asResponse().asByteBuffer().rewind(), (ByteBuffer) tx.payload()
           .rewind());
-   }
+    }
   }
 }
