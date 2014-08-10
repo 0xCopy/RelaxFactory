@@ -329,7 +329,7 @@ public class Tx implements WantsZeroCopy {
         decodeChunkedEncoding(res, new F() {
           @Override
           public void apply(SelectionKey key) throws Exception {
-            ByteBuffer byteBuffer = coalesceBuffers(res);
+            ByteBuffer byteBuffer = cat(res);
             payload(byteBuffer);
             success.apply(key());
           }
@@ -416,7 +416,7 @@ public class Tx implements WantsZeroCopy {
     if (needs != 0) {
       ByteBuffer chunk;
       chunk = ByteBuffer.allocateDirect(needs);
-      std.cat(payload, chunk);
+      std.push(payload, chunk);
       bb(payload, post.compact, debug);
 
       return chunk;
