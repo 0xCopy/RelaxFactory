@@ -20,6 +20,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.file.Paths;
 import java.text.ParseException;
 
+import static bbcursive.std.log;
 import static bbcursive.std.str;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static one.xio.AsioVisitor.Helper.*;
@@ -35,13 +36,11 @@ import static one.xio.AsioVisitor.Helper.*;
 public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
 
   private final Object delegate;
-  private Tx tx = Tx.current();
+  private Tx tx;
 
-  public GwtRpcVisitor() {
-    this(null);
-  }
 
-  public GwtRpcVisitor(Object delegate) {
+  public GwtRpcVisitor(Object delegate,Tx tx) {
+    this.tx = tx;
 
     if (delegate == null) {
       delegate = this;
@@ -70,16 +69,16 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
       String path = new URL(moduleBaseURL).getPath();
       fileName = SerializationPolicyLoader.getSerializationPolicyFileName(path + strongName);
       try (FileInputStream fileInputStream =
-          new FileInputStream(String.valueOf(Paths.get(CouchNamespace.RXF_CONTENT_ROOT, fileName)))) {
+               new FileInputStream(String.valueOf(Paths.get(CouchNamespace.RXF_CONTENT_ROOT, fileName)))) {
         serializationPolicy = SerializationPolicyLoader.loadFromStream(fileInputStream, null);
       }
     } catch (ParseException e) {
-      System.out.println("ERROR: Failed to parse the policy file "
+      log("ERROR: Failed to parse the policy file "
           + Paths.get(fileName).toUri().toASCIIString());
     } catch (IOException e) {
-      System.out.println("ERROR: Could not read the policy file "
+      log("ERROR: Could not read the policy file "
           + Paths.get(fileName).toUri().toASCIIString());
-    }
+    }catch (Throwable e){e.printStackTrace();}
     return serializationPolicy;
   }
 
@@ -91,14 +90,17 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
     public void run() {
 
       Class<?> aClass = delegate.getClass();
+      log(aClass,"rpc for ");
       String payload = str(tx.payload(), Cursive.pre.flip);
-
+log(payload,"rpc payload ");
       RPCRequest rpcRequest = RPC.decodeRequest((payload), aClass, GwtRpcVisitor.this);
       try {
-        Tx.current(tx);
         payload =
-            RPC.invokeAndEncodeResponse(delegate, rpcRequest.getMethod(), rpcRequest
-                .getParameters(), rpcRequest.getSerializationPolicy(), rpcRequest.getFlags());
+            RPC.invokeAndEncodeResponse(delegate, //
+                rpcRequest.getMethod(), //
+                rpcRequest.getParameters(), //
+                rpcRequest.getSerializationPolicy(), //
+                rpcRequest.getFlags());//
       } catch (IncompatibleRemoteServiceException | SerializationException | RpcTokenException ex) {
         try {
           payload = RPC.encodeResponseForFailure(null, ex);
@@ -119,7 +121,6 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
         }
       }, (ByteBuffer) tx.hdr().asResponse().asByteBuffer().rewind(), (ByteBuffer) tx.payload()
           .rewind());
-
-    }
+   }
   }
 }
