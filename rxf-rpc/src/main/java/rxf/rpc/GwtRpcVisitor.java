@@ -37,7 +37,8 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
 
   private final Object delegate;
 
-  public GwtRpcVisitor() {tx=Tx.current();
+  public GwtRpcVisitor() {
+    tx = Tx.current();
     delegate = null;
   }
 
