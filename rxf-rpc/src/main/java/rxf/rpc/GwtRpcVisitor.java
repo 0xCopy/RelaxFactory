@@ -69,13 +69,16 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
     try {
       String path = new URL(moduleBaseURL).getPath();
       fileName = SerializationPolicyLoader.getSerializationPolicyFileName(path + strongName);
-      try (FileInputStream fileInputStream = new FileInputStream(String.valueOf(Paths.get(CouchNamespace.RXF_CONTENT_ROOT, fileName)))) {
+      try (FileInputStream fileInputStream =
+          new FileInputStream(String.valueOf(Paths.get(CouchNamespace.RXF_CONTENT_ROOT, fileName)))) {
         serializationPolicy = SerializationPolicyLoader.loadFromStream(fileInputStream, null);
       }
     } catch (ParseException e) {
-      System.out.println("ERROR: Failed to parse the policy file "+Paths.get(fileName).toUri().toASCIIString());
+      System.out.println("ERROR: Failed to parse the policy file "
+          + Paths.get(fileName).toUri().toASCIIString());
     } catch (IOException e) {
-      System.out.println("ERROR: Could not read the policy file "+Paths.get(fileName).toUri().toASCIIString());
+      System.out.println("ERROR: Could not read the policy file "
+          + Paths.get(fileName).toUri().toASCIIString());
     }
     return serializationPolicy;
   }
