@@ -1,5 +1,6 @@
 package rxf.rpc;
 
+import bbcursive.Cursive;
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.RpcTokenException;
 import com.google.gwt.user.client.rpc.SerializationException;
@@ -7,28 +8,21 @@ import com.google.gwt.user.server.rpc.*;
 import one.xio.AsioVisitor.Impl;
 import one.xio.HttpHeaders;
 import one.xio.HttpStatus;
-import one.xio.MimeType;
 import rxf.core.CouchNamespace;
 import rxf.core.Tx;
 import rxf.web.inf.OpInterest;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.file.Paths;
 import java.text.ParseException;
 
-import static bbcursive.Cursive.post.rewind;
-import static bbcursive.Cursive.pre.debug;
 import static bbcursive.std.str;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static one.xio.AsioVisitor.Helper.F;
-import static one.xio.AsioVisitor.Helper.finishWrite;
-import static one.xio.AsioVisitor.Helper.park;
+import static one.xio.AsioVisitor.Helper.*;
 
 // import static bbcursive.Cursive.std.asString;
 
@@ -70,28 +64,18 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
     // TODO cache policies in weakrefmap? cleaner than reading from fs?
 
     // Translate the module path to a path per the filesystem, and grab a stream
-    InputStream is;
-    String fileName;
+    String fileName = null;
+    SerializationPolicy serializationPolicy = null;
     try {
       String path = new URL(moduleBaseURL).getPath();
       fileName = SerializationPolicyLoader.getSerializationPolicyFileName(path + strongName);
-      is =
-          new FileInputStream(String.valueOf(Paths.get(CouchNamespace.RXF_CONTENT_ROOT, fileName)));
-    } catch (MalformedURLException e1) {
-      System.out.println("ERROR: malformed moduleBaseURL: " + moduleBaseURL);
-      return null;
-    } catch (IOException e) {
-      e.printStackTrace();
-      return null;
-    }
-
-    SerializationPolicy serializationPolicy = null;
-    try {
-      serializationPolicy = SerializationPolicyLoader.loadFromStream(is, null);
+      try (FileInputStream fileInputStream = new FileInputStream(String.valueOf(Paths.get(CouchNamespace.RXF_CONTENT_ROOT, fileName)))) {
+        serializationPolicy = SerializationPolicyLoader.loadFromStream(fileInputStream, null);
+      }
     } catch (ParseException e) {
-      System.out.println("ERROR: Failed to parse the policy file '" + fileName + "'");
+      System.out.println("ERROR: Failed to parse the policy file "+Paths.get(fileName).toUri().toASCIIString());
     } catch (IOException e) {
-      System.out.println("ERROR: Could not read the policy file '" + fileName + "'");
+      System.out.println("ERROR: Could not read the policy file "+Paths.get(fileName).toUri().toASCIIString());
     }
     return serializationPolicy;
   }
@@ -104,10 +88,9 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
     public void run() {
 
       Class<?> aClass = delegate.getClass();
-      ByteBuffer payload1 = tx.payload();
-      RPCRequest rpcRequest =
-          RPC.decodeRequest(str(payload1, rewind, debug), aClass, GwtRpcVisitor.this);
-      String payload = null;
+      String payload = str(tx.payload(), Cursive.pre.flip);
+
+      RPCRequest rpcRequest = RPC.decodeRequest((payload), aClass, GwtRpcVisitor.this);
       try {
         Tx.current(tx);
         payload =
@@ -123,7 +106,7 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
       tx.payload(UTF_8.encode(payload));
 
       tx.hdr().$res().status(HttpStatus.$200).headerString(HttpHeaders.Content$2dType,
-          MimeType.json.contentType).headerString(HttpHeaders.Content$2dLength,
+          "text/x-gwt-rpc; charset=UTF-8").headerString(HttpHeaders.Content$2dLength,
           String.valueOf(UTF_8.encode(payload).limit()));
 
       finishWrite(tx.key(), new F() {
