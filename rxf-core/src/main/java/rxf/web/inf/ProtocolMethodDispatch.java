@@ -105,9 +105,9 @@ public class ProtocolMethodDispatch extends Impl {
   public void onRead(SelectionKey key) throws Exception {
     Tx tx = Tx.current(Tx.acquireTx(key));
     if (tx.readHttpHeaders()) {
-      String path = tx.state().asRequest().path();
+      String path = tx.hdr().asRequest().path();
       for (Entry<Pattern, Class<? extends Impl>> visitorEntry : NAMESPACE.get(
-          tx.state().asRequest().httpMethod()).entrySet()) {
+          tx.hdr().asRequest().httpMethod()).entrySet()) {
         Matcher matcher = visitorEntry.getKey().matcher(path);
         if (matcher.matches()) {
           if (DEBUG_SENDJSON) {
@@ -117,8 +117,8 @@ public class ProtocolMethodDispatch extends Impl {
           Impl impl = aClass.newInstance();
           boolean keepMatch = aClass.isAnnotationPresent(KeepMatcher.class);
           Object[] a =
-              keepMatch ? new Object[] {impl, tx.state(), tx.payload(), matcher.toMatchResult()}
-                  : new Object[] {impl, tx.state(), tx.payload()};
+              keepMatch ? new Object[] {impl, tx.hdr(), tx.payload(), matcher.toMatchResult()}
+                  : new Object[] {impl, tx.hdr(), tx.payload()};
           OpInterest opInterest = aClass.getAnnotation(OpInterest.class);
           key.interestOps(opInterest != null ? opInterest.value() : OP_READ).attach(a);
 

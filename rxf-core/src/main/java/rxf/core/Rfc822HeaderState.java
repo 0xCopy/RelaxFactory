@@ -114,6 +114,10 @@ public class Rfc822HeaderState implements WantsZeroCopy {
     return Splitter.on('&').withKeyValueSeparator("=").split(path.substring(path.indexOf('?') + 1));
   }
 
+  public static Rfc822HeaderState hdr() {
+    return new Rfc822HeaderState();
+  }
+
   public String headerString(HttpHeaders httpHeader) {
     return headerString(httpHeader.getHeader()); // To change body of created methods use File | Settings | File
     // Templates.

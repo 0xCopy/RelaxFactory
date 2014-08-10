@@ -49,8 +49,8 @@ public class ContentRootImpl extends Impl {
   public static final char INVERSE_CHAR = USE_INVERSE_CHAR ? '\\' : '/';
 
   public ContentRootImpl() {
-    tx.state(tx.state().addHeaderInterest(Accept$2dEncoding, If$2dModified$2dSince,
-        If$2dUnmodified$2dSince).read((ByteBuffer) tx.state().headerBuf().rewind()).asRequest());
+    tx.state(tx.hdr().addHeaderInterest(Accept$2dEncoding, If$2dModified$2dSince,
+        If$2dUnmodified$2dSince).read((ByteBuffer) tx.hdr().headerBuf().rewind()).asRequest());
     assert null != tx.payload() : "Tx.current() returns null, required non-null by ContentRootImpl";
   }
 
@@ -188,7 +188,7 @@ public class ContentRootImpl extends Impl {
   }
 
   public HttpRequest getReq() {
-    return tx.state().asRequest();
+    return tx.hdr().asRequest();
   }
 
   public void setReq(HttpRequest req) {

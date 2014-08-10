@@ -64,7 +64,7 @@ public interface CouchService<E> {
       JsonSendActionBuilder actionBuilder =
           new JsonSend().opaque(db + "/" + id + "/" + fileName + "?rev=" + rev).validjson(content)
               .to();
-      actionBuilder.state().headerString(HttpHeaders.Content$2dType, contentType);
+      actionBuilder.hdr().headerString(HttpHeaders.Content$2dType, contentType);
       CouchTx tx = actionBuilder.fire().tx();
       rev = tx.rev();
       return tx;
@@ -77,7 +77,7 @@ public interface CouchService<E> {
           JsonSendActionBuilder actionBuilder =
               new JsonSend().opaque(db + "/" + id + "/" + fileName + "?rev=" + rev).validjson(
                   getBuffer().toString()).to();
-          actionBuilder.state().headerString(HttpHeaders.Content$2dType, contentType);
+          actionBuilder.hdr().headerString(HttpHeaders.Content$2dType, contentType);
           CouchTx tx = actionBuilder.fire().tx();
           if (!tx.ok()) {
             throw new IOException(tx.error());
@@ -91,7 +91,7 @@ public interface CouchService<E> {
       JsonSendActionBuilder actionBuilder =
           new JsonSend().opaque(db + "/" + id + "/" + fileName + "?rev=" + rev).validjson(content)
               .to();
-      actionBuilder.state().headerString(HttpHeaders.Content$2dType, contentType);
+      actionBuilder.hdr().headerString(HttpHeaders.Content$2dType, contentType);
       CouchTx tx = actionBuilder.fire().tx();
       rev = tx.rev();
       return tx;
@@ -104,7 +104,7 @@ public interface CouchService<E> {
           JsonSendActionBuilder actionBuilder =
               new JsonSend().opaque(db + "/" + id + "/" + fileName + "?rev=" + rev).validjson(
                   getBuffer().toString()).to();
-          actionBuilder.state().headerString(HttpHeaders.Content$2dType, contentType);
+          actionBuilder.hdr().headerString(HttpHeaders.Content$2dType, contentType);
           CouchTx tx = actionBuilder.fire().tx();
           if (!tx.ok()) {
             throw new IOException(tx.error());

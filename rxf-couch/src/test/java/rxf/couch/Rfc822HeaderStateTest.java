@@ -91,7 +91,7 @@ public class Rfc822HeaderStateTest {
 
   @Test
   public void testStateTransition() {
-    Rfc822HeaderState state = Tx.current().state();/*
+    Rfc822HeaderState state = Tx.current().hdr();/*
                                                     * System.err.println( state.as(String.class));
                                                     */
     Rfc822HeaderState.HttpRequest httpRequest = state.$req();

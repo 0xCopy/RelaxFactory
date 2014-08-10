@@ -61,7 +61,7 @@ public class DocFetchProxyImpl extends ContentRootImpl {
             link += "index.html";
           }
           // sets up the threadlocals for CouchMetaDriver calls
-          new DocFetch().db("").docId(link).to().state().$res().addHeaderInterest(Content$2dType);
+          new DocFetch().db("").docId(link).to().hdr().$res().addHeaderInterest(Content$2dType);
 
           RpcHelper.EXECUTOR_SERVICE.submit(new Runnable() {
             // static calls happen in outer thread.
@@ -72,7 +72,7 @@ public class DocFetchProxyImpl extends ContentRootImpl {
               DbKeysBuilder.currentKeys.set(dbKeysBuilder);
               Tx.current(tx);
               try {
-                HttpResponse innerResponse = tx.state().$res();
+                HttpResponse innerResponse = tx.hdr().$res();
                 // getReq() is never sent in any part to couchdb here.
                 CouchMetaDriver.DocFetch.visit(dbKeysBuilder, tx);
 

@@ -71,7 +71,7 @@ public class Tx implements WantsZeroCopy {
       tx = current((Tx) attachment);
     } else {
       tx = current().clear();
-      Rfc822HeaderState rfc822HeaderState = tx.state().addHeaderInterest(interest);
+      Rfc822HeaderState rfc822HeaderState = tx.hdr().addHeaderInterest(interest);
     }
     entryPoint.attach(tx);
     tx.key(entryPoint);
@@ -169,7 +169,7 @@ public class Tx implements WantsZeroCopy {
    */
   public boolean readHttpHeaders(HttpHeaders... headerInterest) throws Exception {
     assert null != key();
-    Rfc822HeaderState state = state();
+    Rfc822HeaderState state = hdr();
     if (headerInterest.length > 0)
       state.addHeaderInterest(headerInterest);
     ByteBuffer byteBuffer = state.headerBuf();
@@ -265,7 +265,7 @@ public class Tx implements WantsZeroCopy {
     throw new AbstractMethodError();
   }
 
-  public Rfc822HeaderState state() {
+  public Rfc822HeaderState hdr() {
     Rfc822HeaderState ret = headers.get();
     if (null == ret)
       headers.set(ret = new Rfc822HeaderState(HEADER_INTEREST));
@@ -284,7 +284,7 @@ public class Tx implements WantsZeroCopy {
   public Tx key(SelectionKey key, HttpHeaders... headerInterest) {
     this.key = key;
     if (headerInterest.length > 0)
-      state().addHeaderInterest(headerInterest);
+      hdr().addHeaderInterest(headerInterest);
     return this;
   }
 

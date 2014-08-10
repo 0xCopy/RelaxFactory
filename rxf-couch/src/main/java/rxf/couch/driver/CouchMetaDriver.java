@@ -87,7 +87,7 @@ public enum CouchMetaDriver {
 
         String db = (String) dbKeysBuilder.get(etype.db);
 
-        ByteBuffer header = (ByteBuffer) tx.state().$req().method(PUT).path("/" + db)
+        ByteBuffer header = (ByteBuffer) tx.hdr().$req().method(PUT).path("/" + db)
         // .headerString(Content$2dLength, "0")
             .asByteBuffer();
 
@@ -96,7 +96,7 @@ public enum CouchMetaDriver {
           assert !header.hasRemaining();
           header.clear();
           final HttpResponse response =
-              tx.state().$req().headerInterest(STATIC_JSON_SEND_HEADERS).$res();
+              tx.hdr().$req().headerInterest(STATIC_JSON_SEND_HEADERS).$res();
 
           toRead(key, new Helper.F() {
 
@@ -184,7 +184,7 @@ public enum CouchMetaDriver {
       final SocketChannel channel = createCouchConnection();
 
       enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
-        ByteBuffer header = (ByteBuffer) tx.state().$req().method(DELETE).pathResCode(
+        ByteBuffer header = (ByteBuffer) tx.hdr().$req().method(DELETE).pathResCode(
             "/" + dbKeysBuilder.get(db)).asByteBuffer();
         public HttpResponse response;
 
@@ -192,7 +192,7 @@ public enum CouchMetaDriver {
           int write = channel.write(header);
           assert !header.hasRemaining();
           header.clear();
-          response = tx.state().$req().headerInterest(STATIC_JSON_SEND_HEADERS).$res();
+          response = tx.hdr().$req().headerInterest(STATIC_JSON_SEND_HEADERS).$res();
 
           key.interestOps(OP_READ);/* WRITE-READ implicit turnaround in 1xio won't need .selector().wakeup() */
         }
@@ -284,7 +284,7 @@ public enum CouchMetaDriver {
 
         String db = (String) dbKeysBuilder.get(etype.db);
         String id = (String) dbKeysBuilder.get(docId);
-        HttpRequest request = tx.state().$req();
+        HttpRequest request = tx.hdr().$req();
         ByteBuffer header = (ByteBuffer) request.path(
             scrub("/" + db + (null == id ? "" : "/" + id))).method(GET).addHeaderInterest(
             STATIC_CONTENT_LENGTH_ARR).asByteBuffer();
@@ -398,7 +398,7 @@ public enum CouchMetaDriver {
 
         String db = (String) dbKeysBuilder.get(etype.db);
         String id = (String) dbKeysBuilder.get(docId);
-        HttpRequest request = tx.state().$req();
+        HttpRequest request = tx.hdr().$req();
         final String scrub = scrub("/" + db + (null != id ? "/" + id : ""));
         ByteBuffer header = (ByteBuffer) request.path(scrub).method(HEAD).asByteBuffer();
         public HttpResponse response;
@@ -483,7 +483,7 @@ public enum CouchMetaDriver {
       String sb =
           scrub('/' + db + (null == docId ? "" : '/' + docId + (null == rev ? "" : "?rev=" + rev)));
       dbKeysBuilder.put(opaque, sb);
-      tx.state().$req().headerString(Content$2dType, MimeType.json.contentType);
+      tx.hdr().$req().headerString(Content$2dType, MimeType.json.contentType);
       JsonSend.visit(dbKeysBuilder, tx);
     }
   },
@@ -501,7 +501,7 @@ public enum CouchMetaDriver {
         // *******************************
         // *******************************
 
-        final HttpRequest request = tx.state().$req();
+        final HttpRequest request = tx.hdr().$req();
         public LinkedList<ByteBuffer> list;
         private HttpResponse response;
         ByteBuffer header = (ByteBuffer) request.path(
@@ -627,7 +627,7 @@ public enum CouchMetaDriver {
 
         public void onWrite(SelectionKey key) throws Exception {
 
-          HttpRequest request = tx.state().$req();
+          HttpRequest request = tx.hdr().$req();
 
           ByteBuffer header =
               (ByteBuffer) request.method(GET)
@@ -864,7 +864,7 @@ public enum CouchMetaDriver {
           1 == slashCounter
               || !(lastSlashIndex < opaque.lastIndexOf('?') && lastSlashIndex != opaque
                   .indexOf('/')) ? POST : PUT;
-      HttpRequest request = tx.state().$req();
+      HttpRequest request = tx.hdr().$req();
       if (null == request.headerString(Content$2dType)) {
         request.headerString(Content$2dType, MimeType.json.contentType);
       }
@@ -874,7 +874,7 @@ public enum CouchMetaDriver {
                   MimeType.json.contentType).asByteBuffer();
       if (RpcHelper.DEBUG_SENDJSON) {
         System.err.println(ProtocolMethodDispatch.deepToString(opaque, validjson,
-            StandardCharsets.UTF_8.decode(header.duplicate()), tx.state()));
+            StandardCharsets.UTF_8.decode(header.duplicate()), tx.hdr()));
       }
       final SocketChannel channel = createCouchConnection();
       final String finalOpaque = opaque;
@@ -886,7 +886,7 @@ public enum CouchMetaDriver {
         // *******************************
         // *******************************
 
-        ByteBuffer header = (ByteBuffer) tx.state().$req().path(finalOpaque).headerInterest(
+        ByteBuffer header = (ByteBuffer) tx.hdr().$req().path(finalOpaque).headerInterest(
             STATIC_JSON_SEND_HEADERS).headerString(Content$2dLength,
             String.valueOf(outbound.length)).headerString(Accept, MimeType.json.contentType).as(
             ByteBuffer.class);
@@ -899,7 +899,7 @@ public enum CouchMetaDriver {
           int write = channel.write(tx.payload());
           if (!tx.payload().hasRemaining()) {
             header.clear();
-            final HttpResponse response = tx.state().$res();
+            final HttpResponse response = tx.hdr().$res();
             tx.payload(null);
             toRead(key, new Helper.F() {
 
@@ -987,7 +987,7 @@ public enum CouchMetaDriver {
   BlobSend {
     public void visit(DbKeysBuilder dbKeysBuilder, final Tx tx) throws Exception {
       final Phaser phaser = new Phaser(2);
-      final HttpRequest request = tx.state().$req();
+      final HttpRequest request = tx.hdr().$req();
       final ByteBuffer payload = (ByteBuffer) dbKeysBuilder.<ByteBuffer> get(etype.blob).rewind();
       String x = null;
 

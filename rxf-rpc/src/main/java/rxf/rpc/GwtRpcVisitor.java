@@ -122,7 +122,7 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
       }
       tx.payload(UTF_8.encode(payload));
 
-      tx.state().$res().status(HttpStatus.$200).headerString(HttpHeaders.Content$2dType,
+      tx.hdr().$res().status(HttpStatus.$200).headerString(HttpHeaders.Content$2dType,
           MimeType.json.contentType).headerString(HttpHeaders.Content$2dLength,
           String.valueOf(UTF_8.encode(payload).limit()));
 
@@ -131,7 +131,7 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
         public void apply(SelectionKey key) throws Exception {
           key.interestOps(SelectionKey.OP_READ).attach(null);
         }
-      }, (ByteBuffer) tx.state().asResponse().asByteBuffer().rewind(), (ByteBuffer) tx.payload()
+      }, (ByteBuffer) tx.hdr().asResponse().asByteBuffer().rewind(), (ByteBuffer) tx.payload()
           .rewind());
 
     }
