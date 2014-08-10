@@ -36,6 +36,11 @@ import static one.xio.AsioVisitor.Helper.*;
 public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
 
   private final Object delegate;
+
+  public GwtRpcVisitor() {tx=Tx.current();
+    delegate = null;
+  }
+
   private Tx tx;
 
   public GwtRpcVisitor(Object delegate, Tx tx) {
