@@ -165,10 +165,13 @@ public class Tx implements WantsZeroCopy {
    *         {@link #decodeChunkedEncoding(java.util.ArrayList, F)} is an optional for the client caller, it may be
    *         desirable to get a chunk at a time.
    * @throws IOException
+   * @param headerInterest
    */
-  public boolean readHttpHeaders() throws Exception {
+  public boolean readHttpHeaders(HttpHeaders... headerInterest) throws Exception {
     assert null != key();
     Rfc822HeaderState state = state();
+    if (headerInterest.length > 0)
+      state.addHeaderInterest(headerInterest);
     ByteBuffer byteBuffer = state.headerBuf();
     if (null == byteBuffer)
       state.headerBuf(byteBuffer = ByteBuffer.allocateDirect(4 << 10));
@@ -278,8 +281,10 @@ public class Tx implements WantsZeroCopy {
     return this;
   }
 
-  public Tx key(SelectionKey key) {
+  public Tx key(SelectionKey key, HttpHeaders... headerInterest) {
     this.key = key;
+    if (headerInterest.length > 0)
+      state().addHeaderInterest(headerInterest);
     return this;
   }
 
