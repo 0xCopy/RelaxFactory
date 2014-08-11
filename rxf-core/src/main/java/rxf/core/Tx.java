@@ -423,7 +423,6 @@ public class Tx implements WantsZeroCopy {
       chunk = ByteBuffer.allocateDirect(needs);
       std.push(payload, chunk);
       bb(payload, post.compact, debug);
-
       return chunk;
     }
     return NIL;
