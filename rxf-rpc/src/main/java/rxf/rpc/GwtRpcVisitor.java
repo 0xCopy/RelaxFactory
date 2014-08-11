@@ -121,7 +121,7 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
       finishWrite(tx.key(), new F() {
         @Override
         public void apply(SelectionKey key) throws Exception {
-          key.interestOps(SelectionKey.OP_READ).attach(null);
+          bye(key);
         }
       }, (ByteBuffer) tx.hdr().asResponse().asByteBuffer().rewind(), (ByteBuffer) tx.payload()
           .rewind());

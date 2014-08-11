@@ -327,6 +327,7 @@ public class Tx implements WantsZeroCopy {
    * @param success
    */
   public void finishPayload(final F success) {
+    log(success, "finishPaylaod");
     if (chunked()) {
       final ArrayList<ByteBuffer> res = new ArrayList<>();
       try {
@@ -353,6 +354,7 @@ public class Tx implements WantsZeroCopy {
         try {
           final ByteBuffer chunk = getNextChunk();
           if (NIL == chunk) {
+            log(key, "decodeChunkSuccess");
             success.apply(key());
             return;
           }
