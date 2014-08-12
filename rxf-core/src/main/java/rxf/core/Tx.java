@@ -16,6 +16,7 @@ import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicReference;
@@ -52,7 +53,7 @@ public class Tx implements WantsZeroCopy {
    * one.
    * <p/>
    * for TOP level default visitor root only!
-   * 
+   *
    * @param entryPoint selectionKey which is not part of a visitor presently
    * @param interest
    * @return a tx
@@ -85,7 +86,7 @@ public class Tx implements WantsZeroCopy {
     SelectionKey key = key();
     Object attachment = key.attachment();
     if (!(attachment instanceof Object[])) {
-      attachment = new Object[] {attachment};
+      attachment = new Object[]{attachment};
     }
     Object[] objects = (Object[]) attachment;
     switch (objects.length) {
@@ -160,12 +161,12 @@ public class Tx implements WantsZeroCopy {
    * <p/>
    * if chunked encoding is indicated, the first chunk length is parsed and the payload is sized to the indicated chunk
    * size,
-   * 
-   * @return true if sane. chunked()==true when the response is chunked.
-   *         {@link #decodeChunkedEncoding(java.util.ArrayList, F)} is an optional for the client caller, it may be
-   *         desirable to get a chunk at a time.
-   * @throws IOException
+   *
    * @param headerInterest
+   * @return true if sane. chunked()==true when the response is chunked.
+   * {@link #decodeChunkedEncoding(java.util.ArrayList, F)} is an optional for the client caller, it may be
+   * desirable to get a chunk at a time.
+   * @throws IOException
    */
   public boolean readHttpHeaders(HttpHeaders... headerInterest) throws Exception {
     assert null != key();
@@ -228,7 +229,7 @@ public class Tx implements WantsZeroCopy {
 
   /**
    * methods like HEAD may contain Content-Length and we dont want to attempt to fill the cursor with that.
-   * 
+   *
    * @param t
    */
   public Tx noPayload(boolean t) {
@@ -238,7 +239,7 @@ public class Tx implements WantsZeroCopy {
 
   /**
    * signals that this is transfer encoding chunked.
-   * 
+   *
    * @param b
    */
   public void chunked(boolean b) {
@@ -323,13 +324,13 @@ public class Tx implements WantsZeroCopy {
 
   /**
    * make payload integral regardless of chunked or content-length
-   * 
+   *
    * @param success
    */
   public void finishPayload(final F success) {
     log(success, "finishPaylaod");
     if (chunked()) {
-      final ArrayList<ByteBuffer> res = new ArrayList<>();
+      final List<ByteBuffer> res = new ArrayList<>();
       try {
         payload().compact();
         decodeChunkedEncoding(res, new F() {
@@ -347,16 +348,16 @@ public class Tx implements WantsZeroCopy {
       finishRead(key(), payload(), success);
   }
 
-  public void decodeChunkedEncoding(final ArrayList<ByteBuffer> res, final F success) {
+  public void decodeChunkedEncoding(final List<ByteBuffer> res, final F success) {
     assert key() != null;
     try {
       while (true)
         try {
           final ByteBuffer chunk = getNextChunk();
           if (NIL == chunk) {
-            log(key, "decodeChunkSuccess");
+            log(key, "decodeChunkSuccess", success.toString());
             success.apply(key());
-            return;
+            break;
           }
           F advance = new F() {
             @Override
@@ -370,7 +371,7 @@ public class Tx implements WantsZeroCopy {
             continue;
           }
           finishRead(key(), chunk, advance);
-          return;
+          break;
         } catch (BufferUnderflowException e) {
 
           /**
@@ -383,13 +384,10 @@ public class Tx implements WantsZeroCopy {
             @Override
             public void apply(SelectionKey key) throws Exception {
               int read = read(key, payload().compact());
-              if (read == -1) {
-                key.cancel();
+              if (-1 == read) {
+                bye(key);
               } else {
                 /* assert null != on(payload, debug); */
-                if (read <= 0) {
-                  return;
-                }
                 park(key, new F() {
                   @Override
                   public void apply(SelectionKey key) throws Exception {
@@ -399,7 +397,7 @@ public class Tx implements WantsZeroCopy {
               }
             }
           });
-          return;
+          break;
         }
     } catch (Exception e) {
       e.printStackTrace();
