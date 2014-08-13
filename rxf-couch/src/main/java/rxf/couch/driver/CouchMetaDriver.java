@@ -116,19 +116,16 @@ public enum CouchMetaDriver {
                     response.headerBuf())) {
                   tx.payload((ByteBuffer) flip.slice());
                   header = null;
-
                   if (RpcHelper.DEBUG_SENDJSON) {
                     System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(),
                         response, StandardCharsets.UTF_8.decode((ByteBuffer) tx.payload()
                             .duplicate().rewind())));
                   }
-
                   HttpStatus httpStatus = response.statusEnum();
                   switch (httpStatus) {
                     case $200:
                     case $201:
                       int remaining = Integer.parseInt(response.headerString(Content$2dLength));
-
                       if (remaining == tx.payload().remaining()) {
                         deliver();
                       } else {
