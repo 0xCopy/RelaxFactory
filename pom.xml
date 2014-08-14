@@ -133,7 +133,7 @@
             <dependency>
                 <groupId>1xio</groupId>
                 <artifactId>1xio</artifactId>
-                <version>2.0.1</version>
+                <version>2.0</version>
             </dependency>
             <dependency>
                 <groupId>com.google.gwt</groupId>

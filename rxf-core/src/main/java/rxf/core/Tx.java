@@ -5,11 +5,18 @@ import bbcursive.std;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.FluentIterable;
+import com.google.common.io.CharStreams;
 import one.xio.AsioVisitor.Helper;
 import one.xio.AsioVisitor.Helper.*;
 import one.xio.HttpHeaders;
+import rxf.core.Rfc822HeaderState.HttpRequest;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.Buffer;
 import java.nio.BufferUnderflowException;
@@ -53,7 +60,7 @@ public class Tx implements WantsZeroCopy {
    * one.
    * <p/>
    * for TOP level default visitor root only!
-   *
+   * 
    * @param entryPoint selectionKey which is not part of a visitor presently
    * @param interest
    * @return a tx
@@ -86,7 +93,7 @@ public class Tx implements WantsZeroCopy {
     SelectionKey key = key();
     Object attachment = key.attachment();
     if (!(attachment instanceof Object[])) {
-      attachment = new Object[]{attachment};
+      attachment = new Object[] {attachment};
     }
     Object[] objects = (Object[]) attachment;
     switch (objects.length) {
@@ -161,11 +168,11 @@ public class Tx implements WantsZeroCopy {
    * <p/>
    * if chunked encoding is indicated, the first chunk length is parsed and the payload is sized to the indicated chunk
    * size,
-   *
+   * 
    * @param headerInterest
    * @return true if sane. chunked()==true when the response is chunked.
-   * {@link #decodeChunkedEncoding(java.util.ArrayList, F)} is an optional for the client caller, it may be
-   * desirable to get a chunk at a time.
+   *         {@link #decodeChunkedEncoding(java.util.List, one.xio.AsioVisitor.Helper.F)} is an optional for the client
+   *         caller, it may be desirable to get a chunk at a time.
    * @throws IOException
    */
   public boolean readHttpHeaders(HttpHeaders... headerInterest) throws Exception {
@@ -229,7 +236,7 @@ public class Tx implements WantsZeroCopy {
 
   /**
    * methods like HEAD may contain Content-Length and we dont want to attempt to fill the cursor with that.
-   *
+   * 
    * @param t
    */
   public Tx noPayload(boolean t) {
@@ -239,7 +246,7 @@ public class Tx implements WantsZeroCopy {
 
   /**
    * signals that this is transfer encoding chunked.
-   *
+   * 
    * @param b
    */
   public void chunked(boolean b) {
@@ -324,7 +331,7 @@ public class Tx implements WantsZeroCopy {
 
   /**
    * make payload integral regardless of chunked or content-length
-   *
+   * 
    * @param success
    */
   public void finishPayload(final F success) {
@@ -431,5 +438,79 @@ public class Tx implements WantsZeroCopy {
   @Override
   public ByteBuffer asByteBuffer() {
     return payload();
+  }
+
+  public static void fetchGetContent(HttpRequest httpRequest, URL url, F onSuccess,
+      AtomicReference<String> payload) throws Exception {
+    final HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+    try {
+      FluentIterable.from(httpRequest.headerStrings().entrySet()).transform(
+          new Function<Entry<String, String>, Void>() {
+            @Nullable
+            @Override
+            public Void apply(Entry<String, String> input) {
+              urlConnection.setRequestProperty(input.getKey(), input.getValue());
+              return null;
+            }
+          });
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    urlConnection.setRequestMethod(httpRequest.method());
+
+    Object content = urlConnection.getContent();
+    String r = null;
+    if (content instanceof InputStream) {
+      InputStream inputStream = (InputStream) content;
+      r = CharStreams.toString(new InputStreamReader(inputStream));
+    }
+    if (content instanceof String) {
+      r = (String) content;
+
+    }
+
+    log(r, "getGetContent", String.valueOf(url));
+    payload.set(r);
+    onSuccess.apply(null);
+
+  }
+
+  public static void fetchPostContent(ByteBuffer reqPayload, HttpRequest httpRequest, URL url,
+      F onSuccess, AtomicReference<String> payload) throws Exception {
+    final HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+    try {
+      FluentIterable.from(httpRequest.headerStrings().entrySet()).transform(
+          new Function<Entry<String, String>, Void>() {
+            @Nullable
+            @Override
+            public Void apply(Entry<String, String> input) {
+              urlConnection.setRequestProperty(input.getKey(), input.getValue());
+              return null;
+            }
+          });
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    urlConnection.setRequestMethod(httpRequest.method());
+    urlConnection.setDoOutput(true);
+    urlConnection.getOutputStream().write(
+        push(reqPayload, ByteBuffer.wrap(new byte[reqPayload.limit()])).array());
+    Object content = urlConnection.getContent();
+    String r = null;
+    if (content instanceof InputStream) {
+      InputStream inputStream = (InputStream) content;
+      r = CharStreams.toString(new InputStreamReader(inputStream));
+    }
+    if (content instanceof String) {
+      r = (String) content;
+
+    }
+    log(r, "fetchPostContent", String.valueOf(url));
+    r = str(content);
+    payload.set(r);
+    onSuccess.apply(null);
+
   }
 }
