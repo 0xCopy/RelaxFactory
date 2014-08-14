@@ -87,7 +87,7 @@ public class SslTest {
       final SocketChannel socketChannel = SocketChannel.open();
       socketChannel.configureBlocking(false);
       socketChannel.connect(new InetSocketAddress(HTTP_SITE, 443));
-      SingleThreadSingletonServer.enqueue(socketChannel, SelectionKey.OP_CONNECT, toConnect(new F() {
+      enqueue(socketChannel, SelectionKey.OP_CONNECT, toConnect(new F() {
 
         private String host;
         private int port;
@@ -148,7 +148,7 @@ public class SslTest {
                 toRead(key, new F() {
 
                   public void apply(SelectionKey key) throws Exception {
-                    tx = new Tx();
+                    tx = new Tx(key);
                     boolean b = tx.readHttpHeaders();
                     assert b;
 
