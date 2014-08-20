@@ -11,7 +11,6 @@ import one.xio.AsioVisitor.Helper.*;
 import one.xio.HttpHeaders;
 import rxf.core.Rfc822HeaderState.HttpRequest;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -351,8 +350,9 @@ public class Tx implements WantsZeroCopy {
       } catch (Exception e) {
         key().cancel();
       }
-    } else
+    } else {
       finishRead(key(), payload(), success);
+    }
   }
 
   public void decodeChunkedEncoding(final List<ByteBuffer> res, final F success) {
@@ -406,8 +406,8 @@ public class Tx implements WantsZeroCopy {
           });
           break;
         }
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (Throwable e) {
+      // e.printStackTrace();
     }
   }
 
@@ -440,64 +440,40 @@ public class Tx implements WantsZeroCopy {
     return payload();
   }
 
-  public static void fetchGetContent(HttpRequest httpRequest, URL url, F onSuccess,
-      AtomicReference<String> payload) throws Exception {
+  public static void fetchGetContent(URL url, HttpRequest httpRequest,
+      AtomicReference<String> payload, F onSuccess) throws Exception {
     final HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+
     try {
-      FluentIterable.from(httpRequest.headerStrings().entrySet()).transform(
-          new Function<Entry<String, String>, Void>() {
-            @Nullable
-            @Override
-            public Void apply(Entry<String, String> input) {
-              urlConnection.setRequestProperty(input.getKey(), input.getValue());
-              return null;
-            }
-          });
+
+      urlConnection.setRequestMethod("GET");
+
+      for (Entry<String, String> stringStringEntry : httpRequest.headerStrings().entrySet()) {
+        urlConnection.setRequestProperty(stringStringEntry.getKey(), stringStringEntry.getValue());
+      }
     } catch (Exception e) {
       e.printStackTrace();
     }
 
-    urlConnection.setRequestMethod(httpRequest.method());
 
-    Object content = urlConnection.getContent();
-    String r = null;
-    if (content instanceof InputStream) {
-      InputStream inputStream = (InputStream) content;
-      r = CharStreams.toString(new InputStreamReader(inputStream));
+    Object content = null;
+    try {
+      log(urlConnection.getRequestProperties().toString());
+      content = urlConnection.getContent();
+    } catch (IOException e) {
+      String s = CharStreams.toString(new InputStreamReader(urlConnection.getErrorStream()));
+      log(s,"!!!! fetchGetContent failure",url.toURI().toASCIIString());
+      log(httpRequest.asRequestHeaderString(),url.toURI().toASCIIString());
     }
-    if (content instanceof String) {
-      r = (String) content;
+    String r = stringFromContent(content);
 
-    }
-
-    log(r, "getGetContent", String.valueOf(url));
+    log(r, "fetchGetContent", String.valueOf(url));
     payload.set(r);
     onSuccess.apply(null);
 
   }
 
-  public static void fetchPostContent(ByteBuffer reqPayload, HttpRequest httpRequest, URL url,
-      F onSuccess, AtomicReference<String> payload) throws Exception {
-    final HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-    try {
-      FluentIterable.from(httpRequest.headerStrings().entrySet()).transform(
-          new Function<Entry<String, String>, Void>() {
-            @Nullable
-            @Override
-            public Void apply(Entry<String, String> input) {
-              urlConnection.setRequestProperty(input.getKey(), input.getValue());
-              return null;
-            }
-          });
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-
-    urlConnection.setRequestMethod(httpRequest.method());
-    urlConnection.setDoOutput(true);
-    urlConnection.getOutputStream().write(
-        push(reqPayload, ByteBuffer.wrap(new byte[reqPayload.limit()])).array());
-    Object content = urlConnection.getContent();
+  private static String stringFromContent(Object content) throws IOException {
     String r = null;
     if (content instanceof InputStream) {
       InputStream inputStream = (InputStream) content;
@@ -507,8 +483,31 @@ public class Tx implements WantsZeroCopy {
       r = (String) content;
 
     }
+    return str(r);
+  }
+
+  public static void fetchPostContent(ByteBuffer reqPayload, HttpRequest httpRequest, URL url,
+      F onSuccess, AtomicReference<String> payload) throws Exception {
+    final HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+
+    try {
+
+      urlConnection.setRequestMethod("GET");
+
+      for (Entry<String, String> stringStringEntry : httpRequest.headerStrings().entrySet()) {
+        urlConnection.setRequestProperty(stringStringEntry.getKey(), stringStringEntry.getValue());
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    urlConnection.setRequestMethod("POST");
+    urlConnection.setDoOutput(true);
+    urlConnection.getOutputStream().write(
+        push(reqPayload, ByteBuffer.wrap(new byte[reqPayload.limit()])).array());
+    Object content = urlConnection.getContent();
+    String r = stringFromContent(content);
     log(r, "fetchPostContent", String.valueOf(url));
-    r = str(content);
     payload.set(r);
     onSuccess.apply(null);
 
