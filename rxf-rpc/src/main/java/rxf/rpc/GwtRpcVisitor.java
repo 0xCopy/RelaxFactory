@@ -1,6 +1,7 @@
 package rxf.rpc;
 
 import bbcursive.Cursive;
+import bbcursive.Cursive.pre;
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.RpcTokenException;
 import com.google.gwt.user.client.rpc.SerializationException;
@@ -20,9 +21,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.file.Paths;
 import java.text.ParseException;
 
-import static bbcursive.std.log;
-import static bbcursive.std.str;
-import static java.nio.charset.StandardCharsets.UTF_8;
+import static bbcursive.std.*;
 import static one.xio.AsioVisitor.Helper.*;
 
 // import static bbcursive.Cursive.std.asString;
@@ -46,7 +45,6 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
 
   public GwtRpcVisitor(Object delegate, Tx tx) {
     this.tx = tx;
-
     if (delegate == null) {
       delegate = this;
     }
@@ -96,7 +94,7 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
 
       Class<?> aClass = delegate.getClass();
       log(aClass, "rpc for ");
-      String payload = str(tx.payload(), Cursive.pre.flip);
+      String payload = str(tx.payload(), pre.flip);
       log(payload, "rpc payload ");
       RPCRequest rpcRequest = RPC.decodeRequest((payload), aClass, GwtRpcVisitor.this);
       try {
@@ -105,6 +103,9 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
             rpcRequest.getParameters(), //
             rpcRequest.getSerializationPolicy(), //
             rpcRequest.getFlags());//
+
+       log(payload,"RPC might've worked....");
+
       } catch (IncompatibleRemoteServiceException | SerializationException | RpcTokenException ex) {
         try {
           payload = RPC.encodeResponseForFailure(null, ex);
@@ -112,11 +113,13 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
           e.printStackTrace();
         }
       }
-      tx.payload(UTF_8.encode(payload));
+      ByteBuffer bb = bb(payload, Cursive.pre.debug);
+      tx.payload(bb);
 
-      tx.hdr().$res().status(HttpStatus.$200).headerString(HttpHeaders.Content$2dType,
-          "text/x-gwt-rpc; charset=UTF-8").headerString(HttpHeaders.Content$2dLength,
-          String.valueOf(UTF_8.encode(payload).limit()));
+      tx.hdr(). asResponse() .status(HttpStatus.$200).headerString(HttpHeaders.Content$2dType,
+          "text/x-gwt-rpc; charset=UTF-8")
+          .headerString(HttpHeaders.Content$2dLength,
+          ""+((tx.payload()).limit()));
 
       finishWrite(tx.key(), new F() {
         @Override
