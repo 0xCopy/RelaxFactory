@@ -455,15 +455,14 @@ public class Tx implements WantsZeroCopy {
       e.printStackTrace();
     }
 
-
     Object content = null;
     try {
       log(urlConnection.getRequestProperties().toString());
       content = urlConnection.getContent();
     } catch (IOException e) {
       String s = CharStreams.toString(new InputStreamReader(urlConnection.getErrorStream()));
-      log(s,"!!!! fetchGetContent failure",url.toURI().toASCIIString());
-      log(httpRequest.asRequestHeaderString(),url.toURI().toASCIIString());
+      log(s, "!!!! fetchGetContent failure", url.toURI().toASCIIString());
+      log(httpRequest.asRequestHeaderString(), url.toURI().toASCIIString());
     }
     String r = stringFromContent(content);
 

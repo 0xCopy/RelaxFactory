@@ -104,7 +104,7 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
             rpcRequest.getSerializationPolicy(), //
             rpcRequest.getFlags());//
 
-       log(payload,"RPC might've worked....");
+        log(payload, "RPC might've worked....");
 
       } catch (IncompatibleRemoteServiceException | SerializationException | RpcTokenException ex) {
         try {
@@ -116,10 +116,9 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
       ByteBuffer bb = bb(payload, Cursive.pre.debug);
       tx.payload(bb);
 
-      tx.hdr(). asResponse() .status(HttpStatus.$200).headerString(HttpHeaders.Content$2dType,
-          "text/x-gwt-rpc; charset=UTF-8")
-          .headerString(HttpHeaders.Content$2dLength,
-          ""+((tx.payload()).limit()));
+      tx.hdr().asResponse().status(HttpStatus.$200).headerString(HttpHeaders.Content$2dType,
+          "text/x-gwt-rpc; charset=UTF-8").headerString(HttpHeaders.Content$2dLength,
+          "" + ((tx.payload()).limit()));
 
       finishWrite(tx.key(), new F() {
         @Override
