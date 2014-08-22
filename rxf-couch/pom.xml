@@ -5,7 +5,7 @@
     <artifactId>rxf-couch</artifactId>
     <parent>
         <groupId>rxf</groupId>
-        <version>0.9.9.3-ANYNPO</version>
+        <version>0.9.9.3.1</version>
         <artifactId>relaxfactory</artifactId>
     </parent>
     <packaging>jar</packaging>

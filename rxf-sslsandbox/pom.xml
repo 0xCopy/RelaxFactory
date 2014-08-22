@@ -7,7 +7,7 @@
     <parent>
         <groupId>rxf</groupId>
         <artifactId>relaxfactory</artifactId>
-        <version>0.9.9.3-ANYNPO</version>
+        <version>0.9.9.3.1</version>
     </parent>
 
 

@@ -212,7 +212,7 @@ public class CouchServiceTest {
     for (int i = 0; i < 10; i++) {
       CSFTest a = new CSFTest();
       a.brand = "-brand" + i;
-      a.model = "-model" + i;
+      a.model = "-depModel" + i;
       service.persist(a);
     }
 
@@ -233,7 +233,7 @@ public class CouchServiceTest {
     for (int i = 0; i < 10; i++) {
       CSFTest a = new CSFTest();
       a.brand = "-brand" + i;
-      a.model = "-model" + i;
+      a.model = "-depModel" + i;
       service.persist(a);
     }
 
@@ -249,7 +249,7 @@ public class CouchServiceTest {
     for (int i = 0; i < 10; i++) {
       CSFTest a = new CSFTest();
       a.brand = "-brand" + i;
-      a.model = "-model" + i;
+      a.model = "-depModel" + i;
       service.persist(a);
     }
 
@@ -301,7 +301,7 @@ public class CouchServiceTest {
     for (int i = 0; i < 10; i++) {
       CSFTest a = new CSFTest();
       a.brand = "-brand" + i;
-      a.model = "-model" + i;
+      a.model = "-depModel" + i;
       service.persist(a);
     }
 
@@ -318,7 +318,7 @@ public class CouchServiceTest {
     for (int i = 0; i < 10; i++) {
       CSFTest a = new CSFTest();
       a.brand = "-brand" + i;
-      a.model = "-model" + (i % 2);
+      a.model = "-depModel" + (i % 2);
       service.persist(a);
     }
 
@@ -339,7 +339,7 @@ public class CouchServiceTest {
     for (int i = 0; i < 10; i++) {
       CSFTest a = new CSFTest();
       a.brand = "-brand" + i;
-      a.model = "-model" + (i % 2);
+      a.model = "-depModel" + (i % 2);
       service.persist(a);
     }
 
@@ -355,7 +355,7 @@ public class CouchServiceTest {
     for (int i = 0; i < 10; i++) {
       CSFTest a = new CSFTest();
       a.brand = "-brand" + i;
-      a.model = "-model" + (i % 2);
+      a.model = "-depModel" + (i % 2);
       service.persist(a);
     }
 
@@ -376,7 +376,7 @@ public class CouchServiceTest {
     for (int i = 0; i < 10; i++) {
       CSFTest a = new CSFTest();
       a.brand = "-brand" + i;
-      a.model = "-model" + (i % 2);
+      a.model = "-depModel" + (i % 2);
       service.persist(a);
     }
 
@@ -394,7 +394,7 @@ public class CouchServiceTest {
     for (int i = 0; i < 10; i++) {
       CSFTest a = new CSFTest();
       a.brand = "-brand" + i;
-      a.model = "-model" + (i % 2);
+      a.model = "-depModel" + (i % 2);
       service.persist(a);
     }
 
@@ -412,7 +412,7 @@ public class CouchServiceTest {
     for (int i = 0; i < 10; i++) {
       CSFTest a = new CSFTest();
       a.brand = "-brand" + i;
-      a.model = "-model" + (i % 2);
+      a.model = "-depModel" + (i % 2);
       service.persist(a);
     }
 
@@ -430,7 +430,7 @@ public class CouchServiceTest {
     for (int i = 0; i < 10; i++) {
       CSFTest a = new CSFTest();
       a.brand = "-brand" + i;
-      a.model = "-model" + (i % 2);
+      a.model = "-depModel" + (i % 2);
       service.persist(a);
     }
 
@@ -537,31 +537,31 @@ public class CouchServiceTest {
   }
 
   public interface SlightlyComplexCouchService extends CouchService<CSFTest> {
-    @View(map = "function(doc){emit(doc.model.slice(0,4), doc);}")
+    @View(map = "function(doc){emit(doc.depModel.slice(0,4), doc);}")
     List<CSFTest> load(@Key String key, @Limit int limit, @Skip int skip);
 
-    @View(map = "function(doc){emit(doc.model, doc);}")
+    @View(map = "function(doc){emit(doc.depModel, doc);}")
     List<CSFTest> anyMatching(@Keys String... keys);
 
-    @View(map = "function(doc){emit({model:doc.model, brand:doc.brand}, doc);}")
+    @View(map = "function(doc){emit({depModel:doc.depModel, brand:doc.brand}, doc);}")
     List<CSFTest> matchingTuples(@Key CSFTest obj);
 
     @View(map = "function(doc){emit(doc._id,doc);}")
     List<CSFTest> all();
 
-    @View(map = "function(doc){emit(doc.model, doc.brand);}")
+    @View(map = "function(doc){emit(doc.depModel, doc.brand);}")
     List<String> brandsByModel(@Key String model);
 
     @View(map = "function(doc){emit(doc.brand, 1);}", reduce = "_count")
     int countMatchingBrand(@Key String brand);
 
-    @View(map = "function(doc){emit(doc.model, doc.brand.length)}", reduce = "_stats")
+    @View(map = "function(doc){emit(doc.depModel, doc.brand.length)}", reduce = "_stats")
     Stats statsOnBrandNameLengthByModel(@Key String model);
 
     @View(map = "function(doc){emit(doc.brand, doc);}")
     Map<String, CSFTest> getDocsByBrand(@Key String brand);
 
-    @View(map = "function(doc){emit(doc.brand, doc.model);}")
+    @View(map = "function(doc){emit(doc.brand, doc.depModel);}")
     Map<String, String> getBrandModelMap();
 
     @View(map = "function(doc) {emit(doc, doc._id);}")
