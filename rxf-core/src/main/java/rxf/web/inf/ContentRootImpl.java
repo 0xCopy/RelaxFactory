@@ -5,86 +5,62 @@ import one.xio.HttpStatus;
 import one.xio.MimeType;
 import rxf.core.CouchNamespace;
 import rxf.core.DateHeaderParser;
-import rxf.core.Rfc822HeaderState;
+import rxf.core.Errors;
 import rxf.core.Rfc822HeaderState.HttpRequest;
 import rxf.core.Rfc822HeaderState.HttpResponse;
+import rxf.core.Tx;
 import rxf.shared.CompressionTypes;
-import rxf.shared.PreRead;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel.MapMode;
 import java.nio.channels.SelectionKey;
-import java.nio.channels.SocketChannel;
+import java.nio.file.Paths;
 import java.util.regex.MatchResult;
 
-import static java.nio.channels.SelectionKey.*;
+import static java.nio.channels.SelectionKey.OP_READ;
+import static java.nio.channels.SelectionKey.OP_WRITE;
 import static one.xio.AsioVisitor.Helper.finishWrite;
 import static one.xio.AsioVisitor.Helper.write;
 import static one.xio.HttpHeaders.*;
 
 /**
- * User: jim Date: 6/4/12 Time: 1:42 AM
+ * 
+ * deprecated -- Tx.fetchHttpHeaders and Tx.finishRequest change things User: jim Date: 6/4/12 Time: 1:42 AM
  */
-@PreRead
-public class ContentRootImpl extends Impl implements ServiceHandoff {
+@OpInterest(value = SelectionKey.OP_WRITE)
+@Deprecated
+public class ContentRootImpl extends Impl {
 
   public static final String SLASHDOTSLASH = File.separator + "." + File.separator;
   public static final String DOUBLESEP = File.separator + File.separator;
   private static final boolean DEBUG_SENDJSON = false;
-  private String rootPath = CouchNamespace.COUCH_DEFAULT_FS_ROOT;
   private ByteBuffer cursor;
-  private SocketChannel channel;
-  private HttpRequest req;
   private MatchResult matchResults;
+  /**
+   * threadlocal from creation-time
+   */
+  Tx tx = Tx.current();
+  public static final boolean USE_INVERSE_CHAR = '/' == File.separatorChar;
+  public static final char INVERSE_CHAR = USE_INVERSE_CHAR ? '\\' : '/';
+
+  public ContentRootImpl() {
+    tx.state(tx.hdr().addHeaderInterest(Accept$2dEncoding, If$2dModified$2dSince,
+        If$2dUnmodified$2dSince).read((ByteBuffer) tx.hdr().headerBuf().rewind()).asRequest());
+    assert null != tx.payload() : "Tx.current() returns null, required non-null by ContentRootImpl";
+  }
 
   public static String fileScrub(String scrubMe) {
     char inverseChar = '/' == File.separatorChar ? '\\' : '/';
-    return null == scrubMe ? null : scrubMe.trim().replace(inverseChar, File.separatorChar)
-        .replace(DOUBLESEP, "" + File.separator).replace("..", ".");
-  }
-
-  public void onRead(SelectionKey key) throws Exception {
-    setChannel((SocketChannel) key.channel());
-    if (getCursor() == null) {
-      if (key.attachment() instanceof Object[]) {
-        Object[] ar = (Object[]) key.attachment();
-        for (Object o : ar) {
-          if (o instanceof ByteBuffer) {
-            setCursor((ByteBuffer) o);
-            continue;
-          }
-          if (o instanceof Rfc822HeaderState) {
-            setReq(((Rfc822HeaderState) o).$req());
-            continue;
-          }
-          if (o instanceof MatchResult) {
-            setMatchResults((MatchResult) o);
-            continue;
-          }
-        }
-      }
-      key.attach(this);
-    }
-    setCursor(null == getCursor() ? ByteBuffer.allocateDirect(4 << 10) : getCursor().hasRemaining()
-        ? getCursor() : ByteBuffer.allocateDirect(getCursor().capacity() << 1).put(
-            (ByteBuffer) getCursor().rewind()));
-    int read = Helper.read(getChannel(), getCursor());
-    if (read == -1)
-      key.cancel();
-    Buffer flip = getCursor().duplicate().flip();
-
-    setReq((HttpRequest) new Rfc822HeaderState().addHeaderInterest(Accept$2dEncoding,
-        If$2dModified$2dSince, If$2dUnmodified$2dSince).$req().read((ByteBuffer) flip));
-    if (!Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR, getReq()
-        .headerBuf())) {
-      return;
-    }
-    setCursor(((ByteBuffer) flip).slice());
-    key.interestOps(SelectionKey.OP_WRITE);
+    return null == scrubMe ? null : Paths.get(scrubMe.trim()).normalize()//
+        .toString()//
+        .replace(inverseChar, File.separatorChar)//
+        .replace(DOUBLESEP, "" + File.separator)//
+        .replace("..", ".");//
   }
 
   public void onWrite(SelectionKey key) throws Exception {
@@ -95,13 +71,14 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
       file = new File((finalFname + "/index.html"));
     }
     finalFname = (file.getCanonicalPath());
+    System.err.println("ContentRootImpl write entered: " + finalFname);
 
     java.util.Date fdate = new java.util.Date(file.lastModified());
 
     String since = getReq().headerString(If$2dModified$2dSince);
     String accepts = getReq().headerString(Accept$2dEncoding);
 
-    HttpResponse res = getReq().$res();
+    final HttpResponse res = getReq().$res();
     if (null != since) {
       java.util.Date cachedDate = DateHeaderParser.parseDate(since);
 
@@ -109,7 +86,7 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
 
         res.status(HttpStatus.$304).headerString(Connection, "close").headerString(Last$2dModified,
             DateHeaderParser.formatHttpHeaderDate(fdate));
-        int write = getChannel().write(res.asByteBuffer());
+        int write = write(key, res.asByteBuffer());
         key.interestOps(OP_READ).attach(null);
         return;
       }
@@ -123,7 +100,7 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
 
           res.status(HttpStatus.$412).headerString(Connection, "close").headerString(
               Last$2dModified, DateHeaderParser.formatHttpHeaderDate(fdate));
-          int write = getChannel().write(res.asByteBuffer());
+          int write = write(key, res.asByteBuffer());
           key.interestOps(OP_READ).attach(null);
           return;
         }
@@ -155,11 +132,7 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
       key.interestOps(OP_WRITE).attach(new Impl() {
 
         public void onWrite(SelectionKey key) throws Exception {
-
-          write(getChannel(), getReq().$res().status(HttpStatus.$404)
-              .headerString(Connection,"close")
-              .headerString(
-                  Content$2dLength, "0").asByteBuffer());
+          Errors.$404(key, res.asRequest().path());
           key.selector().wakeup();
           key.interestOps(OP_READ).attach(null);
         }
@@ -170,9 +143,6 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
   public void sendFile(final SelectionKey key, String finalFname, File file, java.util.Date fdate,
       HttpResponse res, String ceString) throws IOException {
     final RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
-    final long total = randomAccessFile.length();
-    final FileChannel fileChannel = randomAccessFile.getChannel();
-
     String substring = finalFname.substring(finalFname.lastIndexOf('.') + 1);
     MimeType mimeType = MimeType.valueOf(substring);
     long length = randomAccessFile.length();
@@ -185,6 +155,9 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
       res.headerString(Content$2dEncoding, ceString);
 
     try {
+      MappedByteBuffer map = randomAccessFile.getChannel().map(MapMode.READ_ONLY, 0, length);
+      Buffer fileContent = map.rewind();
+      Buffer headers = res.asByteBuffer().rewind();
       finishWrite(key, new Runnable() {
         @Override
         public void run() {
@@ -193,10 +166,13 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
           } catch (IOException e) {
             e.printStackTrace();
           }
-          key.interestOps(OP_READ).attach(null);
+          try {
+            key.channel().close();
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
         }
-      }, (ByteBuffer) res.asByteBuffer().rewind(), (ByteBuffer) randomAccessFile.getChannel().map(
-          FileChannel.MapMode.READ_ONLY, 0, length).rewind());
+      }, (ByteBuffer) headers, (ByteBuffer) fileContent);
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -211,35 +187,46 @@ public class ContentRootImpl extends Impl implements ServiceHandoff {
     this.cursor = cursor;
   }
 
-  public SocketChannel getChannel() {
-    return channel;
-  }
-
-  public void setChannel(SocketChannel channel) {
-    this.channel = channel;
-  }
-
   public HttpRequest getReq() {
-    return req;
+    return tx.hdr().asRequest();
   }
 
   public void setReq(HttpRequest req) {
-    this.req = req;
+    tx.state(req);
   }
 
   public String getRootPath() {
-    return rootPath;
+    return CouchNamespace.RXF_CONTENT_ROOT;
   }
 
   public void setRootPath(String rootPath) {
-    this.rootPath = rootPath;
+    throw new AbstractMethodError();
   }
 
   public void setMatchResults(MatchResult matchResults) {
     this.matchResults = matchResults;
   }
 
-  public MatchResult getMatchResults() {
+  /**
+   * todo: make cleaner. make this go away
+   * 
+   * @return
+   * @param key
+   */
+  public MatchResult getMatchResults(SelectionKey key) {
+    if (matchResults == null) {
+      Object attachment = key.attachment();
+      if (attachment instanceof Object[]) {
+        Object[] objects = (Object[]) attachment;
+        for (Object object : objects) {
+          if (object instanceof MatchResult) {
+            MatchResult matchResult1 = (MatchResult) object;
+            return matchResults = matchResult1;
+          }
+        }
+      }
+
+    }
     return matchResults;
   }
 }

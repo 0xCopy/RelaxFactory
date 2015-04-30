@@ -1,6 +1,6 @@
 package rxf.shared;
 
-public class CouchTx {
+public class CouchTx implements KouchTx {
   private Boolean ok;
   private String id;
   private String rev;
@@ -32,69 +32,79 @@ public class CouchTx {
     return reason;
   }
 
-  public CouchTx ok(Boolean ok) {
+  public KouchTx ok(Boolean ok) {
     this.ok = ok;
     return this;
   }
 
-  public CouchTx id(String id) {
+  public KouchTx id(String id) {
     this.id = id;
     return this;
   }
 
-  public CouchTx rev(String rev) {
+  public KouchTx rev(String rev) {
     this.rev = rev;
     return this;
   }
 
-  public CouchTx error(String error) {
+  public KouchTx error(String error) {
     this.error = error;
     return this;
   }
 
-  public CouchTx reason(String reason) {
+  public KouchTx reason(String reason) {
     this.reason = reason;
     return this;
   }
 
   // //////////////////////////// RF hideousity below
 
+  @Override
   public Boolean getOk() {
     return ok;
   }
 
+  @Override
   public void setOk(Boolean ok) {
     this.ok = ok;
   }
 
+  @Override
   public String getId() {
     return id;
   }
 
+  @Override
   public void setId(String id) {
     this.id = id;
   }
 
+  @Override
   public String getRev() {
     return rev;
   }
 
+  @Override
   public void setRev(String rev) {
     this.rev = rev;
   }
 
+  @Override
   public String getError() {
     return error;
   }
 
+  @Override
   public void setError(String error) {
     this.error = error;
   }
 
+  @Override
   public String getReason() {
     return reason;
   }
 
+  @Override
   public void setReason(String reason) {
     this.reason = reason;
   }

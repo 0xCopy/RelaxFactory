@@ -8,6 +8,7 @@ import rxf.couch.gen.CouchDriver.DocFetch;
 import rxf.couch.gen.CouchDriver.JsonSend;
 import rxf.couch.gen.CouchDriver.JsonSend.JsonSendActionBuilder;
 import rxf.shared.CouchTx;
+import rxf.shared.KouchTx;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -41,7 +42,7 @@ public interface CouchService<E> {
 
     String getAttachment(String fileName);
 
-    CouchTx deleteAttachment(String fileName);
+    KouchTx deleteAttachment(String fileName);
 
   }
 
@@ -63,7 +64,7 @@ public interface CouchService<E> {
       JsonSendActionBuilder actionBuilder =
           new JsonSend().opaque(db + "/" + id + "/" + fileName + "?rev=" + rev).validjson(content)
               .to();
-      actionBuilder.state().headerString(HttpHeaders.Content$2dType, contentType);
+      actionBuilder.hdr().headerString(HttpHeaders.Content$2dType, contentType);
       CouchTx tx = actionBuilder.fire().tx();
       rev = tx.rev();
       return tx;
@@ -76,7 +77,7 @@ public interface CouchService<E> {
           JsonSendActionBuilder actionBuilder =
               new JsonSend().opaque(db + "/" + id + "/" + fileName + "?rev=" + rev).validjson(
                   getBuffer().toString()).to();
-          actionBuilder.state().headerString(HttpHeaders.Content$2dType, contentType);
+          actionBuilder.hdr().headerString(HttpHeaders.Content$2dType, contentType);
           CouchTx tx = actionBuilder.fire().tx();
           if (!tx.ok()) {
             throw new IOException(tx.error());
@@ -90,7 +91,7 @@ public interface CouchService<E> {
       JsonSendActionBuilder actionBuilder =
           new JsonSend().opaque(db + "/" + id + "/" + fileName + "?rev=" + rev).validjson(content)
               .to();
-      actionBuilder.state().headerString(HttpHeaders.Content$2dType, contentType);
+      actionBuilder.hdr().headerString(HttpHeaders.Content$2dType, contentType);
       CouchTx tx = actionBuilder.fire().tx();
       rev = tx.rev();
       return tx;
@@ -103,7 +104,7 @@ public interface CouchService<E> {
           JsonSendActionBuilder actionBuilder =
               new JsonSend().opaque(db + "/" + id + "/" + fileName + "?rev=" + rev).validjson(
                   getBuffer().toString()).to();
-          actionBuilder.state().headerString(HttpHeaders.Content$2dType, contentType);
+          actionBuilder.hdr().headerString(HttpHeaders.Content$2dType, contentType);
           CouchTx tx = actionBuilder.fire().tx();
           if (!tx.ok()) {
             throw new IOException(tx.error());
@@ -117,7 +118,7 @@ public interface CouchService<E> {
       return new DocFetch().db(db).docId(id + "/" + fileName).to().fire().json();
     }
 
-    public CouchTx deleteAttachment(String fileName) {
+    public KouchTx deleteAttachment(String fileName) {
       CouchTx tx = new DocDelete().db(db).docId(id + "/" + fileName).to().fire().tx();
       rev = tx.rev();
       return tx;

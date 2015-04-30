@@ -1,10 +1,9 @@
 package rxf.web.inf;
 
 import one.xio.AsioVisitor.Impl;
-import one.xio.AsyncSingletonServer;
-import one.xio.HttpMethod;
-import rxf.core.Rfc822HeaderState;
-import rxf.core.Rfc822HeaderState.HttpRequest;
+import one.xio.AsyncSingletonServer.SingleThreadSingletonServer;
+import rxf.core.Errors;
+import rxf.core.Tx;
 import rxf.shared.KeepMatcher;
 import rxf.shared.PreRead;
 
@@ -18,7 +17,6 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,6 +33,7 @@ import static rxf.core.CouchNamespace.NAMESPACE;
  * <p/>
  * User: jim Date: 4/18/12 Time: 12:37 PM
  */
+@Deprecated
 public class ProtocolMethodDispatch extends Impl {
 
   public static final ByteBuffer NONCE = ByteBuffer.allocateDirect(0);
@@ -93,64 +92,47 @@ public class ProtocolMethodDispatch extends Impl {
     ServerSocketChannel channel = (ServerSocketChannel) key.channel();
     SocketChannel accept = channel.accept();
     accept.configureBlocking(false);
-    AsyncSingletonServer.SingleThreadSingletonServer.enqueue(accept, OP_READ, this);
+    SingleThreadSingletonServer.enqueue(accept, OP_READ);
 
   }
 
+  /**
+   * this makes use of the fact that we are the default/init Visitor, allowing for temporary placement of a tx object.
+   * 
+   * @param key
+   * @throws Exception
+   */
   public void onRead(SelectionKey key) throws Exception {
-    SocketChannel channel = (SocketChannel) key.channel();
-    ByteBuffer cursor = ByteBuffer.allocateDirect(4 << 10);
-    int read = Helper.read(key, cursor);
-    if (-1 == read) {
-      ((SocketChannel) key.channel()).socket().close();// cancel();
-      return;
-    }
+    Tx tx = Tx.current(Tx.acquireTx(key));
+    if (tx.readHttpHeaders()) {
+      String path = tx.hdr().asRequest().path();
+      for (Entry<Pattern, Class<? extends Impl>> visitorEntry : NAMESPACE.get(
+          tx.hdr().asRequest().httpMethod()).entrySet()) {
+        Matcher matcher = visitorEntry.getKey().matcher(path);
+        if (matcher.matches()) {
+          if (DEBUG_SENDJSON) {
+            System.err.println("+?+?+? using " + matcher.toString());
+          }
+          Class<? extends Impl> aClass = visitorEntry.getValue();
+          Impl impl = aClass.newInstance();
+          boolean keepMatch = aClass.isAnnotationPresent(KeepMatcher.class);
+          Object[] a =
+              keepMatch ? new Object[] {impl, tx.hdr(), tx.payload(), matcher.toMatchResult()}
+                  : new Object[] {impl, tx.hdr(), tx.payload()};
+          OpInterest opInterest = aClass.getAnnotation(OpInterest.class);
+          key.interestOps(opInterest != null ? opInterest.value() : OP_READ).attach(a);
 
-    HttpMethod method = null;
-    HttpRequest httpRequest = null;
-    try {
-      // find the method to dispatch
-      Rfc822HeaderState state = new Rfc822HeaderState().read((ByteBuffer) cursor.flip());
-      httpRequest = state.$req();
-      if (DEBUG_SENDJSON) {
-        System.err.println(deepToString(StandardCharsets.UTF_8.decode((ByteBuffer) httpRequest
-            .headerBuf().duplicate().rewind())));
-      }
-      String method1 = httpRequest.method();
-      method = HttpMethod.valueOf(method1);
-    } catch (Exception e) {
-    }
-
-    if (null == method) {
-      ((SocketChannel) key.channel()).socket().close();// cancel();
-      return;
-    }
-
-    Set<Entry<Pattern, Class<? extends Impl>>> entries = NAMESPACE.get(method).entrySet();
-    String path = httpRequest.path();
-    for (Entry<Pattern, Class<? extends Impl>> visitorEntry : entries) {
-      Matcher matcher = visitorEntry.getKey().matcher(path);
-      if (matcher.matches()) {
-        if (DEBUG_SENDJSON) {
-          System.err.println("+?+?+? using " + matcher.toString());
+          key.attach(a);
+          if (aClass.isAnnotationPresent(PreRead.class))
+            impl.onRead(key);
+          key.selector().wakeup();
+          return;
         }
-        Class<? extends Impl> value = visitorEntry.getValue();
-        Impl impl;
 
-        impl = value.newInstance();
-        boolean keepMatch = value.isAnnotationPresent(KeepMatcher.class);
-        Object a[] =
-            keepMatch ? new Object[] {impl, httpRequest, cursor, matcher.toMatchResult()}
-                : new Object[] {impl, httpRequest, cursor};
-        key.attach(a);
-        if (value.isAnnotationPresent(PreRead.class))
-          impl.onRead(key);
-        key.selector().wakeup();
-        return;
       }
-
+      System.err.println(deepToString("!!!1!1!!", "404", path, "using", NAMESPACE));
+      Errors.$404(key, path);
     }
-    System.err.println(deepToString("!!!1!1!!", "404", path, "using", NAMESPACE));
   }
 
 }

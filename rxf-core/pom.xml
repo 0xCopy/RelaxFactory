@@ -6,7 +6,7 @@
     <parent>
         <groupId>rxf</groupId>
         <artifactId>relaxfactory</artifactId>
-        <version>0.9.9.2</version>
+        <version>0.9.9.3.1</version>
     </parent>
 
     <artifactId>rxf-core</artifactId>
@@ -35,6 +35,22 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava-gwt</artifactId>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+        <groupId>org.httpunit</groupId>
+        <artifactId>httpunit</artifactId>
+        <scope>test</scope>
+        <exclusions>
+            <exclusion>
+                <artifactId>junit</artifactId>
+                <groupId>junit</groupId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+        <dependency>
+            <artifactId>junit</artifactId>
+            <groupId>junit</groupId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

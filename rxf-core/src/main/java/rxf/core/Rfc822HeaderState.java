@@ -1,5 +1,6 @@
 package rxf.core;
 
+import bbcursive.WantsZeroCopy;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.util.concurrent.Atomics;
@@ -40,7 +41,7 @@ import static java.util.Arrays.deepToString;
  * <p/>
  * User: jim Date: 5/19/12 Time: 10:00 PM
  */
-public class Rfc822HeaderState {
+public class Rfc822HeaderState implements WantsZeroCopy {
 
   public static final String HTTP = "HTTP";
   public static final String HTTP_1_1 = HTTP + "/1.1";
@@ -109,6 +110,14 @@ public class Rfc822HeaderState {
     return true;
   }
 
+  static public Map<String, String> parseQuery(String path) {
+    return Splitter.on('&').withKeyValueSeparator("=").split(path.substring(path.indexOf('?') + 1));
+  }
+
+  public static Rfc822HeaderState hdr() {
+    return new Rfc822HeaderState();
+  }
+
   public String headerString(HttpHeaders httpHeader) {
     return headerString(httpHeader.getHeader()); // To change body of created methods use File | Settings | File
     // Templates.
@@ -122,6 +131,11 @@ public class Rfc822HeaderState {
       if (null != protocol && !protocol.startsWith(HTTP)) {
         protocol(null);
       }
+    }
+
+    public HttpMethod httpMethod() {
+      return HttpMethod.valueOf(methodProtocol()); // To change body of overridden methods use File | Settings | File
+                                                   // Templates.
     }
 
     public String method() {
@@ -358,6 +372,7 @@ public class Rfc822HeaderState {
 
   }
 
+  @Override
   public ByteBuffer asByteBuffer() {
     throw new UnsupportedOperationException(
         "must promote to as((HttpRequest|HttpResponse)).class first");
@@ -651,16 +666,15 @@ public class Rfc822HeaderState {
       if (wantsHeaders) {
         Map<String, int[]> headerMap = HttpHeaders.getHeaders((ByteBuffer) headerBuf.rewind());
         LinkedHashMap<String, String> stringStringLinkedHashMap = new LinkedHashMap<>();
-        headerStrings.set(stringStringLinkedHashMap);//todo: no more linkedhashmaps in parsers
+        headerStrings.set(stringStringLinkedHashMap);// todo: no more linkedhashmaps in parsers
         for (String o : headerInterest.get()) {
           int[] o1 = headerMap.get(o);
           if (null != o1) {
-            String trim = UTF_8.decode(
-                (ByteBuffer) headerBuf.duplicate().clear().position(o1[0]).limit(o1[1]))
-                .toString().trim();
-          stringStringLinkedHashMap    .put(
-                o,
-                trim);
+            String trim =
+                UTF_8.decode(
+                    (ByteBuffer) headerBuf.duplicate().clear().position(o1[0]).limit(o1[1]))
+                    .toString().trim();
+            stringStringLinkedHashMap.put(o, trim);
           }
         }
       }

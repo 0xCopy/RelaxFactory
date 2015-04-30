@@ -2,7 +2,6 @@ package rxf.web.inf;
 
 import com.google.common.io.CharStreams;
 import one.xio.HttpStatus;
-import rxf.shared.PreRead;
 
 import java.io.File;
 import java.io.FileReader;
@@ -12,7 +11,6 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@PreRead
 public abstract class TemplateContentImpl extends ContentRootImpl {
 
   private static Map<File, File> content = new LinkedHashMap<>();
