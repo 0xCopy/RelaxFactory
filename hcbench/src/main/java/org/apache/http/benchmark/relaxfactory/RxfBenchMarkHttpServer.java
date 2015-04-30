@@ -103,8 +103,6 @@ public class RxfBenchMarkHttpServer implements HttpServer {
                                     key1.attach(null);
 
                                 },  (ByteBuffer)state.hdr().asResponse().asByteBuffer(),wrap(buf));
-
-
                             }
                         }
                     });

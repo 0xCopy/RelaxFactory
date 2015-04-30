@@ -29,8 +29,8 @@ package org.apache.http.benchmark.jetty;
 
 import org.apache.http.benchmark.BenchConsts;
 import org.apache.http.benchmark.HttpServer;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.nio.SelectChannelConnector;
+import org.eclipse.jetty.server.*;
+
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
 public class JettyNIOServer implements HttpServer {
@@ -45,20 +45,22 @@ public class JettyNIOServer implements HttpServer {
         }
         this.port = port;
 
-        final SelectChannelConnector connector = new SelectChannelConnector();
-        connector.setPort(port);
-        connector.setRequestBufferSize(BenchConsts.BUF_SIZE);
-        connector.setResponseBufferSize(BenchConsts.BUF_SIZE);
-        connector.setReuseAddress(true);
+
 
         final QueuedThreadPool threadpool = new QueuedThreadPool();
         threadpool.setMinThreads(25);
         threadpool.setMaxThreads(200);
 
-        this.server = new Server();
+        this.server = new Server(port);
+        final Connector connector = new NetworkTrafficServerConnector(server,threadpool, null,null,50,Runtime.getRuntime().availableProcessors(),new HttpConnectionFactory());
         this.server.addConnector(connector);
-        this.server.setThreadPool(threadpool);
+
         this.server.setHandler(new RandomDataHandler());
+//        connector.getDefaultConnectionFactory()
+//        connector.setPort(port);
+//        connector.setRequestBufferSize(BenchConsts.BUF_SIZE);
+//        connector.setResponseBufferSize(BenchConsts.BUF_SIZE);
+//        connector.setReuseAddress(true);
     }
 
     public String getName() {
