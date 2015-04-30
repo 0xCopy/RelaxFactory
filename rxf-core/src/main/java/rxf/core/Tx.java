@@ -382,9 +382,9 @@ public class Tx implements WantsZeroCopy {
         } catch (BufferUnderflowException e) {
 
           /**
-           * due to sslengine permitting pre-fetch backlogs, the 1xio event depModel is screwed. however we can access that
-           * backlog data anytime by calling read(), we just need to be immediate about it, and register normally after
-           * an initial grab
+           * due to sslengine permitting pre-fetch backlogs, the 1xio event depModel is screwed. however we can access
+           * that backlog data anytime by calling read(), we just need to be immediate about it, and register normally
+           * after an initial grab
            */
 
           toRead(key(), new F() {
