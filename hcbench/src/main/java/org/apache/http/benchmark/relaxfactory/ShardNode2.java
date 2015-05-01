@@ -7,17 +7,17 @@ import java.io.IOException;
 import java.nio.channels.*;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
-import static java.lang.StrictMath.min;
 
 /**
  * Created by jim per 5/19/14.
  */
 class ShardNode2 implements AsyncSingletonServer {
+ 
+    public  Selector selector;
 
-    private static Thread selectorThread;
-    private static Selector selector;
-
+    ConcurrentLinkedQueue q=new ConcurrentLinkedQueue();
     /**
      * handles the threadlocal ugliness if any to registering user threads into the selector/reactor pattern
      *
@@ -25,29 +25,36 @@ class ShardNode2 implements AsyncSingletonServer {
      * @param op int ChannelSelector.operator
      * @param s the payload: grammar {enum,data1,data..n}
      */
-    public static void enqueue(SelectableChannel channel, int op, Object... s) {
+    public void enqueue(SelectableChannel channel, int op, Object... s) {
         assert channel != null && !killswitch.get() : "Server appears to have shut down, cannot enqueue";
-        if (Thread.currentThread() == selectorThread)
+      /*  if (Thread.currentThread() == selectorThread)
             try {
                 channel.register(AsioVisitor.Helper.getSelector(), op, s);
             } catch (ClosedChannelException e) {
                 e.printStackTrace();
             }
-        else {
+        else*/ {
             q.add(new Object[] {channel, op, s});
         }
     }
 
-    public static void init(AsioVisitor protocoldecoder) throws IOException {
+    public ShardNode2() {
 
-       selector=(Selector.open());
-        selectorThread = Thread.currentThread();
+        try {
+            selector=(Selector.open());
+        } catch (IOException e) {
 
+
+        }
+    }
+
+    public  void init(AsioVisitor protocoldecoder) throws IOException {
+  
         long timeoutMax = 1024, timeout = 1;
       /*synchronized (killswitch)*/{
             while (!killswitch.get()) {
                 while (!q.isEmpty()) {
-                    Object[] s = q.poll();
+                    Object[] s = (Object[]) q.poll();
                     if (null != s) {
                         SelectableChannel x = (SelectableChannel) s[0];
 
@@ -65,13 +72,13 @@ class ShardNode2 implements AsyncSingletonServer {
                 }
                 int select = selector.select(timeout);
 
-                timeout = 0 == select ? min(timeout << 1, timeoutMax) : 1;
+                timeout = 0 == select ? Math.min(timeout << 1, timeoutMax) : 1;
                 if (0 != select)
                     innerloop(protocoldecoder);
             }
         }}
 
-    public static void innerloop(AsioVisitor protocoldecoder) throws IOException {
+    public  void innerloop(AsioVisitor protocoldecoder) throws IOException {
         Set<SelectionKey> keys = selector.selectedKeys();
 
         for (Iterator<SelectionKey> i = keys.iterator(); i.hasNext();) {
@@ -129,7 +136,7 @@ class ShardNode2 implements AsyncSingletonServer {
         }
     }
 
-    public static AsioVisitor inferAsioVisitor(AsioVisitor default$, SelectionKey key) {
+    public  AsioVisitor inferAsioVisitor(AsioVisitor default$, SelectionKey key) {
         Object attachment = key.attachment();
         AsioVisitor m;
         if (null == attachment)
