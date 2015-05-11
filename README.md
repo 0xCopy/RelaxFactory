@@ -165,4 +165,4 @@ overall profiler shows roughly equivalent benchmark camel humps in the cpu score
 
 benchmarks seem to show allocation of Direct ByteBuffers allocated in force in rxf, with the other 3 implementations presumably using heap or possibly fast "Unsafe" shortcuts.
 
-![image](https://cloud.githubusercontent.com/assets/73514/7576817/c77eab5c-f7f6-11e4-974a-e1e79d304705.png)
+![image](https://cloud.githubusercontent.com/assets/73514/7576943/f82f7c94-f7f7-11e4-8556-c0ed82daad9a.png)
