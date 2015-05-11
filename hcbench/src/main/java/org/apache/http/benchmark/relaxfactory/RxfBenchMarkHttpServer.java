@@ -1,13 +1,12 @@
 package org.apache.http.benchmark.relaxfactory;
 
-import one.xio.AsioVisitor;
+import com.databricks.fastbuffer.ByteBufferReader;
 import one.xio.AsioVisitor.Impl;
 import one.xio.AsyncSingletonServer;
  import one.xio.HttpMethod;
 import one.xio.HttpStatus;
 import org.apache.http.benchmark.Benchmark;
 import org.apache.http.benchmark.HttpServer;
-import rxf.core.Rfc822HeaderState;
 import rxf.core.Rfc822HeaderState.HttpResponse;
 import rxf.core.Tx;
 
@@ -19,8 +18,7 @@ import java.nio.channels.*;
 import java.util.concurrent.*;
 
 import static bbcursive.Cursive.pre.*;
-import static bbcursive.std.bb;
-import static bbcursive.std.str;
+import static bbcursive.std.*;
 import static java.lang.StrictMath.min;
 import static java.nio.ByteBuffer.allocate;
 import static java.nio.ByteBuffer.allocateDirect;
@@ -35,11 +33,11 @@ import static one.xio.MimeType.text;
  * Created by jim on 4/29/15.
  */
 public class RxfBenchMarkHttpServer implements HttpServer {
-
-
-    final private static ExecutorService executorService = Executors.newCachedThreadPool();//(Math.max(2, WIDE)+3);
+    private static final ExecutorService executorService = Executors.newCachedThreadPool();//(Math.max(2, WIDE)+3);
     public static final int WIDE = Runtime.getRuntime().availableProcessors();
     private ServerSocketChannel serverSocketChannel;
+
+
     private Impl protocoldecoder = new Impl() {
         public void onRead(SelectionKey key) throws Exception {
 
@@ -53,37 +51,41 @@ public class RxfBenchMarkHttpServer implements HttpServer {
                     byteBuffer = (ByteBuffer) attachment;
                 } else byteBuffer = allocate(256);
 
-                final Tx tx = new Tx(key);
+                Tx tx = new Tx(key);
                 (state = tx).hdr().headerBuf((ByteBuffer) byteBuffer.clear());
             }
 
 
             if (state.readHttpHeaders() && HttpMethod.GET == state.hdr().asRequest().httpMethod()) {
-               final  ByteBuffer scratch = state.hdr().headerBuf();
+               ByteBuffer scratch = state.hdr().headerBuf();
                 ByteBuffer bb = bb(scratch, rewind, toWs, slice, toWs, back1, flip);
                 while (bb.hasRemaining() && bb.get() != '=') ;
-                String str = str(bb, noop);
-                int count = (Integer.parseInt(str));
+//                String str = str(bb, noop);
+                int count = (parseInt(bb));
                 key.interestOps(0).selector().wakeup();
 
                 ByteBuffer cursor ;
                 if (scratch.limit()>= count) {
-                    state.hdr().headerBuf(null);cursor=scratch;
+                    state.hdr().headerBuf(null);
+                    cursor=scratch;
                 }
                 else cursor= allocateDirect(count);
                 int r = Math.abs(key.hashCode());
 
-                 int finalCount = count;
-                ByteBuffer tmp = (ByteBuffer) cursor.rewind();
-                while (tmp.hasRemaining()) tmp.put((byte) ((r + tmp.position()) % 96 + 32));
+                ByteBuffer tmp = ((ByteBuffer) cursor.rewind());
+                int limit = cursor.limit();
+                for (int i = 0; i < limit; i++) {
+                    tmp.put(i,(byte) ((r + tmp.position()) % 96 + 32));
+                }
 
                 HttpResponse httpResponse = state.hdr().asResponse();
                 httpResponse.status(HttpStatus.$200).headerStrings().clear();
                 httpResponse.headerString(Content$2dType, text.contentType).headerString(Content$2dLength, str(count));
+
                 finishWrite(key, key1 -> {
                     key.interestOps(OP_READ).selector().wakeup();
                     key.attach(cursor);
-                }, state.hdr().asResponse().asByteBuffer(), bb(cursor, rewind));
+                }, cat(state.hdr().asResponse().asByteBuffer(), bb(cursor, rewind)));
 
 
             }
@@ -111,7 +113,7 @@ public class RxfBenchMarkHttpServer implements HttpServer {
         AsyncSingletonServer.killswitch.set(false);
         ShardNode2[] shardNode2s = new ShardNode2[WIDE];
         for (int i = 0; i < shardNode2s.length; i++) {
-            final int finalI = i;
+            int finalI = i;
             ShardNode2 shardNode2 = new ShardNode2();
             shardNode2s[finalI]=shardNode2;
             executorService.execute(() -> {

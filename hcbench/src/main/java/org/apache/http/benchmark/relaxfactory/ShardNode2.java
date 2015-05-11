@@ -34,7 +34,7 @@ class ShardNode2 implements AsyncSingletonServer {
                 e.printStackTrace();
             }
         else*/ {
-            q.add(new Object[] {channel, op, s});
+            q.add(new Object[]{channel, op, s});
         }
     }
 
@@ -51,32 +51,32 @@ class ShardNode2 implements AsyncSingletonServer {
     public  void init(AsioVisitor protocoldecoder) throws IOException {
   
         long timeoutMax = 1024, timeout = 1;
-      /*synchronized (killswitch)*/{
-            while (!killswitch.get()) {
-                while (!q.isEmpty()) {
-                    Object[] s = (Object[]) q.poll();
-                    if (null != s) {
-                        SelectableChannel x = (SelectableChannel) s[0];
+      /*synchronized (killswitch)*/
+        while (!killswitch.get()) {
+            while (!q.isEmpty()) {
+                Object[] s = (Object[]) q.poll();
+                if (null != s) {
+                    SelectableChannel x = (SelectableChannel) s[0];
 
-                        Integer op = (Integer) s[1];
-                        Object att = s[2];
+                    Integer op = (Integer) s[1];
+                    Object att = s[2];
 
-                        try {
-                            x.configureBlocking(false);
-                            SelectionKey register = x.register(selector, op, att);
-                            assert null != register;
-                        } catch (Throwable e) {
-                            e.printStackTrace();
-                        }
+                    try {
+                        x.configureBlocking(false);
+                        SelectionKey register = x.register(selector, op, att);
+                        assert null != register;
+                    } catch (Throwable e) {
+                        e.printStackTrace();
                     }
                 }
-                int select = selector.select(timeout);
-
-                timeout = 0 == select ? Math.min(timeout << 1, timeoutMax) : 1;
-                if (0 != select)
-                    innerloop(protocoldecoder);
             }
-        }}
+            int select = selector.select(timeout);
+
+            timeout = 0 == select ? Math.min(timeout << 1, timeoutMax) : 1;
+            if (0 != select)
+                innerloop(protocoldecoder);
+        }
+    }
 
     public  void innerloop(AsioVisitor protocoldecoder) throws IOException {
         Set<SelectionKey> keys = selector.selectedKeys();

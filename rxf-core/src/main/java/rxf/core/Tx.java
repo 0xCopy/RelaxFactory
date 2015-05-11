@@ -181,11 +181,11 @@ public class Tx implements WantsZeroCopy {
       state.addHeaderInterest(headerInterest);
     ByteBuffer byteBuffer = state.headerBuf();
     if (null == byteBuffer)
-      state.headerBuf(byteBuffer = ByteBuffer.allocateDirect(4 << 10));
+      state.headerBuf(byteBuffer = alloc(4 << 10));
     if (!byteBuffer.hasRemaining())
       state
           .headerBuf(byteBuffer =
-              ByteBuffer.allocateDirect(byteBuffer.capacity() << 1).put(
+              alloc(byteBuffer.capacity() << 1).put(
                   (ByteBuffer) byteBuffer.flip()));
     int prior = byteBuffer.position(); // if the headers are extensive, this may be a buffer that has been extended
     assert key != null;
@@ -210,24 +210,27 @@ public class Tx implements WantsZeroCopy {
 
           String anObject = state.headerString(Transfer$2dEncoding);
 
-          if ("chunked".equals(anObject)) {
+          if (!"chunked".equals(anObject)) try {
+            if (state.headerStrings().containsKey(Content$2dLength.getHeader())
+                    ) {
+              int remaining = parseInt(state.headerString(Content$2dLength.getHeader()));
+              payload(alloc(remaining).put(slice));
+            }
+          } catch (Exception e) {
+            payload(NIL);
+          }
+          else {
             payload(slice);
             chunked(true);
-          } else {
-            try {
-              int remaining = Integer.parseInt(state.headerString(Content$2dLength.getHeader()));
-              payload(ByteBuffer.allocateDirect(remaining).put(slice));
-            } catch (NumberFormatException e) {
-              payload(NIL);
-            }
           }
           break;
-
         }
         break;
     }
     return true;
   }
+
+
 
   public boolean noPayload() {
     return noPayload;
@@ -414,11 +417,9 @@ public class Tx implements WantsZeroCopy {
   public ByteBuffer getNextChunk() throws BufferUnderflowException {
     bb(payload(), flip);
     int needs;
-    ByteBuffer lenBuf;
     try {
-      lenBuf = bb(payload, mark, skipWs, slice, forceToEol, rtrim, flip);
-      String lenString = str(lenBuf, post.rewind);
-      needs = Integer.parseInt(lenString, 0x10);
+
+      needs = parseInt(bb(payload, mark, skipWs, slice, forceToEol, rtrim, flip));
     } catch (Exception e) {
       payload.reset();
       throw new BufferUnderflowException();
@@ -427,7 +428,7 @@ public class Tx implements WantsZeroCopy {
     bb(payload, toEol);
     if (needs != 0) {
       ByteBuffer chunk;
-      chunk = ByteBuffer.allocateDirect(needs);
+      chunk = alloc(needs);
       std.push(payload, chunk);
       bb(payload, post.compact, debug);
       return chunk;
