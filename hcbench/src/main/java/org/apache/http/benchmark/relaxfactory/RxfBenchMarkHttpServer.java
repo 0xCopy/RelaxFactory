@@ -1,5 +1,7 @@
 package org.apache.http.benchmark.relaxfactory;
 
+import bbcursive.Allocator;
+import bbcursive.std;
 import com.databricks.fastbuffer.ByteBufferReader;
 import one.xio.AsioVisitor.Impl;
 import one.xio.AsyncSingletonServer;
@@ -19,6 +21,7 @@ import java.util.concurrent.*;
 
 import static bbcursive.Cursive.pre.*;
 import static bbcursive.std.*;
+import static bbcursive.std.allocator;
 import static java.lang.StrictMath.min;
 import static java.nio.ByteBuffer.allocate;
 import static java.nio.ByteBuffer.allocateDirect;
@@ -163,7 +166,8 @@ public class RxfBenchMarkHttpServer implements HttpServer {
 
         RxfBenchMarkHttpServer rxfBenchMarkHttpServer = new RxfBenchMarkHttpServer(Benchmark.PORT);
         rxfBenchMarkHttpServer.start();
-
+        int runtime = Runtime.getRuntime().availableProcessors();
+        std.allocator=new Allocator(runtime *4*Allocator.MEG);
 
         while (!AsyncSingletonServer.killswitch.get()) Thread.sleep(1000);
     }
