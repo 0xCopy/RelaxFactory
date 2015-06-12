@@ -4,8 +4,8 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>rxf-rpc</artifactId>
     <parent>
-        <groupId>rxf</groupId>
-        <version>0.9.9.3.1</version>
+        <groupId>com.github.jnorthrup</groupId>
+        <version>1.0</version>
         <artifactId>relaxfactory</artifactId>
     </parent>
     <packaging>jar</packaging>

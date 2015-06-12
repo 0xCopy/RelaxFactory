@@ -3,6 +3,11 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>benchmark</groupId>
+  <parent>
+    <groupId>com.github.jnorthrup</groupId>
+    <artifactId>relaxfactory</artifactId>
+   <version>1.0</version>
+  </parent>
   <artifactId>hcbench</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>jar</packaging>
@@ -10,11 +15,6 @@
   <name>hcbench</name>
   <url>http://maven.apache.org</url>
 
-  <properties>
-
-    <target.jdk>1.8</target.jdk>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
 
   <dependencies>
     <dependency>
@@ -64,37 +64,12 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>rxf</groupId>
+      <groupId>com.github.jnorthrup</groupId>
       <artifactId>rxf-core</artifactId>
-      <version>0.9.9.3.1</version>
-    </dependency>
+     </dependency>
     <dependency>
-      <groupId>rxf</groupId>
+      <groupId>com.github.jnorthrup</groupId>
       <artifactId>rxf-rpc</artifactId>
-      <version>0.9.9.3.1</version>
-    </dependency>
+     </dependency>
   </dependencies>
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.2</version>
-        <configuration>
-          <useIncrementalCompilation>true</useIncrementalCompilation>
-          <source>1.8</source>
-          <target>1.8</target>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-resources-plugin</artifactId>
-        <version>2.6</version>
-        <configuration>
-          <encoding>${project.build.sourceEncoding}</encoding>
-        </configuration>
-      </plugin>
-
-    </plugins>
-  </build>
 </project>

@@ -1,34 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>rxf</groupId>
+    <groupId>com.github.jnorthrup</groupId>
     <artifactId>relaxfactory</artifactId>
-    <version>0.9.9.3.1</version>
-    <dependencies>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.12</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+    <version>1.0</version>
     <packaging>pom</packaging>
     <properties>
         <gwt.draftCompile>false</gwt.draftCompile>
-        <java.compiler.version>${java.specification.version}
-        </java.compiler.version>
-        <project.build.sourceEncoding>UTF-8
-        </project.build.sourceEncoding>
+        <java.compiler.version>${java.specification.version}</java.compiler.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <gwt.style>OBF</gwt.style>
         <gwt.plugin.version>2.6.1</gwt.plugin.version>
         <gwt.version>2.6.1</gwt.version>
-        <gwt-maven-plugin.compileReport>false
-        </gwt-maven-plugin.compileReport>
-        <gwt-maven-plugin.soycDetailed>false
-        </gwt-maven-plugin.soycDetailed>
+        <gwt-maven-plugin.compileReport>false</gwt-maven-plugin.compileReport>
+        <gwt-maven-plugin.soycDetailed>false</gwt-maven-plugin.soycDetailed>
         <gwt-maven-plugin.strict>false</gwt-maven-plugin.strict>
         <guava.version>17.0</guava.version>
+
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
     <profiles>
         <profile>
             <!--big box-->
@@ -36,13 +30,10 @@
             <properties>
                 <gwt.style>DETAILED</gwt.style>
                 <gwt.draftCompile>true</gwt.draftCompile>
-                <gwt.compiler.optimizationLevel>0
-                </gwt.compiler.optimizationLevel>
+                <gwt.compiler.optimizationLevel>0</gwt.compiler.optimizationLevel>
                 <gwt.extraJvmArgs>-Xmx6g</gwt.extraJvmArgs>
-                <gwt-maven-plugin.compileReport>true
-                </gwt-maven-plugin.compileReport>
-                <gwt-maven-plugin.soycDetailed>true
-                </gwt-maven-plugin.soycDetailed>
+                <gwt-maven-plugin.compileReport>true</gwt-maven-plugin.compileReport>
+                <gwt-maven-plugin.soycDetailed>true</gwt-maven-plugin.soycDetailed>
             </properties>
         </profile>
         <profile>
@@ -64,8 +55,7 @@
             <properties>
                 <gwt.style>OBF</gwt.style>
                 <gwt.draftCompile>false</gwt.draftCompile>
-                <gwt.compiler.optimizationLevel>9
-                </gwt.compiler.optimizationLevel>
+                <gwt.compiler.optimizationLevel>9</gwt.compiler.optimizationLevel>
                 <gwt.extraJvmArgs>-Xmx6g</gwt.extraJvmArgs>
             </properties>
         </profile>
@@ -82,28 +72,21 @@
                 <gwt.compiler.localWorkers>1
                 </gwt.compiler.localWorkers>
 
+
+                <maven.compiler.source>1.8</maven.compiler.source>
+                <maven.compiler.target>1.8</maven.compiler.target>
+                <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+
                 <!--linode 119 seconds, 600 without-->
             </properties>
         </profile>
     </profiles>
     <repositories>
-        <!--<repository>
-            <id>gwt-maven-rewraps</id>
-            <url>http://gwt-maven-rewraps.googlecode.com/git/</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-        </repository>-->
         <repository>
-            <id>misc-repo</id>
-            <url>
-                http://raw.github.com/jnorthrup/misc-repo/master/
-            </url>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
         </repository>
-
         <repository>
             <id>sonatype-snapshots</id>
             <url>
@@ -129,7 +112,7 @@
 
         <dependencies>
             <dependency>
-                <groupId>1xio</groupId>
+                <groupId>com.github.jnorthrup</groupId>
                 <artifactId>1xio</artifactId>
                 <version>2.0.1</version>
             </dependency>
@@ -232,6 +215,20 @@
                 <artifactId>javolution</artifactId>
                 <version>5.5.1</version>
             </dependency>
+            <dependency>
+                <groupId>com.github.jnorthrup</groupId>
+                <artifactId>
+                    rxf-core
+                </artifactId>
+                <version>1.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.jnorthrup</groupId>
+                <artifactId>
+                    rxf-rpc
+                </artifactId>
+                <version>1.0</version>
+            </dependency>
         </dependencies>
 
     </dependencyManagement>
@@ -244,50 +241,17 @@
         <module>rxf-guice</module>
         <module>rxf-rsync</module>
         <module>hcbench</module>
-    <module>ws_sandbox</module>
-  </modules>
+        <module>ws_sandbox</module>
+    </modules>
     <build>
         <pluginManagement>
             <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.0</version>
-                    <configuration>
-                        <source>1.7</source>
-                        <target>1.7</target>
-                        <!--
-                        <source>${java.specification.version}</source>
-                        <target>${java.specification.version}</target>
-                        -->
-                    </configuration>
-                </plugin>
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-site-plugin</artifactId>
                     <version>3.2</version>
                 </plugin>
-                <!-- unmaintained?
-                    <plugin>
-                    <groupId>com.googlecode</groupId>
-                    <artifactId>maven-idea-plugin</artifactId>
-                    <version>1.6</version>
-                    <configuration>
-                    <compileInBackground>true</compileInBackground>
-                    <jdkName>1.8</jdkName>
-                    <jdkLevel>JDK_1_8</jdkLevel>
-                    <downloadSources>true</downloadSources>
-                    <downloadJavadocs>true</downloadJavadocs>
-                    <assertNotNull>false</assertNotNull>
-                    <optimizeImportsBeforeCommit>false</optimizeImportsBeforeCommit>
-                    <reformatCodeBeforeCommit>false</reformatCodeBeforeCommit>
-                    <performCodeAnalisisBeforeCommit>false</performCodeAnalisisBeforeCommit>
-                    <autoscrollToSource>false</autoscrollToSource>
-                    <autoscrollFromSource>true</autoscrollFromSource>
-                    <hideEmptyPackages>false</hideEmptyPackages>
-                    </configuration>
-                    </plugin>-->
             </plugins>
         </pluginManagement>
         <plugins>
@@ -310,9 +274,6 @@
                     <compilerCompliance>1.7</compilerCompliance>
                     <compilerTargetPlatform>1.7
                     </compilerTargetPlatform>
-                    <!--<configFile>${project.basedir}/../fmt/ugh.xml</configFile>-->
-                    <!--<configFile>https://raw.github.com/jnorthrup/RelaxFactory/x0uchdb/fmt/gwt-format.xml</configFile>-->
-                    <!--http://code.google.com/p/google-web-toolkit/source/browse/trunk/eclipse/settings/code-style/gwt-format.xml</configFile>&ndash;&gt;-->
                     <configFile>
                         ${project.basedir}/../fmt/gwt-format.xml
                     </configFile>

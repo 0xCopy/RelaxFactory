@@ -183,10 +183,8 @@ public class Tx implements WantsZeroCopy {
     if (null == byteBuffer)
       state.headerBuf(byteBuffer = alloc(4 << 10));
     if (!byteBuffer.hasRemaining())
-      state
-          .headerBuf(byteBuffer =
-              alloc(byteBuffer.capacity() << 1).put(
-                  (ByteBuffer) byteBuffer.flip()));
+      state.headerBuf(byteBuffer =
+          alloc(byteBuffer.capacity() << 1).put((ByteBuffer) byteBuffer.flip()));
     int prior = byteBuffer.position(); // if the headers are extensive, this may be a buffer that has been extended
     assert key != null;
     int read = read(key, byteBuffer);
@@ -210,15 +208,15 @@ public class Tx implements WantsZeroCopy {
 
           String anObject = state.headerString(Transfer$2dEncoding);
 
-          if (!"chunked".equals(anObject)) try {
-            if (state.headerStrings().containsKey(Content$2dLength.getHeader())
-                    ) {
-              int remaining = parseInt(state.headerString(Content$2dLength.getHeader()));
-              payload(alloc(remaining).put(slice));
+          if (!"chunked".equals(anObject))
+            try {
+              if (state.headerStrings().containsKey(Content$2dLength.getHeader())) {
+                int remaining = parseInt(state.headerString(Content$2dLength.getHeader()));
+                payload(alloc(remaining).put(slice));
+              }
+            } catch (Exception e) {
+              payload(NIL);
             }
-          } catch (Exception e) {
-            payload(NIL);
-          }
           else {
             payload(slice);
             chunked(true);
@@ -229,8 +227,6 @@ public class Tx implements WantsZeroCopy {
     }
     return true;
   }
-
-
 
   public boolean noPayload() {
     return noPayload;

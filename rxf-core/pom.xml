@@ -4,25 +4,22 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>rxf</groupId>
+        <groupId>com.github.jnorthrup</groupId>
         <artifactId>relaxfactory</artifactId>
-        <version>0.9.9.3.1</version>
+        <version>1.0</version>
     </parent>
 
     <artifactId>rxf-core</artifactId>
 
     <name>rxf-core</name>
     <url>http://maven.apache.org</url>
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
     <dependencies>
         <dependency>
-            <groupId>1xio</groupId>
+            <groupId>com.github.jnorthrup</groupId>
             <artifactId>1xio</artifactId>
          </dependency>
         <dependency>
-            <groupId>rxf</groupId>
+            <groupId>com.github.jnorthrup</groupId>
             <artifactId>rxf-shared</artifactId>
             <version>${parent.version}</version>
         </dependency>

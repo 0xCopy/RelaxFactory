@@ -3,8 +3,8 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <artifactId>relaxfactory</artifactId>
-        <groupId>rxf</groupId>
-        <version>0.9.9.3.1</version>
+        <groupId>com.github.jnorthrup</groupId>
+        <version>1.0</version>
     </parent>
     <artifactId>rxf-guice</artifactId>
     <name>rxf DI tools</name>
@@ -15,7 +15,7 @@
             <version>4.0</version>
         </dependency>
         <dependency>
-            <groupId>rxf</groupId>
+            <groupId>com.github.jnorthrup</groupId>
             <artifactId>rxf-couch</artifactId>
             <version>${project.version}</version>
         </dependency>
