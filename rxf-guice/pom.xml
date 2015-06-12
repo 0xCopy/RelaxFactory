@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <artifactId>relaxfactory</artifactId>
-        <groupId>com.github.jnorthrup</groupId>
+        <groupId>com.github.0xcopy</groupId>
         <version>1.0</version>
     </parent>
     <artifactId>rxf-guice</artifactId>
@@ -15,7 +15,7 @@
             <version>4.0</version>
         </dependency>
         <dependency>
-            <groupId>com.github.jnorthrup</groupId>
+            <groupId>com.github.0xcopy</groupId>
             <artifactId>rxf-couch</artifactId>
             <version>${project.version}</version>
         </dependency>

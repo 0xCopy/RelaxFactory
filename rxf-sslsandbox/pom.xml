@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>rxf-sslsandbox</artifactId>
     <parent>
-        <groupId>com.github.jnorthrup</groupId>
+        <groupId>com.github.0xcopy</groupId>
         <artifactId>relaxfactory</artifactId>
         <version>1.0</version>
     </parent>
@@ -20,7 +20,7 @@
         <artifactId>javolution</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.github.jnorthrup</groupId>
+            <groupId>com.github.0xcopy</groupId>
             <artifactId>rxf-couch</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
