@@ -1,6 +1,8 @@
 Description
 ===
 
+[![Join the chat at https://gitter.im/0xCopy/RelaxFactory](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/0xCopy/RelaxFactory?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 RelaxFactory is a Server Toolkit for implementing web protocols 
 like HTTP, QUIC, WebSockets, and REST middleware using Java 
 language but without a java resource cost associated with 
