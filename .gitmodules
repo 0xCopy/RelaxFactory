@@ -13,9 +13,6 @@
 [submodule "rxf-rpc"]
 	path = rxf-rpc
 	url = ../rxf-rpc
-[submodule "rxf-rsync"]
-	path = rxf-rsync
-	url = ../rxf-rsync
 [submodule "rxf-shared"]
 	path = rxf-shared
 	url = ../rxf-shared
