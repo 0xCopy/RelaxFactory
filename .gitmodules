@@ -1,0 +1,21 @@
+[submodule "rxf-core"]
+	path = rxf-core
+	url = ../rxf-core
+[submodule "rxf-couch"]
+	path = rxf-couch
+	url = ../rxf-couch
+[submodule "rxf-guice"]
+	path = rxf-guice
+	url = ../rxf-guice
+[submodule "rxf-pouch"]
+	path = rxf-pouch
+	url = ../rxf-pouch
+[submodule "rxf-rpc"]
+	path = rxf-rpc
+	url = ../rxf-rpc
+[submodule "rxf-rsync"]
+	path = rxf-rsync
+	url = ../rxf-rsync
+[submodule "rxf-shared"]
+	path = rxf-shared
+	url = ../rxf-shared
