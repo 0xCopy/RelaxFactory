@@ -239,7 +239,7 @@
         <module>rxf-rpc</module>
         <module>rxf-couch</module>
         <module>rxf-guice</module>
-        <module>rxf-rsync</module>
+        <!--<module>rxf-rsync</module>-->
         <module>hcbench</module>
         <module>ws_sandbox</module>
     </modules>

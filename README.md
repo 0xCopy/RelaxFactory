@@ -1,3 +1,9 @@
+Cloning
+====
+due to using modules to accmodate jitpack.io, the submodules need some help being cloned
+
+git clone --recursive git@github.com:0xCopy/RelaxFactory 
+
 Description
 ===
 
