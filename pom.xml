@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.github.0xcopy</groupId>
+    <groupId>com.github.0xCopy.RelaxFactory</groupId>
     <artifactId>relaxfactory</artifactId>
     <version>1.0</version>
     <packaging>pom</packaging>
@@ -112,9 +112,9 @@
 
         <dependencies>
             <dependency>
-                <groupId>com.github.0xcopy</groupId>
+                <groupId>com.github.0xCopy</groupId>
                 <artifactId>1xio</artifactId>
-                <version>2.0.2</version>
+                <version>2.0.6</version>
             </dependency>
             <dependency>
                 <groupId>com.google.gwt</groupId>
@@ -216,14 +216,14 @@
                 <version>5.5.1</version>
             </dependency>
             <dependency>
-                <groupId>com.github.0xcopy</groupId>
+                <groupId>com.github.0xCopy.RelaxFactory</groupId>
                 <artifactId>
                     rxf-core
                 </artifactId>
                 <version>1.0</version>
             </dependency>
             <dependency>
-                <groupId>com.github.0xcopy</groupId>
+                <groupId>com.github.0xCopy.RelaxFactory</groupId>
                 <artifactId>
                     rxf-rpc
                 </artifactId>
