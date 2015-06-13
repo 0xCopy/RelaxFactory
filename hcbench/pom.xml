@@ -4,7 +4,8 @@
 
   <groupId>benchmark</groupId>
   <parent>
-    <groupId>com.github.0xcopy</groupId>
+    <groupId>com.github./
+    </groupId>
     <artifactId>relaxfactory</artifactId>
    <version>1.0</version>
   </parent>
@@ -64,11 +65,11 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.github.0xcopy</groupId>
+      <groupId>com.github.0xCopy</groupId>
       <artifactId>rxf-core</artifactId>
      </dependency>
     <dependency>
-      <groupId>com.github.0xcopy</groupId>
+      <groupId>com.github.0xCopy</groupId>
       <artifactId>rxf-rpc</artifactId>
      </dependency>
   </dependencies>
