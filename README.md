@@ -47,12 +47,6 @@ RelaxFactory is dependent upon 1xio (https://github.com/jnorthrup/1xio) and pote
 
 to your pom.xml
 
-IRC
-===
-while working on the toolkit the author(s) can likely be found at irc://chat.freenode.net/#relaxfactory
-
-
-
 
 Latest Benchmark results.
 ==========
