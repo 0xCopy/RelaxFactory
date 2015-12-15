@@ -17,7 +17,6 @@
         <gwt-maven-plugin.soycDetailed>false</gwt-maven-plugin.soycDetailed>
         <gwt-maven-plugin.strict>false</gwt-maven-plugin.strict>
         <guava.version>17.0</guava.version>
-
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
