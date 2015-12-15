@@ -219,14 +219,14 @@
                 <artifactId>
                     rxf-core
                 </artifactId>
-                <version>1.0</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.github.0xCopy.RelaxFactory</groupId>
                 <artifactId>
                     rxf-rpc
                 </artifactId>
-                <version>1.0</version>
+                <version>${project.version}</version>
             </dependency>
         </dependencies>
 
