@@ -114,7 +114,7 @@
             <dependency>
                 <groupId>com.github.0xCopy</groupId>
                 <artifactId>1xio</artifactId>
-                <version>2.0.6</version>
+                <version>-SNAPSHOT</version><!--jitpack convention-->
             </dependency>
             <dependency>
                 <groupId>com.google.gwt</groupId>
