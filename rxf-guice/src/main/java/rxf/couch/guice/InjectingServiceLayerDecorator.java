@@ -8,18 +8,18 @@ import com.google.web.bindery.requestfactory.shared.ServiceLocator;
 
 /**
  * Simple SLD subclass to delegate locator/servicelocator creation to guice
- *
+ * 
  * @author colin
  */
 public class InjectingServiceLayerDecorator extends ServiceLayerDecorator {
-    @Inject
-    Injector injector;
+  @Inject
+  Injector injector;
 
-    public <T extends Locator<?, ?>> T createLocator(Class<T> clazz) {
-        return injector.getInstance(clazz);
-    }
+  public <T extends Locator<?, ?>> T createLocator(Class<T> clazz) {
+    return injector.getInstance(clazz);
+  }
 
-    public <T extends ServiceLocator> T createServiceLocator(Class<T> clazz) {
-        return injector.getInstance(clazz);
-    }
+  public <T extends ServiceLocator> T createServiceLocator(Class<T> clazz) {
+    return injector.getInstance(clazz);
+  }
 }
