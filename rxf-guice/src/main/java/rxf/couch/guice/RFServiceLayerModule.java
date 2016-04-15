@@ -13,19 +13,19 @@ import rxf.rpc.GwtRequestFactoryVisitor;
  */
 public class RFServiceLayerModule extends AbstractModule {
 
-  protected void configure() {
-    requireBinding(ServiceLayerDecorator.class);
+    protected void configure() {
+        requireBinding(ServiceLayerDecorator.class);
 
-    requestStaticInjection(this.getClass());
-  }
+        requestStaticInjection(this.getClass());
+    }
 
-  @Provides
-  SimpleRequestProcessor provideSimpleRequestProcessor(ServiceLayerDecorator sld) {
-    return new SimpleRequestProcessor(ServiceLayer.create(sld));
-  }
+    @Provides
+    SimpleRequestProcessor provideSimpleRequestProcessor(ServiceLayerDecorator sld) {
+        return new SimpleRequestProcessor(ServiceLayer.create(sld));
+    }
 
-  @Inject
-  static void injectGwtRequestFactoryVisitor(SimpleRequestProcessor srp) {
-    GwtRequestFactoryVisitor.SIMPLE_REQUEST_PROCESSOR = srp;
-  }
+    @Inject
+    static void injectGwtRequestFactoryVisitor(SimpleRequestProcessor srp) {
+        GwtRequestFactoryVisitor.SIMPLE_REQUEST_PROCESSOR = srp;
+    }
 }

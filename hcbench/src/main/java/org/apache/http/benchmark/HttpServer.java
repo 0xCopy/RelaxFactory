@@ -20,14 +20,14 @@ package org.apache.http.benchmark;
 
 public interface HttpServer {
 
-  String getName();
+    String getName();
 
-  String getVersion();
+    String getVersion();
 
-  int getPort();
+    int getPort();
 
-  void start() throws Exception;
+    void start() throws Exception;
 
-  void shutdown();
+    void shutdown();
 
 }

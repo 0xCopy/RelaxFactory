@@ -34,7 +34,7 @@ import static rxf.rpc.RpcHelper.setDEBUG_SENDJSON;
 public class CouchServiceTest {
   public static final String SOMEDBPREFIX = "test_somedb_";
   public static final String SOMEDB = SOMEDBPREFIX + System.currentTimeMillis(); // ordered names of testdbs for failure
-                                                                                 // postmortem....
+  // postmortem....
   public static final String DESIGN_SAMPLE = "_design/sample";
   public static ScheduledExecutorService exec;
 
@@ -524,6 +524,7 @@ public class CouchServiceTest {
     public String data;
     public Map<String, Attachment> _attachments = new HashMap<>();
   }
+
   public interface AttachmentService extends CouchService<DataWithAttachments> {
   }
 
@@ -577,6 +578,7 @@ public class CouchServiceTest {
     public String model;
     public String brand;
   }
+
   public static class Stats {
     public int sum;
     public int count;

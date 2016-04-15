@@ -1,6 +1,9 @@
 package rxf.web.inf;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 import java.nio.channels.SelectionKey;
 
 import static java.lang.annotation.ElementType.TYPE;

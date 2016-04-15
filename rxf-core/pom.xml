@@ -17,7 +17,7 @@
         <dependency>
             <groupId>com.github.0xCopy</groupId>
             <artifactId>1xio</artifactId>
-         </dependency>
+        </dependency>
         <dependency>
             <groupId>com.github.0xCopy.RelaxFactory</groupId>
             <artifactId>rxf-shared</artifactId>
@@ -34,16 +34,16 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-        <groupId>org.httpunit</groupId>
-        <artifactId>httpunit</artifactId>
-        <scope>test</scope>
-        <exclusions>
-            <exclusion>
-                <artifactId>junit</artifactId>
-                <groupId>junit</groupId>
-            </exclusion>
-        </exclusions>
-    </dependency>
+            <groupId>org.httpunit</groupId>
+            <artifactId>httpunit</artifactId>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>junit</artifactId>
+                    <groupId>junit</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
         <dependency>
             <artifactId>junit</artifactId>
             <groupId>junit</groupId>

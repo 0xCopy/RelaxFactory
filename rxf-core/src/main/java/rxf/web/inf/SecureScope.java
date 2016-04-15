@@ -28,12 +28,15 @@ public @interface SecureScope {
   @SecureScope
   class ContentRootCacheImpl extends rxf.web.inf.ContentRootCacheImpl {
   }
+
   @SecureScope
   class ContentRootNoCacheImpl extends rxf.web.inf.ContentRootNoCacheImpl {
   }
+
   @SecureScope
   class ContentRootImpl extends rxf.web.inf.ContentRootImpl {
   }
+
   class Forbidden extends rxf.web.inf.ContentRootImpl {
 
     public void onWrite(SelectionKey key) throws Exception {

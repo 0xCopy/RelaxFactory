@@ -26,7 +26,7 @@ import static java.nio.channels.SelectionKey.*;
  * <li>Accepts external socket connections per behalf of Couchdb or other REST couch
  * <p/>
  * </ul>
- * 
+ * <p>
  * User: jnorthrup Date: 10/1/13 Time: 7:26 PM
  */
 public class ProxyDaemon extends AsioVisitor.Impl {

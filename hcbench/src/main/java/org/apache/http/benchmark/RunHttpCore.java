@@ -21,9 +21,9 @@ import org.apache.http.benchmark.httpcore.HttpCoreNIOServer;
 
 public class RunHttpCore {
 
-  public static void main(final String[] args) throws Exception {
-    final Config config = BenchRunner.parseConfig(args);
-    BenchRunner.run(new HttpCoreNIOServer(Benchmark.PORT), config);
-  }
+    public static void main(final String[] args) throws Exception {
+        final Config config = BenchRunner.parseConfig(args);
+        BenchRunner.run(new HttpCoreNIOServer(Benchmark.PORT), config);
+    }
 
 }

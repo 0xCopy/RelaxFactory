@@ -1,6 +1,6 @@
 package rxf.core;
 
-import bbcursive.std;
+import static bbcursive.lib.log.log;
 import static java.lang.System.setProperty;
 
 public class Config {
@@ -13,7 +13,7 @@ public class Config {
     var = null == var && defaultVal.length > 0 ? defaultVal[0] : var;
     if (null != var) {
       setProperty(javapropname, var);
-      std.log("// -D" + javapropname + "=" + "\"" + var + "\"");
+      log("// -D" + javapropname + "=" + "\"" + var + "\"");
     }
     return var;
   }

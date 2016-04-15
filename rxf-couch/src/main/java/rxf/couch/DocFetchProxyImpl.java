@@ -110,8 +110,8 @@ public class DocFetchProxyImpl extends ContentRootImpl {
   /**
    * very default implementation
    * 
-   * @return a transformed string
    * @param key
+   * @return a transformed string
    */
   public String transformLink(SelectionKey key) {
     MatchResult matcher = getMatchResults(key);

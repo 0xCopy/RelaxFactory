@@ -26,12 +26,12 @@ import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
 
 class HttpServerPipelineFactory implements ChannelPipelineFactory {
 
-  public ChannelPipeline getPipeline() throws Exception {
-    final ChannelPipeline pipeline = Channels.pipeline();
-    pipeline.addLast("decoder", new HttpRequestDecoder());
-    pipeline.addLast("encoder", new HttpResponseEncoder());
-    pipeline.addLast("handler", new RandomDataHandler());
-    return pipeline;
-  }
+    public ChannelPipeline getPipeline() throws Exception {
+        final ChannelPipeline pipeline = Channels.pipeline();
+        pipeline.addLast("decoder", new HttpRequestDecoder());
+        pipeline.addLast("encoder", new HttpResponseEncoder());
+        pipeline.addLast("handler", new RandomDataHandler());
+        return pipeline;
+    }
 
 }

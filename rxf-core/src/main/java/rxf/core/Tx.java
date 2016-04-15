@@ -1,7 +1,7 @@
 package rxf.core;
 
+import bbcursive.Cursive;
 import bbcursive.WantsZeroCopy;
-import bbcursive.std;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.FluentIterable;
@@ -28,6 +28,9 @@ import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static bbcursive.Cursive.pre.*;
+import static bbcursive.lib.Int.parseInt;
+import static bbcursive.lib.log.log;
+import static bbcursive.lib.push.push;
 import static bbcursive.std.*;
 import static one.xio.AsioVisitor.Helper.*;
 import static one.xio.HttpHeaders.*;
@@ -425,8 +428,8 @@ public class Tx implements WantsZeroCopy {
     if (needs != 0) {
       ByteBuffer chunk;
       chunk = alloc(needs);
-      std.push(payload, chunk);
-      bb(payload, post.compact, debug);
+      push(payload, chunk);
+      bb(payload, Cursive.post.compact, debug);
       return chunk;
     }
     return NIL;

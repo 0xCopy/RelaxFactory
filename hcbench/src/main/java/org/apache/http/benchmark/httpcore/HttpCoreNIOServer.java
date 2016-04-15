@@ -17,9 +17,6 @@
  */
 package org.apache.http.benchmark.httpcore;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-
 import org.apache.http.HttpResponseInterceptor;
 import org.apache.http.benchmark.BenchConsts;
 import org.apache.http.benchmark.HttpServer;
@@ -33,105 +30,103 @@ import org.apache.http.nio.protocol.HttpAsyncService;
 import org.apache.http.nio.protocol.UriHttpAsyncRequestHandlerMapper;
 import org.apache.http.nio.reactor.IOEventDispatch;
 import org.apache.http.nio.reactor.ListeningIOReactor;
-import org.apache.http.protocol.HttpProcessor;
-import org.apache.http.protocol.ImmutableHttpProcessor;
-import org.apache.http.protocol.ResponseConnControl;
-import org.apache.http.protocol.ResponseContent;
-import org.apache.http.protocol.ResponseDate;
-import org.apache.http.protocol.ResponseServer;
+import org.apache.http.protocol.*;
 import org.apache.http.util.VersionInfo;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
 
 public class HttpCoreNIOServer implements HttpServer {
 
-  private final int port;
-  private final NHttpListener listener;
+    private final int port;
+    private final NHttpListener listener;
 
-  public HttpCoreNIOServer(final int port) throws IOException {
-    if (port <= 0) {
-      throw new IllegalArgumentException("Server port may not be negative or null");
+    public HttpCoreNIOServer(final int port) throws IOException {
+        if (port <= 0) {
+            throw new IllegalArgumentException("Server port may not be negative or null");
+        }
+        this.port = port;
+
+        final HttpProcessor httpproc =
+                new ImmutableHttpProcessor(new HttpResponseInterceptor[]{
+                        new ResponseDate(), new ResponseServer("HttpCore-NIO-Test/1.1"), new ResponseContent(),
+                        new ResponseConnControl()});
+
+        final UriHttpAsyncRequestHandlerMapper registry = new UriHttpAsyncRequestHandlerMapper();
+        registry.register("/rnd", new NRandomDataHandler());
+
+        final HttpAsyncService handler =
+                new HttpAsyncService(httpproc, DefaultConnectionReuseStrategy.INSTANCE,
+                        DefaultHttpResponseFactory.INSTANCE, registry, null);
+
+        final IOReactorConfig reactorConfig =
+                IOReactorConfig.custom().setSoReuseAddress(true).setTcpNoDelay(BenchConsts.TCP_NO_DELAY)
+                        .build();
+        final ListeningIOReactor ioreactor = new DefaultListeningIOReactor(reactorConfig);
+        final ConnectionConfig connectionConfig =
+                ConnectionConfig.custom().setBufferSize(BenchConsts.BUF_SIZE).setFragmentSizeHint(
+                        BenchConsts.BUF_SIZE).build();
+        final IOEventDispatch ioEventDispatch =
+                new DefaultHttpServerIODispatch(handler, connectionConfig);
+
+        this.listener = new NHttpListener(ioreactor, ioEventDispatch);
     }
-    this.port = port;
 
-    final HttpProcessor httpproc =
-        new ImmutableHttpProcessor(new HttpResponseInterceptor[] {
-            new ResponseDate(), new ResponseServer("HttpCore-NIO-Test/1.1"), new ResponseContent(),
-            new ResponseConnControl()});
-
-    final UriHttpAsyncRequestHandlerMapper registry = new UriHttpAsyncRequestHandlerMapper();
-    registry.register("/rnd", new NRandomDataHandler());
-
-    final HttpAsyncService handler =
-        new HttpAsyncService(httpproc, DefaultConnectionReuseStrategy.INSTANCE,
-            DefaultHttpResponseFactory.INSTANCE, registry, null);
-
-    final IOReactorConfig reactorConfig =
-        IOReactorConfig.custom().setSoReuseAddress(true).setTcpNoDelay(BenchConsts.TCP_NO_DELAY)
-            .build();
-    final ListeningIOReactor ioreactor = new DefaultListeningIOReactor(reactorConfig);
-    final ConnectionConfig connectionConfig =
-        ConnectionConfig.custom().setBufferSize(BenchConsts.BUF_SIZE).setFragmentSizeHint(
-            BenchConsts.BUF_SIZE).build();
-    final IOEventDispatch ioEventDispatch =
-        new DefaultHttpServerIODispatch(handler, connectionConfig);
-
-    this.listener = new NHttpListener(ioreactor, ioEventDispatch);
-  }
-
-  @Override
-  public String getName() {
-    return "HttpCore (NIO)";
-  }
-
-  @Override
-  public String getVersion() {
-    final VersionInfo vinfo =
-        VersionInfo.loadVersionInfo("org.apache.http", Thread.currentThread()
-            .getContextClassLoader());
-    return vinfo.getRelease();
-  }
-
-  @Override
-  public int getPort() {
-    return this.port;
-  }
-
-  @Override
-  public void start() throws Exception {
-    this.listener.start();
-    this.listener.listen(new InetSocketAddress(this.port));
-  }
-
-  @Override
-  public void shutdown() {
-    this.listener.terminate();
-    try {
-      this.listener.awaitTermination(1000);
-    } catch (final InterruptedException ex) {
+    @Override
+    public String getName() {
+        return "HttpCore (NIO)";
     }
-    final Exception ex = this.listener.getException();
-    if (ex != null) {
-      System.out.println("Error: " + ex.getMessage());
+
+    @Override
+    public String getVersion() {
+        final VersionInfo vinfo =
+                VersionInfo.loadVersionInfo("org.apache.http", Thread.currentThread()
+                        .getContextClassLoader());
+        return vinfo.getRelease();
     }
-  }
 
-  public static void main(final String[] args) throws Exception {
-    if (args.length != 1) {
-      System.out.println("Usage: <port>");
-      System.exit(1);
+    @Override
+    public int getPort() {
+        return this.port;
     }
-    final int port = Integer.parseInt(args[0]);
-    final HttpCoreNIOServer server = new HttpCoreNIOServer(port);
-    System.out.println("Listening on port: " + port);
-    server.start();
 
-    Runtime.getRuntime().addShutdownHook(new Thread() {
+    @Override
+    public void start() throws Exception {
+        this.listener.start();
+        this.listener.listen(new InetSocketAddress(this.port));
+    }
 
-      @Override
-      public void run() {
-        server.shutdown();
-      }
+    @Override
+    public void shutdown() {
+        this.listener.terminate();
+        try {
+            this.listener.awaitTermination(1000);
+        } catch (final InterruptedException ex) {
+        }
+        final Exception ex = this.listener.getException();
+        if (ex != null) {
+            System.out.println("Error: " + ex.getMessage());
+        }
+    }
 
-    });
-  }
+    public static void main(final String[] args) throws Exception {
+        if (args.length != 1) {
+            System.out.println("Usage: <port>");
+            System.exit(1);
+        }
+        final int port = Integer.parseInt(args[0]);
+        final HttpCoreNIOServer server = new HttpCoreNIOServer(port);
+        System.out.println("Listening on port: " + port);
+        server.start();
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+
+            @Override
+            public void run() {
+                server.shutdown();
+            }
+
+        });
+    }
 
 }

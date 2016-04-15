@@ -2,10 +2,9 @@ package org.apache.http.benchmark.relaxfactory;
 
 import bbcursive.Allocator;
 import bbcursive.std;
-import com.databricks.fastbuffer.ByteBufferReader;
 import one.xio.AsioVisitor.Impl;
 import one.xio.AsyncSingletonServer;
- import one.xio.HttpMethod;
+import one.xio.HttpMethod;
 import one.xio.HttpStatus;
 import org.apache.http.benchmark.Benchmark;
 import org.apache.http.benchmark.HttpServer;
@@ -16,13 +15,10 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
-import java.nio.channels.*;
-import java.util.concurrent.*;
 
 import static bbcursive.Cursive.pre.*;
 import static bbcursive.std.*;
 import static bbcursive.std.allocator;
-import static java.lang.StrictMath.min;
 import static java.nio.ByteBuffer.allocate;
 import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.channels.SelectionKey.OP_ACCEPT;
@@ -44,7 +40,7 @@ public class RxfBenchMarkHttpServer implements HttpServer {
     private Impl protocoldecoder = new Impl() {
         public void onRead(SelectionKey key) throws Exception {
 
-            Tx state  ;
+            Tx state;
             Object attachment = key.attachment();
             if (attachment instanceof Tx) {  //incomplete headers resuming
                 state = Tx.acquireTx(key);
@@ -60,25 +56,24 @@ public class RxfBenchMarkHttpServer implements HttpServer {
 
 
             if (state.readHttpHeaders() && HttpMethod.GET == state.hdr().asRequest().httpMethod()) {
-               ByteBuffer scratch = state.hdr().headerBuf();
+                ByteBuffer scratch = state.hdr().headerBuf();
                 ByteBuffer bb = bb(scratch, rewind, toWs, slice, toWs, back1, flip);
                 while (bb.hasRemaining() && bb.get() != '=') ;
 //                String str = str(bb, noop);
                 int count = (parseInt(bb));
                 key.interestOps(0).selector().wakeup();
 
-                ByteBuffer cursor ;
-                if (scratch.limit()>= count) {
+                ByteBuffer cursor;
+                if (scratch.limit() >= count) {
                     state.hdr().headerBuf(null);
-                    cursor=scratch;
-                }
-                else cursor= allocateDirect(count);
+                    cursor = scratch;
+                } else cursor = allocateDirect(count);
                 int r = Math.abs(key.hashCode());
 
                 ByteBuffer tmp = ((ByteBuffer) cursor.rewind());
                 int limit = cursor.limit();
                 for (int i = 0; i < limit; i++) {
-                    tmp.put(i,(byte) ((r + tmp.position()) % 96 + 32));
+                    tmp.put(i, (byte) ((r + tmp.position()) % 96 + 32));
                 }
 
                 HttpResponse httpResponse = state.hdr().asResponse();
@@ -94,7 +89,7 @@ public class RxfBenchMarkHttpServer implements HttpServer {
             }
         }
     };
-    private int regCount=0;
+    private int regCount = 0;
 
     public RxfBenchMarkHttpServer(int port) {
 
@@ -118,7 +113,7 @@ public class RxfBenchMarkHttpServer implements HttpServer {
         for (int i = 0; i < shardNode2s.length; i++) {
             int finalI = i;
             ShardNode2 shardNode2 = new ShardNode2();
-            shardNode2s[finalI]=shardNode2;
+            shardNode2s[finalI] = shardNode2;
             executorService.execute(() -> {
                 try {
                     shardNode2.init(protocoldecoder);
@@ -133,7 +128,7 @@ public class RxfBenchMarkHttpServer implements HttpServer {
         serverSocketChannel = (ServerSocketChannel) ServerSocketChannel.open().bind(new InetSocketAddress(/*InetAddress.getLoopbackAddress(),*/ Benchmark.PORT)/*, 2048*/).configureBlocking(false);
         serverSocketChannel.setOption(StandardSocketOptions.SO_REUSEADDR, Boolean.TRUE);//.setOption(StandardSocketOptions.IP_TOS, 0x10 );
         boolean first = true;
-      shardNode2s[regCount++%shardNode2s.length]. enqueue(serverSocketChannel, OP_ACCEPT, new Impl() {
+        shardNode2s[regCount++ % shardNode2s.length].enqueue(serverSocketChannel, OP_ACCEPT, new Impl() {
             @Override
             public void onAccept(SelectionKey key) throws Exception {
                 ServerSocketChannel c = (ServerSocketChannel) key.channel();
@@ -144,7 +139,7 @@ public class RxfBenchMarkHttpServer implements HttpServer {
 //        IPTOS_LOWDELAY (0x10)
 //                accept.setOption(StandardSocketOptions.TCP_NODELAY, Boolean.TRUE).setOption(StandardSocketOptions.IP_TOS, 0x10);
                 newSocket.configureBlocking(false);
-                shardNode2s[regCount++%shardNode2s.length].enqueue(newSocket, OP_READ /*| OP_WRITE*/);
+                shardNode2s[regCount++ % shardNode2s.length].enqueue(newSocket, OP_READ /*| OP_WRITE*/);
 
             }
         });
@@ -167,7 +162,7 @@ public class RxfBenchMarkHttpServer implements HttpServer {
         RxfBenchMarkHttpServer rxfBenchMarkHttpServer = new RxfBenchMarkHttpServer(Benchmark.PORT);
         rxfBenchMarkHttpServer.start();
         int runtime = Runtime.getRuntime().availableProcessors();
-        std.allocator=new Allocator(runtime *4*Allocator.MEG);
+        std.allocator = new Allocator(runtime * 4 * Allocator.MEG);
 
         while (!AsyncSingletonServer.killswitch.get()) Thread.sleep(1000);
     }

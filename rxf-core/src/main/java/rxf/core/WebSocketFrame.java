@@ -26,59 +26,59 @@ import java.nio.ByteBuffer;
  * + - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - +
  * |                     Payload Data continued ...                |
  * +---------------------------------------------------------------+
- * <p>
+ *
  * FIN:  1 bit
- * <p>
+ *
  * Indicates that this is the final fragment in a message.  The first
  * fragment MAY also be the final fragment.
- * <p>
+ *
  * RSV1, RSV2, RSV3:  1 bit each
- * <p>
+ *
  * MUST be 0 unless an extension is negotiated that defines meanings
  * for non-zero values.  If a nonzero value is received and none of
  * the negotiated extensions defines the meaning of such a nonzero
  * value, the receiving endpoint MUST _Fail the WebSocket
  * Connection_.
- * <p>
- * <p>
- * <p>
- * <p>
+ *
+ *
+ *
+ *
  * Fette & Melnikov             Standards Track                   [Page 28]
- * <p>
+ *
  * RFC 6455                 The WebSocket Protocol            December 2011
- * <p>
- * <p>
+ *
+ *
  * Opcode:  4 bits
- * <p>
+ *
  * Defines the interpretation of the "Payload data".  If an unknown
  * opcode is received, the receiving endpoint MUST _Fail the
  * WebSocket Connection_.  The following values are defined.
- * <p>
+ *
  *  %x0 denotes a continuation frame
- * <p>
+ *
  *  %x1 denotes a text frame
- * <p>
+ *
  *  %x2 denotes a binary frame
- * <p>
+ *
  *  %x3-7 are reserved for further non-control frames
- * <p>
+ *
  *  %x8 denotes a connection close
- * <p>
+ *
  *  %x9 denotes a ping
- * <p>
+ *
  *  %xA denotes a pong
- * <p>
+ *
  *  %xB-F are reserved for further control frames
- * <p>
+ *
  * Mask:  1 bit
- * <p>
+ *
  * Defines whether the "Payload data" is masked.  If set to 1, a
  * masking key is present in masking-key, and this is used to unmask
  * the "Payload data" as per Section 5.3.  All frames sent from
  * client to couch have this bit set to 1.
- * <p>
+ *
  * Payload length:  7 bits, 7+16 bits, or 7+64 bits
- * <p>
+ *
  * The length of the "Payload data", in bytes: if 0-125, that is the
  * payload length.  If 126, the following 2 bytes interpreted as a
  * 16-bit unsigned integer are the payload length.  If 127, the
@@ -92,47 +92,47 @@ import java.nio.ByteBuffer;
  * "Application data".  The length of the "Extension data" may be
  * zero, in which case the payload length is the length of the
  * "Application data".
- * <p>
- * <p>
- * <p>
- * <p>
- * <p>
- * <p>
- * <p>
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  * Fette & Melnikov             Standards Track                   [Page 29]
- * <p>
+ *
  * RFC 6455                 The WebSocket Protocol            December 2011
- * <p>
- * <p>
+ *
+ *
  * Masking-key:  0 or 4 bytes
- * <p>
+ *
  * All frames sent from the client to the couch are masked by a
  * 32-bit value that is contained within the frame.  This field is
  * present if the mask bit is set to 1 and is absent if the mask bit
  * is set to 0.  See Section 5.3 for further information per client-
  * to-couch masking.
- * <p>
+ *
  * Payload data:  (StripeLeveler+y) bytes
- * <p>
+ *
  * The "Payload data" is defined as "Extension data" concatenated
  * with "Application data".
- * <p>
+ *
  * Extension data:  StripeLeveler bytes
- * <p>
+ *
  * The "Extension data" is 0 bytes unless an extension has been
  * negotiated.  Any extension MUST specify the length of the
  * "Extension data", or how that length may be calculated, and how
  * the extension use MUST be negotiated during the opening handshake.
  * If present, the "Extension data" is included in the total payload
  * length.
- * <p>
+ *
  * Application data:  y bytes
- * <p>
+ *
  * Arbitrary "Application data", taking up the remainder of the frame
  * after any "Extension data".  The length of the "Application data"
  * is equal to the payload length minus the length of the "Extension
  * data".
- * <p>
+ *
  * </pre>
  */
 
@@ -212,7 +212,6 @@ public class WebSocketFrame {
    * 
    * @param data if payloadlength is 0 thelengths of remaining data are sum'd. if masking is set, the mask is applied.
    * @return the first or only bytebuffer with the ws header only
-   * 
    */
   public ByteBuffer as(ByteBuffer... data) {
     ByteBuffer out = ByteBuffer.allocateDirect(16);

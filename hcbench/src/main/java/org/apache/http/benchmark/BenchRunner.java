@@ -17,62 +17,57 @@
  */
 package org.apache.http.benchmark;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.PosixParser;
+import org.apache.commons.cli.*;
 
 import java.net.URL;
 
 public final class BenchRunner {
 
-  public static Config parseConfig(final String[] args) throws ParseException {
-    final Config config = new Config();
-    if (args.length > 0) {
-      final Options options = CommandLineUtils.getOptions();
-      final CommandLineParser parser = new PosixParser();
-      final CommandLine cmd = parser.parse(options, args);
-      if (cmd.hasOption('h')) {
-        final HelpFormatter formatter = new HelpFormatter();
-        formatter.printHelp("Benchmark [options]", options);
-        System.exit(1);
-      }
-      CommandLineUtils.parseCommandLine(cmd, config);
-    } else {
-      config.setKeepAlive(true);
-      config.setRequests(100000);
-      config.setThreads(50);
+    public static Config parseConfig(final String[] args) throws ParseException {
+        final Config config = new Config();
+        if (args.length > 0) {
+            final Options options = CommandLineUtils.getOptions();
+            final CommandLineParser parser = new PosixParser();
+            final CommandLine cmd = parser.parse(options, args);
+            if (cmd.hasOption('h')) {
+                final HelpFormatter formatter = new HelpFormatter();
+                formatter.printHelp("Benchmark [options]", options);
+                System.exit(1);
+            }
+            CommandLineUtils.parseCommandLine(cmd, config);
+        } else {
+            config.setKeepAlive(true);
+            config.setRequests(100000);
+            config.setThreads(50);
+        }
+        return config;
     }
-    return config;
-  }
 
-  public static void run(final HttpServer server, final Config config) throws Exception {
-    final URL target = new URL("http", "localhost", server.getPort(), "/rnd?c=2048");
-    config.setUrl(target);
+    public static void run(final HttpServer server, final Config config) throws Exception {
+        final URL target = new URL("http", "localhost", server.getPort(), "/rnd?c=2048");
+        config.setUrl(target);
 
-    server.start();
-    try {
-      System.out.println("---------------------------------------------------------------");
-      System.out.println(server.getName() + "; version: " + server.getVersion());
-      System.out.println("---------------------------------------------------------------");
+        server.start();
+        try {
+            System.out.println("---------------------------------------------------------------");
+            System.out.println(server.getName() + "; version: " + server.getVersion());
+            System.out.println("---------------------------------------------------------------");
 
-      final Config warmupConfig = config.copy();
-      int n = warmupConfig.getRequests() / 100;
-      if (n > 100) {
-        n = 100;
-      }
-      warmupConfig.setRequests(n);
-      final HttpBenchmark warmUp = new HttpBenchmark(warmupConfig);
-      warmUp.doExecute();
+            final Config warmupConfig = config.copy();
+            int n = warmupConfig.getRequests() / 100;
+            if (n > 100) {
+                n = 100;
+            }
+            warmupConfig.setRequests(n);
+            final HttpBenchmark warmUp = new HttpBenchmark(warmupConfig);
+            warmUp.doExecute();
 
-      final HttpBenchmark benchmark = new HttpBenchmark(config);
-      benchmark.execute();
-      System.out.println("---------------------------------------------------------------");
-    } finally {
-      server.shutdown();
+            final HttpBenchmark benchmark = new HttpBenchmark(config);
+            benchmark.execute();
+            System.out.println("---------------------------------------------------------------");
+        } finally {
+            server.shutdown();
+        }
     }
-  }
 
 }

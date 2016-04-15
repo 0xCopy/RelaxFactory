@@ -24,14 +24,14 @@ import org.apache.http.benchmark.relaxfactory.RxfBenchMarkHttpServer;
 
 public class Benchmark {
 
-  public static final int PORT = 8989;
+    public static final int PORT = 8989;
 
-  public static void main(final String[] args) throws Exception {
-    final Config config = BenchRunner.parseConfig(args);
-    BenchRunner.run(new RxfBenchMarkHttpServer(PORT), config);
-    BenchRunner.run(new JettyNIOServer(PORT), config);
-    BenchRunner.run(new HttpCoreNIOServer(PORT), config);
-    BenchRunner.run(new NettyNIOServer(PORT), config);
-  }
+    public static void main(final String[] args) throws Exception {
+        final Config config = BenchRunner.parseConfig(args);
+        BenchRunner.run(new RxfBenchMarkHttpServer(PORT), config);
+        BenchRunner.run(new JettyNIOServer(PORT), config);
+        BenchRunner.run(new HttpCoreNIOServer(PORT), config);
+        BenchRunner.run(new NettyNIOServer(PORT), config);
+    }
 
 }

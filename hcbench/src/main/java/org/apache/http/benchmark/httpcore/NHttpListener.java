@@ -17,53 +17,53 @@
  */
 package org.apache.http.benchmark.httpcore;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-
 import org.apache.http.nio.reactor.IOEventDispatch;
 import org.apache.http.nio.reactor.ListenerEndpoint;
 import org.apache.http.nio.reactor.ListeningIOReactor;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+
 class NHttpListener extends Thread {
 
-  private final ListeningIOReactor ioreactor;
-  private final IOEventDispatch ioEventDispatch;
+    private final ListeningIOReactor ioreactor;
+    private final IOEventDispatch ioEventDispatch;
 
-  private volatile Exception exception;
+    private volatile Exception exception;
 
-  public NHttpListener(final ListeningIOReactor ioreactor, final IOEventDispatch ioEventDispatch) {
-    super();
-    this.ioreactor = ioreactor;
-    this.ioEventDispatch = ioEventDispatch;
-  }
-
-  @Override
-  public void run() {
-    try {
-      this.ioreactor.execute(this.ioEventDispatch);
-    } catch (final Exception ex) {
-      this.exception = ex;
+    public NHttpListener(final ListeningIOReactor ioreactor, final IOEventDispatch ioEventDispatch) {
+        super();
+        this.ioreactor = ioreactor;
+        this.ioEventDispatch = ioEventDispatch;
     }
-  }
 
-  public void listen(final InetSocketAddress address) throws InterruptedException {
-    final ListenerEndpoint endpoint = this.ioreactor.listen(address);
-    endpoint.waitFor();
-  }
-
-  public void terminate() {
-    try {
-      this.ioreactor.shutdown();
-    } catch (final IOException ex) {
+    @Override
+    public void run() {
+        try {
+            this.ioreactor.execute(this.ioEventDispatch);
+        } catch (final Exception ex) {
+            this.exception = ex;
+        }
     }
-  }
 
-  public Exception getException() {
-    return this.exception;
-  }
+    public void listen(final InetSocketAddress address) throws InterruptedException {
+        final ListenerEndpoint endpoint = this.ioreactor.listen(address);
+        endpoint.waitFor();
+    }
 
-  public void awaitTermination(final long millis) throws InterruptedException {
-    this.join(millis);
-  }
+    public void terminate() {
+        try {
+            this.ioreactor.shutdown();
+        } catch (final IOException ex) {
+        }
+    }
+
+    public Exception getException() {
+        return this.exception;
+    }
+
+    public void awaitTermination(final long millis) throws InterruptedException {
+        this.join(millis);
+    }
 
 }

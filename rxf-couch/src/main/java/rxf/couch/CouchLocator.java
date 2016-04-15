@@ -22,15 +22,15 @@ public abstract class CouchLocator<T> extends Locator<T, String> implements Couc
 
   /**
    * <pre>
-   * POST /rosession HTTP/1.1
-   * Content-Type: application/json
-   * Content-Length: 133
-   *
-   * [data not shown]
-   * HTTP/1.1 201 Created
-   *
-   * [data not shown]
-   * </pre>
+     * POST /rosession HTTP/1.1
+     * Content-Type: application/json
+     * Content-Length: 133
+     *
+     * [data not shown]
+     * HTTP/1.1 201 Created
+     *
+     * [data not shown]
+     * </pre>
    * 
    * @param clazz
    * @return

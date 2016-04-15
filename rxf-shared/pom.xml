@@ -14,17 +14,18 @@
         <dependency>
             <groupId>org.httpunit</groupId>
             <artifactId>httpunit</artifactId>
-             <scope>test</scope>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
-            <artifactId>junit</artifactId><scope>test</scope>
-         </dependency>
-      <!--  <dependency>
-            <groupId>com.google.web.bindery</groupId>
-            <artifactId>requestfactory-apt</artifactId>
-            <scope>provided</scope>
-         </dependency>-->
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!--  <dependency>
+              <groupId>com.google.web.bindery</groupId>
+              <artifactId>requestfactory-apt</artifactId>
+              <scope>provided</scope>
+           </dependency>-->
     </dependencies>
     <packaging>jar</packaging>
     <build>

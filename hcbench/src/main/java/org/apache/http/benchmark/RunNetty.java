@@ -17,15 +17,13 @@
  */
 package org.apache.http.benchmark;
 
-import org.apache.http.benchmark.httpcore.HttpCoreNIOServer;
-import org.apache.http.benchmark.jetty.JettyNIOServer;
 import org.apache.http.benchmark.netty.NettyNIOServer;
 
 public class RunNetty {
 
-  public static void main(final String[] args) throws Exception {
-    final Config config = BenchRunner.parseConfig(args);
-    BenchRunner.run(new NettyNIOServer(Benchmark.PORT), config);
-  }
+    public static void main(final String[] args) throws Exception {
+        final Config config = BenchRunner.parseConfig(args);
+        BenchRunner.run(new NettyNIOServer(Benchmark.PORT), config);
+    }
 
 }

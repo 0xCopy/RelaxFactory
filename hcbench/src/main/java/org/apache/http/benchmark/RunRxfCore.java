@@ -19,16 +19,11 @@ package org.apache.http.benchmark;
 
 import org.apache.http.benchmark.relaxfactory.RxfBenchMarkHttpServer;
 
-import static bbcursive.std.bb;
-import static bbcursive.std.cat;
-import static bbcursive.std.str;
-import static one.xio.AsioVisitor.Helper.finishWrite;
-
 public class RunRxfCore {
 
-  public static void main(String[] args) throws Exception {
-    Config config = BenchRunner.parseConfig(args);
-    BenchRunner.run(new RxfBenchMarkHttpServer(Benchmark.PORT), config);
-  }
+    public static void main(String[] args) throws Exception {
+        Config config = BenchRunner.parseConfig(args);
+        BenchRunner.run(new RxfBenchMarkHttpServer(Benchmark.PORT), config);
+    }
 
 }

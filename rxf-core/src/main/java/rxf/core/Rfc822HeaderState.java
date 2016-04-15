@@ -135,7 +135,7 @@ public class Rfc822HeaderState implements WantsZeroCopy {
 
     public HttpMethod httpMethod() {
       return HttpMethod.valueOf(methodProtocol()); // To change body of overridden methods use File | Settings | File
-                                                   // Templates.
+      // Templates.
     }
 
     public String method() {

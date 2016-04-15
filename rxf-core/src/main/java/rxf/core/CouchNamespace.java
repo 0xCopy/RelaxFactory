@@ -40,14 +40,12 @@ public interface CouchNamespace {
 
   public enum ns {
     orgname {
-
       public void setMe(CouchNamespace cl, String ns) {
         cl.setOrgname(ns);
 
       }
     },
     entityName {
-
       public void setMe(CouchNamespace cl, String ns) {
         cl.setEntityName(ns);
       }

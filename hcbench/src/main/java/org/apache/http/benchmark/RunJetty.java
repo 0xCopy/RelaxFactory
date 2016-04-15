@@ -21,9 +21,9 @@ import org.apache.http.benchmark.jetty.JettyNIOServer;
 
 public class RunJetty {
 
-  public static void main(final String[] args) throws Exception {
-    final Config config = BenchRunner.parseConfig(args);
-    BenchRunner.run(new JettyNIOServer(Benchmark.PORT), config);
-  }
+    public static void main(final String[] args) throws Exception {
+        final Config config = BenchRunner.parseConfig(args);
+        BenchRunner.run(new JettyNIOServer(Benchmark.PORT), config);
+    }
 
 }

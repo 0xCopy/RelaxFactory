@@ -120,7 +120,6 @@ public enum CookieRfc6265Util {
    * expiry-time.
    */
   Expires {
-
     public Serializable value(ByteBuffer input) {
       input = input.slice();
       while (input.hasRemaining() && Character.isWhitespace(((ByteBuffer) input.mark()).get()));
@@ -168,7 +167,6 @@ public enum CookieRfc6265Util {
    * expiry-time.
    */
   Max$2dAge {
-
     public Serializable value(ByteBuffer input) {
       input = input.slice();
       while (input.hasRemaining() && Character.isWhitespace(((ByteBuffer) input.mark()).get()));
@@ -221,7 +219,6 @@ public enum CookieRfc6265Util {
    * cookie-domain.
    */
   Domain {
-
     public Serializable value(ByteBuffer input) {
       input = input.slice();
       while (input.hasRemaining() && Character.isWhitespace(((ByteBuffer) input.mark()).get()));
@@ -263,7 +260,6 @@ public enum CookieRfc6265Util {
    * cookie-path.
    */
   Path {
-
     public Serializable value(ByteBuffer input) {
       input = input.slice();
       while (input.hasRemaining() && Character.isWhitespace(((ByteBuffer) input.mark()).get()));
@@ -292,7 +288,6 @@ public enum CookieRfc6265Util {
    * the cookie-attribute-list with an attribute-name of Secure and an empty attribute-value.
    */
   Secure {
-
     public Serializable value(ByteBuffer input) {
       input.rewind();
       ByteBuffer tok = token.duplicate();
@@ -321,7 +316,6 @@ public enum CookieRfc6265Util {
    * the cookie- attribute-list with an attribute-name of HttpOnly and an empty attribute-value.
    */
   HttpOnly {
-
     public Serializable value(ByteBuffer input) {
       input.rewind();
       ByteBuffer tok = token.duplicate();

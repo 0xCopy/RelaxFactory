@@ -29,7 +29,6 @@ import static one.xio.AsioVisitor.Helper.write;
 import static one.xio.HttpHeaders.*;
 
 /**
- * 
  * deprecated -- Tx.fetchHttpHeaders and Tx.finishRequest change things User: jim Date: 6/4/12 Time: 1:42 AM
  */
 @OpInterest(value = SelectionKey.OP_WRITE)
@@ -210,8 +209,8 @@ public class ContentRootImpl extends Impl {
   /**
    * todo: make cleaner. make this go away
    * 
-   * @return
    * @param key
+   * @return
    */
   public MatchResult getMatchResults(SelectionKey key) {
     if (matchResults == null) {

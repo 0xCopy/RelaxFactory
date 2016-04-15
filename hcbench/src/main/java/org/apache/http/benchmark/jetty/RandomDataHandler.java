@@ -17,66 +17,65 @@
  */
 package org.apache.http.benchmark.jetty;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.Writer;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Writer;
+
 class RandomDataHandler extends AbstractHandler {
 
-  public RandomDataHandler() {
-    super();
-  }
-
-  @Override
-  public void handle(final String target, final Request baseRequest,
-      final HttpServletRequest request, final HttpServletResponse response) throws IOException,
-      ServletException {
-    if (target.equals("/rnd")) {
-      rnd(request, response);
-    } else {
-      response.setStatus(HttpStatus.NOT_FOUND_404);
-      response.setContentType("text/plain");
-      final Writer writer = response.getWriter();
-      writer.write("Target not found: " + target);
-      writer.flush();
-    }
-  }
-
-  private void rnd(final HttpServletRequest request, final HttpServletResponse response)
-      throws IOException {
-    int count = 100;
-    final String s = request.getParameter("c");
-    try {
-      count = Integer.parseInt(s);
-    } catch (final NumberFormatException ex) {
-      response.setStatus(500);
-      final Writer writer = response.getWriter();
-      writer.write("Invalid query format: " + request.getQueryString());
-      writer.flush();
-      return;
+    public RandomDataHandler() {
+        super();
     }
 
-    response.setStatus(200);
-    response.setContentType("text/plain");
-    response.setContentLength(count);
-
-    final byte[] b = new byte[count];
-    final int r = Math.abs(b.hashCode());
-    for (int i = 0; i < count; i++) {
-      b[i] = (byte) ((r + i) % 96 + 32);
+    @Override
+    public void handle(final String target, final Request baseRequest,
+                       final HttpServletRequest request, final HttpServletResponse response) throws IOException,
+            ServletException {
+        if (target.equals("/rnd")) {
+            rnd(request, response);
+        } else {
+            response.setStatus(HttpStatus.NOT_FOUND_404);
+            response.setContentType("text/plain");
+            final Writer writer = response.getWriter();
+            writer.write("Target not found: " + target);
+            writer.flush();
+        }
     }
 
-    final OutputStream outstream = response.getOutputStream();
-    outstream.write(b);
-    outstream.flush();
-  }
+    private void rnd(final HttpServletRequest request, final HttpServletResponse response)
+            throws IOException {
+        int count = 100;
+        final String s = request.getParameter("c");
+        try {
+            count = Integer.parseInt(s);
+        } catch (final NumberFormatException ex) {
+            response.setStatus(500);
+            final Writer writer = response.getWriter();
+            writer.write("Invalid query format: " + request.getQueryString());
+            writer.flush();
+            return;
+        }
+
+        response.setStatus(200);
+        response.setContentType("text/plain");
+        response.setContentLength(count);
+
+        final byte[] b = new byte[count];
+        final int r = Math.abs(b.hashCode());
+        for (int i = 0; i < count; i++) {
+            b[i] = (byte) ((r + i) % 96 + 32);
+        }
+
+        final OutputStream outstream = response.getOutputStream();
+        outstream.write(b);
+        outstream.flush();
+    }
 
 }

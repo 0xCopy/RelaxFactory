@@ -16,8 +16,8 @@
     </properties>
     <dependencies>
         <dependency>
-        <groupId>javolution</groupId>
-        <artifactId>javolution</artifactId>
+            <groupId>javolution</groupId>
+            <artifactId>javolution</artifactId>
         </dependency>
         <dependency>
             <groupId>com.github.0xCopy.RelaxFactory</groupId>

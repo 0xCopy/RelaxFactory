@@ -21,7 +21,9 @@ import java.nio.channels.SelectionKey;
 import java.nio.file.Paths;
 import java.text.ParseException;
 
-import static bbcursive.std.*;
+import static bbcursive.lib.log.log;
+import static bbcursive.std.bb;
+import static bbcursive.std.str;
 import static one.xio.AsioVisitor.Helper.*;
 
 // import static bbcursive.Cursive.std.asString;

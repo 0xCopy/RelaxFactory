@@ -18,75 +18,75 @@
 
 package org.apache.http.benchmark.netty;
 
-import java.net.InetSocketAddress;
-import java.util.concurrent.Executors;
-
 import org.apache.http.benchmark.BenchConsts;
 import org.apache.http.benchmark.HttpServer;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 
+import java.net.InetSocketAddress;
+import java.util.concurrent.Executors;
+
 public class NettyNIOServer implements HttpServer {
 
-  private final int port;
-  private final ServerBootstrap serverBootstrap;
+    private final int port;
+    private final ServerBootstrap serverBootstrap;
 
-  public NettyNIOServer(final int port) {
-    super();
-    if (port <= 0) {
-      throw new IllegalArgumentException("Server port may not be negative or null");
+    public NettyNIOServer(final int port) {
+        super();
+        if (port <= 0) {
+            throw new IllegalArgumentException("Server port may not be negative or null");
+        }
+        this.port = port;
+        this.serverBootstrap =
+                new ServerBootstrap(new NioServerSocketChannelFactory(Executors.newCachedThreadPool(),
+                        Executors.newCachedThreadPool()));
+        this.serverBootstrap.setPipelineFactory(new HttpServerPipelineFactory());
+        this.serverBootstrap.setOption("child.tcpNoDelay", Boolean.valueOf(BenchConsts.TCP_NO_DELAY));
     }
-    this.port = port;
-    this.serverBootstrap =
-        new ServerBootstrap(new NioServerSocketChannelFactory(Executors.newCachedThreadPool(),
-            Executors.newCachedThreadPool()));
-    this.serverBootstrap.setPipelineFactory(new HttpServerPipelineFactory());
-    this.serverBootstrap.setOption("child.tcpNoDelay", Boolean.valueOf(BenchConsts.TCP_NO_DELAY));
-  }
 
-  @Override
-  public String getName() {
-    return "Netty";
-  }
-
-  @Override
-  public String getVersion() {
-    return "3.6.2";
-  }
-
-  @Override
-  public int getPort() {
-    return this.port;
-  }
-
-  @Override
-  public void start() throws Exception {
-    serverBootstrap.bind(new InetSocketAddress(port));
-  }
-
-  @Override
-  public void shutdown() {
-    serverBootstrap.releaseExternalResources();
-  }
-
-  public static void main(final String[] args) throws Exception {
-    if (args.length != 1) {
-      System.out.println("Usage: <port>");
-      System.exit(1);
+    @Override
+    public String getName() {
+        return "Netty";
     }
-    final int port = Integer.parseInt(args[0]);
-    final NettyNIOServer server = new NettyNIOServer(port);
-    System.out.println("Listening on port: " + port);
-    server.start();
 
-    Runtime.getRuntime().addShutdownHook(new Thread() {
+    @Override
+    public String getVersion() {
+        return "3.6.2";
+    }
 
-      @Override
-      public void run() {
-        server.shutdown();
-      }
+    @Override
+    public int getPort() {
+        return this.port;
+    }
 
-    });
-  }
+    @Override
+    public void start() throws Exception {
+        serverBootstrap.bind(new InetSocketAddress(port));
+    }
+
+    @Override
+    public void shutdown() {
+        serverBootstrap.releaseExternalResources();
+    }
+
+    public static void main(final String[] args) throws Exception {
+        if (args.length != 1) {
+            System.out.println("Usage: <port>");
+            System.exit(1);
+        }
+        final int port = Integer.parseInt(args[0]);
+        final NettyNIOServer server = new NettyNIOServer(port);
+        System.out.println("Listening on port: " + port);
+        server.start();
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+
+            @Override
+            public void run() {
+                server.shutdown();
+            }
+
+        });
+    }
 
 }

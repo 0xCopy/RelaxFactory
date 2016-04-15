@@ -31,7 +31,6 @@ public class RelaxFactoryServerImpl implements RelaxFactoryServer {
    * @param op int ChannelSelector.operator
    * @param s the payload: grammar {enum,data1,data..n}
    * @throws java.nio.channels.ClosedChannelException
-   * 
    */
   public static void enqueue(SelectableChannel channel, int op, Object... s)
       throws ClosedChannelException {

@@ -29,7 +29,7 @@ public class CouchDriverTest {
 
   public static final String SOMEDBPREFIX = "test_somedb_";
   public static final String SOMEDB = SOMEDBPREFIX + System.currentTimeMillis(); // ordered names of testdbs for failure
-                                                                                 // postmortem....
+  // postmortem....
   public static final String DESIGN_SAMPLE = "_design/sample";
   public static ScheduledExecutorService exec;
 

@@ -16,6 +16,7 @@ import java.util.Set;
 
 /**
  * usage:
+ * <p>
  * 
  * <pre>
  * String dbSpec = "http://" + Window.Location.getHost() + "/api/campaigns";
@@ -68,7 +69,7 @@ public class PouchProxy extends JavaScriptObject {
   }
 
   public static native <P> JavaScriptObject wrapSuccesFailCallback(AsyncCallback<P> cb)/*-{
-                                                                                       return  $entry(function (e, r) {
+                                                                                       return $entry(function (e, r) {
                                                                                        var err = e, response = r;
                                                                                        if (err)
                                                                                        ( cb.@com.google.gwt.user.client.rpc.AsyncCallback::onFailure(Ljava/lang/Throwable;)(@java.lang.Exception::new(Ljava/lang/String;)(JSON.stringify(err))));
