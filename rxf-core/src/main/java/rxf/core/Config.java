@@ -1,6 +1,7 @@
 package rxf.core;
 
 import static bbcursive.lib.log.log;
+
 import static java.lang.System.setProperty;
 
 public class Config {
