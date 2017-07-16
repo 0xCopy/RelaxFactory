@@ -1,27 +1,30 @@
-package rxf.couch;
+package rxf.couch.service;
 
+import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.internal.Primitives;
+import one.xio.HttpHeaders;
 import rxf.core.CouchNamespace;
+import rxf.couch.CouchResultSet;
 import rxf.couch.CouchResultSet.tuple;
-import rxf.couch.CouchService.AttachmentsImpl;
-import rxf.couch.CouchService.CouchRequestParam;
-import rxf.couch.CouchService.View;
+import rxf.couch.driver.Attachments;
+import rxf.couch.ann.CouchRequestParam;
+import rxf.couch.ann.View;
 import rxf.couch.driver.CouchMetaDriver;
 import rxf.couch.gen.CouchDriver.*;
-import rxf.couch.gen.CouchDriver.DocPersist.DocPersistActionBuilder;
-import rxf.couch.gen.CouchDriver.DocPersist.DocPersistTerminalBuilder;
 import rxf.couch.gen.CouchDriver.JsonSend.JsonSendTerminalBuilder;
 import rxf.couch.gen.CouchDriver.ViewFetch.ViewFetchTerminalBuilder;
 import rxf.rpc.RpcHelper;
 import rxf.shared.CouchTx;
 import rxf.shared.KouchTx;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.net.URLEncoder;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -69,8 +72,8 @@ public class CouchServiceFactory {
       init(serviceInterface, ns);
     }
 
-    public void init(final Class<? extends CouchService<E>> serviceInterface,
-        final String... initNs) throws ExecutionException, InterruptedException {
+    public void init(Class<? extends CouchService<E>> serviceInterface,
+                     String... initNs) throws ExecutionException, InterruptedException {
       init = RpcHelper.EXECUTOR_SERVICE.submit(() -> {
         for (int i = 0; i < initNs.length; i++) {
           String n = initNs[i];
@@ -160,8 +163,8 @@ public class CouchServiceFactory {
                       new DocFetch().db(pathPrefix1).docId(designId).to().fire().json(),
                       CouchDesignDoc.class)))) {
             System.err.println("Existing design doc out of date, updating...");
-            final String stringParam = CouchMetaDriver.gson().toJson(design);
-            final JsonSendTerminalBuilder fire = new JsonSend().opaque(getPathPrefix())
+            String stringParam = CouchMetaDriver.gson().toJson(design);
+            JsonSendTerminalBuilder fire = new JsonSend().opaque(getPathPrefix())
             /* .docId(design.key) */.validjson(stringParam).to().fire();
             if (RpcHelper.DEBUG_SENDJSON) {
               CouchTx tx = fire.tx();
@@ -195,7 +198,7 @@ public class CouchServiceFactory {
 
     // /CouchNS boilerplate
 
-    public Object invoke(Object proxy, final Method method, final Object[] args)
+    public Object invoke(Object proxy, Method method, Object[] args)
         throws ExecutionException, InterruptedException {
       init.get();
 
@@ -228,12 +231,11 @@ public class CouchServiceFactory {
           } else {
             // assume list or map, parametrized type, else give up and use entityType
             ParameterizedType returnType = (ParameterizedType) method.getGenericReturnType();
-            if (returnType.getRawType() == Map.class) {
-              Map map = new HashMap();
+            if (Objects.equals(returnType.getRawType(), Map.class)) {
               // do map from assumed key type to assumed data type
               keyType = returnType.getActualTypeArguments()[0];
               valueType = returnType.getActualTypeArguments()[1];
-            } else if (returnType.getRawType() == List.class) {
+            } else if (Objects.equals(returnType.getRawType(), List.class)) {
               valueType = returnType.getActualTypeArguments()[0];
             } else {
               // no idea, go with something somewhat sane
@@ -242,10 +244,10 @@ public class CouchServiceFactory {
           }
 
           /* dont forget to uncomment this after new CouchResult gen */
-          final Map<String, String> stringStringMap = viewMethods;
+          Map<String, String> stringStringMap = viewMethods;
           // Object[] cast to make varargs behave
           String format = String.format(stringStringMap.get(name), (Object[]) jsonArgs);
-          final ViewFetchTerminalBuilder fire =
+          ViewFetchTerminalBuilder fire =
               new ViewFetch().db(getPathPrefix()).type(valueType).keyType(keyType).view(format)
                   .to().fire();
           CouchResultSet<?, ?> rows = fire.rows();
@@ -257,8 +259,8 @@ public class CouchServiceFactory {
           } else {
             // assume list or map, parameterized type
             ParameterizedType returnType = (ParameterizedType) method.getGenericReturnType();
-            if (returnType.getRawType() == Map.class) {
-              Map map = new HashMap();
+            if (Objects.equals(returnType.getRawType(), Map.class)) {
+              Map map = new LinkedHashMap();
               // populate map of specified type
               if (null != rows && null != rows.rows) {
                 for (tuple<?, ?> row : rows.rows) {
@@ -268,8 +270,7 @@ public class CouchServiceFactory {
 
               // return map
               return map;
-            } else if (returnType.getRawType() == List.class) {
-              List list = new ArrayList();
+            } else if (Objects.equals(returnType.getRawType(), List.class)) {
               // assume items in collection
               // iterate through items in rowset, populating list
               if (null != rows && null != rows.rows) {
@@ -288,22 +289,88 @@ public class CouchServiceFactory {
         if ("persist".equals(method.getName())) {
           // again, no point, see above with DocPersist
           String stringParam = CouchMetaDriver.gson().toJson(args[0]);
-          final DocPersistActionBuilder to =
-              new DocPersist().db(getPathPrefix()).validjson(stringParam).to();
-          DocPersistTerminalBuilder fire = to.fire();
-          KouchTx tx = fire.tx();
-          return tx;
+          return new DocPersist().db(getPathPrefix()).validjson(stringParam).to().fire().tx();
         } else if ("attachments".equals(method.getName())) {
-          try {
-            return new AttachmentsImpl(getPathPrefix(), (E) args[0]);
-          } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-          } catch (IllegalAccessException e) {
-            e.printStackTrace();
-          }
-          return null;
+          String db1 = getPathPrefix();
+          E entity1 = (E) args[0];
+          return new Attachments() {
+            private String rev;
+            private String id;
+            private String db = db1;
+
+            {
+              JsonObject obj = CouchMetaDriver.gson().toJsonTree(entity1).getAsJsonObject();
+              rev = obj.get("_rev").getAsString();
+              id = obj.get("_id").getAsString();
+            }
+
+            public CouchTx addAttachment(String content, String fileName, String contentType) {
+              JsonSend.JsonSendActionBuilder actionBuilder =
+                  new JsonSend().opaque(db + "/" + id + "/" + fileName + "?rev=" + rev).validjson(content)
+                      .to();
+              actionBuilder.hdr().headerString(HttpHeaders.Content$2dType, contentType);
+              CouchTx tx = actionBuilder.fire().tx();
+              rev = tx.rev();
+              return tx;
+            }
+
+            public Writer addAttachment(String fileName, String contentType) {
+              return new StringWriter() {
+
+                public void close() throws IOException {
+                  JsonSend.JsonSendActionBuilder actionBuilder =
+                      new JsonSend().opaque(db + "/" + id + "/" + fileName + "?rev=" + rev).validjson(
+                          getBuffer().toString()).to();
+                  actionBuilder.hdr().headerString(HttpHeaders.Content$2dType, contentType);
+                  CouchTx tx = actionBuilder.fire().tx();
+                  if (!tx.ok()) {
+                    throw new IOException(tx.error());
+                  }
+                  rev = tx.rev();
+                }
+              };
+            }
+
+            public CouchTx updateAttachment(String content, String fileName, String contentType) {
+              JsonSend.JsonSendActionBuilder actionBuilder =
+                  new JsonSend().opaque(db + "/" + id + "/" + fileName + "?rev=" + rev).validjson(content)
+                      .to();
+              actionBuilder.hdr().headerString(HttpHeaders.Content$2dType, contentType);
+              CouchTx tx = actionBuilder.fire().tx();
+              rev = tx.rev();
+              return tx;
+            }
+
+            public Writer updateAttachment(String fileName, String contentType) {
+              return new StringWriter() {
+
+                public void close() throws IOException {
+                  JsonSend.JsonSendActionBuilder actionBuilder =
+                      new JsonSend().opaque(db + "/" + id + "/" + fileName + "?rev=" + rev).validjson(
+                          getBuffer().toString()).to();
+                  actionBuilder.hdr().headerString(HttpHeaders.Content$2dType, contentType);
+                  CouchTx tx = actionBuilder.fire().tx();
+                  if (!tx.ok()) {
+                    throw new IOException(tx.error());
+                  }
+                  rev = tx.rev();
+                }
+              };
+            }
+
+            public String getAttachment(String fileName) {
+              return new DocFetch().db(db).docId(id + "/" + fileName).to().fire().json();
+            }
+
+            public KouchTx deleteAttachment(String fileName) {
+              CouchTx tx = new DocDelete().db(db).docId(id + "/" + fileName).to().fire().tx();
+              rev = tx.rev();
+              return tx;
+            }
+          };
+
         } else {
-          assert "find" == (method.getName().intern());
+          assert Objects.equals("find", method.getName() );
           String doc =
               new DocFetch().db(getPathPrefix()).docId((String) args[0]).to().fire().json();
           return (E) CouchMetaDriver.gson().fromJson(doc, entityType);
@@ -349,8 +416,8 @@ public class CouchServiceFactory {
           return false;
         }
         CouchView other = (CouchView) obj;
-        return ((map == null && other.map == null) || map.equals(other.map))
-            && ((reduce == null && other.reduce == null || reduce.equals(other.reduce)));
+        return (map == null && other.map == null || map.equals(other.map))
+            && (reduce == null && other.reduce == null || reduce.equals(other.reduce));
       }
     }
 

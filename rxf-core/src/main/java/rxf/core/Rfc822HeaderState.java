@@ -328,14 +328,16 @@ public class Rfc822HeaderState implements WantsZeroCopy {
    * simple wrapper for HttpRequest setters
    */
   public HttpRequest $req() {
-    return HttpRequest.class == this.getClass() ? (HttpRequest) this : new HttpRequest(this);
+    return Objects.equals(HttpRequest.class, this.getClass()) ? (HttpRequest) this
+        : new HttpRequest(this);
   }
 
   /**
    * simple wrapper for HttpRequest setters
    */
   public HttpResponse $res() {
-    return HttpResponse.class == this.getClass() ? (HttpResponse) this : new HttpResponse(this);
+    return Objects.equals(HttpResponse.class, this.getClass()) ? (HttpResponse) this
+        : new HttpResponse(this);
   }
 
   public String toString() {
@@ -346,7 +348,7 @@ public class Rfc822HeaderState implements WantsZeroCopy {
         + ", sourceKey:" + sourceKey() + '}';
   }
 
-  public <T> T as(final Class<T> clazz) {
+  public <T> T as(Class<T> clazz) {
     if (clazz.equals(HttpResponse.class)) {
       return (T) $res();
 

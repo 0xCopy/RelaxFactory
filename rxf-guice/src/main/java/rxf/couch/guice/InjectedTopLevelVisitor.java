@@ -57,7 +57,7 @@ public class InjectedTopLevelVisitor extends AsioVisitor.Impl {
   }
 
   public void onRead(SelectionKey key) throws Exception {
-    final SocketChannel channel = (SocketChannel) key.channel();
+    SocketChannel channel = (SocketChannel) key.channel();
 
     ByteBuffer cursor = ByteBuffer.allocateDirect(4 << 10);
     int read = Helper.read(key, cursor);

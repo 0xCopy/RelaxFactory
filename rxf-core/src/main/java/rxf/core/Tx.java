@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static bbcursive.Cursive.pre.*;
@@ -333,10 +334,10 @@ public class Tx implements WantsZeroCopy {
    * 
    * @param success
    */
-  public void finishPayload(final F success) {
+  public void finishPayload(F success) {
     log(success, "finishPaylaod");
     if (chunked()) {
-      final List<ByteBuffer> res = new ArrayList<>();
+      List<ByteBuffer> res = new ArrayList<>();
       try {
         payload().compact();
         decodeChunkedEncoding(res, key -> {
@@ -352,13 +353,13 @@ public class Tx implements WantsZeroCopy {
     }
   }
 
-  public void decodeChunkedEncoding(final List<ByteBuffer> res, final F success) {
+  public void decodeChunkedEncoding(List<ByteBuffer> res, F success) {
     assert key() != null;
     try {
       while (true)
         try {
-          final ByteBuffer chunk = getNextChunk();
-          if (NIL == chunk) {
+          ByteBuffer chunk = getNextChunk();
+          if (Objects.equals(NIL, chunk)) {
             log(key, "decodeChunkSuccess", success.toString());
             success.apply(key());
             break;
@@ -426,7 +427,7 @@ public class Tx implements WantsZeroCopy {
 
   public static void fetchGetContent(URL url, HttpRequest httpRequest,
       AtomicReference<String> payload, F onSuccess) throws Exception {
-    final HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+    HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
 
     try {
 
@@ -471,7 +472,7 @@ public class Tx implements WantsZeroCopy {
 
   public static void fetchPostContent(ByteBuffer reqPayload, HttpRequest httpRequest, URL url,
       F onSuccess, AtomicReference<String> payload) throws Exception {
-    final HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+    HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
 
     try {
 

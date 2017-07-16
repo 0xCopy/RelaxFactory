@@ -3,8 +3,8 @@ package rxf.couch.guice;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
-import rxf.couch.CouchService;
-import rxf.couch.CouchServiceFactory;
+import rxf.couch.service.CouchService;
+import rxf.couch.service.CouchServiceFactory;
 
 import java.util.concurrent.ExecutionException;
 

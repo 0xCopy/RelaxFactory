@@ -1,4 +1,4 @@
-package rxf.couch;
+package rxf.couch.driver;
 
 import rxf.core.Tx;
 import rxf.couch.driver.CouchMetaDriver.etype;
@@ -10,7 +10,7 @@ import java.util.EnumMap;
  * User: jim Date: 5/29/12 Time: 1:58 PM
  */
 public abstract class DbKeysBuilder {
-  protected static ThreadLocal<DbKeysBuilder> currentKeys = new InheritableThreadLocal<>();
+  public static ThreadLocal<DbKeysBuilder> currentKeys = new InheritableThreadLocal<>();
   protected final EnumMap<etype, Object> parms = new EnumMap<>(etype.class);
 
   private Throwable trace;

@@ -8,7 +8,7 @@ import com.google.inject.name.Names;
 import one.xio.AsioVisitor;
 import one.xio.AsyncSingletonServer;
 import org.junit.*;
-import rxf.couch.CouchService;
+import rxf.couch.service.CouchService;
 import rxf.couch.gen.CouchDriver;
 import rxf.rpc.RelaxFactoryServerImpl;
 import rxf.rpc.RpcHelper;

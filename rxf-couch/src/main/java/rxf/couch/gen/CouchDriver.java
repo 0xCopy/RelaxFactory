@@ -7,7 +7,7 @@ import rxf.core.Rfc822HeaderState;
 import rxf.core.TerminalBuilder;
 import rxf.core.Tx;
 import rxf.couch.CouchResultSet;
-import rxf.couch.DbKeysBuilder;
+import rxf.couch.driver.DbKeysBuilder;
 import rxf.couch.driver.CouchMetaDriver;
 import rxf.couch.driver.CouchMetaDriver.etype;
 import rxf.rpc.RpcHelper;
@@ -79,7 +79,7 @@ public interface CouchDriver {
 
           @Deprecated
           public void oneWay() {
-            final DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
+            DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
 
             RpcHelper.EXECUTOR_SERVICE.submit(() -> {
               try {
@@ -157,7 +157,7 @@ public interface CouchDriver {
 
           @Deprecated
           public void oneWay() {
-            final DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
+            DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
 
             RpcHelper.EXECUTOR_SERVICE.submit(() -> {
               try {
@@ -395,7 +395,7 @@ public interface CouchDriver {
 
           @Deprecated
           public void oneWay() {
-            final DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
+            DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
 
             RpcHelper.EXECUTOR_SERVICE.submit(() -> {
               try {
@@ -488,7 +488,7 @@ public interface CouchDriver {
 
           @Deprecated
           public void oneWay() {
-            final DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
+            DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
 
             RpcHelper.EXECUTOR_SERVICE.submit(() -> {
               try {
@@ -774,7 +774,7 @@ public interface CouchDriver {
 
           @Deprecated
           public void oneWay() {
-            final DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
+            DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
 
             RpcHelper.EXECUTOR_SERVICE.submit(() -> {
               try {
@@ -932,7 +932,7 @@ public interface CouchDriver {
 
           @Deprecated
           public void oneWay() {
-            final DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
+            DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
 
             RpcHelper.EXECUTOR_SERVICE.submit(() -> {
               try {

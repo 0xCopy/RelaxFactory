@@ -1,4 +1,4 @@
-package rxf.couch;
+package rxf.couch.service;
 
 import com.google.web.bindery.requestfactory.shared.ServiceLocator;
 import rxf.core.CouchNamespace;

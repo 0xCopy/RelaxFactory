@@ -85,7 +85,7 @@ public class RequestQueueVisitor extends Impl implements SerializationPolicyProv
     }
     cursor = cursor.slice();
     int remaining = Integer.parseInt(req.headerString(HttpHeaders.Content$2dLength));
-    final RequestQueueVisitor prev = this;
+    RequestQueueVisitor prev = this;
     if (cursor.remaining() != remaining) {
       key.attach(new Impl() {
 
@@ -104,7 +104,7 @@ public class RequestQueueVisitor extends Impl implements SerializationPolicyProv
     }
   }
 
-  public void onWrite(final SelectionKey key) throws Exception {
+  public void onWrite(SelectionKey key) throws Exception {
     if (null == payload)
       park(key, key1 -> {
         RpcHelper.EXECUTOR_SERVICE.submit(() -> {
@@ -126,7 +126,7 @@ public class RequestQueueVisitor extends Impl implements SerializationPolicyProv
               payload = RPC.encodeResponseForFailure(null, ex);
             }
             ByteBuffer pbuf = (ByteBuffer) StandardCharsets.UTF_8.encode(payload).rewind();
-            final int limit = pbuf.rewind().limit();
+            int limit = pbuf.rewind().limit();
             Rfc822HeaderState.HttpResponse res = req.$res();
             res.status(HttpStatus.$200);
             ByteBuffer as =

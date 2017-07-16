@@ -53,13 +53,13 @@ public class Rfc822HeaderStateTest {
     state.addHeaderInterest("Server");
     state.read(simpleResponse);
 
-    final String actual = state.methodProtocol();
+    String actual = state.methodProtocol();
     assertEquals("HTTP/1.0", actual);
-    final String actual1 = state.pathResCode();
+    String actual1 = state.pathResCode();
     assertEquals("200", actual1);
-    final String actual2 = state.protocolStatus();
+    String actual2 = state.protocolStatus();
     assertEquals("OK", actual2);
-    final String server = state.headerString("Server");
+    String server = state.headerString("Server");
     assertEquals("NotReallyAServer", server);
   }
 

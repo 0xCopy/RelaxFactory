@@ -4,8 +4,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.name.Names;
-import rxf.couch.CouchService;
-import rxf.couch.CouchServiceFactory;
+import rxf.couch.service.CouchService;
+import rxf.couch.service.CouchServiceFactory;
 
 import java.util.ArrayList;
 import java.util.List;

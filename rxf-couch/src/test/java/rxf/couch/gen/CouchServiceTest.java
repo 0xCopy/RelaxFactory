@@ -7,10 +7,11 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import rxf.couch.Attachment;
-import rxf.couch.CouchService;
-import rxf.couch.CouchServiceFactory;
+import rxf.couch.ann.*;
+import rxf.couch.service.CouchServiceFactory;
 import rxf.couch.gen.CouchDriver.DbDelete;
 import rxf.couch.gen.CouchDriver.DocFetch;
+import rxf.couch.service.CouchService;
 import rxf.shared.CouchTx;
 import rxf.web.inf.ProtocolMethodDispatch;
 
@@ -269,7 +270,7 @@ public class CouchServiceTest {
      * com.google.gson.Gson.fromJson(Gson.java:755) at com.google.gson.Gson.fromJson(Gson.java:721) at
      * com.google.gson.Gson.fromJson(Gson.java:670) at
      * rxf.couch.gen.CouchDriver$ViewFetch$ViewFetchActionBuilder$1.rows(CouchDriver.java:735) at
-     * rxf.couch.CouchServiceFactory$CouchServiceHandler$2.call(CouchServiceFactory.java:198) at
+     * rxf.couch.service.CouchServiceFactory$CouchServiceHandler$2.call(CouchServiceFactory.java:198) at
      * java.util.concurrent.FutureTask$Sync.innerRun(FutureTask.java:334) at
      * java.util.concurrent.FutureTask.run(FutureTask.java:166) at
      * java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask

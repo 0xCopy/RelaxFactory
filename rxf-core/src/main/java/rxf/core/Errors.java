@@ -23,7 +23,7 @@ public class Errors {
     redir(key, newUrl);
   }
 
-  private static void redir(SelectionKey key, final String newUrl) {
+  private static void redir(SelectionKey key, String newUrl) {
     String message = "Resource moved to <a href='" + newUrl + "'>" + newUrl + "</a>";
     ByteBuffer bb =
         bb("<html><head><title>Resource Moved</title></head><body><div>" + message
@@ -54,8 +54,8 @@ public class Errors {
     error(key, HttpStatus.$500, "Internal Server Error");
   }
 
-  private static void error(SelectionKey key, final HttpStatus code, String message) {
-    final String html = message;
+  private static void error(SelectionKey key, HttpStatus code, String message) {
+    String html = message;
     finishWrite(key, key1 -> key1.interestOps(SelectionKey.OP_READ).attach(null), bb((ByteBuffer) new Rfc822HeaderState().$res().status(code).headerString(
         HttpHeaders.Content$2dType, "text/html").headerString(HttpHeaders.Content$2dLength,
         String.valueOf(html.length())).asByteBuffer(), Cursive.pre.debug, Cursive.pre.rewind));

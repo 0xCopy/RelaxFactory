@@ -76,10 +76,10 @@ public class ProxyDaemon extends AsioVisitor.Impl {
    * @param innerKey connection to the Distributor
    * @param b the DMA ByteBuffers where applicable
    */
-  public static void pipe(SelectionKey innerKey, final SelectionKey outerKey, final ByteBuffer... b) {
+  public static void pipe(SelectionKey innerKey, SelectionKey outerKey, ByteBuffer... b) {
     String s = "pipe-" + counter;
-    final ByteBuffer ob = b.length > 1 ? b[1] : ByteBuffer.allocate(4 << 10);
-    final HttpPipeVisitor ib = new HttpPipeVisitor(s + "-in", innerKey, b[0], ob);
+    ByteBuffer ob = b.length > 1 ? b[1] : ByteBuffer.allocate(4 << 10);
+    HttpPipeVisitor ib = new HttpPipeVisitor(s + "-in", innerKey, b[0], ob);
     outerKey.interestOps(OP_READ | OP_WRITE).attach(ib);
     innerKey.interestOps(OP_WRITE);
     innerKey.attach(new HttpPipeVisitor(s + "-out", outerKey, ob, b[0]) {
@@ -110,16 +110,16 @@ public class ProxyDaemon extends AsioVisitor.Impl {
 
   public void onAccept(SelectionKey key) throws Exception {
     ServerSocketChannel c = (ServerSocketChannel) key.channel();
-    final SocketChannel accept = c.accept();
+    SocketChannel accept = c.accept();
     accept.configureBlocking(false);
     AsyncSingletonServer.SingleThreadSingletonServer.enqueue(accept, OP_READ, this);
   }
 
-  public void onRead(final SelectionKey outerKey) throws Exception {
+  public void onRead(SelectionKey outerKey) throws Exception {
 
     if (cursor == null)
       cursor = ByteBuffer.allocate(4 << 10);
-    final SocketChannel outterChannel = (SocketChannel) outerKey.channel();
+    SocketChannel outterChannel = (SocketChannel) outerKey.channel();
     int read = Helper.read(outterChannel, cursor);
     if (-1 != read) {
       boolean timeHeaders = RPS_SHOW && counter % 1000 == 0;
@@ -155,7 +155,7 @@ public class ProxyDaemon extends AsioVisitor.Impl {
 
         Buffer position = cursor.limit(climit).position(headersBuf.limit());
 
-        final ByteBuffer inwardBuffer =
+        ByteBuffer inwardBuffer =
             ByteBuffer.allocateDirect(8 << 10).put(
                 (ByteBuffer) cursor.clear().limit(1 + hosts[0] - HOSTPREFIXLEN)).put(
                 (ByteBuffer) cursor.limit(headersBuf.limit() - 2).position(hosts[1])).put(slice2)
@@ -170,8 +170,7 @@ public class ProxyDaemon extends AsioVisitor.Impl {
         }
         counter++;
 
-        final SocketChannel innerChannel =
-            (SocketChannel) SocketChannel.open().configureBlocking(false);
+        SocketChannel innerChannel = (SocketChannel) SocketChannel.open().configureBlocking(false);
         InetSocketAddress remote;
         switch (PROXY_PORT) {
           case 0:

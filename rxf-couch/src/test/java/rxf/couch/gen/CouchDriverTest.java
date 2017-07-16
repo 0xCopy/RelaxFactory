@@ -174,7 +174,7 @@ public class CouchDriverTest {
         "{\"name\":\"" + System.nanoTime() + "\",\"brand\":\"d\",\"crap\":\"" + space + "\"}").to()
         .fire().tx();
     // running view
-    final ViewFetchTerminalBuilder fire =
+    ViewFetchTerminalBuilder fire =
         new ViewFetch().db(SOMEDB).type(Map.class).view(DESIGN_SAMPLE + "/_view/foo?key=\"a\"")
             .to().fire();
     CouchResultSet<?, Map<String, String>> data = fire.rows();

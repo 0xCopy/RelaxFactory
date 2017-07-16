@@ -77,7 +77,7 @@ public class ContentRootImpl extends Impl {
     String since = getReq().headerString(If$2dModified$2dSince);
     String accepts = getReq().headerString(Accept$2dEncoding);
 
-    final HttpResponse res = getReq().$res();
+    HttpResponse res = getReq().$res();
     if (null != since) {
       java.util.Date cachedDate = DateHeaderParser.parseDate(since);
 
@@ -139,9 +139,9 @@ public class ContentRootImpl extends Impl {
     }
   }
 
-  public void sendFile(final SelectionKey key, String finalFname, File file, java.util.Date fdate,
-      HttpResponse res, String ceString) throws IOException {
-    final RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
+  public void sendFile(SelectionKey key, String finalFname, File file, java.util.Date fdate,
+                       HttpResponse res, String ceString) throws IOException {
+    RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
     String substring = finalFname.substring(finalFname.lastIndexOf('.') + 1);
     MimeType mimeType = MimeType.valueOf(substring);
     long length = randomAccessFile.length();

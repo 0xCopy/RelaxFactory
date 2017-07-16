@@ -228,7 +228,7 @@ public class PouchProxy extends JavaScriptObject {
       return this;
   }-*/;
 
-  public final PouchProxy allDocs(AllDocOptions options, final AsyncCallback<ViewResults.Results> cb) {
+  public final PouchProxy allDocs(AllDocOptions options, AsyncCallback<ViewResults.Results> cb) {
 
     String alldocOptions;
     alldocOptions =

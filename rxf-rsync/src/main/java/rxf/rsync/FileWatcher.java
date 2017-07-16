@@ -137,7 +137,7 @@ public class FileWatcher {
         WatchEvent.Kind kind = event.kind();
 
         // TBD - provide example of how OVERFLOW event is handled
-        if (kind == OVERFLOW) {
+        if (Objects.equals(kind, OVERFLOW)) {
           System.err.println("WatchService Overflow!");
           System.exit(99);
           continue;
@@ -156,7 +156,7 @@ public class FileWatcher {
         // register it and its sub-directories
 
         if (Files.isDirectory(child)) {
-          if (kind == ENTRY_CREATE) {
+          if (Objects.equals(kind, ENTRY_CREATE)) {
             try {
               if (recursive && Files.isDirectory(child, NOFOLLOW_LINKS)) {
                 registerAll(child);
@@ -166,17 +166,17 @@ public class FileWatcher {
               // ignore to keep sample readbale
             }
 
-          } else if (kind == ENTRY_DELETE)
+          } else if (Objects.equals(kind, ENTRY_DELETE))
             keys.remove(key);
         }
         // Path relativize = child.relativize(NORMALIZE);
         if (Files.isRegularFile(child)) {
           System.out.println("putting child: " + child);
-          if (/* kind == ENTRY_CREATE || */kind == ENTRY_MODIFY) {
+          if (/* kind == ENTRY_CREATE || */Objects.equals(kind, ENTRY_MODIFY)) {
 
             delta.put(child, isAvoided(child));
 
-          } else if (kind == ENTRY_DELETE) {
+          } else if (Objects.equals(kind, ENTRY_DELETE)) {
             delta.put(child, false);
           }
         }
@@ -254,7 +254,7 @@ public class FileWatcher {
         String s = NORMALIZE.relativize(key).toString();
 
         Boolean keepOrDelete = entry.getValue();
-        if (Boolean.FALSE == keepOrDelete) {
+        if (Objects.equals(Boolean.FALSE, keepOrDelete)) {
           delta.entrySet().remove(entry);
           attachments.remove(s);
           changed = true;

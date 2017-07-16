@@ -8,6 +8,7 @@ import rxf.core.Errors;
 import rxf.core.Rfc822HeaderState;
 import rxf.core.Tx;
 import rxf.couch.driver.CouchMetaDriver;
+import rxf.couch.driver.DbKeysBuilder;
 import rxf.rpc.RpcHelper;
 import rxf.shared.KeepMatcher;
 import rxf.web.inf.ContentRootImpl;
@@ -33,7 +34,7 @@ import static rxf.couch.gen.CouchDriver.DocFetch;
 @KeepMatcher
 public class DocFetchProxyImpl extends ContentRootImpl {
 
-  public void onRead(final SelectionKey outerKey) throws Exception {
+  public void onRead(SelectionKey outerKey) throws Exception {
 
     if (outerKey.attachment() instanceof Object[]) {
       Object[] ar = (Object[]) outerKey.attachment();
@@ -51,8 +52,8 @@ public class DocFetchProxyImpl extends ContentRootImpl {
     if (null != getReq() && null != getMatchResults(outerKey))
       park(outerKey, key -> {
 
-        final HttpRequest outerRequest = getReq();
-        final String path = outerRequest.path();
+        HttpRequest outerRequest = getReq();
+        String path = outerRequest.path();
 
         String link = transformLink(outerKey);
         if (link.endsWith("/")) {

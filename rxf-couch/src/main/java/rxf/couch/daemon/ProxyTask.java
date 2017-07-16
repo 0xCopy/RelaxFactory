@@ -30,7 +30,7 @@ public class ProxyTask implements Runnable {
     }
   }
 
-  public static void main(final String[] args) {
+  public static void main(String[] args) {
     // boilerplate HttpMethod.init() here
     RpcHelper.getEXECUTOR_SERVICE().submit(new ProxyTask() {
       {

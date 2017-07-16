@@ -24,7 +24,7 @@ public abstract class TemplateContentImpl extends ContentRootImpl {
 
   }
 
-  public void onWrite(final SelectionKey key) throws Exception {
+  public void onWrite(SelectionKey key) throws Exception {
 
     // todo: paths
     String finalFname =

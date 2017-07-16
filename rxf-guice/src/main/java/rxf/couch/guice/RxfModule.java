@@ -64,7 +64,7 @@ public class RxfModule extends AbstractModule {
 
   }
 
-  protected VisitorKeyBindingBuilder handle(final HttpMethod verb, final String regex) {
+  protected VisitorKeyBindingBuilder handle(HttpMethod verb, String regex) {
     return new VisitorKeyBindingBuilder() {
 
       public void with(Key<? extends AsioVisitor> implKey) {

@@ -12,7 +12,6 @@ import rxf.core.Rfc822HeaderState;
 import rxf.core.Rfc822HeaderState.HttpRequest;
 import rxf.core.Rfc822HeaderState.HttpResponse;
 import rxf.core.Tx;
-import rxf.couch.DbKeysBuilder;
 import rxf.rpc.RpcHelper;
 import rxf.web.inf.ProtocolMethodDispatch;
 
@@ -55,7 +54,7 @@ import static rxf.couch.driver.CouchMetaDriver.etype.*;
  * <p/>
  * <h2>{@link one.xio.AsioVisitor} visitor sub-threads in threadpools must be one of:</h2>
  * <ol>
- * <li>inner classes using the <u>final</u> paramters passed in via {@link #visit(rxf.couch.DbKeysBuilder, rxf.core.Tx)}
+ * <li>inner classes using the <u>final</u> paramters passed in via {@link #visit(DbKeysBuilder, rxf.core.Tx)}
  * </li>
  * <li>fluent class interface agnostic(highly unlikely)</li>
  * <li>arduously carried in (same as first option but not as clean as inner class refs)</li>
@@ -77,9 +76,9 @@ public enum CouchMetaDriver {
   // @DbTask( {tx, oneWay})
   // @DbKeys( {db})
   DbCreate {
-    public void visit(final DbKeysBuilder dbKeysBuilder, final Tx tx) throws Exception {
-      final Phaser phaser = new Phaser(2);
-      final SocketChannel channel = createCouchConnection();
+    public void visit(DbKeysBuilder dbKeysBuilder, Tx tx) throws Exception {
+      Phaser phaser = new Phaser(2);
+      SocketChannel channel = createCouchConnection();
       enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
         // *******************************
         // pathological buffersize traits
@@ -95,7 +94,7 @@ public enum CouchMetaDriver {
           int write = channel.write(header);
           assert !header.hasRemaining();
           header.clear();
-          final HttpResponse response =
+          HttpResponse response =
               tx.hdr().$req().headerInterest(STATIC_JSON_SEND_HEADERS).$res();
 
           toRead(key, key1 -> {
@@ -173,9 +172,9 @@ public enum CouchMetaDriver {
   // @DbTask( {tx, oneWay})
   // @DbKeys( {db})
   DbDelete {
-    public void visit(final DbKeysBuilder dbKeysBuilder, final Tx tx) throws Exception {
-      final Phaser phaser = new Phaser(2);
-      final SocketChannel channel = createCouchConnection();
+    public void visit(DbKeysBuilder dbKeysBuilder, Tx tx) throws Exception {
+      Phaser phaser = new Phaser(2);
+      SocketChannel channel = createCouchConnection();
 
       enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
         ByteBuffer header = (ByteBuffer) tx.hdr().$req().method(DELETE).pathResCode(
@@ -266,9 +265,9 @@ public enum CouchMetaDriver {
   // @DbTask( {pojo, future, json})
   // @DbKeys( {db, docId})
   DocFetch {
-    public void visit(final DbKeysBuilder dbKeysBuilder, final Tx tx) throws Exception {
-      final SocketChannel channel = createCouchConnection();
-      final Phaser phaser = new Phaser(2);
+    public void visit(DbKeysBuilder dbKeysBuilder, Tx tx) throws Exception {
+      SocketChannel channel = createCouchConnection();
+      Phaser phaser = new Phaser(2);
       enqueue(channel, OP_CONNECT | OP_WRITE, new Impl() {
         // *******************************
         // *******************************
@@ -379,10 +378,10 @@ public enum CouchMetaDriver {
   // @DbTask( {json, future})
   // @DbKeys( {db, docId})
   RevisionFetch {
-    public void visit(final DbKeysBuilder dbKeysBuilder, final Tx tx) throws Exception {
+    public void visit(DbKeysBuilder dbKeysBuilder, Tx tx) throws Exception {
 
-      final SocketChannel channel = createCouchConnection();
-      final Phaser phaser = new Phaser(2);
+      SocketChannel channel = createCouchConnection();
+      Phaser phaser = new Phaser(2);
       enqueue(channel, OP_CONNECT | OP_WRITE, new Impl() {
         // *******************************
         // *******************************
@@ -484,9 +483,9 @@ public enum CouchMetaDriver {
   // @DbTask( {tx, oneWay, future})
   // @DbKeys(value = {db, docId, rev})
   DocDelete {
-    public void visit(final DbKeysBuilder dbKeysBuilder, final Tx tx) throws Exception {
-      final Phaser phaser = new Phaser(2);
-      final SocketChannel channel = createCouchConnection();
+    public void visit(DbKeysBuilder dbKeysBuilder, Tx tx) throws Exception {
+      Phaser phaser = new Phaser(2);
+      SocketChannel channel = createCouchConnection();
       enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
 
         // *******************************
@@ -593,13 +592,13 @@ public enum CouchMetaDriver {
   // @DbTask( {rows, future, continuousFeed})
   // @DbKeys(value = {db, view}, optional = {type, keyType})
   ViewFetch {
-    public void visit(final DbKeysBuilder dbKeysBuilder, final Tx tx) throws Exception {
-      final AtomicReference<ByteBuffer> payload = new AtomicReference<>();
-      final AtomicReference<List<ByteBuffer>> cePayload = new AtomicReference<>();
-      final Phaser phaser = new Phaser(2);
-      final String db = scrub('/' + (String) dbKeysBuilder.get(etype.db));
+    public void visit(DbKeysBuilder dbKeysBuilder, Tx tx) throws Exception {
+      AtomicReference<ByteBuffer> payload = new AtomicReference<>();
+      AtomicReference<List<ByteBuffer>> cePayload = new AtomicReference<>();
+      Phaser phaser = new Phaser(2);
+      String db = scrub('/' + (String) dbKeysBuilder.get(etype.db));
 
-      final SocketChannel channel = createCouchConnection();
+      SocketChannel channel = createCouchConnection();
       enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
 
         /**
@@ -704,7 +703,7 @@ public enum CouchMetaDriver {
                 if (response.headerStrings().containsKey(Content$2dLength.getHeader())) { // rarity but for empty
                   // rowsets
                   String remainingString = response.headerString(Content$2dLength);
-                  final int remaining = Integer.parseInt(remainingString);
+                  int remaining = Integer.parseInt(remainingString);
                   if (cursor.remaining() == remaining) {
                     // No chunked encoding, all read in one pass, deploy the body without ce-parsing
                     simpleDeploy(cursor.slice());
@@ -825,9 +824,9 @@ public enum CouchMetaDriver {
   // @DbTask( {tx, oneWay, rows, json, future, continuousFeed})
   // @DbKeys(value = {opaque, validjson}, optional = {keyType, type})
   JsonSend {
-    public void visit(final DbKeysBuilder dbKeysBuilder, final Tx tx) throws Exception {
+    public void visit(DbKeysBuilder dbKeysBuilder, Tx tx) throws Exception {
 
-      final Phaser phaser = new Phaser(2);
+      Phaser phaser = new Phaser(2);
       String opaque = scrub('/' + (String) dbKeysBuilder.get(etype.opaque));
 
       int slashCounter = 0;
@@ -852,7 +851,7 @@ public enum CouchMetaDriver {
       String validjson = (String) dbKeysBuilder.get(etype.validjson);
       validjson = null == validjson ? "{}" : validjson;
 
-      final byte[] outbound = validjson.getBytes(StandardCharsets.UTF_8);
+      byte[] outbound = validjson.getBytes(StandardCharsets.UTF_8);
 
       HttpMethod method =
           1 == slashCounter
@@ -870,8 +869,8 @@ public enum CouchMetaDriver {
         System.err.println(ProtocolMethodDispatch.deepToString(opaque, validjson,
             StandardCharsets.UTF_8.decode(header.duplicate()), tx.hdr()));
       }
-      final SocketChannel channel = createCouchConnection();
-      final String finalOpaque = opaque;
+      SocketChannel channel = createCouchConnection();
+      String finalOpaque = opaque;
       enqueue(channel, OP_WRITE | OP_CONNECT, new Impl() {
 
         // *******************************
@@ -893,7 +892,7 @@ public enum CouchMetaDriver {
           int write = channel.write(tx.payload());
           if (!tx.payload().hasRemaining()) {
             header.clear();
-            final HttpResponse response = tx.hdr().$res();
+            HttpResponse response = tx.hdr().$res();
             tx.payload(null);
             toRead(key, new Helper.F() {
 
@@ -979,10 +978,10 @@ public enum CouchMetaDriver {
   },
 
   BlobSend {
-    public void visit(DbKeysBuilder dbKeysBuilder, final Tx tx) throws Exception {
-      final Phaser phaser = new Phaser(2);
-      final HttpRequest request = tx.hdr().$req();
-      final ByteBuffer payload = (ByteBuffer) dbKeysBuilder.<ByteBuffer> get(etype.blob).rewind();
+    public void visit(DbKeysBuilder dbKeysBuilder, Tx tx) throws Exception {
+      Phaser phaser = new Phaser(2);
+      HttpRequest request = tx.hdr().$req();
+      ByteBuffer payload = (ByteBuffer) dbKeysBuilder.<ByteBuffer> get(etype.blob).rewind();
       String x = null;
 
       for (Object o : new Object[] {
@@ -1001,12 +1000,12 @@ public enum CouchMetaDriver {
       String docId = (String) dbKeysBuilder.get(etype.docId);
       String rev = (String) dbKeysBuilder.get(etype.rev);
       String attachname = dbKeysBuilder.get(etype.attachname);
-      final String sb =
+      String sb =
           scrub('/' + db + '/' + docId + '/'
               + URLEncoder.encode(attachname, StandardCharsets.UTF_8.displayName()) + "?rev=" + rev);
 
-      final String ctype = x;
-      final SocketChannel channel = createCouchConnection();
+      String ctype = x;
+      SocketChannel channel = createCouchConnection();
 
       enqueue(channel, OP_WRITE, new Impl() {
 
@@ -1219,7 +1218,7 @@ public enum CouchMetaDriver {
        */
 
       public <T> boolean validate(T... data) {
-        final String t = (String) data[0];
+        String t = (String) data[0];
         return 0 < t.toString().length() && !t.startsWith("\"") && !t.endsWith("\"");
       }
     },

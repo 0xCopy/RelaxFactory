@@ -63,7 +63,7 @@ public class GwtRequestFactoryVisitor extends Impl {
     }
     cursor = cursor.slice();
     int remaining = Integer.parseInt(req.headerString(HttpHeaders.Content$2dLength));
-    final GwtRequestFactoryVisitor prev = this;
+    GwtRequestFactoryVisitor prev = this;
     if (cursor.remaining() != remaining) {
       key.attach(new Impl() {
 
@@ -82,7 +82,7 @@ public class GwtRequestFactoryVisitor extends Impl {
     }
   }
 
-  public void onWrite(final SelectionKey key) throws Exception {
+  public void onWrite(SelectionKey key) throws Exception {
     if (payload == null)
       park(key, key1 -> {
 
@@ -93,7 +93,7 @@ public class GwtRequestFactoryVisitor extends Impl {
                 SIMPLE_REQUEST_PROCESSOR.process(StandardCharsets.UTF_8.decode(
                     (ByteBuffer) cursor.rewind()).toString());
             ByteBuffer pbuf = (ByteBuffer) StandardCharsets.UTF_8.encode(payload).rewind();
-            final int limit = pbuf.rewind().limit();
+            int limit = pbuf.rewind().limit();
             Rfc822HeaderState.HttpResponse res = req.$res();
             res.status(HttpStatus.$200);
             ByteBuffer as =

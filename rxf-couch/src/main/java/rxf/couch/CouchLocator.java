@@ -83,7 +83,7 @@ public abstract class CouchLocator<T> extends Locator<T, String> implements Couc
 
     String pathPrefix = getEntityName();
     String id = getId(domainObject);
-    final DocPersist.DocPersistTerminalBuilder fire =
+    DocPersist.DocPersistTerminalBuilder fire =
         new DocPersist().db(pathPrefix).validjson(gson().toJson(domainObject)).to().fire();
     ret = fire.tx();
 
