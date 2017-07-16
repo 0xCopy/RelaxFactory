@@ -43,14 +43,12 @@ public class CouchServiceTest {
     setDEBUG_SENDJSON(true);
     killswitch.set(false);
     exec = Executors.newScheduledThreadPool(2);
-    exec.submit(new Runnable() {
-      public void run() {
-        AsioVisitor topLevel = new ProtocolMethodDispatch();
-        try {
-          init(topLevel);
-        } catch (Exception e) {
-          fail();
-        }
+    exec.submit(() -> {
+      AsioVisitor topLevel = new ProtocolMethodDispatch();
+      try {
+        init(topLevel);
+      } catch (Exception e) {
+        fail();
       }
     });
     nukeTestDbs();

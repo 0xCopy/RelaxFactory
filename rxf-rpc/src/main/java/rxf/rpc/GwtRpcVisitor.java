@@ -55,13 +55,7 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
 
   @Override
   public void onWrite(SelectionKey key) throws Exception {
-    park(key, new F() {
-      @Override
-      public void apply(SelectionKey key) throws Exception {
-        RpcHelper.getEXECUTOR_SERVICE().submit(new GwtRpcTask());
-
-      }
-    });
+    park(key, key1 -> RpcHelper.getEXECUTOR_SERVICE().submit(new GwtRpcTask()));
   }
 
   public SerializationPolicy getSerializationPolicy(String moduleBaseURL, String strongName) {
@@ -122,12 +116,7 @@ public class GwtRpcVisitor extends Impl implements SerializationPolicyProvider {
           "text/x-gwt-rpc; charset=UTF-8").headerString(HttpHeaders.Content$2dLength,
           "" + ((tx.payload()).limit()));
 
-      finishWrite(tx.key(), new F() {
-        @Override
-        public void apply(SelectionKey key) throws Exception {
-          bye(key);
-        }
-      }, (ByteBuffer) tx.hdr().asResponse().asByteBuffer().rewind(), (ByteBuffer) tx.payload()
+      finishWrite(tx.key(), key -> bye(key), (ByteBuffer) tx.hdr().asResponse().asByteBuffer().rewind(), (ByteBuffer) tx.payload()
           .rewind());
     }
   }

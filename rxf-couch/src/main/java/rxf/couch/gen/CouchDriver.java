@@ -81,16 +81,14 @@ public interface CouchDriver {
           public void oneWay() {
             final DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
 
-            RpcHelper.EXECUTOR_SERVICE.submit(new Runnable() {
-              public void run() {
-                try {
+            RpcHelper.EXECUTOR_SERVICE.submit(() -> {
+              try {
 
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+                DbKeysBuilder.currentKeys.set(dbKeysBuilder);
 
-                  future.get();
-                } catch (Exception e) {
-                  e.printStackTrace();
-                }
+                future.get();
+              } catch (Exception e) {
+                e.printStackTrace();
               }
             });
           }
@@ -161,16 +159,14 @@ public interface CouchDriver {
           public void oneWay() {
             final DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
 
-            RpcHelper.EXECUTOR_SERVICE.submit(new Runnable() {
-              public void run() {
-                try {
+            RpcHelper.EXECUTOR_SERVICE.submit(() -> {
+              try {
 
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+                DbKeysBuilder.currentKeys.set(dbKeysBuilder);
 
-                  future.get();
-                } catch (Exception e) {
-                  e.printStackTrace();
-                }
+                future.get();
+              } catch (Exception e) {
+                e.printStackTrace();
               }
             });
           }
@@ -401,16 +397,14 @@ public interface CouchDriver {
           public void oneWay() {
             final DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
 
-            RpcHelper.EXECUTOR_SERVICE.submit(new Runnable() {
-              public void run() {
-                try {
+            RpcHelper.EXECUTOR_SERVICE.submit(() -> {
+              try {
 
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+                DbKeysBuilder.currentKeys.set(dbKeysBuilder);
 
-                  future.get();
-                } catch (Exception e) {
-                  e.printStackTrace();
-                }
+                future.get();
+              } catch (Exception e) {
+                e.printStackTrace();
               }
             });
           }
@@ -496,16 +490,14 @@ public interface CouchDriver {
           public void oneWay() {
             final DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
 
-            RpcHelper.EXECUTOR_SERVICE.submit(new Runnable() {
-              public void run() {
-                try {
+            RpcHelper.EXECUTOR_SERVICE.submit(() -> {
+              try {
 
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+                DbKeysBuilder.currentKeys.set(dbKeysBuilder);
 
-                  future.get();
-                } catch (Exception e) {
-                  e.printStackTrace();
-                }
+                future.get();
+              } catch (Exception e) {
+                e.printStackTrace();
               }
             });
           }
@@ -784,16 +776,14 @@ public interface CouchDriver {
           public void oneWay() {
             final DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
 
-            RpcHelper.EXECUTOR_SERVICE.submit(new Runnable() {
-              public void run() {
-                try {
+            RpcHelper.EXECUTOR_SERVICE.submit(() -> {
+              try {
 
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+                DbKeysBuilder.currentKeys.set(dbKeysBuilder);
 
-                  future.get();
-                } catch (Exception e) {
-                  e.printStackTrace();
-                }
+                future.get();
+              } catch (Exception e) {
+                e.printStackTrace();
               }
             });
           }
@@ -944,15 +934,13 @@ public interface CouchDriver {
           public void oneWay() {
             final DbKeysBuilder dbKeysBuilder = DbKeysBuilder.get();
 
-            RpcHelper.EXECUTOR_SERVICE.submit(new Runnable() {
-              public void run() {
-                try {
-                  DbKeysBuilder.currentKeys.set(dbKeysBuilder);
+            RpcHelper.EXECUTOR_SERVICE.submit(() -> {
+              try {
+                DbKeysBuilder.currentKeys.set(dbKeysBuilder);
 
-                  future.get();
-                } catch (Exception e) {
-                  e.printStackTrace();
-                }
+                future.get();
+              } catch (Exception e) {
+                e.printStackTrace();
               }
             });
           }

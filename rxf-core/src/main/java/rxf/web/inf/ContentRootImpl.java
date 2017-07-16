@@ -157,19 +157,16 @@ public class ContentRootImpl extends Impl {
       MappedByteBuffer map = randomAccessFile.getChannel().map(MapMode.READ_ONLY, 0, length);
       Buffer fileContent = map.rewind();
       Buffer headers = res.asByteBuffer().rewind();
-      finishWrite(key, new Runnable() {
-        @Override
-        public void run() {
-          try {
-            randomAccessFile.close();
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
-          try {
-            key.channel().close();
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
+      finishWrite(key, () -> {
+        try {
+          randomAccessFile.close();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+        try {
+          key.channel().close();
+        } catch (IOException e) {
+          e.printStackTrace();
         }
       }, (ByteBuffer) headers, (ByteBuffer) fileContent);
 

@@ -34,12 +34,7 @@ public class Errors {
         .headerString(HttpHeaders.Location, newUrl)//
         .headerString(HttpHeaders.Content$2dLength, str(bb.limit()))//
     ;
-    finishWrite(key, new F() {
-      @Override
-      public void apply(SelectionKey key) throws Exception {
-        key.interestOps(SelectionKey.OP_READ).attach(null);
-      }
-    }, bb(rfc822HeaderState), bb);
+    finishWrite(key, key1 -> key1.interestOps(SelectionKey.OP_READ).attach(null), bb(rfc822HeaderState), bb);
   }
 
   public static void $400(SelectionKey key) {
@@ -61,12 +56,7 @@ public class Errors {
 
   private static void error(SelectionKey key, final HttpStatus code, String message) {
     final String html = message;
-    finishWrite(key, new F() {
-      @Override
-      public void apply(SelectionKey key) throws Exception {
-        key.interestOps(SelectionKey.OP_READ).attach(null);
-      }
-    }, bb((ByteBuffer) new Rfc822HeaderState().$res().status(code).headerString(
+    finishWrite(key, key1 -> key1.interestOps(SelectionKey.OP_READ).attach(null), bb((ByteBuffer) new Rfc822HeaderState().$res().status(code).headerString(
         HttpHeaders.Content$2dType, "text/html").headerString(HttpHeaders.Content$2dLength,
         String.valueOf(html.length())).asByteBuffer(), Cursive.pre.debug, Cursive.pre.rewind));
 

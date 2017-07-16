@@ -396,14 +396,12 @@ public class FileWatcher {
 
   static {// boilerplate
     System.setProperty("rxf.couch.realtime.unit", TimeUnit.MINUTES.name());
-    SCHEDULED_EXECUTOR_SERVICE.submit(new Runnable() {
-      public void run() {
-        // class initializers fire here
-        AsioVisitor topLevel = new ProtocolMethodDispatch();
-        try {
-          AsyncSingletonServer.SingleThreadSingletonServer.init(topLevel);
-        } catch (Exception ignored) {
-        }
+    SCHEDULED_EXECUTOR_SERVICE.submit(() -> {
+      // class initializers fire here
+      AsioVisitor topLevel = new ProtocolMethodDispatch();
+      try {
+        AsyncSingletonServer.SingleThreadSingletonServer.init(topLevel);
+      } catch (Exception ignored) {
       }
     });
   }

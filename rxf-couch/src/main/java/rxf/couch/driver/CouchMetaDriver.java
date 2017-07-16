@@ -98,58 +98,55 @@ public enum CouchMetaDriver {
           final HttpResponse response =
               tx.hdr().$req().headerInterest(STATIC_JSON_SEND_HEADERS).$res();
 
-          toRead(key, new Helper.F() {
+          toRead(key, key1 -> {
+            if (null == tx.payload()) {
+              // geometric, vulnerable to dev/null if not max'd here.
+              header =
+                  null == header ? ByteBuffer.allocateDirect(4 << 10) : header.hasRemaining()
+                      ? header : ByteBuffer.allocateDirect(header.capacity() * 2).put(
+                          (ByteBuffer) header.flip());
 
-            public void apply(SelectionKey key) throws Exception {
-              if (null == tx.payload()) {
-                // geometric, vulnerable to dev/null if not max'd here.
-                header =
-                    null == header ? ByteBuffer.allocateDirect(4 << 10) : header.hasRemaining()
-                        ? header : ByteBuffer.allocateDirect(header.capacity() * 2).put(
-                            (ByteBuffer) header.flip());
+              int read = Helper.read(key1, header);
+              ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
+              response.read((ByteBuffer) flip);
 
-                int read = Helper.read(key, header);
-                ByteBuffer flip = (ByteBuffer) header.duplicate().flip();
-                response.read((ByteBuffer) flip);
-
-                if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR,
-                    response.headerBuf())) {
-                  tx.payload((ByteBuffer) flip.slice());
-                  header = null;
-                  if (RpcHelper.DEBUG_SENDJSON) {
-                    System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(),
-                        response, StandardCharsets.UTF_8.decode((ByteBuffer) tx.payload()
-                            .duplicate().rewind())));
-                  }
-                  HttpStatus httpStatus = response.statusEnum();
-                  switch (httpStatus) {
-                    case $200:
-                    case $201:
-                      int remaining = Integer.parseInt(response.headerString(Content$2dLength));
-                      if (remaining == tx.payload().remaining()) {
-                        deliver();
-                      } else {
-                        tx.payload(ByteBuffer.allocateDirect(remaining).put(tx.payload()));
-                      }
-                      break;
-                    default: // error
-                      phaser.forceTermination();
-                      channel.close();
-                  }
+              if (Rfc822HeaderState.suffixMatchChunks(ProtocolMethodDispatch.HEADER_TERMINATOR,
+                  response.headerBuf())) {
+                tx.payload((ByteBuffer) flip.slice());
+                header = null;
+                if (RpcHelper.DEBUG_SENDJSON) {
+                  System.err.println(ProtocolMethodDispatch.deepToString(response.statusEnum(),
+                      response, StandardCharsets.UTF_8.decode((ByteBuffer) tx.payload()
+                          .duplicate().rewind())));
                 }
-              } else {
-                int read = Helper.read(key, tx.payload());
-                switch (read) {
-                  case -1:
+                HttpStatus httpStatus = response.statusEnum();
+                switch (httpStatus) {
+                  case $200:
+                  case $201:
+                    int remaining = Integer.parseInt(response.headerString(Content$2dLength));
+                    if (remaining == tx.payload().remaining()) {
+                      deliver();
+                    } else {
+                      tx.payload(ByteBuffer.allocateDirect(remaining).put(tx.payload()));
+                    }
+                    break;
+                  default: // error
                     phaser.forceTermination();
-
                     channel.close();
-                    return;
                 }
-                if (!tx.payload().hasRemaining()) {
-                  tx.payload().flip();
-                  deliver();
-                }
+              }
+            } else {
+              int read = Helper.read(key1, tx.payload());
+              switch (read) {
+                case -1:
+                  phaser.forceTermination();
+
+                  channel.close();
+                  return;
+              }
+              if (!tx.payload().hasRemaining()) {
+                tx.payload().flip();
+                deliver();
               }
             }
           });

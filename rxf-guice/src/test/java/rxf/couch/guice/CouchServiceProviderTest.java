@@ -31,15 +31,13 @@ public class CouchServiceProviderTest {
     RpcHelper.setDEBUG_SENDJSON(true);
     AsyncSingletonServer.killswitch.set(false);
     exec = Executors.newScheduledThreadPool(2);
-    exec.submit(new Runnable() {
-      public void run() {
-        AsioVisitor topLevel = new ProtocolMethodDispatch();
-        try {
-          RelaxFactoryServerImpl.init(topLevel/* , 1000 */);
+    exec.submit(() -> {
+      AsioVisitor topLevel = new ProtocolMethodDispatch();
+      try {
+        RelaxFactoryServerImpl.init(topLevel/* , 1000 */);
 
-        } catch (Exception e) {
-          Assert.fail();
-        }
+      } catch (Exception e) {
+        Assert.fail();
       }
     });
     new Timer().schedule(new TimerTask() {

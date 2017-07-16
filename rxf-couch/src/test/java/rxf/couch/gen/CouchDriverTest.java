@@ -38,14 +38,12 @@ public class CouchDriverTest {
     RpcHelper.DEBUG_SENDJSON = true;
     AsyncSingletonServer.killswitch.set(false);
     exec = Executors.newScheduledThreadPool(2);
-    exec.submit(new Runnable() {
-      public void run() {
-        AsioVisitor topLevel = new ProtocolMethodDispatch();
-        try {
-          AsyncSingletonServer.SingleThreadSingletonServer.init(topLevel);
-        } catch (Exception e) {
-          fail();
-        }
+    exec.submit(() -> {
+      AsioVisitor topLevel = new ProtocolMethodDispatch();
+      try {
+        AsyncSingletonServer.SingleThreadSingletonServer.init(topLevel);
+      } catch (Exception e) {
+        fail();
       }
     });
     nukeTestDbs();

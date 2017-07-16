@@ -261,12 +261,10 @@ public class Tx implements WantsZeroCopy {
 
   public static String formUrlEncode(Map<String, String> theMap) {
     return Joiner.on(SEPARATOR).withKeyValueSeparator(ASSIGNMENT_OPERATOR).join(
-        FluentIterable.from(theMap.entrySet()).transform(new Function() {
-          public Object apply(Object o) {
-            Entry e = (Entry) o;
-            e.setValue(URLEncoder.encode((String) e.getValue()));
-            return e;
-          }
+        FluentIterable.from(theMap.entrySet()).transform((Function) o -> {
+          Entry e = (Entry) o;
+          e.setValue(URLEncoder.encode((String) e.getValue()));
+          return e;
         }));
   }
 
@@ -341,13 +339,10 @@ public class Tx implements WantsZeroCopy {
       final List<ByteBuffer> res = new ArrayList<>();
       try {
         payload().compact();
-        decodeChunkedEncoding(res, new F() {
-          @Override
-          public void apply(SelectionKey key) throws Exception {
-            ByteBuffer byteBuffer = cat(res);
-            payload(byteBuffer);
-            success.apply(key());
-          }
+        decodeChunkedEncoding(res, key -> {
+          ByteBuffer byteBuffer = cat(res);
+          payload(byteBuffer);
+          success.apply(key());
         });
       } catch (Exception e) {
         key().cancel();
@@ -368,12 +363,9 @@ public class Tx implements WantsZeroCopy {
             success.apply(key());
             break;
           }
-          F advance = new F() {
-            @Override
-            public void apply(SelectionKey key) throws Exception {
-              res.add(bb(chunk, flip));
-              decodeChunkedEncoding(res, success);
-            }
+          F advance = key -> {
+            res.add(bb(chunk, flip));
+            decodeChunkedEncoding(res, success);
           };
           if (!chunk.hasRemaining()) {
             advance.apply(key());
@@ -389,21 +381,13 @@ public class Tx implements WantsZeroCopy {
            * after an initial grab
            */
 
-          toRead(key(), new F() {
-            @Override
-            public void apply(SelectionKey key) throws Exception {
-              int read = read(key, payload().compact());
-              if (-1 == read) {
-                bye(key);
-              } else {
-                /* assert null != on(payload, debug); */
-                park(key, new F() {
-                  @Override
-                  public void apply(SelectionKey key) throws Exception {
-                    decodeChunkedEncoding(res, success);
-                  }
-                });
-              }
+          toRead(key(), key -> {
+            int read = read(key, payload().compact());
+            if (-1 == read) {
+              bye(key);
+            } else {
+              /* assert null != on(payload, debug); */
+              park(key, key1 -> decodeChunkedEncoding(res, success));
             }
           });
           break;

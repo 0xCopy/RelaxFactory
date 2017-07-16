@@ -84,42 +84,36 @@ public class GwtRequestFactoryVisitor extends Impl {
 
   public void onWrite(final SelectionKey key) throws Exception {
     if (payload == null)
-      park(key, new F() {
-        @Override
-        public void apply(final SelectionKey key) throws Exception {
+      park(key, key1 -> {
 
-          RpcHelper.getEXECUTOR_SERVICE().submit(new Runnable() {
+        RpcHelper.getEXECUTOR_SERVICE().submit(() -> {
+          try {
 
-            public void run() {
-              try {
+            payload =
+                SIMPLE_REQUEST_PROCESSOR.process(StandardCharsets.UTF_8.decode(
+                    (ByteBuffer) cursor.rewind()).toString());
+            ByteBuffer pbuf = (ByteBuffer) StandardCharsets.UTF_8.encode(payload).rewind();
+            final int limit = pbuf.rewind().limit();
+            Rfc822HeaderState.HttpResponse res = req.$res();
+            res.status(HttpStatus.$200);
+            ByteBuffer as =
+                res.headerString(HttpHeaders.Content$2dType, MimeType.json.contentType)
+                    .headerString(HttpHeaders.Content$2dLength, String.valueOf(limit)).as(
+                        ByteBuffer.class);
+            int needed = as.rewind().limit() + limit;
 
-                payload =
-                    SIMPLE_REQUEST_PROCESSOR.process(StandardCharsets.UTF_8.decode(
-                        (ByteBuffer) cursor.rewind()).toString());
-                ByteBuffer pbuf = (ByteBuffer) StandardCharsets.UTF_8.encode(payload).rewind();
-                final int limit = pbuf.rewind().limit();
-                Rfc822HeaderState.HttpResponse res = req.$res();
-                res.status(HttpStatus.$200);
-                ByteBuffer as =
-                    res.headerString(HttpHeaders.Content$2dType, MimeType.json.contentType)
-                        .headerString(HttpHeaders.Content$2dLength, String.valueOf(limit)).as(
-                            ByteBuffer.class);
-                int needed = as.rewind().limit() + limit;
+            cursor =
+                (ByteBuffer) ((ByteBuffer) (cursor.capacity() >= needed ? cursor.clear().limit(
+                    needed) : ByteBuffer.allocateDirect(needed))).put(as).put(pbuf).rewind();
 
-                cursor =
-                    (ByteBuffer) ((ByteBuffer) (cursor.capacity() >= needed ? cursor.clear().limit(
-                        needed) : ByteBuffer.allocateDirect(needed))).put(as).put(pbuf).rewind();
-
-                key.interestOps(SelectionKey.OP_WRITE);
-              } catch (Exception e) {
-                key.cancel();
-                e.printStackTrace(); // todo: verify for a purpose
-              } finally {
-              }
-            }
-          });
-          return;
-        }
+            key1.interestOps(SelectionKey.OP_WRITE);
+          } catch (Exception e) {
+            key1.cancel();
+            e.printStackTrace(); // todo: verify for a purpose
+          } finally {
+          }
+        });
+        return;
       });
     int write = channel.write(cursor);
     if (!cursor.hasRemaining()) {
