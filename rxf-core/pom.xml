@@ -15,10 +15,6 @@
     <url>http://maven.apache.org</url>
     <dependencies>
         <dependency>
-            <groupId>com.github.0xCopy</groupId>
-            <artifactId>1xio</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.github.0xCopy.RelaxFactory</groupId>
             <artifactId>rxf-shared</artifactId>
             <version>${parent.version}</version>

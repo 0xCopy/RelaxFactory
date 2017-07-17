@@ -130,13 +130,7 @@
         </pluginRepository>
     </pluginRepositories>
     <dependencyManagement>
-
         <dependencies>
-            <dependency>
-                <groupId>com.github.0xCopy</groupId>
-                <artifactId>1xio</artifactId>
-                <version>-SNAPSHOT</version><!--jitpack convention-->
-            </dependency>
             <dependency>
                 <groupId>com.google.gwt</groupId>
                 <artifactId>gwt-user</artifactId>
