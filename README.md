@@ -8,7 +8,7 @@ like HTTP, QUIC, WebSockets, and REST middleware using Java
 language but without a java resource cost associated with 
 application containers.  This is accomplished by carefully 
 proceeding in whatever way avoids object allocation and object 
-reference longevity.  The C10k Reactor pattern implantation 
+reference longevity.  The C10k Reactor pattern implementation 
 imposes no overhead on inbound sockets and in fact, knows nothing 
 about the sockets outside of the spartan protocol dispatch 
 routines.
